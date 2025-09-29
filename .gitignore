@@ -1,0 +1,31 @@
+# Lean 4
+/build
+/lake-packages
+.lake
+*.olean
+*.ilean
+*.trace
+*.hash
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.local
+
+# Python (if any scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Documentation build
+/_target/
+/html/
