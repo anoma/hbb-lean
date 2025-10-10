@@ -1,0 +1,1012 @@
+import ModalDistribution.Examples.ThyHBB1.Safety
+import ModalDistribution.Examples.ThyHBB1.Axioms
+import ModalDistribution.Examples.ThyLive
+import ModalDistribution.Logic.Properties
+import ModalDistribution.Tactics
+import ModalDistribution.Core.History
+
+/-!
+# ThyHBB1 Uniqueness of Proposals
+
+This file contains lemmas proving the crucial property that at most one value can be proposed
+in the ThyHBB1 broadcast protocol, and derives consequences about echo events.
+
+The main results show that:
+- Uniqueness of proposals forces observed proposal diamonds to agree on values
+- Unique proposals guarantee eventual echoes with the same value
+- At most one proposal implies every learner is safe
+
+These lemmas are extracted from the main ThyHBB1 file to improve modularity and maintainability.
+They support the proof of agreement and liveness properties.
+
+## Key Lemmas
+
+The file is organized into several categories:
+
+- **Guard and value equality lemmas**: Extract and apply uniqueness constraints
+  - `uniquePropose_guard_at_history`: Specializes uniqueness to a given history
+  - `uniquePropose_equal_values`: Forces observed proposals to agree
+  - `uniquePropose_guard_at_predecessor`: Restricts uniqueness to predecessor histories
+
+- **Echo existence and equality lemmas**: Derive echo properties from unique proposals
+  - `uniquePropose_exists_witness_echo`: Antecedent ensures echoes exist
+  - `uniquePropose_eventually_echo_core`: Combines existence and equality
+  - `uniquePropose_eventually_echo`: Main result (\cref{lemm.only.one.propose.only.one.echo0})
+
+- **Helper lemmas for event-level reasoning**:
+  - `sometime_echo_event_exists`: Witness explicit echo events
+  - `echo_backward_diamond_from_sometime`: Convert echoes to proposal diamonds
+  - `boxEcho_to_propose_diamond`: Box echoes imply proposal diamonds
+  - `echoNonEquiv_diamond`: Echo non-equivalence constraint
+
+- **Safety lemmas**:
+  - `atMostOnePropose_safe`: Uniqueness implies safety (\cref{lemm.one.propose.safe})
+-/
+
+namespace ModalDistribution
+namespace Examples
+
+open ModalDistribution
+open ModalDistribution.Logic
+open ModalDistribution.Logic.Formula
+open History
+open PreHistory
+open World
+open scoped Formula PreHistory
+
+set_option autoImplicit false
+
+variable {S : Signature}
+
+section Results
+
+variable {P : Type} [Nonempty P]
+variable {M : Model S P}
+variable {liveSymb : Signature.PredSymb S}
+variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+variable {w w' t : World P (Signature.EventType S)}
+
+/-- Auxiliary: uniqueness at a fixed world yields the guarded at-most-one witness. -/
+lemma uniquePropose_guard_at_history
+    {w : World P (Signature.EventType S)}
+    (hUnique :
+      ⟪w⟫ ⊨[M]∃!ᶠ v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
+    ⟪w⟫ ⊨[M]
+      ∃≤ᶠ1 v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) := by
+  classical
+  have hAnd :=
+    (Sat.and (M := M) (w := w)
+      (φ := ∃≤ᶠ1 v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := ∃ᶠ (fun witness =>
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩)))).1
+      (by
+        simpa [Formula.existsUnique]
+          using hUnique)
+  exact hAnd.1
+
+/-- Auxiliary: uniqueness of proposals forces observed proposal diamonds to agree. -/
+lemma uniquePropose_equal_values
+    {w : World P (Signature.EventType S)}
+    (value altValue : S.Value)
+    (hAtMost : ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+    (hDiamond₁ : ⟪w⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+    (hDiamond₂ : ⟪w⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) :
+    value = altValue := by
+  classical
+  dsimp [Formula.existsAtMostOne] at hAtMost
+  have hForValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun v =>
+        ∀ᶠ fun altValue =>
+          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+            (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+              (v ≃ᶠ altValue))
+      (v := value) hAtMost
+  have hForAlt :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun altValue =>
+        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+            (value ≃ᶠ altValue))
+      (v := altValue) hForValue
+  have hEq : ⟪w⟫ ⊨[M] value ≃ᶠ altValue := by
+    apply (Sat.imp (M := M) (w := w)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩))
+      (ψ := value ≃ᶠ altValue)).1
+    · apply (Sat.imp (M := M) (w := w)
+        (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+        (ψ := (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+          (value ≃ᶠ altValue))).1
+      · exact hForAlt
+      · exact hDiamond₁
+    · exact hDiamond₂
+  simpa [Sat] using hEq
+
+/-- Helper: specialise the existence implication at a concrete event. -/
+lemma uniquePropose_eventually_echo_core_exists_at_event
+    (value : S.Value)
+    (hExists :
+      □⇓⊨[M](predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∃ᶠ (fun witness =>
+            ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
+    {t : World P (Signature.EventType S)}
+    (ht : t ∈ M.history.val) :
+    ⟪⟨t.place, t.event,
+        History.predecessorHistory (H := M.history)
+          (happensBefore_of_mem (P := P)
+            (Event := Signature.EventType S) ht)⟩⟫ ⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ∃ᶠ (fun witness =>
+          ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) := by
+  classical
+  dsimp [EventValid] at hExists
+  have hLocal := hExists ht
+  simpa [History.predecessorHistory, happensBefore_of_mem, World.place, World.event, World.time]
+    using hLocal
+
+/-- Helper: specialise the equality implication at a concrete event. -/
+lemma uniquePropose_eventually_echo_core_eq_at_event
+    (value : S.Value)
+    (hEq :
+      □⇓⊨[M](predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∀ᶠ (fun v =>
+            (↕ᶠ(ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
+            (v ≃ᶠ value)))
+    {t : World P (Signature.EventType S)}
+    (ht : t ∈ M.history.val) :
+    ⟪⟨t.place, t.event,
+        History.predecessorHistory (H := M.history)
+          (happensBefore_of_mem (P := P)
+            (Event := Signature.EventType S) ht)⟩⟫ ⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ∀ᶠ (fun v =>
+          (↕ᶠ(ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
+          (v ≃ᶠ value)) := by
+  classical
+  dsimp [EventValid] at hEq
+  have hLocal := hEq ht
+  simpa [History.predecessorHistory, happensBefore_of_mem, World.place, World.event, World.time]
+    using hLocal
+
+/-- Helper: extract a concrete witness from a modal existential at a fixed world. -/
+lemma uniquePropose_exists_witness_at_world
+    {w : World P (Signature.EventType S)}
+    (hExists :
+      ⟪w⟫ ⊨[M]∃ᶠ (fun witness =>
+          ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩))) :
+    ∃ value : Signature.Value S,
+      ⟪w⟫ ⊨[M]
+        ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
+  classical
+  by_contra hNoWitness
+  have hNotForall : ∀ value : Signature.Value S,
+      ¬ (⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)) :=
+    not_exists.mp hNoWitness
+  have hForallNot :
+      ⟪w⟫ ⊨[M]
+        ∀ᶠ (fun value => ¬ᶠ (↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))) := by
+    refine
+      Sat.forall_intro (M := M) (w := w)
+        (body := fun value => ¬ᶠ (↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))) ?_
+    intro v
+    exact
+      Sat.not_intro (M := M) (w := w)
+        (φ := ↕ᶠ(ofEvent ⟨echoSymb, [v]⟩))
+        (hNotForall v)
+  have hNeg :
+      ⟪w⟫ ⊨[M] ¬ᶠ (∀ᶠ (fun value => ¬ᶠ (↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)))) := by
+    simpa [Formula.exists_] using hExists
+  exact
+    (Sat.not (M := M) (w := w)
+      (φ := ∀ᶠ (fun value => ¬ᶠ (↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))))).1
+        hNeg hForallNot
+
+/-- Helper: equality implication yields value equality under a witness substitution. -/
+lemma uniquePropose_witness_eq_at_world
+    {w : World P (Signature.EventType S)}
+    (value : S.Value)
+    (hEq :
+      ⟪w⟫ ⊨[M]∀ᶠ (fun witness =>
+        (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+          (witness ≃ᶠ value)))
+    (witness : Signature.Value S)
+    (hEcho :
+      ⟪w⟫ ⊨[M]↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) :
+    witness = value := by
+  classical
+  have hImpl :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun witness =>
+        (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+          (witness ≃ᶠ value))
+      (v := witness) hEq
+  have hEqFormula :=
+    Sat.imp_elim (M := M) (w := w)
+      (φ := ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩))
+      (ψ := witness ≃ᶠ value)
+      hImpl hEcho
+  simpa [Sat] using hEqFormula
+
+/-- Helper: transport sometime from a witness value back to the target value. -/
+lemma uniquePropose_sometime_rewrite_value
+    {w : World P (Signature.EventType S)}
+    (value witness : Signature.Value S)
+    (hEcho :
+      ⟪w⟫ ⊨[M]↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩))
+    (hVal : witness = value) :
+    ⟪w⟫ ⊨[M]
+      ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
+  classical
+  subst hVal
+  simpa using hEcho
+
+lemma uniquePropose_eventually_echo_core_world
+    {w : World P (Signature.EventType S)}
+    (value : S.Value)
+    (hExists :
+      ⟪w⟫ ⊨[M](predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∃ᶠ (fun witness =>
+            ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
+    (hEq :
+      ⟪w⟫ ⊨[M](predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∀ᶠ (fun witness =>
+            (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+              (witness ≃ᶠ value))) :
+    ⟪w⟫ ⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
+  classical
+  refine Sat.imp_intro (M := M) (w := w)
+      (φ := predicate0 liveSymb ∧ᶠ
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (ψ := ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)) ?_
+  intro hAnte
+  obtain ⟨witness, hEchoWitness⟩ :=
+    uniquePropose_exists_witness_at_world
+      ((Sat.imp (M := M) (w := w)
+        (φ := predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+        (ψ := ∃ᶠ (fun witness =>
+          ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))).1
+        hExists hAnte)
+  have hEq_inst :=
+    (Sat.imp (M := M) (w := w)
+      (φ := predicate0 liveSymb ∧ᶠ
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (ψ := ∀ᶠ (fun witness =>
+        (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+          (witness ≃ᶠ value)))).1
+      hEq hAnte
+  have hWitnessEq :=
+    uniquePropose_witness_eq_at_world
+      (w := w) (value := value)
+      (hEq := hEq_inst) (witness := witness)
+      (hEcho := hEchoWitness)
+  exact
+    uniquePropose_sometime_rewrite_value
+      (w := w) (value := value)
+      (witness := witness)
+      hEchoWitness hWitnessEq
+
+/-- Auxiliary: combining existence and equality of echoes yields the target echo. -/
+lemma uniquePropose_eventually_echo_core
+    (value : S.Value)
+    (hExists :
+      □⇓⊨[M](predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∃ᶠ (fun witness =>
+            ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
+    (hEq :
+      □⇓⊨[M](predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∀ᶠ (fun witness =>
+            (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+              (witness ≃ᶠ value))) :
+    □⇓⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
+  classical
+  intro t ht
+  have hExists_loc :=
+    uniquePropose_eventually_echo_core_exists_at_event
+      (value := value) (hExists := hExists) ht
+  have hEq_loc :=
+    uniquePropose_eventually_echo_core_eq_at_event
+      (value := value) (hEq := hEq) ht
+  exact
+    uniquePropose_eventually_echo_core_world
+      (w := ⟨t.place, t.event,
+        History.predecessorHistory (H := M.history)
+          (happensBefore_of_mem (P := P)
+            (Event := Signature.EventType S) ht)⟩)
+      (value := value)
+      (hExists := hExists_loc)
+      (hEq := hEq_loc)
+
+/-- Helper: a unique proposal at the global history restricts to predecessors. -/
+lemma uniquePropose_guard_at_predecessor
+    {t : World P (Signature.EventType S)}
+    (ht : t ∈ M.history.val)
+    (hUnique : ⊨[M]∃!ᶠ v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
+    ⟪⟨t.place, t.event,
+        History.predecessorHistory (H := M.history)
+          (happensBefore_of_mem (P := P)
+            (Event := Signature.EventType S) ht)⟩⟫ ⊨[M]
+      ∃≤ᶠ1 v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) := by
+  classical
+  let wTop : World P (Signature.EventType S) :=
+    ⟨t.place, †, M.history.val⟩
+  have hUnique_global :
+      ⟪wTop⟫ ⊨[M]∃!ᶠ v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
+    hUnique _
+  have hGuard_global :
+      ⟪wTop⟫ ⊨[M]
+        ∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
+    uniquePropose_guard_at_history (M := M) (w := wTop) hUnique_global
+  let h_before :=
+    happensBefore_of_mem (P := P)
+      (Event := Signature.EventType S) ht
+  let Hloc := History.predecessorHistory (H := M.history) h_before
+  let wPred : World P (Signature.EventType S) :=
+    ⟨t.place, t.event, Hloc⟩
+  have hSubset_pre : Hloc.val ⊆trn M.history.val := by
+    have hBefore : Hloc.val ≺− M.history.val := by
+      simpa [Hloc, History.predecessorHistory] using h_before
+    exact History.happensBefore_implies_transitiveSubset Hloc M.history hBefore
+  have hSubset : wPred.time ⊆trn wTop.time := by
+    simpa [wPred, wTop] using hSubset_pre
+  have hGuard_pred :=
+    uniquePropose_monotone (M := M) (w := wTop) (w' := wPred) hSubset hGuard_global
+  simpa [wPred, wTop] using hGuard_pred
+
+/-- Auxiliary: the antecedent ensures echoes exist for some witness value. -/
+lemma uniquePropose_exists_witness_echo
+    (value : S.Value)
+    (hHBB1 :
+      M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □⇓⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ∃ᶠ (fun witness =>
+          ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) := by
+  classical
+  have hEchoMem :
+      echoForwardAxiom liveSymb proposeSymb echoSymb
+        ∈ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb := by
+    simp [ThyHBB1]
+  have hEcho :
+      □⇓⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb :=
+    hHBB1 (ax := echoForwardAxiom liveSymb proposeSymb echoSymb) hEchoMem
+  dsimp [EventValid] at hEcho
+  intro t ht
+  have hLocal := hEcho ht
+  let wPred : World P (Signature.EventType S) :=
+    ⟨t.place, t.event,
+      History.predecessorHistory (H := M.history)
+        (happensBefore_of_mem (P := P)
+          (Event := Signature.EventType S) ht)⟩
+  have hLocalWorld :
+      ⟪wPred⟫ ⊨[M]
+        echoForwardAxiom liveSymb proposeSymb echoSymb := by
+    simpa [wPred, World.place, World.event, World.time,
+      History.predecessorHistory, happensBefore_of_mem]
+      using hLocal
+  have hSpecialised :=
+    Sat.forall_elim (M := M) (w := wPred)
+      (body := fun v =>
+        (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+          ∃ᶠ (fun witness =>
+            ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
+      (v := value) hLocalWorld
+  simpa [wPred, World.place, World.event, World.time,
+    History.predecessorHistory, happensBefore_of_mem, echoForwardAxiom]
+    using hSpecialised
+
+/-- Witness an explicit echo event from a sometime echo. -/
+lemma sometime_echo_event_exists
+    {w : World P (Signature.EventType S)}
+    (value : S.Value)
+    (hEcho :
+      ⟪w⟫ ⊨[M]↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)) :
+    ∃ wEcho : World P (Signature.EventType S),
+      wEcho ∈ M.history.val ∧
+      wEcho.place = w.place ∧
+      ⟪wEcho⟫ ⊨[M] ofEvent ⟨echoSymb, [value]⟩ := by
+  classical
+  obtain ⟨wEcho, hMem, hPlace, hEvent⟩ :=
+    (Sat.sometime (M := M) (w := w)
+      (φ := Formula.ofEvent ⟨echoSymb, [value]⟩)).1
+      (by simpa [Formula.sometime] using hEcho)
+  refine ⟨wEcho, hMem, hPlace, ?_⟩
+  simpa [Formula.ofEvent] using hEvent
+
+/-- Convert an observed echo event into a proposal diamond via the backward axiom. -/
+lemma echo_backward_diamond_from_sometime
+    {w : World P (Signature.EventType S)}
+    (value : S.Value)
+    (hEchoBack :
+      □⇓⊨[M]echoBackwardAxiom proposeSymb echoSymb)
+    (hEvent :
+      ⟪w⟫ ⊨[M]ofEvent ⟨echoSymb, [value]⟩) :
+    ⟪w⟫ ⊨[M]
+      ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
+  classical
+  rcases w with ⟨p, evt, Hw⟩
+  obtain ⟨hEvent_eq, ht⟩ :=
+    (by
+      simpa [Formula.ofEvent, Sat] using hEvent)
+  dsimp [EventValid] at hEchoBack
+  have hw_mem : (p, evt, Hw) ∈ M.history.val := by
+    simpa [hEvent_eq]
+      using ht
+  have hBefore : Hw ≺− M.history.val := by
+    simpa [Formula.ofEvent, Sat, hEvent_eq]
+      using (happensBefore_of_mem (P := P)
+        (Event := Signature.EventType S) ht)
+  let Hloc :=
+    History.predecessorHistory (H := M.history) (h_before := hBefore)
+  let wPred : World P (Signature.EventType S) :=
+    ⟨p, evt, Hloc⟩
+  have hLocal :
+      ⟪wPred⟫ ⊨[M]
+        echoBackwardAxiom proposeSymb echoSymb := by
+    simpa [wPred, hEvent_eq, History.predecessorHistory,
+      happensBefore_of_mem]
+      using hEchoBack hw_mem
+  have hImp :=
+    Sat.forall_elim (M := M) (w := wPred)
+      (body := fun v =>
+        ofEvent ⟨echoSymb, [v]⟩ ⇒ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (v := value) hLocal
+  have hImp' :
+      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
+        ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
+    simpa [wPred, hEvent_eq, History.predecessorHistory,
+      happensBefore_of_mem]
+      using hImp
+  have hEvent' :
+      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]ofEvent ⟨echoSymb, [value]⟩ := by
+    simpa [Formula.ofEvent, Sat, hEvent_eq]
+      using hEvent
+  exact (Sat.imp (M := M) (w := ⟨p, evt, Hw⟩)
+    (φ := ofEvent ⟨echoSymb, [value]⟩)
+    (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1
+    hImp' hEvent'
+
+lemma boxEcho_to_propose_diamond
+    {w : World P (Signature.EventType S)}
+    (hSubset : w.time ⊆trn M.history.val)
+    (hEchoBack :
+      □⇓⊨[M]echoBackwardAxiom proposeSymb echoSymb)
+    {learner : Signature.Value S}
+    {value : S.Value}
+    (hBox :
+      ⟪w⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)) :
+    ⟪w⟫ ⊨[M]
+      ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
+  classical
+  rcases w with ⟨p, evt, Hw⟩
+  have hSubsetPlain : Hw ⊆ M.history.val :=
+    History.transitiveSubset_subset
+      (P := P) (Event := Signature.EventType S) hSubset
+  have hHerHw : isHereditarilyTransitive Hw := hSubset.2
+
+  -- Expand the guarded box to obtain a quorum and corresponding witnesses.
+  have hBoxPast :
+      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
+        □ᶠ[[learner]] (Formula.past (ofEvent ⟨echoSymb, [value]⟩)) := by
+    simpa [Formula.boxPast] using hBox
+  obtain ⟨O, hO, hAll⟩ :=
+    (sat_box_singleton_exists (M := M)
+        (w := ⟨p, evt, Hw⟩) (l := learner)
+        (φ := Formula.past (ofEvent ⟨echoSymb, [value]⟩))).1
+      hBoxPast
+  obtain ⟨qEcho, hqEcho⟩ :=
+    (Semifilter.quorum_nonempty
+      (P := P) (L := M.learner learner) (O := O) hO)
+  have hPastEcho :
+      ⟪⟨qEcho, †, Hw⟩⟫ ⊨[M]
+        ↓ᶠ (Formula.ofEvent ⟨echoSymb, [value]⟩) := by
+    simpa [Formula.past] using hAll qEcho hqEcho
+  obtain ⟨wEcho, hEcho_memHw, hEcho_place, hEcho_local⟩ :=
+    (Sat.past (M := M)
+      (w := ⟨qEcho, †, Hw⟩)
+      (φ := Formula.ofEvent ⟨echoSymb, [value]⟩)).1 hPastEcho
+
+  have hEchoMem_H :
+      (wEcho.place, wEcho.event, wEcho.time) ∈ Hw := hEcho_memHw
+  have hEcho_event_mem :
+      wEcho.event = MaybeEvent.some ⟨echoSymb, [value]⟩ ∧
+        (wEcho.place, MaybeEvent.some ⟨echoSymb, [value]⟩, wEcho.time) ∈ M.history.val :=
+    by
+      simpa [Formula.ofEvent, Sat] using hEcho_local
+  have hEcho_event :
+      wEcho.event = MaybeEvent.some ⟨echoSymb, [value]⟩ :=
+    hEcho_event_mem.1
+  have hEchoMem :
+      (wEcho.place, MaybeEvent.some ⟨echoSymb, [value]⟩, wEcho.time) ∈ M.history.val :=
+    hEcho_event_mem.2
+  have hEchoMem_world : wEcho ∈ M.history.val := by
+    rcases wEcho with ⟨place, event, time⟩
+    have : event = MaybeEvent.some ⟨echoSymb, [value]⟩ := by
+      simpa using hEcho_event
+    subst this
+    simpa using hEchoMem
+  have hEchoBack_local :
+      ⟪wEcho⟫ ⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
+    hEchoBack hEchoMem_world
+  have hEchoEvent :
+      ⟪wEcho⟫ ⊨[M] ofEvent ⟨echoSymb, [value]⟩ :=
+    hEcho_local
+  -- Convert the echo information into a proposal diamond at `wEcho`.
+  have hDiamondEcho :=
+    echo_backward_diamond_from_sometime
+      (M := M) (w := wEcho) (value := value)
+      (hEchoBack := hEchoBack) (hEvent := hEchoEvent)
+
+  -- Extract the proposal event produced by the diamond.
+  obtain ⟨qProp, hPastProp⟩ :=
+    (Sat.diamond_nil (M := M) (w := wEcho)
+      (φ := ↓ᶠ (Formula.ofEvent ⟨proposeSymb, [value]⟩))).1
+      (by
+        simpa [Formula.diamondPast] using hDiamondEcho)
+  obtain ⟨wProp, hProp_mem, hProp_place, hProp_event⟩ :=
+    (Sat.past (M := M)
+      (w := ⟨qProp, †, wEcho.time⟩)
+      (φ := Formula.ofEvent ⟨proposeSymb, [value]⟩)).1 hPastProp
+
+  have hPropEventSat :
+      ⟪wProp⟫ ⊨[M]
+        ofEvent ⟨proposeSymb, [value]⟩ :=
+    by
+      simpa [Sat] using hProp_event
+
+  -- Show the witnessed proposal lies inside the base history `Hw`.
+  have hAccEcho : wEcho ≪ ⟨qEcho, †, Hw⟩ :=
+    by
+      simpa [World.accessible] using hEcho_memHw
+  have hBeforeEcho : wEcho.time ≺− Hw :=
+    PreHistory.happensBefore_of_accessible
+      (P := P) (Event := Signature.EventType S) hAccEcho
+  let HW := History.mk Hw hHerHw
+  have hEchoData :=
+    History.predecessor_data (H := HW) hBeforeEcho
+  have hSubsetHe_full : wEcho.time ⊆trn Hw :=
+    History.happensBefore_implies_transitiveSubset
+      (History.mk wEcho.time hEchoData.2) HW hBeforeEcho
+  have hSubsetHe : wEcho.time ⊆ Hw :=
+    History.transitiveSubset_subset
+      (P := P) (Event := Signature.EventType S) hSubsetHe_full
+  have hProp_inHw : wProp ∈ Hw :=
+    hSubsetHe _ hProp_mem
+
+  -- Transport the proposal witness back to the base world.
+  have hPast_at_base :
+      ⟪⟨qProp, †, Hw⟩⟫ ⊨[M]
+        ↓ᶠ (Formula.ofEvent ⟨proposeSymb, [value]⟩) :=
+    Sat.past_intro_of_prefix
+      (M := M) (w := ⟨qProp, †, Hw⟩)
+      (t := wProp)
+      (φ := Formula.ofEvent ⟨proposeSymb, [value]⟩)
+      (by simpa using hProp_inHw)
+      (by simpa using hProp_place)
+      hPropEventSat
+  have hDiamond_witness :
+      ∃ q : P,
+        ⟪⟨q, †, Hw⟩⟫ ⊨[M]
+          ↓ᶠ (Formula.ofEvent ⟨proposeSymb, [value]⟩) :=
+    ⟨qProp, hPast_at_base⟩
+  have hDiamond_base :
+      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
+        ♢ᶠ[[]] (↓ᶠ (Formula.ofEvent ⟨proposeSymb, [value]⟩)) :=
+    (Sat.diamond_nil (M := M)
+      (w := ⟨p, evt, Hw⟩)
+      (φ := ↓ᶠ (Formula.ofEvent ⟨proposeSymb, [value]⟩))).2
+      hDiamond_witness
+  simpa [Formula.diamondPast]
+    using hDiamond_base
+
+/-- One-sided application of `EchoNE`: an echo followed by a past echo must
+share the same value. -/
+lemma echoNonEquiv_diamond
+    (hEchoNE : EventValid M (echoNonEquivAxiom echoSymb))
+    {w : World P (Signature.EventType S)}
+    (hSubset : w.time ⊆trn M.history.val)
+    {valNow valPast : Signature.Value S}
+    (hDiamond :
+      ⟪w⟫ ⊨[M]♢ᶠ↓[[]]((ofEvent ⟨echoSymb, [valNow]⟩) ∧ᶠ
+            ↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩))) :
+    valNow = valPast := by
+  classical
+  rcases w with ⟨p, evt, Hw⟩
+  have hSubsetPlain : Hw ⊆ M.history.val :=
+    History.transitiveSubset_subset
+      (P := P) (Event := Signature.EventType S) hSubset
+  have hHerHw : isHereditarilyTransitive Hw := hSubset.2
+  have hDiamondBase :
+      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
+        ♢ᶠ[[]]
+          (↓ᶠ ((ofEvent ⟨echoSymb, [valNow]⟩) ∧ᶠ
+            ↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩))) := by
+    simpa [Formula.diamondPast]
+      using hDiamond
+  obtain ⟨qEcho, hPastPair⟩ :=
+    (Sat.diamond_nil (M := M)
+      (w := ⟨p, evt, Hw⟩)
+      (φ := ↓ᶠ ((ofEvent ⟨echoSymb, [valNow]⟩) ∧ᶠ
+        ↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩)))).1 hDiamondBase
+  obtain ⟨wNow, hNow_memHw, hNow_place, hNow_local⟩ :=
+    (Sat.past (M := M)
+      (w := ⟨qEcho, †, Hw⟩)
+      (φ := (ofEvent ⟨echoSymb, [valNow]⟩) ∧ᶠ
+        ↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩))).1 hPastPair
+  have hNow_split :=
+    (Sat.and (M := M) (w := wNow)
+      (φ := ofEvent ⟨echoSymb, [valNow]⟩)
+      (ψ := ↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩))).1 hNow_local
+  have hNow_eventSat :
+      ⟪wNow⟫ ⊨[M]ofEvent ⟨echoSymb, [valNow]⟩ := hNow_split.1
+  have hPast_local :
+      ⟪wNow⟫ ⊨[M]↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩) :=
+    hNow_split.2
+  have hNow_mem : wNow ∈ M.history.val :=
+    hSubsetPlain _ hNow_memHw
+  have hEchoNE_local :
+      ⟪wNow⟫ ⊨[M] echoNonEquivAxiom echoSymb :=
+    hEchoNE hNow_mem
+  have hForValues :=
+    Sat.forall_elim (M := M) (w := wNow)
+      (body := fun value =>
+        ∀ᶠ fun altValue =>
+          ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
+            (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
+              (value ≃ᶠ altValue))
+      (v := valNow) hEchoNE_local
+  have hForAlt :=
+    Sat.forall_elim (M := M) (w := wNow)
+      (body := fun altValue =>
+        ofEvent ⟨echoSymb, [valNow]⟩ ⇒ᶠ
+          (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
+            (valNow ≃ᶠ altValue))
+      (v := valPast) hForValues
+  have hImp :=
+    (Sat.imp (M := M) (w := wNow)
+      (φ := ofEvent ⟨echoSymb, [valNow]⟩)
+      (ψ := (↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩)) ⇒ᶠ
+        (valNow ≃ᶠ valPast))).1 hForAlt hNow_eventSat
+  have hEqFormula :=
+    (Sat.imp (M := M) (w := wNow)
+      (φ := ↓ᶠ (ofEvent ⟨echoSymb, [valPast]⟩))
+      (ψ := valNow ≃ᶠ valPast)).1
+      hImp hPast_local
+  have hEq :=
+    (Sat.eq (M := M) (w := wNow)
+      (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
+  simpa [Sat] using hEq
+
+lemma uniquePropose_guard_specialise_value
+    {w : World P (Signature.EventType S)}
+    (value : S.Value)
+    (hGuard :
+      ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
+    ⟪w⟫ ⊨[M]
+      ∀ᶠ (fun altValue =>
+        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+            (value ≃ᶠ altValue)) := by
+  classical
+  dsimp [Formula.existsAtMostOne] at hGuard
+  have hForValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun v =>
+        ∀ᶠ fun altValue =>
+          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+            (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+              (v ≃ᶠ altValue))
+      (v := value) hGuard
+  exact hForValue
+
+/-- Lemma `\cref{fig.HBB1}`: a sequential quorum guard suffices to ensure safety. -/
+lemma seq_guard_implies_safe
+    {w : World P (Signature.EventType S)}
+    (l : Signature.Value S)
+    (hSeqGuard :
+      ⟪w⟫ ⊨[M]∀ᶠ (fun l' => ♢ᶠ[[l, l']]Formula.seq)) :
+    ⟪w⟫ ⊨[M] safeFormula proposeSymb l := by
+  classical
+  unfold safeFormula
+  have h :=
+    (Sat.or (M := M) (w := w)
+      (φ := ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq))).2
+      (Or.inr hSeqGuard)
+  simpa using h
+
+/-- Lemma `\cref{fig.HBB1}`: safety holds precisely when uniqueness or the sequential
+guard is satisfied. -/
+lemma safe_implies_unique_or_seq_guard
+    {w : World P (Signature.EventType S)}
+    (l : Signature.Value S)
+    (hSafe : ⟪w⟫ ⊨[M]safeFormula proposeSymb l) :
+    ⟪w⟫ ⊨[M]
+      (∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
+        ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq) := by
+  classical
+  unfold safeFormula at hSafe
+  have hOr :=
+    (Sat.imp (M := M) (w := w)
+      (φ := (∃≤ᶠ1 v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
+          (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))
+      (ψ := (∃≤ᶠ1 v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
+          (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))).1
+      (Sat.imp_intro (M := M) (w := w)
+        (φ := (∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
+            (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))
+        (ψ := (∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
+            (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))
+        (by intro h; exact h))
+      hSafe
+  exact hOr
+
+lemma uniquePropose_guard_implies_eq
+    {w : World P (Signature.EventType S)}
+    (value witness : S.Value)
+    (hGuard :
+      ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+    (hDiamond_value :
+      ⟪w⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+    (hDiamond_witness :
+      ⟪w⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩)) :
+    ⟪w⟫ ⊨[M]
+      witness ≃ᶠ value := by
+  classical
+  dsimp [Formula.existsAtMostOne] at hGuard
+  have hForValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun v =>
+        ∀ᶠ fun altValue =>
+          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+            (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+              (v ≃ᶠ altValue))
+      (v := value) hGuard
+  have hForWitness :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun altValue =>
+        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+            (value ≃ᶠ altValue))
+      (v := witness) hForValue
+  have hImp :=
+    (Sat.imp (M := M) (w := w)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (ψ := (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩)) ⇒ᶠ
+        (value ≃ᶠ witness))).1
+      hForWitness hDiamond_value
+  have hEqVal :=
+    (Sat.imp (M := M) (w := w)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩))
+      (ψ := value ≃ᶠ witness)).1
+      hImp hDiamond_witness
+  have hEq :=
+    (Sat.eq (M := M) (w := w)
+      (v₁ := value) (v₂ := witness)).1 hEqVal
+  simpa [Sat] using hEq.symm
+
+lemma uniquePropose_witness_eq_value
+    (value : S.Value)
+    (hHBB1 :
+      M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hUnique : ⊨[M]∃!ᶠ v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
+    □⇓⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ∀ᶠ (fun witness =>
+          (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+            (witness ≃ᶠ value)) := by
+  classical
+  dsimp [EventValid]
+  intro t ht
+  set h_before :=
+    happensBefore_of_mem (P := P)
+      (Event := Signature.EventType S) ht with h_before_def
+  set Hloc :=
+    History.predecessorHistory (H := M.history) h_before with hHloc_def
+  set wPred : World P (Signature.EventType S) :=
+    ⟨t.place, t.event, Hloc.val⟩ with hwPred_def
+  set wTop : World P (Signature.EventType S) :=
+    ⟨t.place, †, M.history.val⟩ with hwTop_def
+  have hEchoMem :
+      echoBackwardAxiom proposeSymb echoSymb
+        ∈ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb := by
+    simp [ThyHBB1]
+  have hEchoBack :
+      □⇓⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
+    hHBB1 (ax := echoBackwardAxiom proposeSymb echoSymb) hEchoMem
+  have hUnique_global :
+      ⟪wTop⟫ ⊨[M]∃!ᶠ v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
+    hUnique t.place
+  have hGuard_global :
+      ⟪wTop⟫ ⊨[M]
+        ∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
+    uniquePropose_guard_at_history (M := M) (w := wTop) hUnique_global
+  refine
+    Sat.imp_intro (M := M) (w := wPred)
+      (φ :=
+        predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (ψ := ∀ᶠ (fun witness =>
+        (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+          (witness ≃ᶠ value))) ?_
+  intro hAnte
+  have hConj :=
+    (Sat.and (M := M) (w := wPred)
+      (φ := predicate0 liveSymb)
+      (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1 hAnte
+  have hDiamond_value_loc := hConj.2
+  refine
+    Sat.forall_intro (M := M) (w := wPred)
+      (body := fun witness =>
+        (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+          (witness ≃ᶠ value)) ?_
+  intro witness
+  refine
+    Sat.imp_intro (M := M) (w := wPred)
+      (φ := ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩))
+      (ψ := witness ≃ᶠ value) ?_
+  intro hEcho
+  obtain ⟨wEcho, hEcho_mem, _, hEcho_event⟩ :=
+    sometime_echo_event_exists (M := M) (w := wPred)
+      (value := witness) hEcho
+  have hDiamond_witness_wEcho :
+      ⟪wEcho⟫ ⊨[M]
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩) :=
+    echo_backward_diamond_from_sometime
+      (M := M) (w := wEcho) (value := witness)
+      (hEchoBack := hEchoBack) hEcho_event
+  have hSubset_pred :
+      wPred.time ⊆trn M.history.val := by
+    simpa [wPred, wTop, Hloc, History.predecessorHistory, h_before_def]
+      using (History.happensBefore_implies_transitiveSubset
+        (h1 := Hloc) (h2 := M.history) h_before)
+  have hDiamond_value_global :
+      ⟪wTop⟫ ⊨[M]
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
+    simpa [Formula.ofEvent]
+      using
+        (sat_diamondPast_nil_event_subset
+          (M := M)
+          (w := wTop)
+          (w' := wPred)
+          (symb := proposeSymb)
+          (args := [value])
+          (hSubset := hSubset_pred)
+          hDiamond_value_loc)
+  have hBefore_wEcho :
+      wEcho.time ≺− M.history.val :=
+    happensBefore_of_mem (P := P)
+      (Event := Signature.EventType S) hEcho_mem
+  have hSubset_wEcho :
+      wEcho.time ⊆trn M.history.val := by
+    simpa [History.predecessorHistory]
+      using (History.happensBefore_implies_transitiveSubset
+        (h1 := History.predecessorHistory (H := M.history) hBefore_wEcho)
+        (h2 := M.history) hBefore_wEcho)
+  have hDiamond_witness_global :
+      ⟪wTop⟫ ⊨[M]
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩) := by
+    simpa [Formula.ofEvent]
+      using
+        (sat_diamondPast_nil_event_subset
+          (M := M)
+          (w := wTop)
+          (w' := wEcho)
+          (symb := proposeSymb)
+          (args := [witness])
+          (hSubset := hSubset_wEcho)
+          hDiamond_witness_wEcho)
+  have hEq_global :
+      ⟪wTop⟫ ⊨[M] witness ≃ᶠ value :=
+    uniquePropose_guard_implies_eq
+      (M := M) (w := wTop)
+      (value := value) (witness := witness)
+      (hGuard := hGuard_global)
+      (hDiamond_value := hDiamond_value_global)
+      (hDiamond_witness := hDiamond_witness_global)
+  have hEq_val : witness = value := by
+    simpa [Sat] using hEq_global
+  simp [Sat, hEq_val]
+
+/-- Lemma `\cref{lemm.only.one.propose.only.one.echo0}`:
+a unique proposal guarantees eventual echoes. -/
+lemma uniquePropose_eventually_echo
+    (value : S.Value)
+    (hHBB1 :
+      M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hUnique : ⊨[M]∃!ᶠ v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
+    □⇓⊨[M]
+      (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
+  classical
+  have hExists :
+      □⇓⊨[M]
+        (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∃ᶠ (fun witness =>
+            ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) :=
+    uniquePropose_exists_witness_echo (value := value) (hHBB1 := hHBB1)
+  have hEq :
+      □⇓⊨[M]
+        (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          ∀ᶠ (fun witness =>
+            (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
+              (witness ≃ᶠ value)) :=
+    uniquePropose_witness_eq_value
+      (value := value)
+      (hHBB1 := hHBB1) (hUnique := hUnique)
+  exact
+    (uniquePropose_eventually_echo_core
+      (value := value)
+      (hExists := hExists) (hEq := hEq) :
+        □⇓⊨[M]
+          (predicate0 liveSymb ∧ᶠ
+              ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+            ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
+
+/-- Lemma `\cref{lemm.one.propose.safe}`: at most one proposal implies every learner is safe. -/
+lemma atMostOnePropose_safe
+    (l : Signature.Value S) :
+    ⊨[M](∃≤ᶠ1 v ↦
+        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
+        safeFormula proposeSymb l := by
+  classical
+  let uniqueCond : Formula S :=
+    ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
+  let seqGuard : Formula S :=
+    ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq)
+  intro p
+  refine (Sat.imp (M := M)
+      (w := ⟨p, †, M.history.val⟩)
+      (φ := uniqueCond)
+      (ψ := safeFormula proposeSymb l)).2 ?_
+  intro hUniqueCond
+  have hOr :=
+    (Sat.or (M := M) (w := ⟨p, †, M.history.val⟩)
+      (φ := uniqueCond) (ψ := seqGuard)).2
+      (Or.inl hUniqueCond)
+  simpa [uniqueCond, seqGuard, safeFormula]
+    using hOr
+
+end Results
+
+end Examples
+end ModalDistribution

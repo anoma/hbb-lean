@@ -1,4 +1,5 @@
 import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Set.Basic
 import Mathlib.Order.WellFounded
 import Mathlib.Data.List.Basic
 import Mathlib.Tactic
@@ -6,13 +7,14 @@ import Mathlib.Tactic
 /-!
 # Prehistory Structures
 
-This file formalizes the Prehistory structure from Definition 2.2.4 of the HBB paper.
+This file formalizes the prehistory structure from
+Definition~\ref{defn.prehistory.structure} of the paper.
 A prehistory represents the finite set of events and their causal relationships
 in a distributed system.
 
 ## Main definitions
 
-* `EventTuple P Event History`: Type for event tuples (p, E, H) where p ∈ P, E ∈ Event†,
+* `World P Event History`: Type for event tuples (p, E, H) where p ∈ P, E ∈ Event†,
   H is a history type
 * `MaybeEvent Event`: Type Event† = Event ∪ {†} for maybe-events
 * `PreHistory P Event`: Inductive type for prehistories as finite sets of event tuples
@@ -20,11 +22,11 @@ in a distributed system.
 ## Main theorems
 
 * Structural induction principle for prehistories
-* Basic properties of happens-before relations
+* Basic properties of the happens-before relations
 
 ## References
 
-* Definition 2.2.4 in "Logical Analysis of Heterogeneous Broadcasts"
+* Definition~\ref{defn.prehistory.structure}
 -/
 
 variable {P Event : Type*}
@@ -34,9 +36,9 @@ inductive MaybeEvent (Event : Type*) where
   | some : Event → MaybeEvent Event  -- Regular events
   | none : MaybeEvent Event          -- The non-event †
 
-notation:max Event "†" => MaybeEvent Event
+notation:max "†" => MaybeEvent.none
 
--- Prehistory inductive type following Definition 2.2.4
+-- Prehistory inductive type following Definition~\ref{defn.prehistory.structure}
 -- Note: We use List instead of Finset due to Lean's positivity restrictions.
 -- The paper acknowledges this approach (pages 4-5), noting that while it introduces
 -- redundancy (multiple lists can represent the same logical prehistory), all the
@@ -47,25 +49,52 @@ notation:max Event "†" => MaybeEvent Event
 inductive PreHistory (P Event : Type*) where
   | mk : List (P × MaybeEvent Event × PreHistory P Event) → PreHistory P Event
 
--- Event tuple type alias following Definition 2.2.4
+-- Event tuple type alias following Definition~\ref{defn.happens.at}
 -- An event tuple is (p, E, H) ∈ P × Event† × PreHistory(P, Event)
--- Note: EventTuple must be defined after PreHistory due to dependency
-abbrev EventTuple (P Event : Type*) := P × MaybeEvent Event × PreHistory P Event
+-- Note: World must be defined after PreHistory due to dependency
+abbrev World (P Event : Type*) := P × MaybeEvent Event × PreHistory P Event
 
-namespace EventTuple
+namespace World
 
 variable {P Event : Type*}
 
--- Projection functions for event tuples
-def participant (t : EventTuple P Event) : P := t.1
-def event (t : EventTuple P Event) : MaybeEvent Event := t.2.1
-def time (t : EventTuple P Event) : PreHistory P Event := t.2.2
+/-!
+### Projection functions for event tuples
+
+The revised specification refers to the *place*, *(maybe-)event*, and *time* of
+an event tuple (Definition~\ref{defn.happens.at}).  We expose exactly those projections.
+-/
+@[simp] def place (t : World P Event) : P := t.1
+
+@[simp] def event (t : World P Event) : MaybeEvent Event := t.2.1
+
+@[simp] def time (t : World P Event) : PreHistory P Event := t.2.2
 
 -- Constructor for event tuples (for convenience)
-def mk (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) : EventTuple P Event :=
+def mk (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) : World P Event :=
   (p, e, h)
 
-end EventTuple
+-- Simp lemmas for projections on constructed tuples
+@[simp] lemma place_mk (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) :
+    place (mk p e h) = p := rfl
+
+@[simp] lemma event_mk (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) :
+    event (mk p e h) = e := rfl
+
+@[simp] lemma time_mk (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) :
+    time (mk p e h) = h := rfl
+
+-- Simp lemmas for projections on tuple syntax
+@[simp] lemma place_tuple (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) :
+    place (p, e, h) = p := rfl
+
+@[simp] lemma event_tuple (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) :
+    event (p, e, h) = e := rfl
+
+@[simp] lemma time_tuple (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) :
+    time (p, e, h) = h := rfl
+
+end World
 
 namespace PreHistory
 
@@ -73,45 +102,48 @@ namespace PreHistory
 def empty : PreHistory P Event := mk []
 
 -- Singleton prehistory
-def singleton (t : EventTuple P Event) : PreHistory P Event :=
+def singleton (t : World P Event) : PreHistory P Event :=
   mk [t]
 
 -- Construct from a list (allows duplicates)
-def fromList (l : List (EventTuple P Event)) : PreHistory P Event :=
+def fromList (l : List (World P Event)) : PreHistory P Event :=
   mk l
 
 -- Construct from a finite set (removes duplicates)
-noncomputable def fromFinset (s : Finset (EventTuple P Event)) : PreHistory P Event :=
+noncomputable def fromFinset (s : Finset (World P Event)) : PreHistory P Event :=
   mk s.toList
 
 -- Membership relation for event tuples in prehistories
-def mem (tuple : EventTuple P Event) (h : PreHistory P Event) : Prop :=
+def mem (tuple : World P Event) (h : PreHistory P Event) : Prop :=
   match h with
   | mk l => tuple ∈ l
 
-instance : Membership (EventTuple P Event) (PreHistory P Event) where
+-- Definition \ref{defn.happens.at} phrases this as “H knows of the
+-- event-tuple (p, E, H′)”, i.e. membership in the prehistory.
+
+instance : Membership (World P Event) (PreHistory P Event) where
   mem := fun h t => PreHistory.mem t h
 
 /-! ## Simp lemmas for PreHistory membership and operations -/
 
 -- Basic membership lemma
-@[simp] lemma mem_mk {e : EventTuple P Event} {l : List (EventTuple P Event)} :
+@[simp] lemma mem_mk {e : World P Event} {l : List (World P Event)} :
   e ∈ PreHistory.mk l ↔ e ∈ l := by
   rfl
 
 -- Empty prehistory membership
-@[simp] lemma not_mem_empty {e : EventTuple P Event} :
+@[simp] lemma not_mem_empty {e : World P Event} :
   e ∉ PreHistory.empty := by
   simp [empty, mem_mk]
 
 -- Singleton membership
-@[simp] lemma mem_singleton {e e' : EventTuple P Event} :
+@[simp] lemma mem_singleton {e e' : World P Event} :
   e ∈ PreHistory.singleton e' ↔ e = e' := by
   simp [singleton, mem_mk]
 
 -- For filtered lists
 @[simp] lemma mem_mk_filter
-  {l : List (EventTuple P Event)} {p : EventTuple P Event → Bool} {e : EventTuple P Event} :
+  {l : List (World P Event)} {p : World P Event → Bool} {e : World P Event} :
   e ∈ PreHistory.mk (l.filter p) ↔ e ∈ PreHistory.mk l ∧ p e := by
   simp [mem_mk, List.mem_filter]
 
@@ -127,22 +159,91 @@ instance : HasSubset (PreHistory P Event) where
   h1 ⊆ h2 ↔ ∀ e, e ∈ h1 → e ∈ h2 := by
   rfl
 
--- Happens-before relations (Definition 2.3.1(1))
+end PreHistory
+
+namespace World
+
+/-!
+### Accessibility relations on event tuples
+
+Definition~\ref{defn.world}(\ref{item.world.accessible}) defines accessibility
+between worlds as membership of the predecessor tuple in the enclosing history.
+We expose that relation directly on event tuples so that worlds can be modelled
+without introducing additional wrappers.
+-/
+
+/-- Strict accessibility: `t' ≪ t` when `t'` belongs to the time component of `t`. -/
+def accessible (t' t : World P Event) : Prop :=
+  t' ∈ World.time t
+
+/-- Same-place accessibility (`≪^{-}` in Definition~\ref{defn.world}(4)). -/
+def accessibleLe (t' t : World P Event) : Prop :=
+  accessible t' t ∧ World.place t' = World.place t
+
+@[simp] lemma accessible_iff (t' t : World P Event) :
+    accessible t' t ↔ t' ∈ World.time t := Iff.rfl
+
+@[simp] lemma accessibleLe_iff (t' t : World P Event) :
+    accessibleLe t' t ↔
+      accessible t' t ∧ World.place t' = World.place t := Iff.rfl
+
+scoped[PreHistory] infix:50 " ≪ " => World.accessible
+scoped[PreHistory] infix:50 " ≪⁻ " => World.accessibleLe
+
+open scoped PreHistory
+
+/-- Definition~\ref{defn.world}(4): in-place accessibility refines the strict
+accessibility relation. -/
+lemma accessible_of_accessibleLe {t' t : World P Event} :
+    t' ≪⁻ t → t' ≪ t := fun h => h.1
+
+/-- Definition~\ref{defn.world}(4): in-place accessibility forces equality of
+places. -/
+lemma place_eq_of_accessibleLe {t' t : World P Event} :
+    t' ≪⁻ t → World.place t' = World.place t := fun h => h.2
+
+/-- Definition~\ref{defn.world}(4): strict accessibility at the same place
+produces an in-place accessible successor. -/
+lemma accessibleLe_of_accessible {t' t : World P Event}
+    (h : t' ≪ t) (hplace : World.place t' = World.place t) :
+    t' ≪⁻ t := ⟨h, hplace⟩
+
+end World
+
+namespace PreHistory
+
+/-!
+### History-at helpers
+
+Definition~\ref{defn.historyat} isolates the events owned by a participant.  We
+phrase it directly in terms of event-tuples to avoid redundant interfaces.
+-/
+
+/-- Definition~\ref{defn.historyat}: the collection of event-tuples in `H` whose
+place matches `p`. -/
+def historyAt (H : PreHistory P Event) (p : P) : Set (World P Event) :=
+  { t | t ∈ H ∧ World.place t = p }
+
+@[simp] lemma mem_historyAt {H : PreHistory P Event} {p : P} {t : World P Event} :
+    t ∈ historyAt (P := P) (Event := Event) H p ↔
+      t ∈ H ∧ World.place t = p := Iff.rfl
+
+/-- Definitions~\ref{defn.world}(4) and~\ref{defn.historyat} identify
+in-place accessibility with membership of the history at the current
+participant. -/
+@[simp] lemma accessibleLe_iff_mem_historyAt {t' t : World P Event} :
+    t' ≪⁻ t ↔
+      t' ∈ historyAt (P := P) (Event := Event)
+        (World.time t) (World.place t) := by
+  simp [historyAt]
+
+-- Happens-before relations as introduced alongside Definition~\ref{defn.Hin}
 
 -- H' ≺− H: H' happens strictly before H
 -- iff ∃p', E'.(p', E', H') ∈ H
 def happensBefore (h1 h2 : PreHistory P Event) : Prop :=
   ∃ (p : P) (e : MaybeEvent Event),
     (p, e, h1) ∈ h2
-
-/-- Participant-sensitive happens-before: `h₁ ≺ₚ[p] h₂` iff an event owned by `p`
-    witnesses `h₁` inside `h₂`. This matches Definition 2.3.1(1). -/
-def happensBeforeAt (p : P) (h1 h2 : PreHistory P Event) : Prop :=
-  ∃ e : MaybeEvent Event, (p, e, h1) ∈ h2
-
-/-- Non-strict participant-sensitive happens-before (Definition 2.3.1(2)). -/
-def happensBeforeEqAt (p : P) (h1 h2 : PreHistory P Event) : Prop :=
-  happensBeforeAt (P := P) (Event := Event) p h1 h2 ∨ h1 = h2
 
 -- H' ⪯ H: H' happens non-strictly before H
 -- iff H' ≺− H ∨ H' = H
@@ -153,90 +254,38 @@ def happensBeforeEq (h1 h2 : PreHistory P Event) : Prop :=
 infixl:50 " ≺− " => happensBefore
 infixl:50 " ⪯ " => happensBeforeEq
 
-scoped notation:50 h1 " ≺ₚ[" p "]" h2 =>
-  PreHistory.happensBeforeAt (P := _) (Event := _) p h1 h2
-
-scoped notation:50 h1 " ⪯ₚ[" p "]" h2 =>
-  PreHistory.happensBeforeEqAt (P := _) (Event := _) p h1 h2
-
 -- Happens-before membership characterization
 @[simp] lemma happensBefore_iff {h1 h2 : PreHistory P Event} :
   h1 ≺− h2 ↔ ∃ (p : P) (e : MaybeEvent Event), (p, e, h1) ∈ h2 := by
   rfl
 
-@[simp] lemma happensBeforeAt_iff {p : P} {h1 h2 : PreHistory P Event} :
-  happensBeforeAt (P := P) (Event := Event) p h1 h2 ↔
-    ∃ e : MaybeEvent Event, (p, e, h1) ∈ h2 := by
-  rfl
+/-- Combining Definitions~\ref{defn.world}(3) and~\ref{defn.Hin}:
+strict accessibility forces the predecessor time to happen before the
+successor. -/
+lemma happensBefore_of_accessible {t' t : World P Event}
+    (h : t' ≪ t) :
+    happensBefore (World.time t') (World.time t) := by
+  rcases t' with ⟨p, e, h'⟩
+  exact ⟨p, e, by simpa [happensBefore] using h⟩
 
-@[simp] lemma happensBeforeEqAt_iff {p : P} {h1 h2 : PreHistory P Event} :
-  happensBeforeEqAt (P := P) (Event := Event) p h1 h2 ↔
-    (happensBeforeAt (P := P) (Event := Event) p h1 h2 ∨ h1 = h2) := by
-  rfl
-
-/-\!
-# Knowledge-of relations (Definition 2.4.1)
-
-The September 17, 2025 draft corrects the self-knowledge disjunct and introduces
-an auxiliary variant where the event component is existentially quantified.  We
-mirror that structure here so later developments can reference the paper’s
-notation directly.
--/
-
-/-- `(p', E', H') ↢ᴴ p, H`: participant `p` at time `H` knows the specific
-event tuple `(p', E', H')` inside the ambient prehistory `in_h`. -/
-def knowsOf (p : P) (h : PreHistory P Event) (p' : P) (e' : MaybeEvent Event)
-    (h' : PreHistory P Event) (in_h : PreHistory P Event) : Prop :=
-  (p' = p ∧ h' = h ∧ (p', e', h') ∈ in_h) ∨
-  (p', e', h') ∈ in_h
-
-/-- `(p', H') ↢ᴴ p, H`: participant `p` at time `H` knows of the possible
-world `(p', H')`, meaning there exists some event witnessing knowledge of
-`(p', E', H')`. -/
-def knowsOfPossibleWorld (p : P) (h : PreHistory P Event) (p' : P)
-    (h' : PreHistory P Event) (in_h : PreHistory P Event) : Prop :=
-  ∃ e' : MaybeEvent Event, knowsOf p h p' e' h' in_h
-
-notation:50 "(" pp "," ee "," hh ")" "↢[" in_h "]" p "," h =>
-  knowsOf (P := _) (Event := _) p h pp ee hh in_h
-
-notation:50 "(" pp "," hh ")" "↢[" in_h "]" p "," h =>
-  knowsOfPossibleWorld (P := _) (Event := _) p h pp hh in_h
-
-lemma knowsOf_of_mem {p : P} {h : PreHistory P Event} {p' : P}
-    {e' : MaybeEvent Event} {h' in_h : PreHistory P Event}
-    (hmem : (p', e', h') ∈ in_h) :
-    (p', e', h') ↢[in_h] p, h :=
-  Or.inr hmem
-
-lemma knowsOf_self {p : P} {e : MaybeEvent Event}
-    {h in_h : PreHistory P Event}
-    (hmem : (p, e, h) ∈ in_h) :
-    (p, e, h) ↢[in_h] p, h :=
-  Or.inl ⟨rfl, rfl, hmem⟩
-
-lemma knowsOfPossibleWorld_of_mem {p : P} {h : PreHistory P Event} {p' : P}
-    {e' : MaybeEvent Event} {h' in_h : PreHistory P Event}
-    (hmem : (p', e', h') ∈ in_h) :
-    (p', h') ↢[in_h] p, h :=
-  ⟨e', knowsOf_of_mem (p:=p) (h:=h) hmem⟩
-
-lemma knowsOfPossibleWorld_self {p : P} {e : MaybeEvent Event}
-    {h in_h : PreHistory P Event}
-    (hmem : (p, e, h) ∈ in_h) :
-    (p, h) ↢[in_h] p, h :=
-  ⟨e, knowsOf_self (p:=p) (h:=h) hmem⟩
+/-- Definition~\ref{defn.Hin}: the non-strict happens-before relation absorbs
+the strict case obtained from accessibility. -/
+lemma happensBeforeEq_of_accessible {t' t : World P Event}
+    (h : t' ≪ t) :
+    happensBeforeEq (World.time t') (World.time t) :=
+  Or.inl (happensBefore_of_accessible (P := P) (Event := Event) h)
 
 -- Basic Properties and Lemmas (from acceptance criteria)
 
--- Induction principle (structural induction for prehistories)
--- Paper Reference: Definition 2.2.4 - implicit in the inductive definition
+-- Induction principle (structural induction for prehistories).
+-- Paper Reference: Definition~\ref{defn.prehistory.structure}; the result is
+-- implicit in the inductive definition.
 -- "Let PreHistory(P, Event), the set of prehistories over P and Event,
 -- be the least set closed under..."
 theorem prehistory_induction (P_prop : PreHistory P Event → Prop)
     (h_empty : P_prop empty)
-    (h_extend : ∀ (l : List (EventTuple P Event)), P_prop (mk l) →
-      ∀ (t : EventTuple P Event), P_prop (mk (t :: l))) :
+    (h_extend : ∀ (l : List (World P Event)), P_prop (mk l) →
+      ∀ (t : World P Event), P_prop (mk (t :: l))) :
     ∀ (h : PreHistory P Event), P_prop h := by
   intro h
   cases h with
@@ -246,14 +295,14 @@ theorem prehistory_induction (P_prop : PreHistory P Event → Prop)
     | cons t l' ih => exact h_extend l' ih t
 
 -- Empty prehistory properties (∅ is minimal element)
--- Paper Reference: Definition 2.2.4 - direct consequence
+-- Paper Reference: Definition~\ref{defn.prehistory.structure} - direct consequence
 -- "Any finite (possibly empty) set of place-event-prehistory tuples, is a prehistory"
 theorem empty_minimal (h : PreHistory P Event) : empty ⊆ h := by
   intro t h_mem
   simp [empty] at h_mem
 
 -- Definition of ⪯ from the paper
--- Paper Reference: Definition 2.3.1(1) - directly stated
+-- Paper Reference: see the discussion following Definition~\ref{defn.Hin}
 -- "H′ ⪯ H means H′ ≺− H ∨ H′ = H"
 @[simp] theorem happensBeforeEq_iff (h1 h2 : PreHistory P Event) :
     h1 ⪯ h2 ↔ h1 ≺− h2 ∨ h1 = h2 := by
@@ -268,14 +317,14 @@ theorem happensBeforeEq_refl (h : PreHistory P Event) : h ⪯ h := by
 
 -- Happens-before is well-founded (no infinite descending chains)
 -- Paper Reference: Not explicitly stated - derived from prehistories being finite
--- (Definition 2.2.4)
+-- (Definition~\ref{defn.prehistory.structure})
 
 open List
 
 -- Height of a prehistory: 1 + max height of immediate sub-prehistories
 mutual
   private def heightList {P Event} :
-      List (EventTuple P Event) → Nat
+      List (World P Event) → Nat
     | []      => 0
     | t :: ts => Nat.max (height t.2.2) (heightList ts)
 
@@ -285,7 +334,7 @@ end
 
 -- Key list lemma: any member's subheight ≤ foldr max
 private lemma heightList_ge_of_mem {P Event}
-    {l : List (EventTuple P Event)} {t : EventTuple P Event}
+    {l : List (World P Event)} {t : World P Event}
     (hmem : t ∈ l) :
     height t.2.2 ≤ heightList l := by
   induction l with
@@ -318,13 +367,51 @@ lemma height_lt_of_happensBefore {P Event}
         _ < heightList l + 1 := this
         _ = height (mk l) := by rfl
 
+/-- Lemma~\ref{lemm.world.time}: accessible predecessors have strictly smaller
+times, reflected here by the height measure. -/
+lemma height_lt_of_accessible {t' t : World P Event}
+    (h : t' ≪ t) :
+    height (World.time t') < height (World.time t) := by
+  exact height_lt_of_happensBefore
+    (P := P) (Event := Event)
+    (happensBefore_of_accessible (P := P) (Event := Event) h)
+
+/-- Definition~\ref{defn.world}(4): in-place accessibility also induces the
+strict happens-before relation between times. -/
+lemma happensBefore_of_accessibleLe {t' t : World P Event}
+    (h : t' ≪⁻ t) :
+    happensBefore (World.time t') (World.time t) :=
+  happensBefore_of_accessible (P := P) (Event := Event)
+    (World.accessible_of_accessibleLe (P := P) (Event := Event) h)
+
+/-- Lemma~\ref{lemm.world.time}: the height measure decreases along
+in-place accessibility. -/
+lemma height_lt_of_accessibleLe {t' t : World P Event}
+    (h : t' ≪⁻ t) :
+    height (World.time t') < height (World.time t) :=
+  height_lt_of_accessible (P := P) (Event := Event)
+    (World.accessible_of_accessibleLe (P := P) (Event := Event) h)
+
+/-- Lemma~\ref{lemm.world.time}: accessibility preserves membership of the
+underlying time component provided the ambient time is transitive. -/
+lemma accessible_subset
+    {t' t : World P Event}
+    (h : t' ≪ t)
+    (htrans : ∀ h', h' ≺− World.time t → h' ⊆ World.time t) :
+    World.time t' ⊆ World.time t := by
+  intro s hs
+  have hBefore :=
+    happensBefore_of_accessible (P := P) (Event := Event) h
+  have hSubset := htrans (World.time t') hBefore
+  exact hSubset s hs
+
 /-- The height of the empty prehistory is the base height `1`. -/
 @[simp] lemma height_empty :
     height (P := P) (Event := Event) PreHistory.empty = 1 := by
   simp [PreHistory.empty, height, heightList]
 
 /-- The height of a singleton prehistory is the successor of the embedded time. -/
-lemma height_singleton (t : EventTuple P Event) :
+lemma height_singleton (t : World P Event) :
     height (P := P) (Event := Event) (PreHistory.singleton t) =
       Nat.succ (height (P := P) (Event := Event) t.2.2) := by
   have hzero : 0 ≤ height (P := P) (Event := Event) t.2.2 := Nat.zero_le _
@@ -361,7 +448,7 @@ lemma height_le_of_subset {h₁ h₂ : PreHistory P Event}
           have heightList_le :
               heightList (P := P) (Event := Event) l₁ ≤
                 heightList (P := P) (Event := Event) l₂ := by
-            have aux : ∀ {l : List (EventTuple P Event)},
+            have aux : ∀ {l : List (World P Event)},
                 (∀ t ∈ l, t ∈ l₂) →
                   heightList (P := P) (Event := Event) l ≤
                     heightList (P := P) (Event := Event) l₂ := by
@@ -399,7 +486,7 @@ theorem happensBefore_wellFounded : WellFounded (@happensBefore P Event) := by
     (height_lt_of_happensBefore (P := P) (Event := Event) hab)
 
 -- ≺− is irreflexive and transitive
--- Paper Reference: Definition 2.3.1(1) - implicit from the construction
+-- Paper Reference: see the discussion following Definition~\ref{defn.Hin}
 theorem happensBefore_irrefl (h : PreHistory P Event) : ¬(h ≺− h) := by
   intro h_self
   -- If h ≺− h, then height h < height h by our existing theorem
@@ -407,15 +494,17 @@ theorem happensBefore_irrefl (h : PreHistory P Event) : ¬(h ≺− h) := by
   -- But this is impossible (n < n is false for any n)
   exact Nat.lt_irrefl (height h) this
 
--- Knowledge-of reflexivity ((p, H) knows of itself when appropriate)
--- Paper Reference: Definition 2.4.1, which supplies the self-knowledge disjunct.
-theorem knowsOf_refl (p : P) (h : PreHistory P Event) (e : MaybeEvent Event) :
-    (p, e, h) ∈ h → (p, e, h) ↢[h] p, h := by
-  intro h_mem
-  -- The updated definition places the self-knowledge branch first.
-  left
-  exact ⟨rfl, rfl, h_mem⟩
+/-- Proposition~\ref{prop.accessible.trans}: accessibility is irreflexive. -/
+lemma accessible_irrefl (t : World P Event) :
+    ¬ t ≪ t := by
+  intro hacc
+  have : happensBefore (P := P) (Event := Event)
+      (World.time t) (World.time t) :=
+    happensBefore_of_accessible (P := P) (Event := Event) hacc
+  exact happensBefore_irrefl (P := P) (Event := Event) (h := World.time t) this
 
+-- Knowledge-of reflexivity ((p, H) knows of itself when appropriate)
+-- Paper Reference: Definition~\ref{defn.known.to}, which supplies the self-knowledge disjunct.
 -- Subset relation properties (basic set-theoretic facts)
 theorem subset_refl (h : PreHistory P Event) : h ⊆ h := by
   intro t ht
@@ -456,35 +545,12 @@ lemma subset_antisymm {h₁ h₂ : PreHistory P Event} :
   · exact h₁₂ t
   · exact h₂₁ t
 
-/-- Every strict happens-before has a participant-specific witness. -/
-lemma exists_happensBeforeAt {h₁ h₂ : PreHistory P Event} :
-    h₁ ≺− h₂ → ∃ p, (h₁ ≺ₚ[p] h₂) := by
-  intro hbefore
-  rcases hbefore with ⟨p, e, hmem⟩
-  exact ⟨p, ⟨e, hmem⟩⟩
-
 /-- Strict happens-before composes along inclusions of the target prehistory. -/
 theorem happensBefore_trans {h₁ h₂ h₃ : PreHistory P Event} :
     (h₁ ≺− h₂) → (h₂ ⊆ h₃) → (h₁ ≺− h₃) := by
   intro h₁₂ h₂₃
   rcases h₁₂ with ⟨p, e, hmem⟩
   exact ⟨p, e, h₂₃ _ hmem⟩
-
-/-- Participant-specific witnesses yield strict happens-before. -/
-lemma happensBefore_of_happensBeforeAt {p : P}
-    {h₁ h₂ : PreHistory P Event} :
-    (h₁ ≺ₚ[p] h₂) → (h₁ ≺− h₂) :=
-  by
-    intro h
-    rcases h with ⟨e, hmem⟩
-    exact ⟨p, e, hmem⟩
-
-/-- Membership of a tuple witnesses the participant-specific happens-before relation. -/
-lemma happensBeforeAt_of_mem {p : P} {e : MaybeEvent Event}
-    {h₁ h₂ : PreHistory P Event}
-    (hmem : (p, e, h₁) ∈ h₂) :
-    h₁ ≺ₚ[p] h₂ := by
-  exact ⟨e, hmem⟩
 
 /-- Membership of a tuple yields non-strict happens-before for its time component. -/
 lemma happensBeforeEq_of_mem {p : P} {e : MaybeEvent Event}
@@ -505,8 +571,8 @@ lemma happensBeforeEq_of_mem {p : P} {e : MaybeEvent Event}
     · intro hfalse
       cases hfalse
 
-/-- Non-strict happens-before composes provided every predecessor of the target
-prehistory lies inside it. -/
+-- Non-strict happens-before composes provided every predecessor of the target
+-- prehistory lies inside it.
 theorem happensBeforeEq_trans {h₁ h₂ h₃ : PreHistory P Event}
     (htrans : ∀ ⦃h⦄, h ≺− h₃ → h ⊆ h₃) :
     (h₁ ⪯ h₂) → (h₂ ⪯ h₃) → (h₁ ⪯ h₃) := by
@@ -525,8 +591,8 @@ theorem happensBeforeEq_trans {h₁ h₂ h₃ : PreHistory P Event}
     · subst h₂₃
       exact Or.inr rfl
 
-/-- Non-strict happens-before exposes the underlying subset relation when the
-target prehistory absorbs its predecessors. -/
+-- Non-strict happens-before exposes the underlying subset relation when the
+-- target prehistory absorbs its predecessors.
 lemma subset_of_happensBeforeEq {h₁ h₂ : PreHistory P Event}
     (htrans : ∀ ⦃h⦄, h ≺− h₂ → h ⊆ h₂) :
     (h₁ ⪯ h₂) → h₁ ⊆ h₂ := by
@@ -537,7 +603,7 @@ lemma subset_of_happensBeforeEq {h₁ h₂ : PreHistory P Event}
   · subst h₁₂
     exact ht
 
-/-- Mutual non-strict happens-before forces equality of prehistories. -/
+-- Mutual non-strict happens-before forces equality of prehistories.
 theorem happensBeforeEq_antisymm {h₁ h₂ : PreHistory P Event} :
     (h₁ ⪯ h₂) → (h₂ ⪯ h₁) → h₁ = h₂ :=
   by
@@ -563,13 +629,6 @@ theorem happensBeforeEq_antisymm {h₁ h₂ : PreHistory P Event} :
   constructor <;> intro hrel
   · simpa [happensBeforeEq, happensBefore_iff]
   · simpa [happensBeforeEq, happensBefore_iff]
-
-/-- Participant happens-before is monotone with respect to supersets of the target. -/
-lemma happensBeforeAt_mono {p : P} {h₁ h₂ h₃ : PreHistory P Event} :
-    (h₁ ≺ₚ[p] h₂) → h₂ ⊆ h₃ → (h₁ ≺ₚ[p] h₃) := by
-  intro hbefore hsubset
-  rcases hbefore with ⟨e, hmem⟩
-  exact ⟨e, hsubset _ hmem⟩
 
 /-- Strict happens-before is monotone in the right argument. -/
 lemma happensBefore_mono_right
@@ -625,8 +684,8 @@ lemma happensBeforeEq_of_eq {h₁ h₂ : PreHistory P Event}
 -- Paper Reference: Remark 2.2.7 - explicitly stated
 -- "PreHistory(P, Event) can be characterised as the least set such that
 -- PreHistory(P, Event) = Pfin(P × Event† × PreHistory(P, Event))"
--- In Lean, this is an equivalence between PreHistory and List of EventTuples
-def prehistory_fixpoint : PreHistory P Event ≃ List (EventTuple P Event) where
+-- In Lean, this is an equivalence between PreHistory and List of Worlds
+def prehistory_fixpoint : PreHistory P Event ≃ List (World P Event) where
   toFun := fun h => match h with | mk l => l
   invFun := mk
   left_inv := by intro ⟨l⟩; rfl
@@ -635,10 +694,10 @@ def prehistory_fixpoint : PreHistory P Event ≃ List (EventTuple P Event) where
 -- Utility Functions
 
 -- Constructor helpers (smart constructors for common patterns)
-def from_list (tuples : List (EventTuple P Event)) : PreHistory P Event :=
+def from_list (tuples : List (World P Event)) : PreHistory P Event :=
   fromList tuples
 
-def insert (tuple : EventTuple P Event) (h : PreHistory P Event) : PreHistory P Event :=
+def insert (tuple : World P Event) (h : PreHistory P Event) : PreHistory P Event :=
   match h with
   | mk l => mk (tuple :: l)
 
@@ -648,8 +707,8 @@ instance [ToString Event] : ToString (MaybeEvent Event) where
   | MaybeEvent.some e => toString e
   | MaybeEvent.none => "†"
 
-instance [ToString P] [ToString Event] : ToString (EventTuple P Event) where
-  toString t := s!"({EventTuple.participant t}, {EventTuple.event t}, <prehistory>)"
+instance [ToString P] [ToString Event] : ToString (World P Event) where
+  toString t := s!"({World.place t}, {World.event t}, <prehistory>)"
 
 instance [ToString P] [ToString Event] : ToString (PreHistory P Event) where
   toString h := match h with | mk l => s!"PreHistory(size={l.length})"
@@ -674,11 +733,11 @@ def example_empty : PreHistory P Event := empty
 -- The final prehistory H₃ represents the complete sequential execution
 def example_sequential (p : P) (hello world : Event) : PreHistory P Event :=
   let h0 := empty                                  -- H₀ = ∅
-  let t0 := EventTuple.mk p MaybeEvent.none h0    -- (p, †, ∅)
+  let t0 := World.mk p MaybeEvent.none h0    -- (p, †, ∅)
   let h1 := singleton t0                          -- H₁ = {(p, †, ∅)}
-  let t1 := EventTuple.mk p (MaybeEvent.some hello) h1  -- (p, hello, H₁)
+  let t1 := World.mk p (MaybeEvent.some hello) h1  -- (p, hello, H₁)
   let h2 := singleton t1                          -- H₂ = {(p, hello, H₁)}
-  let t2 := EventTuple.mk p (MaybeEvent.some world) h2  -- (p, world, H₂)
+  let t2 := World.mk p (MaybeEvent.some world) h2  -- (p, world, H₂)
   singleton t2                                     -- H₃ = {(p, world, H₂)}
 
 -- Example 3: Two participant message passing
@@ -693,12 +752,12 @@ def example_sequential (p : P) (hello world : Event) : PreHistory P Event :=
 -- not just the final event set
 def example_message_passing (p q : P) (m : Event) : PreHistory P Event :=
   let h0 := empty                                  -- H₀ = ∅
-  let tp_init := EventTuple.mk p MaybeEvent.none h0    -- (p, †, ∅)
-  let tq_init := EventTuple.mk q MaybeEvent.none h0    -- (q, †, ∅)
+  let tp_init := World.mk p MaybeEvent.none h0    -- (p, †, ∅)
+  let tq_init := World.mk q MaybeEvent.none h0    -- (q, †, ∅)
   let h1 := mk [tp_init, tq_init]                 -- H₁ = both initialize
-  let tp_send := EventTuple.mk p (MaybeEvent.some m) h1  -- (p, m, H₁)
+  let tp_send := World.mk p (MaybeEvent.some m) h1  -- (p, m, H₁)
   let h2 := mk [tp_init, tq_init, tp_send]        -- H₂ = H₁ ∪ {p sends}
-  let tq_recv := EventTuple.mk q (MaybeEvent.some m) h2  -- (q, m, H₂)
+  let tq_recv := World.mk q (MaybeEvent.some m) h2  -- (q, m, H₂)
   mk [tp_init, tq_init, tp_send, tq_recv]         -- H₃ = H₂ ∪ {q receives}
 
 end Examples

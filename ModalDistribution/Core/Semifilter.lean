@@ -3,6 +3,7 @@ import Mathlib.Data.Finset.Basic
 import ModalDistribution.Core.History
 
 open Set
+open History
 
 /-!
 # Semifilter Structures

@@ -1,4 +1,3 @@
-import ModalDistribution.Basic
 import ModalDistribution.Core.Prehistory
 import ModalDistribution.Core.History
 import ModalDistribution.Core.Semifilter
@@ -8,3 +7,4 @@ import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Logic.AxiomSystem
 import ModalDistribution.Examples.ThyLive
+import ModalDistribution.Examples.ThyHBB1

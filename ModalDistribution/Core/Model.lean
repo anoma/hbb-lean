@@ -2,6 +2,7 @@ import ModalDistribution.Core.History
 import ModalDistribution.Core.Semifilter
 
 open Set
+open History
 open scoped Semifilter
 
 /-!
@@ -21,8 +22,6 @@ view operations (Definition 3.2.3 and Definition 3.2.7).
 * `Model`: the tuple `(P, H, ϱ, ς)` from Definition 3.2.3.
 * `Model.LocalHistory`: transitive subsets used for local views
   (Definition 3.2.7).
-* `Model.localView`: restriction of a model to a local view
-  (Definition 3.2.7).
 
 -/
 
@@ -32,14 +31,12 @@ universe u₁ u₂ u₃ u₄ u₅
 
 /-- Definition 3.1.1: a logical signature packages the symbols and values. -/
 structure Signature where
-  /-- Variable symbols (Definition 3.1.1(1)). -/
-  VarSymb : Type u₁
   /-- Event symbols (Definition 3.1.1(1)). -/
-  EventSymb : Type u₂
+  EventSymb : Type u₁
   /-- Predicate symbols (Definition 3.1.1(1)). -/
-  PredSymb : Type u₃
+  PredSymb : Type u₂
   /-- Values (Definition 3.1.1(1)); also used for learners (Remark 3.2.10). -/
-  Value : Type u₄
+  Value : Type u₃
 
 namespace Signature
 
@@ -81,60 +78,6 @@ namespace Model
 
 variable {S : Signature} {P : Type u₅} [Nonempty P]
 variable (M : Model S P)
-
-/-- Definition 3.2.7: restrict a model to a transitive subhistory. -/
-def localView
-    (H : History P (Signature.EventType S)) : Model S P :=
-  { history := H
-    predInterp :=  M.predInterp
-    learner := M.learner }
-
-infixl:70 " ∣ᵥ " => localView
-
-@[simp] lemma localView_history_val
-    (H : History P (Signature.EventType S)) :
-    (M.localView H).history.val = H := by
-  rfl
-
-/-- Predicate interpretation in a local view reuses the ambient interpretation. -/
-@[simp] lemma localView_predInterp
-    (H : History P (Signature.EventType S)) (p : P)
-    (K : PreHistory P (Signature.EventType S)) :
-    (M.localView H).predInterp p K =
-      M.predInterp p K := by
-  rfl
-
-/-- Learner interpretations remain unchanged under restriction. -/
-@[simp] lemma localView_learner
-    (H : History P (Signature.EventType S)) (v : Signature.Value S) :
-    (M.localView H).learner v = M.learner v := by
-  rfl
-
-@[simp] lemma history_subset :
-    M.history ⊆trn M.history.val :=
-  transitiveSubset_refl M.history
-
-/-- Restricting along the whole history yields the same model (Lemma 3.2.8(1)). -/
-@[simp] lemma localView_full :
-    M.localView M.history = M := by
-  cases M
-  rfl
-
-/-- Composite restrictions collapse to a single inclusion (Lemma 3.2.8(2)). -/
-lemma localView_comp
-    (H : History P (Signature.EventType S))
-    (H' : History P (Signature.EventType S)) :
-    (M.localView H).localView H' =
-      M.localView H' := by
-  cases M
-  rfl
-
-/-- Idempotence of restriction (Lemma 3.2.8(3)). -/
-@[simp] lemma localView_idem
-    (H : History P (Signature.EventType S)) :
-    (M.localView H).localView H = M.localView H := by
-  cases M
-  rfl
 
 /-- Every learner interpretation is nonempty (Definition 3.2.3(4)). -/
 theorem learner_nonempty (v : Signature.Value S) :

@@ -5,17 +5,19 @@ import Mathlib.Logic.Basic
 import Mathlib.Tactic
 
 open scoped PreHistory
+open Set
 
 /-!
 # History Structures
 
-This file formalizes the History structure from Definition 2.3.5 of the HBB paper.
+This file formalizes the history structure from
+Definition~\ref{defn.history.structure} of the paper.
 A history is a hereditarily transitive element of PreHistory(P, Event).
 
 ## Main definitions
 
 * `History P Event`: Type for history structures with hereditary transitivity
-* `TransitiveSubset`: Transitive subset relation (⊆trn) from Definition 2.3.13
+* `TransitiveSubset`: Transitive subset relation (⊆trn) from Definition~\ref{defn.hsubseteq}
 * Local view operations and sequentiality properties
 
 ## Main theorems
@@ -26,19 +28,20 @@ A history is a hereditarily transitive element of PreHistory(P, Event).
 
 ## References
 
-* Definition 2.3.5 in "Logical Analysis of Heterogeneous Broadcasts"
-* Definition 2.3.13 (Transitive subset relation)
-* Definition 3.2.7 (Local view)
-* Definition 3.3.2 (Sequential participant)
+* Definition~\ref{defn.history.structure}
+* Definition~\ref{defn.hsubseteq}
+* Definition~\ref{defn.views}
+* Definition~\ref{defn.sequential.p}
 -/
 
 variable {P Event : Type*}
 
-/-- Definition 2.3.2: A prehistory is transitive when `H′ ≺− H` implies `H′ ⊆ H`. -/
+/-- Definition\ref{defn.transitive}: a prehistory is transitive when every
+strict predecessor is a subset. -/
 def isTransitive (h : PreHistory P Event) : Prop :=
   ∀ h' : PreHistory P Event, h' ≺− h → h' ⊆ h
 
-/-- Definition 2.3.5 (auxiliary): hereditary transitivity demands every
+/-- Definition~\ref{defn.history.structure}: hereditary transitivity demands every
     predecessor be transitive and itself satisfy hereditary transitivity. We
     construct this predicate by well-founded recursion on ≺−. -/
 noncomputable def isHereditarilyTransitive : PreHistory P Event → Prop :=
@@ -79,7 +82,7 @@ lemma isHereditarilyTransitive.desc
   have := (isHereditarilyTransitive_unfold h).mp hh
   exact this.2 h' hb
 
-/-- Definition 2.3.5 (2025-09-17 draft): histories are the prehistories that are
+/-- Definition~\ref{defn.history.structure}: histories are the prehistories that are
     hereditarily transitive. The transitivity of the history follows from the
     hereditary property itself. -/
 structure History (P Event : Type*) where
@@ -107,6 +110,10 @@ def toPreHistory (h : History P Event) : PreHistory P Event := h.val
 theorem transitive (h : History P Event) : isTransitive h.val :=
   (isHereditarilyTransitive.trans (P := P) (Event := Event) h.hered)
 
+lemma subset_of_happensBefore {H : History P Event} {h' : PreHistory P Event}
+    (h_before : h' ≺− H.val) : h' ⊆ H.val :=
+  History.transitive H h' h_before
+
 /-- A history is hereditarily transitive -/
 theorem hereditarilyTransitive (h : History P Event) : isHereditarilyTransitive h.val :=
   h.hered
@@ -130,11 +137,9 @@ def predecessorHistory {H : History P Event} {h' : PreHistory P Event}
 lemma predecessorHistory_subset {H : History P Event}
     {h' : PreHistory P Event} (h_before : h' ≺− H.val) :
     (predecessorHistory (H := H) h_before).val ⊆ H.val := by
-  exact History.transitive H h' h_before
+  exact History.subset_of_happensBefore (H := H) h_before
 
-/-- Main characterization theorem from Definition 2.3.2:
-    if `H` is a history, then it is transitive, and every immediate predecessor
-    is itself a history. -/
+/-- If `H` is a history and `h' ≺− H`, then `h'` is also a history. -/
 theorem history_characterization (h : History P Event) :
   isTransitive h.val ∧
     ∀ {h' : PreHistory P Event}, h' ≺− h.val → ∃ H' : History P Event, H'.val = h' := by
@@ -161,110 +166,40 @@ def emptyHistory (P Event : Type*) : History P Event :=
 
 end History
 
-section Examples
+section HistoryAt
 
-/-- The raw prehistory for minimal history -/
-def minimalHistory_val : PreHistory Unit Unit :=
-  PreHistory.mk [((), MaybeEvent.none, PreHistory.empty)]
+variable {P Event : Type*}
 
-/-- minimalHistory_val is transitive -/
-lemma minimalHistory_transitive : isTransitive minimalHistory_val := by
-  intro h' hbefore
-  rcases hbefore with ⟨p, e, hmem⟩
-  simp only [minimalHistory_val, PreHistory.mem_mk, List.mem_singleton] at hmem
-  -- hmem is now: (p, e, h') = ((), MaybeEvent.none, PreHistory.empty)
-  have : h' = PreHistory.empty := by simp only [Prod.ext_iff] at hmem; exact hmem.2.2
-  rw [this]
-  exact PreHistory.empty_minimal minimalHistory_val
+namespace History
 
-/-- minimalHistory_val is hereditarily transitive -/
-lemma minimalHistory_hered : isHereditarilyTransitive minimalHistory_val := by
-  classical
-  refine (isHereditarilyTransitive_unfold (P := Unit) (Event := Unit) minimalHistory_val).mpr ?_
-  constructor
-  · exact minimalHistory_transitive
-  · intro h' hbefore
-    rcases hbefore with ⟨p, e, hmem⟩
-    simp only [minimalHistory_val, PreHistory.mem_mk, List.mem_singleton] at hmem
-    have : h' = PreHistory.empty := by
-      simp only [Prod.ext_iff] at hmem
-      exact hmem.2.2
-    subst this
-    exact History.hereditarilyTransitive (History.emptyHistory Unit Unit)
+/-- Specialise Definition~\ref{defn.historyat} to history structures. -/
+def historyAt (H : History P Event) (p : P) : Set (World P Event) :=
+  PreHistory.historyAt (P := P) (Event := Event) H.val p
 
-/-- Example: A minimal history with one participant -/
-def minimalHistory : History Unit Unit :=
-  { val := minimalHistory_val
-    hered := minimalHistory_hered }
+@[simp] lemma mem_historyAt {H : History P Event} {p : P} {t : World P Event} :
+    t ∈ historyAt (P := P) (Event := Event) H p ↔
+      t ∈ H.val ∧ World.place t = p := Iff.rfl
 
-/-- A history that extends minimalHistory with a new event but where
-    minimalHistory doesn't happen-before it -/
-def extendedHistory_val : PreHistory Unit Unit :=
-  PreHistory.mk [((), MaybeEvent.some (), PreHistory.empty),
-                 ((), MaybeEvent.none, PreHistory.empty)]
+end History
 
-/-- extendedHistory_val is transitive -/
-lemma extendedHistory_transitive : isTransitive extendedHistory_val := by
-  intro h' hbefore
-  rcases hbefore with ⟨p, e, hmem⟩
-  simp only [extendedHistory_val, PreHistory.mem_mk, List.mem_cons] at hmem
-  cases hmem with
-  | inl h_eq =>
-    -- First element: ((), MaybeEvent.some (), PreHistory.empty)
-    have : h' = PreHistory.empty := by simp only [Prod.ext_iff] at h_eq; exact h_eq.2.2
-    rw [this]
-    exact PreHistory.empty_minimal extendedHistory_val
-  | inr h_tail =>
-    -- h_tail means (p, e, h') is in the tail [((), MaybeEvent.none, PreHistory.empty)]
-    -- which after simp becomes:
-    -- (p, e, h') = ((), MaybeEvent.none, PreHistory.empty) ∨ (p, e, h') ∈ []
-    cases h_tail with
-    | inl h_eq =>
-      -- (p, e, h') = ((), MaybeEvent.none, PreHistory.empty)
-      have : h' = PreHistory.empty := by
-        simp only [Prod.ext_iff] at h_eq
-        exact h_eq.2.2
-      rw [this]
-      exact PreHistory.empty_minimal extendedHistory_val
-    | inr h_empty =>
-      -- (p, e, h') ∈ [], which is impossible
-      simp at h_empty
+end HistoryAt
 
-/-- extendedHistory_val is hereditarily transitive -/
-lemma extendedHistory_hered : isHereditarilyTransitive extendedHistory_val := by
-  classical
-  refine (isHereditarilyTransitive_unfold (P := Unit) (Event := Unit) extendedHistory_val).mpr ?_
-  constructor
-  · exact extendedHistory_transitive
-  · intro h' hbefore
-    rcases hbefore with ⟨p, e, hmem⟩
-    simp only [extendedHistory_val, PreHistory.mem_mk, List.mem_cons] at hmem
-    cases hmem with
-    | inl h_eq =>
-      have : h' = PreHistory.empty := by
-        simp only [Prod.ext_iff] at h_eq
-        exact h_eq.2.2
-      subst this
-      exact History.hereditarilyTransitive (History.emptyHistory Unit Unit)
-    | inr h_tail =>
-      cases h_tail with
-      | inl h_eq =>
-        have : h' = PreHistory.empty := by
-          simp only [Prod.ext_iff] at h_eq
-          exact h_eq.2.2
-        subst this
-        exact History.hereditarilyTransitive (History.emptyHistory Unit Unit)
-      | inr h_empty =>
-        cases h_empty
+/-- Definition~\ref{defn.sequential.p}(\ref{item.p.sequential}):
+    participant `p` is sequential in `h` when its event-tuples are linearly
+    ordered by accessibility. -/
+def isSequential (p : P) (h : PreHistory P Event) : Prop :=
+  ∀ {t₁ t₂ : World P Event},
+    t₁ ∈ h →
+    t₂ ∈ h →
+    World.place t₁ = p →
+    World.place t₂ = p →
+      (t₁ ≪ t₂ ∨
+        t₂ ≪ t₁ ∨
+        t₁ = t₂)
 
-/-- Extended history -/
-def extendedHistory : History Unit Unit :=
-  { val := extendedHistory_val
-    hered := extendedHistory_hered }
+namespace History
 
-end Examples
-
-/-- Definition 2.3.13: Transitive subset relation (⊆trn).
+/-- Definition~\ref{defn.hsubseteq}: transitive subset relation (⊆trn).
     `H' ⊆trn H` when `H' ⊆ H` and `H'` is hereditarily transitive; the
     September 2025 draft clarifies that an explicit transitivity hypothesis is
     redundant. -/
@@ -277,15 +212,6 @@ infixl:50 " ⊆trn " => TransitiveSubset
 lemma transitiveSubset_subset {h₁ h₂ : PreHistory P Event}
     (h : h₁ ⊆trn h₂) : h₁ ⊆ h₂ := by
   exact h.1
-
-/-- Participant happens-before persists under transitive supersets of the target. -/
-lemma happensBeforeAt_of_subsetTrn {p : P}
-    {h₁ h₂ h₃ : PreHistory P Event}
-    (hBefore : h₁ ≺ₚ[p]h₂) (hSubset : h₂ ⊆trn h₃) :
-    h₁ ≺ₚ[p] h₃ := by
-  exact
-    PreHistory.happensBeforeAt_mono (P := P) (Event := Event)
-      hBefore (transitiveSubset_subset (P := P) (Event := Event) hSubset)
 
 /-- Transitive subsets carry hereditary transitivity along the inclusion. -/
 lemma transitiveSubset_hereditarily {h₁ h₂ : PreHistory P Event}
@@ -308,122 +234,19 @@ theorem transitiveSubset_antisymm {h₁ h₂ : PreHistory P Event} :
   refine PreHistory.subset_antisymm (P := P) (Event := Event)
     h₁₂.1 h₂₁.1 t
 
-/-- Definition 3.2.7 (2025-09-17 draft): the local view of a history simply
-    returns the chosen transitive subset. -/
-def localView (_H_bar : History P Event) (H : History P Event) :
-  History P Event := H
-
-infixl:70 " ∣ᵥ " => localView
-
-@[simp] lemma localView_eq (H_bar H : History P Event) : H_bar ∣ᵥ H = H := rfl
-
-/-- Local views at the end of time return the entire history (Lemma 3.2.8(1)). -/
-@[simp] lemma localView_end (H : History P Event) : H ∣ᵥ H = H := rfl
-
-/-- Local views compose as expected when taking a transitive subset (Lemma 3.2.8(2)). -/
-@[simp] lemma localView_comp
-    {H_bar H H' : History P Event}
-    (_hsub : H' ⊆trn H.val) :
-    (H_bar ∣ᵥ H) ∣ᵥ H' = H' := by
-  simp [localView]
-
-/-- A corollary of Lemma 3.2.8(2). -/
-@[simp] lemma localView_idempotent (H_bar H : History P Event) :
-    (H_bar ∣ᵥ H) ∣ᵥ H = H := by
-  simp [localView]
-
-/-- Definition 2.3.11: Elementwise transitivity – elements of elements are also
-    elements. -/
-def isElementwiseTransitive (H : PreHistory P Event) : Prop :=
-  ∀ ⦃H' H'' : History P Event⦄,
-    H''.val ≺− H'.val →
-    H'.val ≺− H →
-    H''.val ≺− H
-
-/-- Lemma 2.3.12(1): Transitivity implies elementwise transitivity. -/
-lemma isTransitive.elementwise {H : PreHistory P Event}
-    (htrans : isTransitive (P := P) (Event := Event) H) :
-    isElementwiseTransitive (P := P) (Event := Event) H := by
-  intro H' H'' hH'' hH'
-  rcases hH'' with ⟨p, e, mem⟩
-  have hsubset : H'.val ⊆ H := htrans H'.val hH'
-  exact ⟨p, e, hsubset _ mem⟩
-
-/-- Lemma 2.3.12(2): Elementwise transitivity does not imply transitivity. -/
-lemma elementwise_not_transitive :
-  ∃ (P Event : Type) (H : PreHistory P Event),
-    isElementwiseTransitive H ∧ ¬ isTransitive H := by
-  classical
-  let H₀ : PreHistory Bool Unit :=
-    PreHistory.mk [((false : Bool), MaybeEvent.none, PreHistory.empty)]
-  let H : PreHistory Bool Unit :=
-    PreHistory.mk
-      [ ((false : Bool), MaybeEvent.none, H₀)
-      , ((true : Bool), MaybeEvent.none, PreHistory.empty) ]
-  refine ⟨Bool, Unit, H, ?_, ?_⟩
-  · intro H' H'' hH'' hH'
-    classical
-    rcases hH' with ⟨p, e, mem⟩
-    have mem_cases :
-        (p = (false : Bool) ∧ e = MaybeEvent.none ∧ H'.val = H₀) ∨
-        (p = (true : Bool) ∧ e = MaybeEvent.none ∧ H'.val = PreHistory.empty) := by
-      simpa [H, PreHistory.mem_mk, List.mem_cons] using mem
-    rcases mem_cases with ⟨hp, he, hval⟩ | ⟨hp, he, hval⟩
-    · subst hp; subst he
-      rcases hH'' with ⟨p', e', mem'⟩
-      have mem₀ : p' = (false : Bool) ∧ e' = MaybeEvent.none ∧ H''.val = PreHistory.empty := by
-        have := mem'
-        simp [H₀, PreHistory.mem_mk, hval, Prod.ext_iff] at this
-        exact this
-      rcases mem₀ with ⟨hp', he', hval'⟩
-      subst hp'
-      subst he'
-      refine ⟨(true : Bool), MaybeEvent.none, ?_⟩
-      simp [H, hval', PreHistory.mem_mk]
-    · subst hp; subst he
-      rcases hH'' with ⟨p', e', mem'⟩
-      have mem_empty : (p', e', H''.val) ∈ PreHistory.empty := by
-        simp [hval] at mem'
-      have : False := by
-        simp [PreHistory.empty, PreHistory.mem_mk] at mem_empty
-      cases this
-  · intro htrans
-    have h_before : H₀ ≺− H := by
-      refine ⟨(false : Bool), MaybeEvent.none, ?_⟩
-      simp [H, PreHistory.mem_mk]
-    have hsubset := htrans H₀ h_before
-    have : (false, MaybeEvent.none, PreHistory.empty) ∈ H₀ := by
-      simp [H₀, PreHistory.mem_mk]
-    have : (false, MaybeEvent.none, PreHistory.empty) ∈ H := hsubset _ this
-    simp [H, H₀, PreHistory.mem_mk, List.mem_cons] at this
-    cases this
-
-/-- Lemma 2.3.12(3): Histories are elementwise-transitive. -/
-lemma History.elementwise (H : History P Event) :
-    isElementwiseTransitive (P := P) (Event := Event) H.val :=
-  (isTransitive.elementwise (P := P) (Event := Event)
-    (History.transitive H))
-
-/-- Lemma 2.3.14(1): `H′ ≺− H` implies `H′ ⊆trn H`. -/
+/-- Strict happens-before forces the predecessor history to sit inside the
+transitive-subset relation of Definition~\ref{defn.hsubseteq}. -/
 theorem happensBefore_implies_transitiveSubset (h1 h2 : History P Event) :
   h1.val ≺− h2.val → h1.val ⊆trn h2.val := by
   intro h_before
   constructor
   · -- h1.val ⊆ h2.val
-    exact History.transitive h2 h1.val h_before
+    exact History.subset_of_happensBefore (H := h2) h_before
   · -- isHereditarilyTransitive h1.val
     exact History.hereditarilyTransitive h1
 
-theorem happensBeforeAt_implies_transitiveSubset (h1 h2 : History P Event) (p : P) :
-  (h1.val ≺ₚ[p] h2.val) → h1.val ⊆trn h2.val := by
-  intro h_before
-  constructor
-  · -- h1.val ⊆ h2.val
-    exact History.transitive h2 h1.val (PreHistory.happensBefore_of_happensBeforeAt h_before)
-  · -- isHereditarilyTransitive h1.val
-    exact History.hereditarilyTransitive h1
-
-/-- Lemma 2.3.14(1): `H′ ⪯ H` implies `H′ ⊆trn H`. -/
+/-- Non-strict happens-before collapses to the same transitive-subset
+inclusion. -/
 theorem happensBeforeEq_implies_transitiveSubset (h1 h2 : History P Event) :
   h1.val ⪯ h2.val → h1.val ⊆trn h2.val := by
   intro h_before_eq
@@ -442,114 +265,27 @@ theorem happensBeforeEq_implies_transitiveSubset (h1 h2 : History P Event) :
     · -- isHereditarilyTransitive h2.val
       exact History.hereditarilyTransitive h2
 
-/-- Definition 2.3.15(1): a globally initial event-tuple. -/
-def isInitialTuple (t : EventTuple P Event) (H : PreHistory P Event) : Prop :=
+/-- Definition~\ref{defn.initial.final.event-tuple}: a globally initial event-tuple. -/
+def isInitialTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, H' ≺− t.2.2
 
-/-- Definition 2.3.15(1): a globally final event-tuple. -/
-def isFinalTuple (t : EventTuple P Event) (H : PreHistory P Event) : Prop :=
+/-- Definition~\ref{defn.initial.final.event-tuple}: a globally final event-tuple. -/
+def isFinalTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, t.2.2 ≺− H'
 
-/-- Definition 2.3.15(2): `(p, E, H)` is `p`-initial when no earlier `p`-event exists. -/
-def isInitialAt (p : P) (t : EventTuple P Event) (H : PreHistory P Event) : Prop :=
-  t ∈ H ∧ t.1 = p ∧ ¬ ∃ H' : PreHistory P Event, H' ≺ₚ[p] t.2.2
+/-- `(p, E, H)` is `p`-initial when no earlier `p`-event exists.
+    See Definition~\ref{defn.initial.final.event-tuple}. -/
+def isInitialAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
+  t ∈ H ∧ World.place t = p ∧
+    ¬ ∃ t' : World P Event,
+        t' ∈ H ∧ World.place t' = p ∧ World.time t' ≺− World.time t
 
-/-- Definition 2.3.15(3): `(p, E, H)` is `p`-final when no later `p`-event exists. -/
-def isFinalAt (p : P) (t : EventTuple P Event) (H : PreHistory P Event) : Prop :=
-  t ∈ H ∧ t.1 = p ∧ ¬ ∃ H' : PreHistory P Event, t.2.2 ≺ₚ[p] H'
-
-/-- Lemma 2.3.14(2): The reverse implication need not hold.
-    There exist histories H' and H where H' ⊆trn H but not H' ⪯ H -/
-theorem transitiveSubset_not_implies_happensBeforeEq :
-  ∃ (P Event : Type) (H' H : History P Event),
-    H'.val ⊆trn H.val ∧ ¬(H'.val ⪯ H.val) := by
-  -- Use minimalHistory as H' and extendedHistory as H
-  use Unit, Unit, minimalHistory, extendedHistory
-  constructor
-  · -- Show minimalHistory.val ⊆trn extendedHistory.val
-    constructor
-    · -- minimalHistory.val ⊆ extendedHistory.val
-      intro e he
-      simp only [minimalHistory, minimalHistory_val, PreHistory.mem_mk, List.mem_singleton] at he
-      simp only [extendedHistory, extendedHistory_val, PreHistory.mem_mk, List.mem_cons]
-      right
-      -- he is (e = ((), MaybeEvent.none, PreHistory.empty) ∨ e ∈ [])
-      -- We need e ∈ [((), MaybeEvent.none, PreHistory.empty)]
-      simp
-      exact he
-    · -- isHereditarilyTransitive minimalHistory.val
-      exact minimalHistory_hered
-  · -- Show ¬(minimalHistory.val ⪯ extendedHistory.val)
-    intro h_le
-    rw [PreHistory.happensBeforeEq_iff] at h_le
-    cases h_le with
-    | inl h_before =>
-      -- Case: minimalHistory.val ≺− extendedHistory.val
-      -- This would mean ∃ p e, (p, e, minimalHistory.val) ∈ extendedHistory.val
-      rcases h_before with ⟨p, e, hmem⟩
-      simp only [extendedHistory, extendedHistory_val, PreHistory.mem_mk,
-                 List.mem_cons] at hmem
-      cases hmem with
-      | inl h_eq =>
-        -- (p, e, minimalHistory.val) = ((), MaybeEvent.some (), PreHistory.empty)
-        simp only [Prod.ext_iff] at h_eq
-        have : minimalHistory.val = PreHistory.empty := h_eq.2.2
-        -- But minimalHistory.val is not empty!
-        have not_empty : ((), MaybeEvent.none, PreHistory.empty) ∈ minimalHistory.val := by
-          simp [minimalHistory, minimalHistory_val, PreHistory.mem_mk]
-        rw [this] at not_empty
-        simp [PreHistory.empty] at not_empty
-      | inr h_tail =>
-        -- h_tail means (p, e, minimalHistory.val) is in the tail
-        cases h_tail with
-        | inl h_eq =>
-          -- (p, e, minimalHistory.val) = ((), MaybeEvent.none, PreHistory.empty)
-          simp only [Prod.ext_iff] at h_eq
-          have : minimalHistory.val = PreHistory.empty := h_eq.2.2
-          -- But minimalHistory.val is not empty!
-          have not_empty : ((), MaybeEvent.none, PreHistory.empty) ∈ minimalHistory.val := by
-            simp [minimalHistory, minimalHistory_val, PreHistory.mem_mk]
-          rw [this] at not_empty
-          simp [PreHistory.empty] at not_empty
-        | inr h_empty =>
-          -- (p, e, minimalHistory.val) ∈ [], which is impossible
-          simp at h_empty
-    | inr h_eq =>
-      -- Case: minimalHistory.val = extendedHistory.val
-      -- But they have different elements!
-      have h1 : ((), MaybeEvent.some (), PreHistory.empty) ∈ extendedHistory.val := by
-        simp [extendedHistory, extendedHistory_val, PreHistory.mem_mk]
-      rw [← h_eq] at h1
-      simp only [minimalHistory, minimalHistory_val, PreHistory.mem_mk, List.mem_singleton] at h1
-      -- This gives us ((), MaybeEvent.some (), PreHistory.empty) =
-      --             ((), MaybeEvent.none, PreHistory.empty)
-      simp only [Prod.ext_iff] at h1
-      -- MaybeEvent.some () = MaybeEvent.none, which is false
-      cases h1.2.1
-
-/-- Transitivity Closure (Knowledge preservation):
-    The "knows of" relation is transitive in histories -/
-theorem transitivity_closure (H : History P Event) :
-  ∀ e1 e2 e3 : EventTuple P Event,
-    e1 ∈ H.val → e2 ∈ H.val → e3 ∈ H.val →
-    (∃ p, e2 = (p, e2.2.1, e1.2.2)) →
-    (∃ q, e3 = (q, e3.2.1, e2.2.2)) →
-    (∃ r, (r, e3.2.1, e1.2.2) ∈ H.val) := by
-  intro e1 e2 e3 _ _ he3 hp hq
-  -- Extract the witnesses and equalities
-  rcases hp with ⟨_, hp_eq⟩
-  rcases hq with ⟨q, hq_eq⟩
-  -- From hp_eq: e2 = (p, e2.2.1, e1.2.2), so e2.2.2 = e1.2.2
-  have h_time : e2.2.2 = e1.2.2 := by rw [hp_eq]
-  -- Substitute this time equality into hq_eq
-  -- Since e3 = (q, e3.2.1, e2.2.2) and e2.2.2 = e1.2.2,
-  -- we have e3 = (q, e3.2.1, e1.2.2)
-  use q
-  -- Show that (q, e3.2.1, e1.2.2) ∈ H.val
-  -- This follows from e3 = (q, e3.2.1, e2.2.2) and e2.2.2 = e1.2.2
-  rw [hq_eq] at he3
-  rw [h_time] at he3
-  exact he3
+/-- `(p, E, H)` is `p`-final when no later `p`-event exists.
+    See Definition~\ref{defn.initial.final.event-tuple}. -/
+def isFinalAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
+  t ∈ H ∧ World.place t = p ∧
+    ¬ ∃ t' : World P Event,
+        t' ∈ H ∧ World.place t' = p ∧ World.time t ≺− World.time t'
 
 /-- Corollary: For histories, ≺− transitivity within the history -/
 theorem happensBefore_trans_in_history (H : History P Event) :
@@ -717,7 +453,7 @@ theorem localView_subset_history (H : History P Event)
 lemma happensBefore_subset {H : History P Event} {h' : PreHistory P Event} :
     (h' ≺− H.val) → h' ⊆ H.val := by
   intro h_before
-  exact History.transitive H h' h_before
+  exact (History.transitive H) h' h_before
 
 /-- Order-theoretic monotonicity for histories: `h₁ ≤ h₂` yields `h₁.val ⊆ h₂.val`. -/
 lemma subset_of_le {h₁ h₂ : History P Event} :
@@ -726,7 +462,7 @@ lemma subset_of_le {h₁ h₂ : History P Event} :
   have h := (PreHistory.happensBeforeEq_iff (h₁.val) (h₂.val)).mp h_le
   cases h with
   | inl h_before =>
-      exact History.transitive h₂ h₁.val h_before
+      exact (History.transitive h₂) h₁.val h_before
   | inr h_eq =>
       intro t ht
       simpa [h_eq] using ht
@@ -748,79 +484,33 @@ lemma transitiveSubset_trans {h₁ h₂ h₃ : PreHistory P Event} :
   · exact PreHistory.subset_trans h₁ h₂ h₃ h₁₂_subset h₂₃_subset
   · exact h₁₂_trn
 
-/-- Definition 3.3.2 (September 17, 2025 draft): a participant is sequential when
-    any two of its event-tuples appear in sequence. -/
-def isSequential (p : P) (h : PreHistory P Event) : Prop :=
-  ∀ {t₁ t₂ : EventTuple P Event},
-    t₁ ∈ h →
-    t₂ ∈ h →
-    EventTuple.participant t₁ = p →
-    EventTuple.participant t₂ = p →
-      (t₁ ∈ EventTuple.time t₂ ∨
-        t₂ ∈ EventTuple.time t₁ ∨
-        t₁ = t₂)
+/-- Definition~\ref{defn.sequential.p} expressed using the `historyAt`
+projection from Definition~\ref{defn.historyat}. -/
+lemma isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
+    isSequential (P := P) (Event := Event) p h ↔
+      ∀ {t t' : World P Event},
+        t ∈ PreHistory.historyAt (P := P) (Event := Event) h p →
+        t' ∈ PreHistory.historyAt (P := P) (Event := Event) h p →
+          (t ≪ t' ∨ t' ≪ t ∨ t = t') := by
+  constructor
+  · intro hSeq t t' ht ht'
+    obtain ⟨ht_mem, ht_place⟩ := ht
+    obtain ⟨ht'_mem, ht'_place⟩ := ht'
+    exact hSeq ht_mem ht'_mem ht_place ht'_place
+  · intro hSeq t₁ t₂ ht₁ ht₂ hp₁ hp₂
+    have ht₁_history :
+        t₁ ∈ PreHistory.historyAt (P := P) (Event := Event) h p := ⟨ht₁, hp₁⟩
+    have ht₂_history :
+        t₂ ∈ PreHistory.historyAt (P := P) (Event := Event) h p := ⟨ht₂, hp₂⟩
+    exact hSeq ht₁_history ht₂_history
 
 /-! ## Helper lemmas for sequentiality preservation -/
 
 /-- If an event is in H, its time component happens before H -/
-lemma happensBefore_of_mem {H : PreHistory P Event} {e : EventTuple P Event}
+lemma happensBefore_of_mem {H : PreHistory P Event} {e : World P Event}
   (he : e ∈ H) :
   e.2.2 ≺− H :=
   ⟨e.1, e.2.1, he⟩
-
-/-- If `H' ≺− H` then there exists a participant that knows the possible world
-`H'` at `(p, H)` (Lemma 2.4.3). -/
-lemma exists_knowsOfPossibleWorld_of_happensBefore
-    {H : History P Event} {H' : PreHistory P Event}
-    (h_before : H' ≺− H.val) :
-    ∃ p : P, (p,H') ↢[H.val] p,H.val := by
-  classical
-  rcases h_before with ⟨p, e, mem⟩
-  exact ⟨p, ⟨e, Or.inr mem⟩⟩
-
-/-- If a participant knows the possible world `H'` at `(p, H)` then
-`H' ⪯ H` (Lemma 2.4.3/2.4.4, reverse direction). -/
-lemma happensBeforeEq_of_exists_knowsOfPossibleWorld
-    {H : History P Event} {H' : PreHistory P Event}
-    (h_know : ∃ p : P, (p,H')↢[H.val]p,H.val) :
-    H' ⪯ H.val := by
-  classical
-  rcases h_know with ⟨p, ⟨e, hmem⟩⟩
-  cases hmem with
-  | inl hself =>
-      rcases hself with ⟨_, hh, _⟩
-      subst hh
-      exact Or.inr rfl
-  | inr mem' =>
-      exact Or.inl ⟨p, e, mem'⟩
-
-/-- Forward direction: sequentiality is preserved by local views (now the
-identity). -/
-lemma sequentiality_forward {p : P} {H : History P Event} {H_bar : History P Event}
-  (seqH : isSequential p H.val) :
-  isSequential p (H_bar ∣ᵥ H).val := by
-  intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-  simpa [localView] using seqH ht₁ ht₂ hp₁ hp₂
-
-/-- Backward direction: sequentiality on the local view implies sequentiality
-on the original history. -/
-lemma sequentiality_backward {p : P} {H : History P Event} {H_bar : History P Event}
-  (_hsubtrn : H ⊆trn H_bar.val)
-  (seqLV : isSequential p (H_bar ∣ᵥ H).val) :
-  isSequential p H.val := by
-  intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-  simpa [localView] using seqLV ht₁ ht₂ hp₁ hp₂
-
-/-- Lemma 3.2.8 (sequentiality preservation): the new local view leaves
-sequentiality unchanged. -/
-theorem sequentiality_preservation (p : P) (H : History P Event) (H_bar : History P Event)
-  (_hsubtrn : H ⊆trn H_bar.val) :
-  isSequential p H.val ↔ isSequential p (H_bar ∣ᵥ H).val := by
-  constructor <;> intro h
-  · intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-    simpa [localView] using h ht₁ ht₂ hp₁ hp₂
-  · intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-    simpa [localView] using h ht₁ ht₂ hp₁ hp₂
 
 /-- Lemma 5.1.1: Sequentiality is monotone -/
 theorem sequentiality_monotone (p : P) (h h' : History P Event) :
@@ -841,8 +531,10 @@ lemma sequentiality_of_predecessor {p : P} {H : History P Event}
     (h_before : h' ≺− H.val)
     (hseq : isSequential (P := P) (Event := Event) p H.val) :
     isSequential p h' := by
-  have hsubset : h' ⊆ H.val := History.transitive H h' h_before
+  have hsubset : h' ⊆ H.val := History.subset_of_happensBefore (H := H) h_before
   intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
   have ht₁' : t₁ ∈ H.val := hsubset _ ht₁
   have ht₂' : t₂ ∈ H.val := hsubset _ ht₂
   exact hseq ht₁' ht₂' hp₁ hp₂
+
+end History

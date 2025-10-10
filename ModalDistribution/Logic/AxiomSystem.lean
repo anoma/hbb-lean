@@ -18,42 +18,28 @@ open scoped Formula
 
 set_option autoImplicit false
 
-universe u₁ u₂ u₃
+-- Fix at Type 0 to match Semantics.lean
+variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
-/-- Closed formulas regarded as axioms (Definition 5.2.1). -/
-structure Axiom (S : Signature) [DecidableEq S.VarSymb] where
-  /-- Underlying formula. -/
-  formula : Formula S
-  /-- The axiom is closed (no free variables). -/
-  isClosed : formula.IsClosed
+/-- Formulas regarded as axioms (Definition 5.2.1).
+In HOAS, all formulas are inherently closed. -/
+abbrev Axiom (S : Signature.{0, 0, 0}) : Type 1 :=
+  Formula S
 
 namespace Axiom
 
-variable {S : Signature} [DecidableEq S.VarSymb]
-
-instance : Coe (Axiom S) (Formula S) where
-  coe ax := ax.formula
-
-@[simp] lemma coe_formula (ax : Axiom S) : (ax : Formula S) = ax.formula := rfl
-
-@[simp] lemma isClosed_coe (ax : Axiom S) : (ax : Formula S).IsClosed := ax.isClosed
-
 /-- An axiom holds in a model when it is valid at every event (Definition 5.2.1). -/
 @[simp] def Valid
-    {P : Type u₃} [Nonempty P]
     (M : Model S P) (ax : Axiom S) : Prop :=
-  ∀ σ : Assignment S, EventValid M σ ax.formula
+  EventValid M ax
 
 end Axiom
 
 /-- A theory is a (possibly infinite) set of axioms (Definition 5.2.1). -/
-abbrev Theory (S : Signature) [DecidableEq S.VarSymb] : Type :=
+abbrev Theory (S : Signature.{0, 0, 0}) : Type 1 :=
   Set (Axiom S)
 
 namespace Theory
-
-variable {S : Signature} [DecidableEq S.VarSymb]
-variable {P : Type u₃} [Nonempty P]
 
 /-- A model satisfies a theory when it satisfies each of its axioms (Definition 5.2.1). -/
 @[simp] def Valid (M : Model S P) (T : Theory S) : Prop :=
