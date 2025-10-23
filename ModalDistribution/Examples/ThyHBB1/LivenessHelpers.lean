@@ -36,7 +36,7 @@ variable {value : Signature.Value S}
 point.  This lifts a local vote quorum and liveness witness into an eventual
 delivery fact at the same world. -/
 lemma deliver_from_vote_box_local
-    (hDeliverAx : EventValid M
+    (hDeliverAx : AllWorldValid M
       (deliverForwardAxiom liveSymb voteSymb deliverSymb))
     {t : World P (Signature.EventType S)}
     (ht_mem : t ∈ M.history.val)
@@ -45,7 +45,13 @@ lemma deliver_from_vote_box_local
       ⟪t⟫ ⊨[M]□ᶠ↓[[reporting]](ofEvent ⟨voteSymb, [learner, value]⟩)) :
     ⟪t⟫ ⊨[M]↕ᶠ(ofEvent ⟨deliverSymb, [reporting, learner, value]⟩) := by
   classical
-  have hForward := hDeliverAx ht_mem
+  have hForward :
+      ⟪t⟫ ⊨[M]
+        deliverForwardAxiom liveSymb voteSymb deliverSymb :=
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := deliverForwardAxiom liveSymb voteSymb deliverSymb)
+      hDeliverAx ht_mem
   have hReporting :=
     Sat.forall_elim (M := M) (w := t)
       (body := fun reporting' =>
@@ -89,7 +95,7 @@ delivery.  This packages the `Deliver!` instantiation together with the
 time-shifting arguments based on `ThyLive`. -/
 lemma deliver_from_vote_box
     (hThyLive : M ⊨ᵀ ThyLive liveSymb)
-    (hDeliverAx : EventValid M
+    (hDeliverAx : AllWorldValid M
       (deliverForwardAxiom liveSymb voteSymb deliverSymb))
     {p : P}
     (hLiveTop : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]predicate0 liveSymb)
@@ -121,7 +127,7 @@ lemma deliver_from_vote_box
     simpa [wTop, World.place, World.time] using hLiveTop
   have hLiveLocal :
       ⟪t⟫ ⊨[M] predicate0 liveSymb :=
-    (live_always_equiv_part1 (M := M)
+    (alwaysLiveEquivForward (M := M)
       (liveSymb := liveSymb)
       (hTheory := hThyLive)
       (t := t) (ht := ht_mem)).mpr hLiveEnd

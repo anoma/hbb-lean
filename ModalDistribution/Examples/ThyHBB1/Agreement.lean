@@ -14,7 +14,7 @@ This file contains the main agreement theorem for the ThyHBB1 broadcast protocol
 
 ## Main Result
 
-- **`hbb1_agreement`** (Theorem 6.6.1 / Proposition~\ref{prop.1.agreement}):
+- **`agreementThyHBB1`** (Theorem 6.6.1 / Proposition~\ref{prop.1.agreement}):
   The agreement property states that if two different values are delivered at different learners,
   then sequentiality must be violated. More precisely, if:
   - Two deliver events occur for values v₁ and v₂ at learners l₁ and l₂
@@ -56,9 +56,17 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Proposition~\ref{prop.1.agreement} (6.3.1) (Soundness / Agreement) specialised to
-`ThyHBB1`. -/
-lemma hbb1_agreement
+/-- Agreement property for ThyHBB1 (Proposition~\ref{prop.1.agreement}, Theorem 6.6.1).
+
+Under sequentiality assumptions, if two different values are delivered at different
+learners, they must be equal. This is the fundamental correctness property of the
+broadcast protocol: all processes that deliver a value must deliver the same value.
+
+The proof proceeds by contradiction, deriving a contradiction from the assumption
+that two different values v₁ ≠ v₂ are delivered under sequentiality.
+
+See also: `agreementFromDeliveriesThyHBB1`, agreement properties for ThyHBB2 and ThyHBB3. -/
+lemma agreementThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
@@ -124,16 +132,16 @@ lemma hbb1_agreement
         (hEvt' := hVoteBox₂)
         (hDistinct := hDistinct)
 
-  have hVoteAx : EventValid M
+  have hVoteAx : AllWorldValid M
       (voteBackwardAxiom proposeSymb echoSymb voteSymb) := by
     apply hTheory
     simp [ThyHBB1]
 
   have hEchoBack :
-      □⇓⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
+      □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
     hTheory (by simp [ThyHBB1])
 
-  have hEchoNE : EventValid M (echoNonEquivAxiom echoSymb) :=
+  have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
     hTheory (by simp [ThyHBB1])
 
   have derive_contradiction :
@@ -199,7 +207,12 @@ lemma hbb1_agreement
             ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
               (safeFormula proposeSymb learner ∧ᶠ
                 □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := la) (h := hVoteAx hNow_mem_history)
+        (v := la)
+        (h :=
+          AllWorldValid.of_mem_history
+            (M := M)
+            (φ := voteBackwardAxiom proposeSymb echoSymb voteSymb)
+            hVoteAx hNow_mem_history)
     have hVoteImp_now_value :=
       Sat.forall_elim (M := M) (w := wNow)
         (body := fun value =>
@@ -235,7 +248,12 @@ lemma hbb1_agreement
             ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
               (safeFormula proposeSymb learner ∧ᶠ
                 □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := lb) (h := hVoteAx hPast_mem_history)
+        (v := lb)
+        (h :=
+          AllWorldValid.of_mem_history
+            (M := M)
+            (φ := voteBackwardAxiom proposeSymb echoSymb voteSymb)
+            hVoteAx hPast_mem_history)
     have hVoteImp_past_value :=
       Sat.forall_elim (M := M) (w := wPast)
         (body := fun value =>
@@ -266,7 +284,7 @@ lemma hbb1_agreement
     have hEcho_lb_box :
         ⟪wNow⟫ ⊨[M]
           □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩) :=
-      lemma_4_2_4_part1 (M := M) (w := wNow)
+      pastBoxCollapsesToPresentBox (M := M) (w := wNow)
         (l := lb) (φ := ofEvent ⟨echoSymb, [vb]⟩)
         (hMem := hNow_mem_history) hPastBox_lb
 
@@ -369,6 +387,59 @@ lemma hbb1_agreement
           (va := v₂) (vb := v₁)
           (fun h => hNe h.symm) hRight
       simpa [Sat] using hEqFinal.symm
+
+/-- Agreement from deliveries helper for ThyHBB1 (Corollary of Proposition~\ref{prop.1.agreement}).
+
+Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of time,
+the delivered values must coincide. This factors out the core reasoning used in
+the main agreement theorem.
+
+See also: `agreementThyHBB1`. -/
+lemma agreementFromDeliveriesThyHBB1
+    (hTheory : M ⊨ᵀ
+      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l₁ l₂ l₁' l₂' : Signature.Value S}
+    {v₁ v₂ : Signature.Value S}
+    (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq)
+    (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
+    (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
+    ⊨[M] v₁ ≃ᶠ v₂ := by
+  classical
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  have hImp :
+      ⟪wTop⟫ ⊨[M]
+        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
+          (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
+            (v₁ ≃ᶠ v₂) := by
+    simpa [wTop]
+      using
+        (agreementThyHBB1 (M := M)
+          (hTheory := hTheory) (l₁ := l₁) (l₂ := l₂)
+          (l₁' := l₁') (l₂' := l₂') (v₁ := v₁) (v₂ := v₂)
+          (hSeq := hSeq) p)
+  have hDeliver₁Top :
+      ⟪wTop⟫ ⊨[M]
+        ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩) :=
+    by simpa [wTop] using hDeliver₁ p
+  have hDeliver₂Top :
+      ⟪wTop⟫ ⊨[M]
+        ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩) :=
+    by simpa [wTop] using hDeliver₂ p
+  have hImp' :
+      ⟪wTop⟫ ⊨[M]
+        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
+          (v₁ ≃ᶠ v₂) :=
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
+      (ψ :=
+        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
+          (v₁ ≃ᶠ v₂)) hImp hDeliver₁Top
+  have hEq :=
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩))
+      (ψ := v₁ ≃ᶠ v₂) hImp' hDeliver₂Top
+  simpa [wTop] using hEq
 
 end Examples
 end ModalDistribution

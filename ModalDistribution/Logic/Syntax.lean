@@ -52,6 +52,14 @@ throughout the paper.
 * `World.accessible` / notation `t' ≪ t` ↔ `\accessible` (Definition~\ref{defn.world}(3)).
 * `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `\accessible^{-}` (Definition~\ref{defn.world}(4)).
 
+> **Validity notation warning.**  The paper uses three related validity
+> judgements (`\aworld\mentHφ`, `\mentHφ`, `\alltimeplace\mentHφ`).  In this
+> formalisation they correspond to different Lean notations:
+> `⟪w⟫ ⊨[M] φ` for local/world satisfaction, `⊨[M] φ` for end-of-time
+> validity, and `□W⊨[M] φ` for all-world validity.  Picking the wrong one
+> changes a statement’s meaning, so double-check which modality the paper
+> uses before translating it.
+
 ## References
 
 * Definition 3.1.3 in the HBB paper.
@@ -116,27 +124,27 @@ def exists_ (body : S.Value → Formula S) : Formula S :=
   not (.forall (fun v => not (body v)))
 
 /-- Sometimes modality (`↕`) specialised to the current participant; sugar for `⤒↓`. -/
-@[simp] def sometime (φ : Formula S) : Formula S :=
+def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 
 /-- Always in the past (`⇕` in Figure 4). -/
-@[simp] def alwaysPast (φ : Formula S) : Formula S :=
+def alwaysPast (φ : Formula S) : Formula S :=
   not (sometime (not φ))
 
 /-- Eventually in the past (`⇓` in Figure 4). -/
-@[simp] def eventuallyPast (φ : Formula S) : Formula S :=
+def eventuallyPast (φ : Formula S) : Formula S :=
   not (.past (not φ))
 
 /-- Box modality from Figure 4. -/
-@[simp] def box (ls : List S.Value) (φ : Formula S) : Formula S :=
+def box (ls : List S.Value) (φ : Formula S) : Formula S :=
   not (.diamond ls (not φ))
 
 /-- Diamond with past guard. -/
-@[simp] def diamondPast (ls : List S.Value) (φ : Formula S) : Formula S :=
+def diamondPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (.past φ)
 
 /-- Diamond with eventual past guard. -/
-@[simp] def diamondEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
+def diamondEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (eventuallyPast φ)
 
 /-- Diamond with empty learner list. -/
@@ -144,11 +152,11 @@ def exists_ (body : S.Value → Formula S) : Formula S :=
   .diamond [] φ
 
 /-- Box with past guard. -/
-@[simp] def boxPast (ls : List S.Value) (φ : Formula S) : Formula S :=
+def boxPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (.past φ)
 
 /-- Box with eventual past guard. -/
-@[simp] def boxEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
+def boxEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (Formula.eventuallyPast φ)
 
 /-- Box over the empty learner list. -/

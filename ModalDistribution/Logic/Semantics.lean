@@ -1130,14 +1130,30 @@ lemma EndValid.congr
       (φ := ψ) (ψ := φ) (h := fun p => (h p).2) hψ
 
 /-- Event-driven validity (Definition~\ref{defn.valid} / Figure~\ref{fig.valid}). -/
-@[simp] def EventValid
+@[simp] def AllWorldValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ {t : World P S.EventType},
-    t ∈ M.history.val →
+    t.time ⪯ M.history.val →
       ⟪t⟫ ⊨[M]φ
 
-notation:55 "□⇓⊨[" M "]" φ =>
-  EventValid M φ
+lemma AllWorldValid.of_mem_history
+    (M : Model S P) {φ : Formula S}
+    (h : AllWorldValid M φ)
+    {t : World P S.EventType}
+    (ht : t ∈ M.history.val) :
+    ⟪t⟫ ⊨[M]φ :=
+  by
+    classical
+    have hBefore :
+        t.time ⪯ M.history.val :=
+      PreHistory.happensBeforeEq_of_mem
+        (P := P) (Event := Signature.EventType S)
+        (hmem := by
+          simpa [World.place, World.event, World.time] using ht)
+    exact h hBefore
+
+notation:55 "□W⊨[" M "]" φ =>
+  AllWorldValid M φ
 
 /-- Active participant predicate (Definition~\ref{defn.active.p}). -/
 @[simp] def IsActive

@@ -8,3 +8,5 @@ import ModalDistribution.Logic.Properties
 import ModalDistribution.Logic.AxiomSystem
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Examples.ThyHBB1
+import ModalDistribution.Examples.ThyHBB2
+import ModalDistribution.Examples.ThyHBB3

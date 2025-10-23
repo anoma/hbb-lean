@@ -24,9 +24,9 @@ are still accessible via `ModalDistribution.Examples.ThyHBB1`.
 
 ## Main Results
 
-- **Agreement** (`hbb1_agreement`): Two different values implies sequentiality violation
-- **Liveness 1** (`hbb1_liveness_one`): Under uniqueness, live proposals are eventually delivered
-- **Liveness 2** (`hbb1_liveness_two`): Deliveries propagate across intersecting learner quorums
+- **Agreement** (`agreementThyHBB1`): Two different values implies sequentiality violation
+- **Liveness 1** (`livenessOneThyHBB1`): Under uniqueness, live proposals are eventually delivered
+- **Liveness 2** (`livenessTwoThyHBB1`): Deliveries propagate across intersecting learner quorums
 
 ## Theory Definition
 

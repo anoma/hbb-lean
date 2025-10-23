@@ -1,10 +1,10 @@
-# ModalDistribution (Under Development)
+# ModalDistribution
 
-A Lean 4 library formalizing modal logic and broadcast algorithms from the paper "Logical Analysis of Heterogeneous Broadcasts" (hbb-disc.pdf).
+A Lean 4 library formalizing modal logic and broadcast algorithms from the paper "Modal logic specification and semantics of distributed algorithms, with application to heterogeneous broadcast".
 
 ## Overview
 
-This library provides mechanically verified proofs of distributed broadcast protocols using semitopologies and history structures. It formalizes three broadcast algorithms (ThyHBB1, ThyHBB2, ThyHBB3) and proves their correctness properties (Agreement, Liveness1, Liveness2).
+This library provides mechanically verified proofs of distributed broadcast protocols using semifilters and history structures. It formalizes three broadcast algorithms (ThyHBB1, ThyHBB2, ThyHBB3) and proves their correctness properties (Agreement, Liveness1, Liveness2).
 
 ## Installation
 
@@ -26,6 +26,8 @@ import ModalDistribution.Core.Prehistory
 import ModalDistribution.Logic.Syntax
 import ModalDistribution.Algorithms.ThyHBB1
 ```
+
+You may also simply open up the project in Visual Studio Code with the Lean 4 extension to step through proofs.
 
 ## Requirements
 

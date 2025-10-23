@@ -1,5 +1,6 @@
 import ModalDistribution.Logic.AxiomSystem
 import ModalDistribution.Logic.Properties
+import ModalDistribution.Logic.Syntax
 import ModalDistribution.Core.Prehistory
 import ModalDistribution.Core.History
 
@@ -158,17 +159,17 @@ lemma live_guard_past
       liveActiveAxiom (S := S) liveSymb ∈ ThyLive liveSymb := by
     simp [ThyLive]
   have hActive :
-      EventValid M (liveActiveAxiom (S := S) liveSymb) :=
+      AllWorldValid M (liveActiveAxiom (S := S) liveSymb) :=
     hTheory hActiveMem
   have hActiveEvent :
-      EventValid M
+      AllWorldValid M
         (⤒ᶠ (□ᶠ[]
           ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ))) := by
     intro t ht
     simpa [liveActiveAxiom]
       using hActive ht
   obtain ⟨w₀, hwTime, hBox⟩ :=
-    eventValid_atEnd_exists (M := M)
+    AllWorldValid_atEnd_exists (M := M)
       (φ := □ᶠ[]
         ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ))
       hActiveEvent hNonempty
@@ -207,7 +208,7 @@ lemma live_at_predecessor
       liveAlwaysAxiom (S := S) liveSymb ∈ ThyLive liveSymb := by
     simp [ThyLive]
   have hAlways :
-      EventValid M (liveAlwaysAxiom (S := S) liveSymb) :=
+      AllWorldValid M (liveAlwaysAxiom (S := S) liveSymb) :=
     hTheory hAlwaysMem
   have hBefore : w.time ≺− M.history.val :=
     happensBefore_of_mem (P := P) (Event := Signature.EventType S) hMem
@@ -218,7 +219,7 @@ lemma live_at_predecessor
       ⟪⟨w.place, w.event, Hpre.val⟩⟫ ⊨[M]
         (Formula.predicate0 liveSymb ⇔ᶠ
           ⤒ᶠ (Formula.predicate0 liveSymb)) :=
-    eventValid_predecessor (M := M)
+    AllWorldValid_predecessor (M := M)
       (φ := liveAlwaysAxiom (S := S) liveSymb)
       hAlways (by
         simpa [World.place, World.event, World.time]
@@ -313,8 +314,14 @@ lemma live_guard_predecessor_data
   simpa [Formula.predicate0, Sat, World.place, World.event, World.time, hPre_val]
     using this
 
-/-- Lemma 5.2.9(1): liveness does not depend on time. -/
-lemma live_always_equiv_part1
+/-- Liveness at world equivalent to liveness at end-of-time (Lemma 5.2.9(1)).
+
+Liveness does not depend on time: a participant is live at a specific world
+if and only if it is live at the end-of-time world for that participant.
+This follows from the liveness-always axiom (live ⇔ ⤒ live).
+
+See also: `alwaysLiveEquivBackward`, liveness-always axiom. -/
+lemma alwaysLiveEquivForward
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {t : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val) :
@@ -325,20 +332,23 @@ lemma live_always_equiv_part1
       liveAlwaysAxiom (S := S) liveSymb ∈ ThyLive liveSymb := by
     simp [ThyLive]
   have hAlways :
-      EventValid M (liveAlwaysAxiom (S := S) liveSymb) :=
+      AllWorldValid M (liveAlwaysAxiom (S := S) liveSymb) :=
     hTheory hAlwaysMem
   have hIff :
-      ⟪⟨t.place, t.event, t.time⟩⟫ ⊨[M]
+      ⟪t⟫ ⊨[M]
         (Formula.predicate0 liveSymb ⇔ᶠ
           ⤒ᶠ (Formula.predicate0 liveSymb)) :=
-    hAlways (t := t) ht
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := liveAlwaysAxiom (S := S) liveSymb)
+      hAlways ht
   constructor
   · intro hLocal
     have hAtEnd :
-        ⟪⟨t.place, t.event, t.time⟩⟫ ⊨[M]
+        ⟪t⟫ ⊨[M]
           ⤒ᶠ (Formula.predicate0 liveSymb) :=
       (Sat.iff_mp (M := M)
-        (w := ⟨t.place, t.event, t.time⟩)
+        (w := t)
         (φ := Formula.predicate0 liveSymb)
         (ψ := ⤒ᶠ (Formula.predicate0 liveSymb))
         hIff) hLocal
@@ -346,16 +356,16 @@ lemma live_always_equiv_part1
         ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
           Formula.predicate0 liveSymb :=
       (Sat.atEnd (M := M)
-        (w := ⟨t.place, t.event, t.time⟩)
+        (w := t)
         (φ := Formula.predicate0 liveSymb)).1 hAtEnd
     simpa [Sat, World.place, World.event, World.time]
       using hGlobal
   · intro hGlobal
     have hAtEnd :
-        ⟪⟨t.place, t.event, t.time⟩⟫ ⊨[M]
+        ⟪t⟫ ⊨[M]
           ⤒ᶠ (Formula.predicate0 liveSymb) :=
       (Sat.atEnd (M := M)
-        (w := ⟨t.place, t.event, t.time⟩)
+        (w := t)
         (φ := Formula.predicate0 liveSymb)).2
         (by
           simpa [Sat, World.place, World.event, World.time]
@@ -371,9 +381,15 @@ lemma live_always_equiv_part1
     simpa [Sat, World.place, World.event, World.time]
       using hLocal'
 
-/-- Lemma~\ref{lemm.live.then.live.now}(\ref{item.live.then.live.now.2}):
-liveness does not depend on time. -/
-lemma live_always_equiv_part2
+/-- Liveness at any two worlds with same participant
+(Lemma~\ref{lemm.live.then.live.now}(\ref{item.live.then.live.now.2})).
+
+Liveness does not depend on time: if two worlds have the same participant (place),
+then liveness holds at one if and only if it holds at the other. This is a direct
+consequence of the forward direction applied twice.
+
+See also: `alwaysLiveEquivForward`, liveness-always axiom. -/
+lemma alwaysLiveEquivBackward
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {t t' : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val)
@@ -383,10 +399,10 @@ lemma live_always_equiv_part2
       (⟪t'⟫ ⊨[M] Formula.predicate0 liveSymb) := by
   classical
   have h_t :=
-    live_always_equiv_part1 (M := M)
+    alwaysLiveEquivForward (M := M)
       (t := t) (hTheory := hTheory) (ht := ht)
   have h_t' :=
-    live_always_equiv_part1 (M := M)
+    alwaysLiveEquivForward (M := M)
       (t := t') (hTheory := hTheory) (ht := ht')
   constructor
   · intro hLocal
@@ -443,12 +459,12 @@ lemma knowledgeDiamond_imp_at_predecessor
     simpa using ht
   have hKnowMem :
       knowledgeDiamondAxiom (S := S) liveSymb [] φ ∈ ThyLive liveSymb := by
-    simp [ThyLive]
+    simp [ThyLive, Formula.sometime, Formula.diamondPast]
   have hKnow :
-      EventValid M (knowledgeDiamondAxiom (S := S) liveSymb [] φ) :=
+      AllWorldValid M (knowledgeDiamondAxiom (S := S) liveSymb [] φ) :=
     hTheory hKnowMem
   have hPre :=
-    eventValid_predecessor (M := M)
+    AllWorldValid_predecessor (M := M)
       (hEvent := hKnow) (hMem := ht')
   have hPre_val :
       (predecessorHistory (H := M.history)
@@ -555,7 +571,7 @@ lemma live_eventually_knows_box
     exact ⟨[l], φ, rfl⟩
 
   have hKnowledge :
-      EventValid M
+      AllWorldValid M
         (knowledgeDiamondEventuallyAxiom (S := S)
           liveSymb [l] φ) :=
     hTheory hKnowMem
@@ -578,7 +594,11 @@ lemma live_eventually_knows_box
 
   -- Apply the knowledge axiom at the predecessor event.
   have hKnowledgePre :=
-    hKnowledge (t := wPre) hw_mem
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := knowledgeDiamondEventuallyAxiom (S := S)
+        liveSymb [l] φ)
+      hKnowledge hw_mem
 
   have hImp :=
     Sat.imp_elim (M := M) (w := wPre)
@@ -642,7 +662,7 @@ private lemma promote_live_atddot_past
     refine Or.inr ?_
     exact ⟨[l], φ, rfl⟩
   have hKnowledge :
-      EventValid M
+      AllWorldValid M
         (knowledgeDiamondEventuallyAxiom (S := S)
           liveSymb [l] φ) :=
     hTheory hKnowMem
@@ -650,6 +670,8 @@ private lemma promote_live_atddot_past
     (Sat.past (M := M)
       (w := ⟨q, †, M.history.val⟩)
       (φ := (Formula.predicate0 liveSymb) ∧ᶠ φ)).1 hPastLiveφ
+  have ht_mem_history : t ∈ M.history.val := by
+    simpa [World.time] using ht_mem
   have hLive_t :
       ⟪t⟫ ⊨[M]Formula.predicate0 liveSymb :=
     (Sat.and (M := M)
@@ -679,7 +701,12 @@ private lemma promote_live_atddot_past
       (w := t)
       (φ := □ᶠ↓[[l]]
         ((Formula.predicate0 liveSymb) ∧ᶠ φ))).2 hBox_tplace
-  have hKnow_t := hKnowledge (t := t) ht_mem
+  have hKnow_t :=
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := knowledgeDiamondEventuallyAxiom (S := S)
+        liveSymb [l] φ)
+      hKnowledge ht_mem_history
   have hLiveImp :
       ⟪t⟫ ⊨[M]
         (Formula.predicate0 liveSymb) ⇒ᶠ
@@ -723,7 +750,7 @@ private lemma promote_live_atddot_past
   have hLive_end_t :
       ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
         Formula.predicate0 liveSymb :=
-    (live_always_equiv_part1 (M := M)
+    (alwaysLiveEquivForward (M := M)
       (hTheory := hTheory)
       (t := t)
       (ht := ht_mem)).1 hLive_t
@@ -746,7 +773,7 @@ private lemma promote_live_atddot_past
   have hLive_tBox :
       ⟪tBox⟫ ⊨[M]
         Formula.predicate0 liveSymb :=
-    (live_always_equiv_part1 (M := M)
+    (alwaysLiveEquivForward (M := M)
       (hTheory := hTheory)
       (t := tBox)
       (ht := htBox_mem)).2 hLive_end_tBox
@@ -1267,7 +1294,7 @@ lemma live_knows_eventually_quorum_past
   have hBoxPast :
       ⟪tPast⟫ ⊨[M] φBox := by
     have hBox :=
-      lemma_4_2_4_part2 (M := M)
+      pastDiamondBoxCollapsesToPresentBox (M := M)
         (w := tPast) (l := l₁)
         (φ := Formula.ofEvent evt)
         (hMem := ht_mem_history)
@@ -1466,7 +1493,7 @@ theorem intertwined_two_quorums
   classical
   -- Nonempty intersection of the quorum families for `[l, l₁]`.
   have hIntersect_nonempty :=
-    (lemma_4_1_1_nonempty (M := M)
+    (nWayQuorumIntersectionNonempty (M := M)
       (ls := [l, l₁])).1 hIntersect
   -- Choose a default participant for extracting quorums.
   let p₀ : P := Classical.choice inferInstance

@@ -4,13 +4,14 @@ import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
 import ModalDistribution.Examples.ThyLive
+import ModalDistribution.Logic.Properties.Modalities
 
 /-!
 # ThyHBB1 Liveness Properties
 
 This file contains the two liveness two theorem for the ThyHBB1 broadcast protocol:
 
-- **Liveness 2** (`hbb1_liveness_two`): If a value is delivered to one learner and certain
+- **Liveness 2** (`livenessTwoThyHBB1`): If a value is delivered to one learner and certain
   liveness/intersection conditions hold, it will eventually be delivered to another learner.
   Corresponds to Proposition 6.5.4 (prop.1.liveness.2) in the paper.
 -/
@@ -41,7 +42,7 @@ If a value is delivered to learner l₁' and:
 - The safe condition holds for learner l
 - All of learner l₂'s quorum members are live
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
-lemma hbb1_liveness_two
+lemma livenessTwoThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -169,7 +170,7 @@ lemma hbb1_liveness_two
       | refl => simpa [wTop, World.place, World.time] using h
     have hLivePast :
         ⟪tVote⟫ ⊨[M] predicate0 liveSymb :=
-      (live_always_equiv_part1 (M := M)
+      (alwaysLiveEquivForward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hThyLiveTheory)
         (t := tVote)
@@ -215,7 +216,7 @@ lemma hbb1_liveness_two
           ((predicate0 liveSymb) ∧ᶠ
             □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
     classical
-    have hVoteAx : EventValid M
+    have hVoteAx : AllWorldValid M
         (voteBackwardAxiom proposeSymb echoSymb voteSymb) := by
       apply hTheory
       simp [ThyHBB1]
@@ -254,7 +255,12 @@ lemma hbb1_liveness_two
             ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
               (safeFormula proposeSymb learner ∧ᶠ
                 □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := l) (h := hVoteAx ht_mem_history)
+        (v := l)
+        (h :=
+          AllWorldValid.of_mem_history
+            (M := M)
+            (φ := voteBackwardAxiom proposeSymb echoSymb voteSymb)
+            hVoteAx ht_mem_history)
     have hVoteImp_value :=
       Sat.forall_elim (M := M) (w := tVote)
         (body := fun value =>
@@ -417,15 +423,26 @@ lemma hbb1_liveness_two
     have hSubsetTop' : wq.time ⊆trn M.history.val :=
       by simpa [wTop, wq, World.time]
         using hTimeSubsetTop
+    have ht_le : t.time ⪯ M.history.val :=
+      PreHistory.happensBeforeEq_of_mem
+        (P := P) (Event := Signature.EventType S)
+        (hmem := by
+          simpa [wTop, World.place, World.event, World.time] using ht_mem)
+    have hSubset_t : t.time ⊆trn M.history.val :=
+      ModalDistribution.Logic.time_subset_trn_history
+        (M := M) (t := t) ht_le
     have hSafeLocal :
         ⟪t⟫ ⊨[M] safeFormula proposeSymb l :=
-      safe_monotone_subset (M := M)
-        (l := l)
+      safe_axiom_body_monotone
+        (M := M)
+        (proposeSymb := proposeSymb)
         (w := wq)
         (w' := t)
-        (hSubset := hSubsetTop')
-        (hAcc := ⟨ht_mem, ht_place⟩)
-        (hSafe := by
+        (l := l)
+        (hSubset := by
+          simpa [wTop, wq, World.time] using hSubset_t)
+        (hPlace := by simpa [wTop, wq, World.place] using ht_place)
+        (hBody := by
           simpa [wTop]
             using hSafe q')
     have hSafeConj :
@@ -486,11 +503,11 @@ lemma hbb1_liveness_two
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l, v]⟩) := by
     classical
-    have hVoteForwardAx : EventValid M
+    have hVoteForwardAx : AllWorldValid M
         (voteForwardAxiom liveSymb proposeSymb echoSymb voteSymb) := by
       apply hTheory
       simp [ThyHBB1]
-    have hImpVotes : EventValid M
+    have hImpVotes : AllWorldValid M
         ((predicate0 liveSymb ∧ᶠ φVote) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
       intro t ht_mem
@@ -521,12 +538,15 @@ lemma hbb1_liveness_two
         ⟨by intro s hs; simpa [wt, World.time] using hs, M.history.hered⟩
       have hSafeLocal :
           ⟪t⟫ ⊨[M] safeFormula proposeSymb l :=
-        safe_monotone_subset (M := M)
-          (l := l)
+        safe_monotone_subset
+          (M := M)
           (w := wt)
           (w' := t)
+          (l := l)
           (hSubset := hSubsetWt)
-          (hAcc := ⟨ht_mem, rfl⟩)
+          (hBefore := by
+            simpa [World.time] using ht_mem)
+          (hPlace := rfl)
           (hSafe := hSafeTopWorld)
       have hSafeAlways :
           ⟪t⟫ ⊨[M] ⇕ᶠ (safeFormula proposeSymb l) := by
@@ -546,12 +566,19 @@ lemma hbb1_liveness_two
                 using hs_place⟩
         have hSafe_s :
             ⟪s⟫ ⊨[M] safeFormula proposeSymb l :=
-          safe_monotone_subset (M := M)
-            (l := l)
+          safe_monotone_subset
+            (M := M)
             (w := wt)
             (w' := s)
+            (l := l)
             (hSubset := hSubsetWt)
-            (hAcc := hAcc_s)
+            (hBefore :=
+              by
+                simpa [World.time] using
+                  PreHistory.happensBeforeEq_of_accessible
+                    (P := P) (Event := Signature.EventType S)
+                    hAcc_s.1)
+            (hPlace := by simpa [World.place] using hAcc_s.2)
             (hSafe := hSafeTopWorld)
         exact
           (Sat.not_elim (M := M) (w := s)
@@ -642,7 +669,7 @@ lemma hbb1_liveness_two
           ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) := by
     intro hLiveTop
     have hVotesTop := step7 hLiveTop
-    have hDeliverAx : EventValid M
+    have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
       simp [ThyHBB1]
@@ -659,6 +686,129 @@ lemma hbb1_liveness_two
         (hVotesTop := hVotesTop)
 
   exact step8 hLivep
+
+/-- Corollary of Proposition~\ref{prop.1.liveness.2}: a delivery for `(l₁', l)`
+forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
+delivered. -/
+lemma livenessTwoAtPastDownThyHBB1
+    (hTheory : M ⊨ᵀ
+      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l₁' l₂' l : Signature.Value S}
+    {v : Signature.Value S}
+    (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
+    (hSafe : ⊨[M]safeFormula proposeSymb l)
+    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
+         □ᶠ↓[[l₂']] (ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
+  classical
+  let deliver₁ := ofEvent ⟨deliverSymb, [l₁', l, v]⟩
+  let deliver₂ := ofEvent ⟨deliverSymb, [l₂', l, v]⟩
+  have hMain :=
+    livenessTwoThyHBB1 (M := M)
+      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+      (echoSymb := echoSymb) (voteSymb := voteSymb)
+      (deliverSymb := deliverSymb) (v := v)
+      (hTheory := hTheory)
+      (hIntersect := hIntersect)
+      (hSafe := hSafe)
+      (hLive := hLive)
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  have hLiveTop : ⟪wTop⟫ ⊨[M] □ᶠ[[l₂']] predicate0 liveSymb :=
+    by simpa [wTop] using hLive p
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hDeliver
+  obtain ⟨rDeliver, hPastDeliver⟩ :=
+    (Sat.diamond_nil (M := M) (w := wTop)
+        (φ := Formula.past deliver₁)).1
+      (by simpa [Formula.diamondPast] using hDeliver)
+  obtain ⟨O, hO, hAllLive⟩ :=
+    (sat_box_singleton_exists (M := M)
+        (w := wTop) (l := l₂')
+        (φ := predicate0 liveSymb)).1
+      hLiveTop
+  refine
+    (sat_box_singleton_exists (M := M)
+        (w := wTop) (l := l₂')
+        (φ := ↓ᶠ deliver₂)).2
+      ⟨O, hO, ?_⟩
+  intro q hqO
+  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
+  have hDeliver_q : ⟪wq⟫ ⊨[M] ♢ᶠ↓[[]] deliver₁ := by
+    have hPastWitness :
+        ⟪⟨rDeliver, †, wq.time⟩⟫ ⊨[M] Formula.past deliver₁ := by
+      simpa [wq, wTop, World.time] using hPastDeliver
+    exact
+      (Sat.diamond_nil (M := M) (w := wq)
+          (φ := Formula.past deliver₁)).2
+        ⟨rDeliver, hPastWitness⟩
+  have hImp_at_q :
+      ⟪wq⟫ ⊨[M]
+        (♢ᶠ↓[[]] deliver₁) ⇒ᶠ
+          (predicate0 liveSymb ⇒ᶠ ↕ᶠ deliver₂) := by
+    simpa [wq] using hMain q
+  have hNext :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := ♢ᶠ↓[[]] deliver₁)
+      (ψ := predicate0 liveSymb ⇒ᶠ ↕ᶠ deliver₂)
+      hImp_at_q hDeliver_q
+  have hLive_q : ⟪wq⟫ ⊨[M] predicate0 liveSymb :=
+    by simpa [wq, wTop, World.time] using hAllLive q hqO
+  have hEventual :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := predicate0 liveSymb)
+      (ψ := ↕ᶠ deliver₂)
+      hNext hLive_q
+  have hPastDeliver_q :
+      ⟪wq⟫ ⊨[M] ↓ᶠ deliver₂ :=
+    by
+      have hPast :=
+        (Sat.atEnd (M := M) (w := wq)
+          (φ := Formula.past deliver₂)).1
+          (by
+            simpa [Formula.sometime]
+              using hEventual)
+      simpa using hPast
+  exact hPastDeliver_q
+
+/-- Corollary of Proposition~\ref{prop.1.liveness.2}: a delivery for `(l₁', l)`
+forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
+lemma livenessTwoAtPastThyHBB1
+    (hTheory : M ⊨ᵀ
+      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l₁' l₂' l : Signature.Value S}
+    {v : Signature.Value S}
+    (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
+    (hSafe : ⊨[M]safeFormula proposeSymb l)
+    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
+         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
+  classical
+  let deliver₁ := ofEvent ⟨deliverSymb, [l₁', l, v]⟩
+  let deliver₂ := ofEvent ⟨deliverSymb, [l₂', l, v]⟩
+  have hBox :=
+    livenessTwoAtPastDownThyHBB1 (M := M)
+      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+      (echoSymb := echoSymb) (voteSymb := voteSymb)
+      (deliverSymb := deliverSymb) (v := v)
+      (hTheory := hTheory)
+      (hIntersect := hIntersect)
+      (hSafe := hSafe)
+      (hLive := hLive)
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hDeliver
+  have hBoxPast :=
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := ♢ᶠ↓[[]] deliver₁)
+      (ψ := □ᶠ↓[[l₂']] deliver₂)
+      (by simpa [wTop] using hBox p)
+      hDeliver
+  have hDiamond :=
+    singletonBoxImpliesDiamond (M := M) (w := wTop)
+      (l := l₂') (φ := deliver₂) hBoxPast
+  simpa [wTop] using hDiamond
 
 end Liveness_Two
 end Examples

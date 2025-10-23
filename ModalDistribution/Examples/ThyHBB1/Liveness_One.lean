@@ -4,13 +4,14 @@ import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
 import ModalDistribution.Examples.ThyLive
+import ModalDistribution.Logic.Properties.Modalities
 
 /-!
 # ThyHBB1 Liveness Properties
 
 This file contains the liveness one theorem for the ThyHBB1 broadcast protocol:
 
-- **Liveness 1** (`hbb1_liveness_one`): Under uniqueness of proposals and a live quorum,
+- **Liveness 1** (`livenessOneThyHBB1`): Under uniqueness of proposals and a live quorum,
   if a live participant knows a proposal, it will eventually be delivered.
   Corresponds to Proposition 6.5.3 (prop.1.liveness.1) in the paper.
 -/
@@ -35,10 +36,14 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Proposition 6.5.3 (prop.1.liveness.1) (Liveness 1) specialised to `ThyHBB1`.
+/-- Liveness One for ThyHBB1 (Proposition 6.5.3 / prop.1.liveness.1).
+
 Under uniqueness of proposals and a live quorum, if a live participant knows
-a proposal for value v, then v will eventually be delivered. -/
-lemma hbb1_liveness_one
+a proposal for value v, then v will eventually be delivered. This establishes
+that proposals from live participants will eventually propagate to delivery.
+
+See also: `livenessTwoThyHBB1`, `livenessOneAtPastDownThyHBB1`. -/
+lemma livenessOneThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -124,7 +129,7 @@ lemma hbb1_liveness_one
   have hStep2Global :
       ⊨[M] □ᶠ↓[[l]] φLiveEcho := by
     have hImpEcho :
-        □⇓⊨[M]
+        □W⊨[M]
           (φLivePropose ⇒ᶠ ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩)) :=
       uniquePropose_eventually_echo
         (M := M) (liveSymb := liveSymb)
@@ -205,13 +210,20 @@ lemma hbb1_liveness_one
         refine ⟨?_, ?_⟩
         · simpa [wTop, World.time] using ht_mem
         · simpa [wTop, World.place] using ht_place
+      have hBefore :
+          t.time ⪯ wTop.time :=
+        PreHistory.happensBeforeEq_of_accessible
+          (P := P) (Event := Signature.EventType S) hAcc.1
       have hSafe_t : ⟪t⟫ ⊨[M] φSafe :=
         safe_monotone_subset
           (M := M)
           (w := wTop) (w' := t)
           (l := l)
           (hSubset := hSubsetHistory)
-          (hAcc := hAcc)
+          (hBefore := by
+            simpa [wTop, World.time] using hBefore)
+          (hPlace := by
+            simpa [wTop, World.place] using hAcc.2)
           (hSafe := hSafeAtTop)
       exact
         (Sat.not_elim (M := M) (w := t) (φ := φSafe))
@@ -226,13 +238,13 @@ lemma hbb1_liveness_one
   classical
 
   have hVoteForwardAx :
-      EventValid M
+      AllWorldValid M
         (voteForwardAxiom liveSymb proposeSymb echoSymb voteSymb) := by
     apply hTheory
     simp [ThyHBB1]
 
   have hImpVotes :
-      □⇓⊨[M]
+      □W⊨[M]
         ((predicate0 liveSymb ∧ᶠ
             □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
@@ -272,7 +284,9 @@ lemma hbb1_liveness_one
         (w' := t)
         (l := l)
         (hSubset := hSubsetTop)
-        (hAcc := ⟨ht_mem, rfl⟩)
+        (hBefore := by
+          simpa [World.time] using ht_mem)
+        (hPlace := rfl)
         (hSafe := hSafeTop)
 
     have hSafeAlways : ⟪t⟫ ⊨[M] ⇕ᶠ φSafe := by
@@ -297,7 +311,14 @@ lemma hbb1_liveness_one
           (w' := s)
           (l := l)
           (hSubset := hSubsetTop)
-          (hAcc := hAcc_s)
+          (hBefore :=
+            by
+              simpa [World.time] using
+                PreHistory.happensBeforeEq_of_accessible
+                  (P := P) (Event := Signature.EventType S)
+                  hAcc_s.1)
+          (hPlace := by
+            simpa [World.place] using hAcc_s.2)
           (hSafe := hSafeTop)
       exact
         (Sat.not_elim (M := M) (w := s) (φ := φSafe))
@@ -402,7 +423,7 @@ lemma hbb1_liveness_one
         (φ := predicate0 liveSymb)
         (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))).1
         step6 hLiveTop
-    have hDeliverAx : EventValid M
+    have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
       simp [ThyHBB1]
@@ -424,6 +445,133 @@ lemma hbb1_liveness_one
       (φ := predicate0 liveSymb)
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
       step7 hLivep
+
+/-- Corollary of Proposition~\ref{prop.1.liveness.1}: whenever a live learner
+observes the guarded proposal diamond, every member of its quorum knows (in the
+past) that the corresponding value was delivered. -/
+lemma livenessOneAtPastDownThyHBB1
+    (hTheory : M ⊨ᵀ
+      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l : Signature.Value S}
+    {v : Signature.Value S}
+    (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
+    (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :
+    ⊨[M](♢ᶠ↓[[]]
+          (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
+         □ᶠ↓[[l]] (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
+  classical
+  let φAnte :=
+    predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
+  let deliverEvt := ofEvent ⟨deliverSymb, [l, l, v]⟩
+  have hMain :=
+    livenessOneThyHBB1 (M := M)
+      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+      (echoSymb := echoSymb) (voteSymb := voteSymb)
+      (deliverSymb := deliverSymb) (l := l) (v := v)
+      (hTheory := hTheory)
+      (hLiveQuorum := hLiveQuorum)
+      (hUnique := hUnique)
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  have hLiveTop : ⟪wTop⟫ ⊨[M] □ᶠ[[l]] predicate0 liveSymb :=
+    by simpa [wTop] using hLiveQuorum p
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hAnte
+  obtain ⟨rProp, hPastAnte⟩ :=
+    (Sat.diamond_nil (M := M) (w := wTop)
+        (φ := Formula.past φAnte)).1
+      (by simpa [Formula.diamondPast, φAnte] using hAnte)
+  obtain ⟨O, hO, hAllLive⟩ :=
+    (sat_box_singleton_exists (M := M)
+        (w := wTop) (l := l)
+        (φ := predicate0 liveSymb)).1
+      hLiveTop
+  refine
+    (sat_box_singleton_exists (M := M)
+        (w := wTop) (l := l)
+        (φ := ↓ᶠ deliverEvt)).2
+      ⟨O, hO, ?_⟩
+  intro q hqO
+  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
+  have hAnte_q :
+      ⟪wq⟫ ⊨[M]
+        ♢ᶠ↓[[]] φAnte := by
+    have hPastWitness :
+        ⟪⟨rProp, †, wq.time⟩⟫ ⊨[M] Formula.past φAnte := by
+      simpa [wq, wTop, World.time] using hPastAnte
+    exact
+      (Sat.diamond_nil (M := M) (w := wq)
+          (φ := Formula.past φAnte)).2
+        ⟨rProp, hPastWitness⟩
+  have hImp_q :
+      ⟪wq⟫ ⊨[M]
+        (♢ᶠ↓[[]] φAnte) ⇒ᶠ
+          (predicate0 liveSymb ⇒ᶠ ↕ᶠ deliverEvt) := by
+    simpa [wq, φAnte, deliverEvt] using hMain q
+  have hNext :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := ♢ᶠ↓[[]] φAnte)
+      (ψ := predicate0 liveSymb ⇒ᶠ ↕ᶠ deliverEvt)
+      hImp_q hAnte_q
+  have hLive_q : ⟪wq⟫ ⊨[M] predicate0 liveSymb :=
+    by simpa [wq, wTop, World.time] using hAllLive q hqO
+  have hEventual :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := predicate0 liveSymb)
+      (ψ := ↕ᶠ deliverEvt)
+      hNext hLive_q
+  have hPastDeliver_q :
+      ⟪wq⟫ ⊨[M] ↓ᶠ deliverEvt :=
+    by
+      have hPast :=
+        (Sat.atEnd (M := M) (w := wq)
+          (φ := Formula.past deliverEvt)).1
+          (by
+            simpa [Formula.sometime]
+              using hEventual)
+      simpa using hPast
+  exact hPastDeliver_q
+
+/-- Corollary of Proposition~\ref{prop.1.liveness.1}: witnessing the guarded
+proposal diamond guarantees the delivery diamond for learner `l`. -/
+lemma livenessOneAtPastThyHBB1
+    (hTheory : M ⊨ᵀ
+      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l : Signature.Value S}
+    {v : Signature.Value S}
+    (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
+    (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :
+    ⊨[M](♢ᶠ↓[[]]
+          (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
+         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
+  classical
+  let φAnte :=
+    predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
+  let deliverEvt := ofEvent ⟨deliverSymb, [l, l, v]⟩
+  have hBox :=
+    livenessOneAtPastDownThyHBB1 (M := M)
+      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+      (echoSymb := echoSymb) (voteSymb := voteSymb)
+      (deliverSymb := deliverSymb) (l := l) (v := v)
+      (hTheory := hTheory)
+      (hLiveQuorum := hLiveQuorum)
+      (hUnique := hUnique)
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hAnte
+  have hBoxPast :=
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := ♢ᶠ↓[[]] φAnte)
+      (ψ := □ᶠ↓[[l]] deliverEvt)
+      (by simpa [wTop, φAnte, deliverEvt] using hBox p)
+      hAnte
+  have hDiamond :=
+    singletonBoxImpliesDiamond (M := M) (w := wTop)
+      (l := l) (φ := deliverEvt) hBoxPast
+  simpa [wTop, φAnte, deliverEvt] using hDiamond
 
 end Liveness_One
 end Examples

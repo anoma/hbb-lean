@@ -69,7 +69,7 @@ private lemma deliver_box_witness
           □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩) := by
   classical
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hDeliverAx : EventValid M (deliverBackwardAxiom voteSymb deliverSymb) := by
+  have hDeliverAx : AllWorldValid M (deliverBackwardAxiom voteSymb deliverSymb) := by
     apply hTheory
     simp [ThyHBB1]
   have hDiamond_nil :
@@ -92,7 +92,10 @@ private lemma deliver_box_witness
   have hDeliverLocal :
       ⟪tDeliver⟫ ⊨[M]
         deliverBackwardAxiom voteSymb deliverSymb :=
-    hDeliverAx ht_mem_history
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := deliverBackwardAxiom voteSymb deliverSymb)
+      hDeliverAx ht_mem_history
   have hImp_reporting :=
     Sat.forall_elim (M := M) (w := tDeliver)
       (body := fun reporting' =>
@@ -373,24 +376,38 @@ lemma safe_axiom_body_monotone
 lemma safe_monotone_subset
     (l : Signature.Value S)
     (hSubset : w.time ⊆trn M.history.val)
-    (hAcc : w' ≪⁻ w)
+    (hBefore : w'.time ⪯ w.time)
+    (hPlace : w'.place = w.place)
     (hSafe : ⟪w⟫ ⊨[M]safeFormula proposeSymb l) :
     ⟪w'⟫ ⊨[M]safeFormula proposeSymb l := by
   classical
-  have hPlace : w'.place = w.place := hAcc.2
-  have hMem_w' : w' ∈ w.time := hAcc.1
-  let Hw : History P (Signature.EventType S) :=
-    ⟨w.time, hSubset.2⟩
-  have hBefore_w' : w'.time ≺− Hw.val :=
-    (happensBefore_of_mem (P := P)
-      (Event := Signature.EventType S)
-      (H := Hw.val) (e := w') hMem_w')
-  let Hw' : History P (Signature.EventType S) :=
-    History.predecessorHistory (H := Hw) hBefore_w'
-  have hSubset_trn : w'.time ⊆trn w.time := by
-    have hIncl :=
-      History.happensBefore_implies_transitiveSubset Hw' Hw hBefore_w'
-    simpa [Hw', History.predecessorHistory] using hIncl
+  -- hereditary transitivity for the larger history ensures all predecessors stay inside it
+  have hHer_w : isHereditarilyTransitive (P := P) (Event := Signature.EventType S) w.time :=
+    hSubset.2
+  have hTrans_w :
+      ∀ ⦃h⦄, h ≺− w.time → h ⊆ w.time :=
+    (isHereditarilyTransitive.trans (P := P) (Event := Signature.EventType S)
+      hHer_w)
+  have hSubset' :
+      w'.time ⊆ w.time :=
+    PreHistory.subset_of_happensBeforeEq
+      (P := P) (Event := Signature.EventType S)
+      (htrans := hTrans_w) hBefore
+  have hHer_w' :
+      isHereditarilyTransitive (P := P) (Event := Signature.EventType S) w'.time :=
+    by
+      rcases
+          (PreHistory.happensBeforeEq_iff
+            (P := P) (Event := Signature.EventType S)
+            w'.time w.time).1 hBefore with
+        hBefore' | hEq
+      · exact
+          isHereditarilyTransitive.desc
+            (P := P) (Event := Signature.EventType S)
+            hHer_w hBefore'
+      · exact Eq.subst hEq.symm hHer_w
+  have hSubset_trn : w'.time ⊆trn w.time :=
+    ⟨hSubset', hHer_w'⟩
   exact
     safe_axiom_body_monotone (M := M)
       (w := w) (w' := w') (l := l)
@@ -426,7 +443,12 @@ lemma safe_allPast
       ⟪t⟫ ⊨[M] safeFormula proposeSymb l :=
     safe_monotone_subset (M := M)
       (w := w) (w' := t) (l := l)
-      (hSubset := hSubsetTime) (hAcc := hAcc) (hSafe := hSafe)
+      (hSubset := hSubsetTime)
+      (hBefore :=
+        PreHistory.happensBeforeEq_of_accessible
+          (P := P) (Event := Signature.EventType S) hAcc.1)
+      (hPlace := hAcc.2)
+      (hSafe := hSafe)
   exact
     Sat.not_elim (M := M) (w := t)
       (φ := safeFormula proposeSymb l) hNotSafe hSafe_t
@@ -437,7 +459,7 @@ lemma atddot_of_eventual_quorum
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]φ)
-    (hImp : □⇓⊨[M](φ ⇒ᶠ ↕ᶠψ)) :
+    (hImp : □W⊨[M](φ ⇒ᶠ ↕ᶠψ)) :
     ⊨[M]□ᶠ↓[[l]] ψ := by
   classical
   refine fun p => ?_
@@ -451,7 +473,7 @@ lemma atddot_of_eventual_quorum
     (sat_box_singleton_exists (M := M)
         (w := wₚ) (l := l)
         (φ := Formula.past φ)).1 hBox_p
-  have hImp_event : EventValid M (φ ⇒ᶠ ↕ᶠ ψ) := hImp
+  have hImp_event : AllWorldValid M (φ ⇒ᶠ ↕ᶠ ψ) := hImp
   refine
     (sat_box_singleton_exists (M := M)
         (w := wₚ) (l := l)
@@ -467,8 +489,14 @@ lemma atddot_of_eventual_quorum
       (w := ⟨q, †, M.history.val⟩)
       (φ := φ)).1 hPastφ
   rcases tPast with ⟨q', evtPast, HPast⟩
+  have ht_mem_history :
+      (q', evtPast, HPast) ∈ M.history.val := by
+    simpa [World.time]
+      using ht_mem
   have hImp_local :=
-    hImp_event (t := ⟨q', evtPast, HPast⟩) ht_mem
+    AllWorldValid.of_mem_history
+      (M := M) (φ := φ ⇒ᶠ ↕ᶠ ψ)
+      hImp_event ht_mem_history
   have hSometime :
       ⟪⟨q', evtPast, HPast⟩⟫ ⊨[M] ↕ᶠ ψ :=
     (Sat.imp (M := M)
@@ -494,7 +522,7 @@ lemma atddot_live_of_eventual_quorum
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ φ))
-    (hImp : □⇓⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
+    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
     ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ ψ) := by
   classical
   refine fun p => ?_
@@ -510,7 +538,7 @@ lemma atddot_live_of_eventual_quorum
         (w := wₚ) (l := l)
         (φ := Formula.past (predicate0 liveSymb ∧ᶠ φ))).1 hBox_p
   have hImp_event :
-      EventValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
+      AllWorldValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
   refine
     (sat_box_singleton_exists (M := M)
         (w := wₚ) (l := l)
@@ -535,8 +563,15 @@ lemma atddot_live_of_eventual_quorum
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] predicate0 liveSymb := hLiveφ_split.1
   have hφ_tφ :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] φ := hLiveφ_split.2
+  have htφ_mem_history :
+      (qφ, evtφ, Hφ) ∈ M.history.val := by
+    simpa [World.time]
+      using htφ_mem
   have hImp_local :=
-    hImp_event (t := ⟨qφ, evtφ, Hφ⟩) htφ_mem
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := (predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ)
+      hImp_event htφ_mem_history
   have hSometime :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] ↕ᶠ ψ :=
     (Sat.imp (M := M)
@@ -561,7 +596,7 @@ lemma atddot_live_of_eventual_quorum
   rcases tψ with ⟨qψ, evtψ, Hψ⟩
   have htψ_place' : qψ = q := htψ_place
   have hEquiv :=
-      live_always_equiv_part1 (M := M)
+      alwaysLiveEquivForward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hLiveTheory)
         (t := ⟨qφ, evtφ, Hφ⟩)
@@ -581,7 +616,7 @@ lemma atddot_live_of_eventual_quorum
     simpa using hLive_global
   have hLive_tψ :
       ⟪⟨qψ, evtψ, Hψ⟩⟫ ⊨[M] predicate0 liveSymb :=
-    (live_always_equiv_part1 (M := M)
+    (alwaysLiveEquivForward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hLiveTheory)
         (t := ⟨qψ, evtψ, Hψ⟩)
@@ -611,13 +646,13 @@ lemma live_eventually_consequent
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
     (φ ψ : Formula S)
     (hLive : ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠφ))
-    (hImp : □⇓⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
+    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
     ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠψ) := by
   classical
   refine fun p => ?_
   let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hLiveImp := hLive p
-  have hImp_event : EventValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
+  have hImp_event : AllWorldValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
   refine
     (Sat.imp (M := M)
       (w := wₚ)
@@ -646,7 +681,7 @@ lemma live_eventually_consequent
   have htφ_place_copy2 := htφ_place'
   have hLive_local :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] predicate0 liveSymb :=
-    (live_always_equiv_part1 (M := M)
+    (alwaysLiveEquivForward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hLiveTheory)
       (t := ⟨qφ, evtφ, Hφ⟩)
@@ -654,9 +689,15 @@ lemma live_eventually_consequent
       (by
         cases htφ_place_copy1
         simpa using hLive_p)
+  have htφ_mem_history :
+      (qφ, evtφ, Hφ) ∈ M.history.val := by
+    simpa [World.time]
+      using htφ_mem
   have hImp_local :=
-    hImp_event (t := ⟨qφ, evtφ, Hφ⟩)
-      (by simpa [World.time] using htφ_mem)
+    AllWorldValid.of_mem_history
+      (M := M)
+      (φ := (predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ)
+      hImp_event htφ_mem_history
   have hConj :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M]
         (predicate0 liveSymb ∧ᶠ φ) :=

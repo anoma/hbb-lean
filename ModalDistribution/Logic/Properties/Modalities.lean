@@ -12,7 +12,7 @@ in the modal logic framework. It includes:
 - `hasQuorumWitness` definition and characterization lemmas
 - Diamond and box modality satisfaction lemmas (sat_diamond_*, sat_box_*)
 - De Morgan duality lemmas between ♢ and □ operators
-- EventValid lemmas for reasoning about event satisfaction
+- AllWorldValid lemmas for reasoning about event satisfaction
 - Results from Section 4 of the HBB paper (lemma_4_1_1_*, lemma_4_1_3_*, etc.)
 - Counterexamples demonstrating limitations of certain implications
 - Lemmas about the interplay between temporal operators (↓, ↕) and quorum modalities
@@ -207,6 +207,51 @@ lemma sat_diamond_iff_diamondCheck
   classical
   simp [Sat]
 
+/-- Extract a triple intersection witness from `♢ᶠ[[l₁,l₂,l₃]] ⊤ᶠ`. -/
+lemma sat_diamond_three_intersection
+    (M : Model S P)
+    (w : World P (Signature.EventType S))
+    {l₁ l₂ l₃ : Signature.Value S}
+    {O₁ O₂ O₃ : Set P}
+    (hDiamond : ⟪w⟫ ⊨[M]♢ᶠ[[l₁, l₂, l₃]]⊤ᶠ)
+    (hO₁ : O₁ ∈ (M.learner l₁).quorums)
+    (hO₂ : O₂ ∈ (M.learner l₂).quorums)
+    (hO₃ : O₃ ∈ (M.learner l₃).quorums) :
+    ∃ p, p ∈ O₁ ∧ p ∈ O₂ ∧ p ∈ O₃ := by
+  classical
+  have hCheck :=
+    (sat_diamond_iff_diamondCheck (M := M)
+      (ls := [l₁, l₂, l₃]) (φ := ⊤ᶠ)
+      (w := w)).1 hDiamond
+  have hCons₁ :=
+    (Sat.Sat_check_cons (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (v := l₁) (vs := [l₂, l₃]) (acc := Set.univ)).1 hCheck
+  have hCons₂ :=
+    (Sat.Sat_check_cons (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (v := l₂) (vs := [l₃]) (acc := Set.univ ∩ O₁)).1
+      (hCons₁ O₁ hO₁)
+  have hNil :=
+    (Sat.Sat_check_cons (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (v := l₃) (vs := []) (acc := (Set.univ ∩ O₁) ∩ O₂)).1
+      (hCons₂ O₂ hO₂)
+  obtain ⟨p, hpMem, _⟩ :=
+    (Sat.Sat_check_nil (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (acc := ((Set.univ ∩ O₁) ∩ O₂) ∩ O₃)).1 (hNil O₃ hO₃)
+  have hpInter : p ∈ (Set.univ ∩ O₁) ∩ O₂ := hpMem.1
+  have hpO₃ : p ∈ O₃ := by
+    simpa [Set.inter_assoc, Set.inter_left_comm, Set.inter_univ]
+      using hpMem.2
+  have hpO₂ : p ∈ O₂ := by
+    simpa [Set.inter_assoc, Set.inter_left_comm, Set.inter_univ]
+      using hpInter.2
+  have hpO₁ : p ∈ O₁ := by
+    simpa [Set.inter_univ] using hpInter.1.2
+  exact ⟨p, hpO₁, hpO₂, hpO₃⟩
+
 @[simp] lemma sat_diamond_singleton_iff
     (M : Model S P)
     (w : World P (Signature.EventType S))
@@ -362,6 +407,126 @@ lemma sat_diamond_iff_diamondCheck
       Sat.not_intro (M := M) (w := w)
         (φ := ♢ᶠ[[l]] (¬ᶠ φ)) hNoDiamond
     simpa [Formula.box, Formula.not] using hNot
+
+/-- An end-of-time past box guarantees that the global history contains a witness. -/
+lemma exists_history_mem_of_end_boxPast
+    (M : Model S P)
+    {l : Signature.Value S} {φ : Formula S}
+    (hBox : ⊨[M]□ᶠ↓[[l]]φ) :
+    ∃ t : World P (Signature.EventType S),
+      t ∈ M.history.val := by
+  classical
+  let p : P := Classical.arbitrary P
+  have hBoxTop :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ[[l]] (↓ᶠ φ) :=
+    by simpa [Formula.boxPast] using hBox p
+  obtain ⟨O, hO, hAll⟩ :=
+    (sat_box_singleton_exists (M := M)
+      (w := ⟨p, †, M.history.val⟩)
+      (l := l) (φ := ↓ᶠ φ)).1 hBoxTop
+  obtain ⟨q, hq⟩ :=
+    (Semifilter.quorum_nonempty (L := M.learner l)
+      (O := O) hO)
+  have hPast :
+      ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] ↓ᶠ φ :=
+    hAll q hq
+  obtain ⟨t, ht_mem, _, _⟩ :=
+    (Sat.past (M := M)
+      (w := ⟨q, †, M.history.val⟩)
+      (φ := φ)).1 hPast
+  exact ⟨t, by simpa using ht_mem⟩
+
+/-- Lift a local sometime fact to the end-of-time perspective. -/
+lemma lift_sometime_to_end
+    (M : Model S P)
+    {t : World P (Signature.EventType S)} {φ : Formula S}
+    (hSome : ⟪t⟫ ⊨[M]↕ᶠφ) :
+    ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]↕ᶠφ := by
+  classical
+  simpa [Formula.sometime, Formula.atEnd, Sat, World.place, World.event, World.time]
+    using hSome
+
+/-- Always-past facts depend only on the active participant, not on the local
+time slice. -/
+lemma lift_alwaysPast_of_same_place
+    (M : Model S P)
+    {w t : World P (Signature.EventType S)} {φ : Formula S}
+    (hPlace : t.place = w.place)
+    (hAlways : ⟪w⟫ ⊨[M]⇕ᶠφ) :
+    ⟪t⟫ ⊨[M]⇕ᶠφ := by
+  classical
+  have hAlways' :
+      Sat M w.place w.event w.time (⤒ᶠ (↓ᶠ (¬ᶠ φ))) → False := by
+    simpa [Formula.alwaysPast, Formula.sometime, Formula.atEnd, Formula.not, Sat]
+      using hAlways
+  have hGoal :
+      Sat M t.place t.event t.time (⤒ᶠ (↓ᶠ (¬ᶠ φ))) → False := by
+    intro hSome
+    have hPast :
+        Sat M t.place † M.history.val (↓ᶠ (¬ᶠ φ)) :=
+      by simpa [Formula.atEnd, Sat] using hSome
+    have hPast_w :
+        Sat M w.place † M.history.val (↓ᶠ (¬ᶠ φ)) :=
+      hPlace ▸ hPast
+    have hSome_w :
+        Sat M w.place w.event w.time (⤒ᶠ (↓ᶠ (¬ᶠ φ))) :=
+      by simpa [Formula.atEnd, Sat] using hPast_w
+    exact hAlways' hSome_w
+  have hNot :=
+    Sat.not_intro (M := M) (w := t)
+      (φ := ⤒ᶠ (↓ᶠ (¬ᶠ φ))) hGoal
+  simpa [Formula.alwaysPast, Formula.sometime, Formula.atEnd, Formula.not, Sat]
+    using hNot
+
+/-- If a world lies in the global history, an always-past fact at that world
+forces the underlying proposition to hold immediately. -/
+lemma alwaysPast_now_of_mem
+    (M : Model S P)
+    {w : World P (Signature.EventType S)} {φ : Formula S}
+    (hMem : w ∈ M.history.val)
+    (hAlways : ⟪w⟫ ⊨[M]⇕ᶠφ) :
+    ⟪w⟫ ⊨[M] φ := by
+  classical
+  have hNoSome :
+      ⟪w⟫ ⊨[M] ¬ᶠ (↕ᶠ (¬ᶠ φ)) :=
+    by simpa [Formula.alwaysPast] using hAlways
+  have hNoSome' :=
+    (Sat.not (M := M) (w := w)
+      (φ := ↕ᶠ (¬ᶠ φ))).1 hNoSome
+  by_contra hContr
+  have hNot : ⟪w⟫ ⊨[M] ¬ᶠ φ :=
+    (Sat.not (M := M) (w := w) (φ := φ)).2 hContr
+  have hSome :
+      ⟪w⟫ ⊨[M] ↕ᶠ (¬ᶠ φ) :=
+    (Sat.sometime (M := M) (w := w)
+        (φ := ¬ᶠ φ)).2
+      ⟨w, hMem, rfl, hNot⟩
+  exact hNoSome' hSome
+
+/-- A local empty past diamond witnessed at end-of-time yields end-of-time
+validity for the same statement. -/
+lemma end_valid_diamondPast_nil_of_end
+    (M : Model S P)
+    {p : P} {φ : Formula S}
+    (hDiamond : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]φ) :
+    ⊨[M]♢ᶠ↓[[]]φ := by
+  classical
+  have hDiamond' :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ[[]](↓ᶠ φ) :=
+    by simpa [Formula.diamondPast]
+      using hDiamond
+  obtain ⟨q, hPast⟩ :=
+    (Sat.diamond_nil (M := M)
+      (w := ⟨p, †, M.history.val⟩)
+      (φ := ↓ᶠ φ)).1 hDiamond'
+  refine fun p' => ?_
+  have hDiamond_p' :
+      ⟪⟨p', †, M.history.val⟩⟫ ⊨[M]♢ᶠ[[]](↓ᶠ φ) :=
+    (Sat.diamond_nil (M := M)
+      (w := ⟨p', †, M.history.val⟩)
+      (φ := ↓ᶠ φ)).2 ⟨q, hPast⟩
+  simpa [Formula.diamondPast]
+    using hDiamond_p'
 
 /-- Helper lemma for transporting empty diamonds from the local view. -/
 lemma sat_diamondEmpty_of_local
@@ -535,6 +700,32 @@ lemma sat_diamondPast_nil_event_subset
       (φ := ↓ᶠ (Formula.event ⟨symb, args⟩))).2
       ⟨q, hPast'⟩
 
+/-- If an event occurs at some point in the history, then the corresponding
+end-of-time world satisfies the empty-guard past diamond for that event. -/
+lemma diamondPast_nil_of_event_at_history
+    (M : Model S P)
+    {t : World P (Signature.EventType S)}
+    (htMem : t ∈ M.history.val)
+    {E : Signature.EventType S}
+    (hEvent : ⟪t⟫ ⊨[M]Formula.ofEvent E) :
+    ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
+      ♢ᶠ↓[[]](Formula.ofEvent E) := by
+  classical
+  -- Package the concrete event as a past witness at end-of-time.
+  have hPast :
+      ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
+        ↓ᶠ (Formula.ofEvent E) :=
+    (Sat.past (M := M)
+      (w := ⟨t.place, †, M.history.val⟩)
+      (φ := Formula.ofEvent E)).2
+      ⟨t, htMem, rfl, hEvent⟩
+  -- Upgrade the past fact to the empty-guard diamond.
+  exact
+    (Sat.diamond_nil (M := M)
+      (w := ⟨t.place, †, M.history.val⟩)
+      (φ := ↓ᶠ (Formula.ofEvent E))).2
+      ⟨t.place, hPast⟩
+
 lemma diamond_valid_eventuallyPast_not_iff
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -675,6 +866,24 @@ lemma quorumWitnessAcc_univ
     obtain ⟨p, hpAll, hpSat⟩ := h F
     exact ⟨p, by simp, hpAll, hpSat⟩
 
+/-- Witnesses for `⊤ᶠ` coincide with nonempty intersections. -/
+lemma hasQuorumWitness_top_iff_nonempty
+    (M : Model S P)
+    (ls : List S.Value) :
+    hasQuorumWitness (M := M) ls ⊤ᶠ ↔
+      hasQuorumNonempty (M := M) ls := by
+  classical
+  constructor
+  · intro hWitness F
+    obtain ⟨p, hpAll, _⟩ := hWitness F
+    exact ⟨p, hpAll⟩
+  · intro hNonempty F
+    obtain ⟨p, hpAll⟩ := hNonempty F
+    refine ⟨p, hpAll, ?_⟩
+    simpa [Formula.top]
+      using Sat.top (M := M)
+        (w := ⟨p, †, M.history.val⟩)
+
 /-- `□ᶠ⇓` is the De Morgan dual of `♢ᶠ↓` (Remark 3.7.7(4)). -/
 lemma boxEventually_valid_iff_not_diamondPast_not
     (M : Model S P)
@@ -744,24 +953,30 @@ lemma boxPast_valid_iff_not_diamondEventually_not
           (M := M) (w := ⟨p, †, M.history.val⟩)
           (ts := ls) (φ := φ)).2 hSat
 
-lemma eventValid_atEnd_exists
+lemma AllWorldValid_atEnd_exists
     (M : Model S P) {φ : Formula S}
-    (hEvent : EventValid M (⤒ᶠφ))
+    (hEvent : AllWorldValid M (⤒ᶠφ))
     (hNonempty : ∃ t : World P (Signature.EventType S),
       t ∈ M.history.val) :
     ∃ w : World P (Signature.EventType S),
       w.time = M.history.val ∧ ⟪w⟫ ⊨[M] φ := by
   classical
   obtain ⟨t, ht⟩ := hNonempty
-  have hAtEnd := hEvent ht
+  have hBefore :
+      t.time ⪯ M.history.val :=
+    PreHistory.happensBeforeEq_of_mem
+      (P := P) (Event := Signature.EventType S)
+      (hmem := by
+        simpa [World.place, World.event, World.time] using ht)
+  have hAtEnd := hEvent hBefore
   have hSat : Sat M t.place † M.history.val φ := by
     simpa [Formula.atEnd, Sat] using hAtEnd
   refine ⟨⟨t.place, †, M.history.val⟩, rfl, ?_⟩
   simpa using hSat
 
-lemma eventValid_predecessor
+lemma AllWorldValid_predecessor
     (M : Model S P) {φ : Formula S}
-    (hEvent : EventValid M φ)
+    (hEvent : AllWorldValid M φ)
     {p : P} {e : MaybeEvent (Signature.EventType S)}
     {H : PreHistory P (Signature.EventType S)}
     (hMem : (p, e, H) ∈ M.history.val) :
@@ -771,9 +986,50 @@ lemma eventValid_predecessor
             (Event := Signature.EventType S) hMem)).val⟩⟫
       ⊨[M] φ := by
   classical
-  dsimp [EventValid] at hEvent
-  have h := hEvent hMem
+  dsimp [AllWorldValid] at hEvent
+  have hBefore :
+      (History.predecessorHistory (H := M.history)
+          (happensBefore_of_mem (P := P)
+            (Event := Signature.EventType S) hMem)).val
+        ⪯ M.history.val :=
+    PreHistory.happensBeforeEq_of_mem
+      (P := P) (Event := Signature.EventType S)
+      (hmem := by
+        simpa [History.predecessorHistory, happensBefore_of_mem,
+          World.place, World.event, World.time] using hMem)
+  have h :=
+    hEvent
+      (t :=
+        ⟨p, e,
+          (History.predecessorHistory (H := M.history)
+              (happensBefore_of_mem (P := P)
+                (Event := Signature.EventType S) hMem)).val⟩)
+      hBefore
   simpa [History.predecessorHistory, happensBefore_of_mem] using h
+
+/-- A world whose local history occurs before the model history inherits a transitive subset. -/
+lemma time_subset_trn_history
+    (M : Model S P) {t : World P S.EventType}
+    (ht : t.time ⪯ M.history.val) :
+    t.time ⊆trn M.history.val := by
+  classical
+  have h := (PreHistory.happensBeforeEq_iff
+      (P := P) (Event := Signature.EventType S)
+      t.time M.history.val).mp ht
+  cases h with
+  | inl hBefore =>
+      refine ⟨
+        History.subset_of_happensBefore (H := M.history) hBefore,
+        (History.predecessor_data (H := M.history)
+            (h_before := hBefore)).2⟩
+  | inr hEq =>
+      refine ⟨?subset, ?hered⟩
+      · intro x hx
+        exact hEq ▸ hx
+      · have hTrans := History.hereditarilyTransitive M.history
+        exact Eq.subst
+          (motive := fun H => isHereditarilyTransitive H)
+          hEq.symm hTrans
 
 /-- Satisfaction of an empty box at the full history forces the guard everywhere. -/
 lemma sat_boxEmpty_full_iff_local
@@ -871,8 +1127,17 @@ lemma hasQuorumWitness.seq_to_past
 
 /-! ## Results from Section 4 -/
 
-/-- Lemma~\ref{lemm.n.quorum.intersection}(1): characterisation of `♢` via quorum witnesses. -/
-theorem lemma_4_1_1_witness
+/-- N-way quorum intersection witness (Lemma~\ref{lemm.n.quorum.intersection}(1)).
+
+Characterizes the global diamond modality `♢ᶠ[ls] φ` in terms of quorum witnesses:
+a formula holds under the diamond modality if and only if there exists a witness
+participant present in all quorums from every learner family.
+
+This is fundamental to establishing agreement properties in broadcast protocols,
+as it provides the connection between modal satisfaction and quorum intersection.
+
+See also: `nWayQuorumIntersectionNonempty`, `quorumWitnessImpliesNonempty`. -/
+theorem nWayQuorumIntersectionWitness
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] (♢ᶠ[ls] φ)) ↔ hasQuorumWitness (M := M) ls φ := by
@@ -903,14 +1168,22 @@ theorem lemma_4_1_1_witness
         (ls := ls) (φ := φ)
         (w := ⟨p, †, M.history.val⟩)).2 hCheck
 
-/-- Lemma~\ref{lemm.n.quorum.intersection}(2): nonemptiness under `♢ … ⊤`. -/
-theorem lemma_4_1_1_nonempty
+/-- N-way quorum intersection nonemptiness (Lemma~\ref{lemm.n.quorum.intersection}(2)).
+
+Specializes the witness characterization to the trivial formula `⊤`: the global diamond
+`♢ᶠ[ls] ⊤ᶠ` holds if and only if all quorum families have nonempty intersection.
+
+This provides a simpler sufficient condition for quorum intersection when we don't
+need to track satisfaction of a specific formula.
+
+See also: `nWayQuorumIntersectionWitness`, `quorumWitnessImpliesNonempty`. -/
+theorem nWayQuorumIntersectionNonempty
     (M : Model S P)
     (ls : List S.Value) :
     (⊨[M] (♢ᶠ[ls] ⊤ᶠ)) ↔ hasQuorumNonempty (M := M) ls := by
   classical
   refine
-    (lemma_4_1_1_witness (M := M) (ls := ls) (φ := ⊤ᶠ)).trans ?_
+    (nWayQuorumIntersectionWitness (M := M) (ls := ls) (φ := ⊤ᶠ)).trans ?_
   constructor
   · intro hWitness F
     rcases hWitness F with ⟨p, hpAll, _⟩
@@ -922,21 +1195,28 @@ theorem lemma_4_1_1_nonempty
       using (Sat.top (M := M)
         (w := ⟨p, †, M.history.val⟩))
 
-/-- Lemma~\ref{lemm.n.quorum.intersection}(3): witnesses imply nonemptiness. -/
-lemma lemma_4_1_1_imp_nonempty
+/-- Quorum witness implies nonemptiness (Lemma~\ref{lemm.n.quorum.intersection}(3)).
+
+If a formula has a quorum witness (satisfies `♢ᶠ[ls] φ`), then the quorum families
+have nonempty intersection (satisfies `♢ᶠ[ls] ⊤ᶠ`). This weakening is useful when
+we only need to establish that quorums intersect, not that they intersect at worlds
+satisfying a specific formula.
+
+See also: `nWayQuorumIntersectionWitness`, `nWayQuorumIntersectionNonempty`. -/
+lemma quorumWitnessImpliesNonempty
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] (♢ᶠ[ls] φ)) →
       (⊨[M] (♢ᶠ[ls] ⊤ᶠ)) := by
   intro h
   have hWitness :=
-    (lemma_4_1_1_witness (M := M) (ls := ls) (φ := φ)).1 h
+    (nWayQuorumIntersectionWitness (M := M) (ls := ls) (φ := φ)).1 h
   have hNonempty : hasQuorumNonempty (M := M) ls := by
     intro F
     obtain ⟨p, hpAll, _⟩ := hWitness F
     exact ⟨p, hpAll⟩
   exact
-    (lemma_4_1_1_nonempty (M := M) (ls := ls)).2 hNonempty
+    (nWayQuorumIntersectionNonempty (M := M) (ls := ls)).2 hNonempty
 
 /-- Nonempty quorum intersections from Notation~\ref{nttn.intersecting.quorums}. -/
 @[simp] def hasNonemptyIntersections
@@ -954,9 +1234,13 @@ lemma lemma_4_1_1_imp_nonempty
     (ls : List S.Value) : Prop :=
   ⊨[M] (♢ᶠ[ls] (Formula.predicate0 liveSymb))
 
-/-- Quorum witnesses correspond to present-time diamonds
-(Lemma~\ref{lemm.n.quorum.intersection}). -/
-theorem lemma_4_1_3_present
+/-- Present-time box implies past-guarded box (Lemma~\ref{lemm.n.quorum.intersection}).
+
+Quorum witnesses correspond to present-time diamonds: having a quorum witness
+is equivalent to the global diamond modality holding.
+
+See also: `pastBoxAtTopWorld`, `nWayQuorumIntersectionWitness`. -/
+theorem presentBoxImpliesPastBox
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     hasQuorumWitness (M := M) ls φ ↔
@@ -964,7 +1248,7 @@ theorem lemma_4_1_3_present
   by
     classical
     simpa using
-      (lemma_4_1_1_witness (M := M)
+      (nWayQuorumIntersectionWitness (M := M)
         (ls := ls) (φ := φ)).symm
 
 lemma localSat_eventuallyPast_top_eq
@@ -974,10 +1258,14 @@ lemma localSat_eventuallyPast_top_eq
   classical
   simp [Formula.eventuallyPast, Formula.not, Formula.top, Sat]
 
-/-- Nonempty quorum intersections correspond to eventually-past diamonds
-(cf. Lemma~\ref{lemm.n.quorum.intersection}).
-nonempty quorum intersections correspond to eventually-past diamonds. -/
-theorem lemma_4_1_3_past_top
+/-- Past-guarded box at top world (Lemma~\ref{lemm.n.quorum.intersection}).
+
+Nonempty quorum intersections correspond to eventually-past diamonds: having
+a quorum witness for ⊤ is equivalent to the eventually-past diamond holding.
+This specializes the present-time correspondence to past-guarded modalities.
+
+See also: `presentBoxImpliesPastBox`, `pastBoxTopImpliesPredecessor`. -/
+theorem pastBoxAtTopWorld
     (M : Model S P)
     (ls : List S.Value) :
     hasQuorumWitness (M := M) ls ⊤ᶠ ↔
@@ -985,7 +1273,7 @@ theorem lemma_4_1_3_past_top
   by
     classical
     have hPresent :=
-      lemma_4_1_3_present (M := M)
+      presentBoxImpliesPastBox (M := M)
         (ls := ls) (φ := ⊤ᶠ)
     refine hPresent.trans ?_
     unfold EndValid
@@ -1000,9 +1288,14 @@ theorem lemma_4_1_3_past_top
           (localSat_eventuallyPast_top_eq (M := M)
             (w := ⟨q, †, M.history.val⟩)).symm))
 
-/-- Activity assumption transfers present-time witnesses to past-guarded diamonds
-(cf. Lemma~\ref{lemm.n.quorum.intersection}). -/
-theorem lemma_4_1_3_past_top_down
+/-- Past box at top implies predecessor (Lemma~\ref{lemm.n.quorum.intersection}).
+
+Under the activity assumption (□ᶠ[] (↓ᶠ ⊤ᶠ)), quorum witnesses for ⊤ correspond
+to past-guarded diamonds ♢ᶠ↓[ls] ⊤ᶠ. The activity assumption ensures that all
+participants have a non-empty history, allowing past operators to be meaningful.
+
+See also: `pastBoxAtTopWorld`, `pastBoxSeqImpliesPredecessor`. -/
+theorem pastBoxTopImpliesPredecessor
     (M : Model S P)
     (ls : List S.Value) :
     (⊨[M] □ᶠ[] (↓ᶠ ⊤ᶠ)) →
@@ -1011,9 +1304,9 @@ theorem lemma_4_1_3_past_top_down
   classical
   intro hActive
   have hPresentTop :=
-    lemma_4_1_3_present (M := M) (ls := ls) (φ := ⊤ᶠ)
+    presentBoxImpliesPastBox (M := M) (ls := ls) (φ := ⊤ᶠ)
   have hPresentPast :=
-    lemma_4_1_3_present (M := M) (ls := ls) (φ := ↓ᶠ ⊤ᶠ)
+    presentBoxImpliesPastBox (M := M) (ls := ls) (φ := ↓ᶠ ⊤ᶠ)
   have hActiveLocal :=
     (EndValid.boxEmpty_guard (M := M)
       (φ := ↓ᶠ ⊤ᶠ)) hActive
@@ -1040,12 +1333,16 @@ theorem lemma_4_1_3_past_top_down
             (w := ⟨p, †, M.history.val⟩)))
         hWitnessPast
 
-/-- Sequential witnesses persist under the activity assumption
-(cf. Lemma~\ref{lemm.n.quorum.intersection}).
-The reverse implication fails in our semantics: a participant can satisfy
-`↓ Formula.seq` via an earlier sequential prefix even when the current
-history contains incomparable events. -/
-theorem lemma_4_1_3_past_seq_down
+/-- Past box for sequentiality implies predecessor (Lemma~\ref{lemm.n.quorum.intersection}).
+
+Under the activity assumption, sequential witnesses persist: having a sequential
+quorum witness implies the past-guarded sequential diamond holds. Note that the
+reverse implication fails in our semantics: a participant can satisfy `↓ Formula.seq`
+via an earlier sequential prefix even when the current history contains incomparable
+events.
+
+See also: `pastBoxTopImpliesPredecessor`, `presentBoxImpliesPastBox`. -/
+theorem pastBoxSeqImpliesPredecessor
     (M : Model S P)
     (ls : List S.Value) :
     (⊨[M] □ᶠ[] (↓ᶠ ⊤ᶠ)) →
@@ -1057,13 +1354,19 @@ theorem lemma_4_1_3_past_seq_down
     hasQuorumWitness.seq_to_past (M := M) (ls := ls)
       hActive hWitness
   exact
-    (lemma_4_1_3_present (M := M) (ls := ls)
+    (presentBoxImpliesPastBox (M := M) (ls := ls)
       (φ := ↓ᶠ Formula.seq)).1 hWitnessPast
 
 /-! ## Section 4.2: Interplay between `↓`, `↕`, and quorum modalities -/
 
-/-- Lemma~\ref{lemm.atd.implies.someone}(1): singleton quorum boxes imply singleton diamonds. -/
-lemma lemma_4_2_1_part1
+/-- Singleton box implies diamond (Lemma~\ref{lemm.atd.implies.someone}(1)).
+
+A singleton quorum box □ᶠ↓[[l]]φ guarantees that every quorum from learner l
+satisfies the past-guarded formula, which implies the empty diamond ♢ᶠ↓[[]] φ
+(someone satisfies the formula). This is the local version of the implication.
+
+See also: `globalSingletonBoxImpliesDiamond`, `quorumBoxImpliesEmptyDiamond`. -/
+lemma singletonBoxImpliesDiamond
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1081,7 +1384,13 @@ lemma lemma_4_2_1_part1
       (w := w) (φ := ↓ᶠ φ)
       ⟨q, hAll q hq⟩
 
-lemma lemma_4_2_1_part2
+/-- Global singleton box implies diamond (Lemma~\ref{lemm.atd.implies.someone}(1)).
+
+The global version: if □ᶠ[[l]] φ holds globally, then ♢ᶠ[] φ holds globally.
+This lifts the local singleton box implication to the global level.
+
+See also: `singletonBoxImpliesDiamond`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
+lemma globalSingletonBoxImpliesDiamond
     (M : Model S P)
     (l : Signature.Value S) (φ : Formula S) :
     (⊨[M] □ᶠ[[l]] φ) → (⊨[M] ♢ᶠ[] φ) := by
@@ -1099,8 +1408,14 @@ lemma lemma_4_2_1_part2
       (w := ⟨p, †, M.history.val⟩) (φ := φ)
       ⟨q, hAll q hq⟩
 
-/-- Lemma~\ref{lemm.atd.implies.someone}(2): quorum boxes yield empty-list diamonds. -/
-lemma lemma_4_2_2_part1
+/-- Quorum box implies empty diamond (Lemma~\ref{lemm.atd.implies.someone}(2)).
+
+A singleton quorum box □ᶠ[[l]] φ at any world implies the empty diamond ♢ᶠ[] φ
+at that world. This is a strengthening that works for arbitrary histories, not
+just the global top history.
+
+See also: `singletonBoxImpliesDiamond`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
+lemma quorumBoxImpliesEmptyDiamond
     (M : Model S P)
     (H : History P (Signature.EventType S)) (p : P)
     (l : Signature.Value S) (φ : Formula S) :
@@ -1166,8 +1481,14 @@ private lemma sat_boxPast_of_predecessor
       (φ := φ) (hSubset := hSubset_t) hPast
   simpa [World.place, World.event, World.time] using hPast'
 
-/-- Lemma~\ref{lemm.atedot.idempotent}: past diamonds are idempotent. -/
-lemma lemma_4_2_2
+/-- Quorum box global implies empty diamond (Lemma~\ref{lemm.atedot.idempotent}).
+
+Past diamonds are idempotent: ♢ᶠ↓[[]] (↓ᶠ φ) is equivalent to ♢ᶠ↓[[]] φ.
+This shows that nested past operators collapse, simplifying reasoning about
+temporal formulas in distributed protocols.
+
+See also: `pastBoxCollapsesToPresentBox`, `pastDiamondBoxCollapsesToPresentBox`. -/
+lemma quorumBoxGlobalImpliesEmptyDiamond
     (M : Model S P)
     (w : World P (Signature.EventType S)) (φ : Formula S)
     (hMem : w ∈ M.history.val) :
@@ -1238,8 +1559,14 @@ lemma lemma_4_2_2
       (w := w) (φ := ↓ᶠ φ)).2 ⟨q, hPastFinal⟩
   simpa [Formula.diamondPast] using hDiamondFinal
 
-/-- Lemma~\ref{lemm.itp.atddot}(1): past boxes collapse to present boxes. -/
-lemma lemma_4_2_4_part1
+/-- Past box collapses to present box (Lemma~\ref{lemm.itp.atddot}(1)).
+
+A past-guarded box ↓ᶠ (□ᶠ↓[[l]] φ) collapses to a present box □ᶠ↓[[l]] φ.
+This idempotency property shows that nested temporal operators can be simplified,
+making proofs about temporal formulas more tractable.
+
+See also: `pastDiamondBoxCollapsesToPresentBox`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
+lemma pastBoxCollapsesToPresentBox
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1262,8 +1589,14 @@ lemma lemma_4_2_4_part1
           using hBox_t)
   simpa [Formula.boxPast] using hBox
 
-/-- Lemma~\ref{lemm.itp.atddot}(2): past diamonds collapse to present diamonds. -/
-lemma lemma_4_2_4_part2
+/-- Past diamond-box collapses to present box (Lemma~\ref{lemm.itp.atddot}(2)).
+
+A past-guarded diamond containing a box ♢ᶠ↓[[]] (□ᶠ↓[[l]] φ) collapses to a
+present box □ᶠ↓[[l]] φ. This strengthens the previous collapsing lemma by showing
+that even with an intervening diamond, the box structure is preserved.
+
+See also: `pastBoxCollapsesToPresentBox`, `singletonBoxImpliesDiamond`. -/
+lemma pastDiamondBoxCollapsesToPresentBox
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1288,6 +1621,149 @@ lemma lemma_4_2_4_part2
         simpa [World.place, World.event, World.time, Formula.boxPast]
           using hBox_t)
   exact hBox
+
+/-- Evaluation of a `⊤ᶠ`-payload diamond does not depend on the timeline. -/
+lemma sat_check_top_congr
+    (M : Model S P)
+    (ls : List (Signature.Value S))
+    {t₁ t₂ : PreHistory P (Signature.EventType S)}
+    {acc : Set P} :
+    Sat.check M t₁ ⊤ᶠ ls acc ↔
+      Sat.check M t₂ ⊤ᶠ ls acc := by
+  classical
+  induction ls generalizing acc with
+  | nil =>
+      constructor
+      · intro h
+        obtain ⟨p, hpAcc, _⟩ :=
+          (Sat.Sat_check_nil (M := M)
+            (H := t₁) (φ := ⊤ᶠ) (acc := acc)).1 h
+        refine
+          (Sat.Sat_check_nil (M := M)
+            (H := t₂) (φ := ⊤ᶠ) (acc := acc)).2 ?_
+        refine ⟨p, hpAcc, ?_⟩
+        simp [Formula.top, Sat]
+      · intro h
+        obtain ⟨p, hpAcc, _⟩ :=
+          (Sat.Sat_check_nil (M := M)
+            (H := t₂) (φ := ⊤ᶠ) (acc := acc)).1 h
+        refine
+          (Sat.Sat_check_nil (M := M)
+            (H := t₁) (φ := ⊤ᶠ) (acc := acc)).2 ?_
+        refine ⟨p, hpAcc, ?_⟩
+        simp [Formula.top, Sat]
+  | cons l ls ih =>
+      constructor
+      · intro hCheck
+        have hCons :=
+          (Sat.Sat_check_cons (M := M)
+            (H := t₁) (φ := ⊤ᶠ)
+            (v := l) (vs := ls) (acc := acc)).1 hCheck
+        refine
+          (Sat.Sat_check_cons (M := M)
+            (H := t₂) (φ := ⊤ᶠ)
+            (v := l) (vs := ls) (acc := acc)).2 ?_
+        intro O hO
+        have hTail := hCons O hO
+        exact
+          (ih (acc := acc ∩ O)).1 hTail
+      · intro hCheck
+        have hCons :=
+          (Sat.Sat_check_cons (M := M)
+            (H := t₂) (φ := ⊤ᶠ)
+            (v := l) (vs := ls) (acc := acc)).1 hCheck
+        refine
+          (Sat.Sat_check_cons (M := M)
+            (H := t₁) (φ := ⊤ᶠ)
+            (v := l) (vs := ls) (acc := acc)).2 ?_
+        intro O hO
+        have hTail := hCons O hO
+        exact
+          (ih (acc := acc ∩ O)).2 hTail
+
+/-- Diamonds with payload `⊤ᶠ` depend only on the learners' quorums. -/
+lemma sat_diamond_top_iff_hasQuorumNonempty
+    (M : Model S P)
+    (w : World P (Signature.EventType S))
+    (ls : List (Signature.Value S)) :
+    (⟪w⟫ ⊨[M] ♢ᶠ[ls] ⊤ᶠ) ↔ hasQuorumNonempty (M := M) ls := by
+  classical
+  constructor
+  · intro hDiamond
+    have hCheck_time :=
+      (sat_diamond_iff_diamondCheck (M := M)
+        (ls := ls) (φ := ⊤ᶠ)
+        (w := w)).1 hDiamond
+    have hCheck_hist :=
+      (sat_check_top_congr (M := M)
+        (ls := ls)
+        (t₁ := w.time) (t₂ := M.history.val)
+        (acc := Set.univ)).1 hCheck_time
+    have hWitness :=
+      (diamondCheck_iff_quorumWitnessAcc (M := M)
+        (ls := ls) (φ := ⊤ᶠ) (acc := Set.univ)).1
+        hCheck_hist
+    have hWitness' :=
+      (quorumWitnessAcc_univ (M := M)
+        (ls := ls) (φ := ⊤ᶠ)).1 hWitness
+    exact
+      (hasQuorumWitness_top_iff_nonempty (M := M)
+        (ls := ls)).1 hWitness'
+  · intro hNonempty
+    have hWitness :=
+      (hasQuorumWitness_top_iff_nonempty (M := M)
+        (ls := ls)).2 hNonempty
+    have hWitnessAcc :=
+      (quorumWitnessAcc_univ (M := M)
+        (ls := ls) (φ := ⊤ᶠ)).2 hWitness
+    have hCheck_hist :=
+      (diamondCheck_iff_quorumWitnessAcc (M := M)
+        (ls := ls) (φ := ⊤ᶠ) (acc := Set.univ)).2
+        hWitnessAcc
+    have hCheck_time :=
+      (sat_check_top_congr (M := M)
+        (ls := ls)
+        (t₁ := M.history.val) (t₂ := w.time)
+        (acc := Set.univ)).1 hCheck_hist
+    exact
+      (sat_diamond_iff_diamondCheck (M := M)
+        (ls := ls) (φ := ⊤ᶠ)
+        (w := w)).2 hCheck_time
+
+/-- Extract a double intersection witness from `♢ᶠ[[l₁,l₂]] ⊤ᶠ`. -/
+lemma sat_diamond_two_intersection
+    (M : Model S P)
+    (w : World P (Signature.EventType S))
+    {l₁ l₂ : Signature.Value S}
+    {O₁ O₂ : Set P}
+    (hDiamond : ⟪w⟫ ⊨[M]♢ᶠ[[l₁, l₂]]⊤ᶠ)
+    (hO₁ : O₁ ∈ (M.learner l₁).quorums)
+    (hO₂ : O₂ ∈ (M.learner l₂).quorums) :
+    ∃ p, p ∈ O₁ ∧ p ∈ O₂ := by
+  classical
+  have hCheck :=
+    (sat_diamond_iff_diamondCheck (M := M)
+      (ls := [l₁, l₂]) (φ := ⊤ᶠ)
+      (w := w)).1 hDiamond
+  have hCons₁ :=
+    (Sat.Sat_check_cons (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (v := l₁) (vs := [l₂]) (acc := Set.univ)).1 hCheck
+  have hNil :=
+    (Sat.Sat_check_cons (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (v := l₂) (vs := []) (acc := Set.univ ∩ O₁)).1
+      (hCons₁ O₁ hO₁)
+  obtain ⟨p, hpMem, _⟩ :=
+    (Sat.Sat_check_nil (M := M)
+      (H := w.time) (φ := ⊤ᶠ)
+      (acc := (Set.univ ∩ O₁) ∩ O₂)).1 (hNil O₂ hO₂)
+  have hpO₂ : p ∈ O₂ := by
+    simpa [Set.inter_assoc, Set.inter_left_comm, Set.inter_univ]
+      using hpMem.2
+  have hpO₁ : p ∈ O₁ := by
+    simpa [Set.inter_univ] using hpMem.1.2
+  exact ⟨p, hpO₁, hpO₂⟩
 
 end DiamondSection
 
