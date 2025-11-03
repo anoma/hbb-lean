@@ -13,7 +13,7 @@ This file contains the liveness one theorem for the ThyHBB1 broadcast protocol:
 
 - **Liveness 1** (`livenessOneThyHBB1`): Under uniqueness of proposals and a live quorum,
   if a live participant knows a proposal, it will eventually be delivered.
-  Corresponds to Proposition 6.5.3 (prop.1.liveness.1) in the paper.
+  Liveness property 1: under uniqueness, live proposals are eventually delivered.
 -/
 
 namespace ModalDistribution
@@ -36,7 +36,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Liveness One for ThyHBB1 (Proposition 6.5.3 / prop.1.liveness.1).
+/-- Liveness One for ThyHBB1 (Liveness property 1).
 
 Under uniqueness of proposals and a live quorum, if a live participant knows
 a proposal for value v, then v will eventually be delivered. This establishes
@@ -61,7 +61,7 @@ lemma livenessOneThyHBB1
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLivep
 
-  -- Abbreviations mirroring the staged argument in Proposition 6.5.3.
+  -- Abbreviations for the staged liveness argument.
   let φLivePropose :=
     predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
   let φLiveEcho :=
@@ -80,7 +80,7 @@ lemma livenessOneThyHBB1
   have hLiveBox : ⊨[M]□ᶠ[id [l]] predicate0 liveSymb := by
     simpa using hLiveQuorum
 
-  -- Step 1 (Corollary 5.2.8(1)): lift the local knowledge into learner `l`'s quorum.
+  -- Step 1: lift the local knowledge into learner `l`'s quorum.
   have hPastWitness :
       ∃ qProp : P,
         ⟪⟨qProp, †, M.history.val⟩⟫ ⊨[M]
@@ -125,7 +125,7 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLivePropose := by
     simpa [wTop] using hStep1Global p
 
-  -- Step 2 (Lemma 6.4.2(2) + Lemma 6.4.1): unique proposals imply eventual echoes.
+  -- Step 2: unique proposals imply eventual echoes.
   have hStep2Global :
       ⊨[M] □ᶠ↓[[l]] φLiveEcho := by
     have hImpEcho :
@@ -173,7 +173,7 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLiveEcho := by
     simpa [wTop] using hStep2Global p
 
-  -- Step 3 (Lemma 6.4.3): promote echoes to nested quorum knowledge.
+  -- Step 3: promote echoes to nested quorum knowledge.
   have hStep3Global :
       ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho :=
     _root_.ModalDistribution.Examples.promote_live_atddot
@@ -186,7 +186,7 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho := by
     simpa [wTop] using hStep3Global p
 
-  -- Step 4 (Lemma 6.4.5 + Lemma 6.4.4): combine nested echoes with safety.
+  -- Step 4: combine nested echoes with safety.
   have step4 :
       ⟪wTop⟫ ⊨[M]
         (□ᶠ↓[[l]] φLiveNestedEcho) ∧ᶠ ⇕ᶠ φSafe := by
@@ -234,7 +234,7 @@ lemma livenessOneThyHBB1
         (ψ := ⇕ᶠ φSafe)).2
         ⟨step3, hSafeAlwaysTop⟩
 
-  -- Step 5 (Lemma 6.4.2(2) + rule `Vote!`): obtain votes for learner `l`.
+  -- Step 5: obtain votes for learner `l`.
   classical
 
   have hVoteForwardAx :
@@ -409,7 +409,7 @@ lemma livenessOneThyHBB1
     simpa [wTop]
       using hKnow p
 
-  -- Step 7 (Lemma 6.4.6 + rule `Deliver!`): conclude eventual delivery.
+  -- Step 7: conclude eventual delivery.
   have step7 :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ
@@ -446,7 +446,7 @@ lemma livenessOneThyHBB1
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
       step7 hLivep
 
-/-- Corollary of Proposition~\ref{prop.1.liveness.1}: whenever a live learner
+/-- Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
 lemma livenessOneAtPastDownThyHBB1
@@ -533,7 +533,7 @@ lemma livenessOneAtPastDownThyHBB1
       simpa using hPast
   exact hPastDeliver_q
 
-/-- Corollary of Proposition~\ref{prop.1.liveness.1}: witnessing the guarded
+/-- Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
 lemma livenessOneAtPastThyHBB1
     (hTheory : M ⊨ᵀ

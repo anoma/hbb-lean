@@ -13,7 +13,7 @@ This file contains the main agreement theorem for the ThyHBB1 broadcast protocol
 
 ## Main Result
 
-- **`agreementThyHBB1`** (Theorem 6.6.1 / Proposition~\ref{prop.1.agreement}):
+- **`agreementThyHBB1`**
   The agreement property states that if two different values are delivered at different learners,
   then sequentiality must be violated. More precisely, if:
   - Two deliver events occur for values v₁ and v₂ at learners l₁ and l₂
@@ -55,7 +55,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Agreement property for ThyHBB1 (Proposition~\ref{prop.1.agreement}, Theorem 6.6.1).
+/-- Agreement property for ThyHBB1.
 
 Under sequentiality assumptions, if two different values are delivered at different
 learners, they must be equal. This is the fundamental correctness property of the
@@ -387,7 +387,7 @@ lemma agreementThyHBB1
           (fun h => hNe h.symm) hRight
       simpa [Sat] using hEqFinal.symm
 
-/-- Agreement from deliveries helper for ThyHBB1 (Corollary of Proposition~\ref{prop.1.agreement}).
+/-- Agreement from deliveries helper for ThyHBB1 (Corollary of agreement property).
 
 Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of time,
 the delivered values must coincide. This factors out the core reasoning used in

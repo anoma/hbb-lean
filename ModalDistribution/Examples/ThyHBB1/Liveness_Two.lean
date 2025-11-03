@@ -13,7 +13,7 @@ This file contains the two liveness two theorem for the ThyHBB1 broadcast protoc
 
 - **Liveness 2** (`livenessTwoThyHBB1`): If a value is delivered to one learner and certain
   liveness/intersection conditions hold, it will eventually be delivered to another learner.
-  Corresponds to Proposition 6.5.4 (prop.1.liveness.2) in the paper.
+  Liveness property 2: deliveries propagate across intersecting learner quorums.
 -/
 
 namespace ModalDistribution
@@ -36,7 +36,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Proposition 6.5.4 (prop.1.liveness.2) (Liveness 2) specialised to `ThyHBB1`.
+/-- Liveness property 2 specialised to `ThyHBB1`.
 If a value is delivered to learner l₁' and:
 - Learners l₁' and l₂' have intersecting quorums
 - The safe condition holds for learner l
@@ -687,7 +687,7 @@ lemma livenessTwoThyHBB1
 
   exact step8 hLivep
 
-/-- Corollary of Proposition~\ref{prop.1.liveness.2}: a delivery for `(l₁', l)`
+/-- Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
 lemma livenessTwoAtPastDownThyHBB1
@@ -771,7 +771,7 @@ lemma livenessTwoAtPastDownThyHBB1
       simpa using hPast
   exact hPastDeliver_q
 
-/-- Corollary of Proposition~\ref{prop.1.liveness.2}: a delivery for `(l₁', l)`
+/-- Corollary: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
 lemma livenessTwoAtPastThyHBB1
     (hTheory : M ⊨ᵀ

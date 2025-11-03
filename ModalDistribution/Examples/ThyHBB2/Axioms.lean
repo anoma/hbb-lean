@@ -6,7 +6,7 @@ import ModalDistribution.Logic.Properties
 # ThyHBB2 Axioms
 
 This file records the axiom schemes for the `ThyHBB2` broadcast protocol theory.
-They follow Figure~\ref{fig.HBB2} of the paper:
+Theory ThyHBB2 axioms:
 
 - **Backward rules**: `Echo?`, `Vote?`, and `Deliver?`
 - **Non-equivocation**: `EchoNE`
@@ -14,7 +14,7 @@ They follow Figure~\ref{fig.HBB2} of the paper:
 - **Theory assembly**: `ThyHBB2` extends `ThyLive` with these axioms
 
 Compared to `ThyHBB1`, the theory drops the `safe` predicate from `Vote?` and
-`Vote!`, reflecting the simplified protocol assumptions discussed in Section 7.
+ `Vote!`, reflecting the simplified protocol assumptions.
 -/
 
 namespace ModalDistribution
@@ -33,7 +33,7 @@ variable {S : Signature}
 section BackwardAxioms
 
 /-- Backward rule `Echo?`: every `Echo(v)` stems from a past `Propose(v)`.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def echoBackwardAxiom
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value =>
@@ -41,7 +41,7 @@ Figure~\ref{fig.HBB2}. -/
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
 
 /-- Backward rule `Vote?`: votes require an `l`-quorum of echoes.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
@@ -49,7 +49,7 @@ Figure~\ref{fig.HBB2}. -/
       □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
 
 /-- Backward rule `Deliver?`: deliveries require an `l'`-quorum of votes.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun reporting => ∀ᶠ (fun learner => ∀ᶠ (fun value =>
@@ -61,7 +61,7 @@ end BackwardAxioms
 section NonEquivocation
 
 /-- Axiom `EchoNE`: sequential participants echo at most one value.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def echoNonEquivAxiom
     (echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value => ∀ᶠ (fun altValue =>
@@ -74,7 +74,7 @@ end NonEquivocation
 section ForwardAxioms
 
 /-- Forward rule `Echo!`: live knowledge of a proposal eventually triggers an echo.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def echoForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
@@ -84,7 +84,7 @@ Figure~\ref{fig.HBB2}. -/
       ∃ᶠ (fun witness => ↕ᶠ (ofEvent ⟨echoSymb, [witness]⟩)))
 
 /-- Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -94,7 +94,7 @@ Figure~\ref{fig.HBB2}. -/
       ↕ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩)))
 
 /-- Forward rule `Deliver!`: live knowledge of votes leads to delivery.
-Figure~\ref{fig.HBB2}. -/
+Backward rule axiom. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -111,8 +111,8 @@ variable
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- Theory `ThyHBB2` from Definition~\ref{defn.HBB2}.
-It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in Figure~\ref{fig.HBB2}. -/
+/-- Theory ThyHBB2 .
+It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in Backward rule axiom. -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
@@ -130,8 +130,8 @@ end ThyHBB2
 
 open ThyHBB2
 
-/-- Theory `ThyHBB2` from Definition~\ref{defn.HBB2}.
-It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in Figure~\ref{fig.HBB2}. -/
+/-- Theory ThyHBB2 .
+It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in Backward rule axiom. -/
 @[simp] def ThyHBB2
     {S : Signature}
     (liveSymb : Signature.PredSymb S)

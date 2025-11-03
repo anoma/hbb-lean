@@ -7,7 +7,7 @@ open Lean
 # Modal logic syntax
 
 This file introduces the syntactic objects for the modal logic developed in
-Section 3 of the HBB paper.  We follow Figure 2 (Definition 3.1.3): terms are
+Modal logic syntax. terms are
 built from variable symbols and values, while formulas provide propositional
 connectives, equality, quantification, event and predicate atoms, the temporal
 modalities `↓` (in the past) and `⤒` (at the end of time), the quorum
@@ -16,13 +16,13 @@ intersection modality `♢`, and the distinguished sequentiality predicate `seq`
 ## Symbol reference
 
 The constructors and scoped notations in this module realise
-Figure~\ref{fig.syntax} (syntax) and the satisfaction clauses in
-Figure~\ref{fig.valid} (semantics) of `paper.txt`.  The bullets record the
+The syntax and satisfaction clauses in
+the semantics.  The bullets record the
 correspondence between Lean identifiers or notations and the LaTeX glyphs used
 throughout the paper.
 
-* `Term.var` ↔ the variable symbol `a` range in Figure~\ref{fig.syntax}.
-* `Term.value` ↔ the value literal `v` in Figure~\ref{fig.syntax}.
+* `Term.var` ↔ the variable symbol `a` range.
+* `Term.value` ↔ the value literal `v`.
 * `Formula.bot` / notation `⊥ᶠ` ↔ `\tbot`.
 * `Formula.top` / notation `⊤ᶠ` ↔ `\ttop`.
 * `Formula.imp` / notation `φ ⇒ᶠ ψ` ↔ `\timp`.
@@ -49,8 +49,8 @@ throughout the paper.
 * `Formula.boxEventually ls φ` / notation `□ᶠ⇓[ls] φ` ↔ `\atdcirc{l_1\dots l_n}\phi`.
 * `Formula.boxEmpty φ` / notation `□ᶠ[] φ` ↔ `\atd{}\phi`.
 * `Formula.seq` ↔ the distinguished predicate `\tf{seq}`.
-* `World.accessible` / notation `t' ≪ t` ↔ `\accessible` (Definition~\ref{defn.world}(3)).
-* `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `\accessible^{-}` (Definition~\ref{defn.world}(4)).
+* `World.accessible` / notation `t' ≪ t` ↔ `\accessible` .
+* `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `\accessible^{-}` .
 
 > **Validity notation warning.**  The paper uses three related validity
 > judgements (`\aworld\mentHφ`, `\mentHφ`, `\alltimeplace\mentHφ`).  In this
@@ -62,7 +62,7 @@ throughout the paper.
 
 ## References
 
-* Definition 3.1.3 in the HBB paper.
+* Modal logic syntax and semantics.
 -/
 
 namespace ModalDistribution
@@ -76,17 +76,17 @@ set_option autoImplicit false
 -- This is acceptable since in practice all symbol and value types are finite.
 variable {S : Signature.{0, 0, 0}}
 
-/-- Event atoms `E(v₁,…,vₙ)` from Definition 3.1.3. -/
+/-- Event atoms `E(v₁,…,vₙ)`. -/
 structure EventAtom (S : Signature.{0, 0, 0}) where
   sym : S.EventSymb
   args : List S.Value
 
-/-- Predicate atoms `P(v₁,…,vₙ)` from Definition 3.1.3. -/
+/-- Predicate atoms `P(v₁,…,vₙ)`. -/
 structure PredicateAtom (S : Signature.{0, 0, 0}) where
   sym : S.PredSymb
   args : List S.Value
 
-/-- Definition 3.1.3: modal formulas with HOAS quantifiers. -/
+/-- Modal formulas with HOAS quantifiers. -/
 inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
   | bot : Formula S
   | imp : Formula S → Formula S → Formula S
@@ -127,15 +127,15 @@ def exists_ (body : S.Value → Formula S) : Formula S :=
 def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 
-/-- Always in the past (`⇕` in Figure 4). -/
+/-- Always in the past (`⇕`). -/
 def alwaysPast (φ : Formula S) : Formula S :=
   not (sometime (not φ))
 
-/-- Eventually in the past (`⇓` in Figure 4). -/
+/-- Eventually in the past (`⇓`). -/
 def eventuallyPast (φ : Formula S) : Formula S :=
   not (.past (not φ))
 
-/-- Box modality from Figure 4. -/
+/-- Box modality. -/
 def box (ls : List S.Value) (φ : Formula S) : Formula S :=
   not (.diamond ls (not φ))
 

@@ -10,14 +10,13 @@ open Set
 /-!
 # History Structures
 
-This file formalizes the history structure from
-Definition~\ref{defn.history.structure} of the paper.
+This file formalizes history structures for HBB.
 A history is a hereditarily transitive element of PreHistory(P, Event).
 
 ## Main definitions
 
 * `History P Event`: Type for history structures with hereditary transitivity
-* `TransitiveSubset`: Transitive subset relation (⊆trn) from Definition~\ref{defn.hsubseteq}
+* `TransitiveSubset`: Transitive subset relation (⊆trn)
 * Local view operations and sequentiality properties
 
 ## Main theorems
@@ -25,25 +24,17 @@ A history is a hereditarily transitive element of PreHistory(P, Event).
 * Hereditary transitivity proofs
 * Basic properties of history structures
 * Local view properties and sequentiality lemmas
-
-## References
-
-* Definition~\ref{defn.history.structure}
-* Definition~\ref{defn.hsubseteq}
-* Definition~\ref{defn.views}
-* Definition~\ref{defn.sequential.p}
 -/
 
 variable {P Event : Type*}
 
-/-- Definition\ref{defn.transitive}: a prehistory is transitive when every
-strict predecessor is a subset. -/
+/-- A prehistory is transitive when every strict predecessor is a subset. -/
 def isTransitive (h : PreHistory P Event) : Prop :=
   ∀ h' : PreHistory P Event, h' ≺− h → h' ⊆ h
 
-/-- Definition~\ref{defn.history.structure}: hereditary transitivity demands every
-    predecessor be transitive and itself satisfy hereditary transitivity. We
-    construct this predicate by well-founded recursion on ≺−. -/
+/-- Hereditary transitivity demands every predecessor be transitive and itself
+    satisfy hereditary transitivity. We construct this predicate by well-founded
+    recursion on ≺−. -/
 noncomputable def isHereditarilyTransitive : PreHistory P Event → Prop :=
   PreHistory.happensBefore_wellFounded.fix
     (fun h rec =>
@@ -82,9 +73,8 @@ lemma isHereditarilyTransitive.desc
   have := (isHereditarilyTransitive_unfold h).mp hh
   exact this.2 h' hb
 
-/-- Definition~\ref{defn.history.structure}: histories are the prehistories that are
-    hereditarily transitive. The transitivity of the history follows from the
-    hereditary property itself. -/
+/-- Histories are the prehistories that are hereditarily transitive.
+    The transitivity of the history follows from the hereditary property itself. -/
 structure History (P Event : Type*) where
   val : PreHistory P Event
   hered : isHereditarilyTransitive val
@@ -172,7 +162,7 @@ variable {P Event : Type*}
 
 namespace History
 
-/-- Specialise Definition~\ref{defn.historyat} to history structures. -/
+/-- History at p for history structures. -/
 def historyAt (H : History P Event) (p : P) : Set (World P Event) :=
   PreHistory.historyAt (P := P) (Event := Event) H.val p
 
@@ -184,8 +174,7 @@ end History
 
 end HistoryAt
 
-/-- Definition~\ref{defn.sequential.p}(\ref{item.p.sequential}):
-    participant `p` is sequential in `h` when its event-tuples are linearly
+/-- Participant `p` is sequential in `h` when its event-tuples are linearly
     ordered by accessibility. -/
 def isSequential (p : P) (h : PreHistory P Event) : Prop :=
   ∀ {t₁ t₂ : World P Event},
@@ -199,10 +188,8 @@ def isSequential (p : P) (h : PreHistory P Event) : Prop :=
 
 namespace History
 
-/-- Definition~\ref{defn.hsubseteq}: transitive subset relation (⊆trn).
-    `H' ⊆trn H` when `H' ⊆ H` and `H'` is hereditarily transitive; the
-    September 2025 draft clarifies that an explicit transitivity hypothesis is
-    redundant. -/
+/-- Transitive subset relation (⊆trn). `H' ⊆trn H` when `H' ⊆ H` and `H'`
+    is hereditarily transitive. -/
 def TransitiveSubset (h1 h2 : PreHistory P Event) : Prop :=
   h1 ⊆ h2 ∧ isHereditarilyTransitive h1
 
@@ -235,7 +222,7 @@ theorem transitiveSubset_antisymm {h₁ h₂ : PreHistory P Event} :
     h₁₂.1 h₂₁.1 t
 
 /-- Strict happens-before forces the predecessor history to sit inside the
-transitive-subset relation of Definition~\ref{defn.hsubseteq}. -/
+    transitive-subset relation. -/
 theorem happensBefore_implies_transitiveSubset (h1 h2 : History P Event) :
   h1.val ≺− h2.val → h1.val ⊆trn h2.val := by
   intro h_before
@@ -265,23 +252,21 @@ theorem happensBeforeEq_implies_transitiveSubset (h1 h2 : History P Event) :
     · -- isHereditarilyTransitive h2.val
       exact History.hereditarilyTransitive h2
 
-/-- Definition~\ref{defn.initial.final.event-tuple}: a globally initial event-tuple. -/
+/-- A globally initial event-tuple. -/
 def isInitialTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, H' ≺− t.2.2
 
-/-- Definition~\ref{defn.initial.final.event-tuple}: a globally final event-tuple. -/
+/-- A globally final event-tuple. -/
 def isFinalTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, t.2.2 ≺− H'
 
-/-- `(p, E, H)` is `p`-initial when no earlier `p`-event exists.
-    See Definition~\ref{defn.initial.final.event-tuple}. -/
+/-- `(p, E, H)` is `p`-initial when no earlier `p`-event exists. -/
 def isInitialAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ World.place t = p ∧
     ¬ ∃ t' : World P Event,
         t' ∈ H ∧ World.place t' = p ∧ World.time t' ≺− World.time t
 
-/-- `(p, E, H)` is `p`-final when no later `p`-event exists.
-    See Definition~\ref{defn.initial.final.event-tuple}. -/
+/-- `(p, E, H)` is `p`-final when no later `p`-event exists. -/
 def isFinalAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ World.place t = p ∧
     ¬ ∃ t' : World P Event,
@@ -484,8 +469,7 @@ lemma transitiveSubset_trans {h₁ h₂ h₃ : PreHistory P Event} :
   · exact PreHistory.subset_trans h₁ h₂ h₃ h₁₂_subset h₂₃_subset
   · exact h₁₂_trn
 
-/-- Definition~\ref{defn.sequential.p} expressed using the `historyAt`
-projection from Definition~\ref{defn.historyat}. -/
+/-- Sequentiality expressed using the `historyAt` projection. -/
 lemma isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
     isSequential (P := P) (Event := Event) p h ↔
       ∀ {t t' : World P Event},
@@ -512,7 +496,7 @@ lemma happensBefore_of_mem {H : PreHistory P Event} {e : World P Event}
   e.2.2 ≺− H :=
   ⟨e.1, e.2.1, he⟩
 
-/-- Lemma 5.1.1: Sequentiality is monotone -/
+/-- Sequentiality is monotone. -/
 theorem sequentiality_monotone (p : P) (h h' : History P Event) :
   h' ⊆trn h.val →
   isSequential p h.val →

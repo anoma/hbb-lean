@@ -372,7 +372,7 @@ lemma safe_axiom_body_monotone
       (hSeqGuard := hSeqGuard)
   exact hSeqGuard'
 
-/-- Lemma~\ref{lemm.safe.monotone}(1): safety persists along same-place accessibility. -/
+/-- Safety persists along same-place accessibility. -/
 lemma safe_monotone_subset
     (l : Signature.Value S)
     (hSubset : w.time ⊆trn M.history.val)
@@ -414,7 +414,7 @@ lemma safe_monotone_subset
       (hSubset := hSubset_trn) (hPlace := hPlace)
       (hBody := hSafe)
 
-/-- Lemma~\ref{lemm.safe.monotone}(2): safety implies it always held in the past. -/
+/-- Safety implies it always held in the past. -/
 lemma safe_allPast
     (l : Signature.Value S)
     (hwMem : w ∈ M.history.val)
@@ -453,7 +453,7 @@ lemma safe_allPast
     Sat.not_elim (M := M) (w := t)
       (φ := safeFormula proposeSymb l) hNotSafe hSafe_t
 
-/-- Lemma~\ref{lemm.implies.eventual.quorum}(1): quorum knowledge of `φ` and a
+/-- Quorum knowledge of `φ` and a
 global implication to `ψ` lift `φ` to a future quorum of `ψ`. -/
 lemma atddot_of_eventual_quorum
     (φ ψ : Formula S)
@@ -515,7 +515,7 @@ lemma atddot_of_eventual_quorum
     simpa using hPastψ_end
   simpa using hPastψ
 
-/-- Lemma~\ref{lemm.implies.eventual.quorum}(2): the previous result under the
+/-- The previous result under the
 `ThyLive` assumption. -/
 lemma atddot_live_of_eventual_quorum
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -640,7 +640,7 @@ lemma atddot_live_of_eventual_quorum
   simpa [wₚ]
     using hPastLiveψ
 
-/-- Lemma~\ref{lemm.eot.ax.conc}: composing eventual consequences at the end of
+/-- Composing eventual consequences at the end of
 time. -/
 lemma live_eventually_consequent
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -727,7 +727,7 @@ lemma live_eventually_consequent
       (w := wₚ)
       (φ := Formula.past ψ)).2 hPastψ
 
-/-- Lemma~\ref{lemm.atd.sometime.atd.itp}: `\atd{l}` of `\sometime φ` coincides
+/-- `\atd{l}` of `\sometime φ` coincides
 with `\atddot{l} φ`. -/
 lemma atd_sometime_iff_atddot
     (φ : Formula S)

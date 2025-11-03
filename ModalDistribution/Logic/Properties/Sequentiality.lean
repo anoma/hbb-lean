@@ -7,7 +7,7 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This module packages the lemmas and propositions whose primary focus is the
 sequentiality modality `Formula.seq`.  They were originally developed inside
-`Properties.lean` (Section 5.1) but are isolated here so that future work on the
+`Properties.lean` but are isolated here so that future work on the
 sequential fragment can build on a dedicated library.
 -/
 
@@ -42,8 +42,7 @@ lemma local_event_predecessor
   · simp [History.predecessorHistory, World.time]
   · simpa [History.predecessorHistory, World.place, World.event, World.time]
 
-/-- Lemma~\ref{lemm.accessible.subset}:
-accessible predecessors preserve in-place accessibility slices. -/
+/-- Accessible predecessors preserve in-place accessibility slices. -/
 lemma accessible_subset_of_accessible
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
@@ -75,8 +74,7 @@ lemma accessible_subset_of_accessible
 variable [Nonempty P]
 variable {M : Model S P}
 
-/-- Proposition~\ref{prop.seq.monotone}(1):
-sequentiality persists along same-place accessibility. -/
+/-- Sequentiality persists along same-place accessibility. -/
 lemma seq_monotone_of_subset
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
@@ -104,7 +102,7 @@ lemma seq_monotone_of_subset
     exact hSeqTime ht₁ ht₂ hp₁' hp₂'
   exact (Sat.seq (M := M) (w := w')).2 hSeqTime'
 
-/-- Proposition~\ref{prop.seq.monotone}(2): sequentiality implies `⇓ᶠ`-sequentiality. -/
+/-- Sequentiality implies `⇓ᶠ`-sequentiality. -/
 lemma seq_monotone_allItp
     (Hw : History P (Signature.EventType S))
     (hwTime : Hw.val = w.time)
@@ -136,8 +134,7 @@ lemma seq_monotone_allItp
     (Sat.seq (M := M) (w := t)).2 hSeq_t_place
   exact (Sat.not_elim (M := M) (w := t) (φ := Formula.seq)) ht_notSeq hSeq_t
 
-/-- Proposition~\ref{prop.seq.two.quorums}(\ref{item.seq.two.quorums.1}):
-quorum intersections furnish a joint witness. -/
+/-- Quorum intersections furnish a joint witness. -/
 theorem two_quorums_exists
     {ls : Signature.Value S}
     {ls' : Signature.Value S}
@@ -179,8 +176,7 @@ theorem two_quorums_exists
     sat_diamondEmpty_of_local (M := M)
       (w := w) (φ := ((ψ ∧ᶠ φ) ∧ᶠ φ')) hWitness
 
-/-- Lemma~\ref{lemm.char.seq}:
-sequentiality coincides with linear ordering of the in-place slice. -/
+/-- Sequentiality coincides with linear ordering of the in-place slice. -/
 lemma seq_iff_linear_accessible
     : (⟪w⟫ ⊨[M]Formula.seq) ↔
       (∀ {w₁ w₂ : World P (Signature.EventType S)},
@@ -559,8 +555,8 @@ lemma sat_diamondPast_empty_participant_iff
         (w := ⟨p₁, evt₁, H₁⟩)
         (φ := ↓ᶠ φ)).2 ⟨p, hp₂⟩
 
-/-- Proposition~\ref{prop.seq.two.quorums}(\ref{item.seq.two.quorums.1})
-specialised to local witnesses. -/
+/-- Specialized to local witnesses: sequential world with two distinct local events
+implies temporal ordering. -/
 theorem seq_two_quorums_events
     {w : World P (Signature.EventType S)}
     {evt evt' : Signature.EventType S}
@@ -682,7 +678,7 @@ theorem seq_two_quorums_events
           have hEqual : evt = evt' := MaybeEvent.some.inj hMaybe
           exact (hDistinct hEqual).elim
 
-/-- Proposition~\ref{prop.seq.two.quorums}(\ref{item.seq.two.quorums.2}). -/
+/-- Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
 theorem seq_two_quorums_eventually
     {H : History P (Signature.EventType S)}
     {w : World P (Signature.EventType S)}

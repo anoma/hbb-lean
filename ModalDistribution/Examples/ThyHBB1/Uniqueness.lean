@@ -30,7 +30,7 @@ The file is organized into several categories:
 - **Echo existence and equality lemmas**: Derive echo properties from unique proposals
   - `uniquePropose_exists_witness_echo`: Antecedent ensures echoes exist
   - `uniquePropose_eventually_echo_core`: Combines existence and equality
-  - `uniquePropose_eventually_echo`: Main result (\cref{lemm.only.one.propose.only.one.echo0})
+  - `uniquePropose_eventually_echo`: Main result 
 
 - **Helper lemmas for event-level reasoning**:
   - `sometime_echo_event_exists`: Witness explicit echo events
@@ -39,7 +39,7 @@ The file is organized into several categories:
   - `echoNonEquiv_diamond`: Echo non-equivalence constraint
 
 - **Safety lemmas**:
-  - `atMostOnePropose_safe`: Uniqueness implies safety (\cref{lemm.one.propose.safe})
+  - `atMostOnePropose_safe`: Uniqueness implies safety 
 -/
 
 namespace ModalDistribution
@@ -734,7 +734,7 @@ lemma uniquePropose_guard_specialise_value
       (v := value) hGuard
   exact hForValue
 
-/-- Lemma `\cref{fig.HBB1}`: a sequential quorum guard suffices to ensure safety. -/
+/-- Main result: a sequential quorum guard suffices to ensure safety. -/
 lemma seq_guard_implies_safe
     {w : World P (Signature.EventType S)}
     (l : Signature.Value S)
@@ -750,7 +750,7 @@ lemma seq_guard_implies_safe
       (Or.inr hSeqGuard)
   simpa using h
 
-/-- Lemma `\cref{fig.HBB1}`: safety holds precisely when uniqueness or the sequential
+/-- Main result: safety holds precisely when uniqueness or the sequential
 guard is satisfied. -/
 lemma safe_implies_unique_or_seq_guard
     {w : World P (Signature.EventType S)}
@@ -946,8 +946,7 @@ lemma uniquePropose_witness_eq_value
     simpa [Sat] using hEq_global
   simp [Sat, hEq_val]
 
-/-- Lemma `\cref{lemm.only.one.propose.only.one.echo0}`:
-a unique proposal guarantees eventual echoes. -/
+/-- a unique proposal guarantees eventual echoes. -/
 lemma uniquePropose_eventually_echo
     (value : S.Value)
     (hHBB1 :
@@ -985,7 +984,7 @@ lemma uniquePropose_eventually_echo
               ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
             ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
 
-/-- Lemma `\cref{lemm.one.propose.safe}`: at most one proposal implies every learner is safe. -/
+/-- at most one proposal implies every learner is safe. -/
 lemma atMostOnePropose_safe
     (l : Signature.Value S) :
     ⊨[M](∃≤ᶠ1 v ↦

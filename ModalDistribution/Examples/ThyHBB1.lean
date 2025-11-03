@@ -14,13 +14,10 @@ The implementation has been modularized for better organization and maintainabil
 - **`ThyHBB1.Axioms`**: Axiom schemes (backward rules, forward rules, safety formula, EchoNE)
 - **`ThyHBB1.Safety`**: Safety and liveness helper lemmas
 - **`ThyHBB1.Uniqueness`**: Uniqueness of proposals lemmas
-- **`ThyHBB1.Agreement`**: Main agreement theorem (Theorem 6.6.1)
-- **`ThyHBB1.Liveness`**: Liveness properties (Propositions 6.5.3 and 6.5.4)
-- **`ThyHBB1.Liveness_One`**: Liveness properties (Proposition 6.5.3)
-- **`ThyHBB1.Liveness_Two`**: Liveness properties (Proposition 6.5.4)
-
-This reorganization maintains backward compatibility - all definitions, lemmas, and theorems
-are still accessible via `ModalDistribution.Examples.ThyHBB1`.
+- **`ThyHBB1.Agreement`**: Main agreement theorem
+- **`ThyHBB1.Liveness`**: Liveness properties
+- **`ThyHBB1.Liveness_One`**: Liveness property 1
+- **`ThyHBB1.Liveness_Two`**: Liveness property 2
 
 ## Main Results
 

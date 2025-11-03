@@ -13,7 +13,7 @@ in the modal logic framework. It includes:
 - Diamond and box modality satisfaction lemmas (sat_diamond_*, sat_box_*)
 - De Morgan duality lemmas between ♢ and □ operators
 - AllWorldValid lemmas for reasoning about event satisfaction
-- Results from Section 4 of the HBB paper (lemma_4_1_1_*, lemma_4_1_3_*, etc.)
+- Results for quorum families and diamond/box modalities
 - Counterexamples demonstrating limitations of certain implications
 - Lemmas about the interplay between temporal operators (↓, ↕) and quorum modalities
 -/
@@ -31,7 +31,7 @@ variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
 section DiamondSection
 
-/-- Witness property for `♢` modalities (Lemma~\ref{lemm.n.quorum.intersection}). -/
+/-- Witness property for `♢` modalities. -/
 @[simp] def hasQuorumWitness
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) : Prop :=
@@ -787,9 +787,9 @@ lemma valid_not_box_iff_diamond_not
         (w := ⟨p, †, M.history.val⟩)
         (φ := ♢ᶠ[ls] (¬ᶠ φ))).2 hSat
 
-/-! ### Remark 3.7.7: dualities between derived modalities -/
+/-! ### De Morgan dualities between derived modalities -/
 
-/-- `♢` and `□` are De Morgan duals (Remark 3.7.7(1)). -/
+/-- `♢` and `□` are De Morgan duals. -/
 lemma diamond_valid_iff_not_box_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -817,7 +817,7 @@ lemma diamond_valid_iff_not_box_not
         (ls := ls) (φ := ¬ᶠ φ)).symm
     exact hDiamondEquiv.trans hNotBox
 
-/-- `□` and `♢` are De Morgan duals (Remark 3.7.7(2)). -/
+/-- `□` and `♢` are De Morgan duals. -/
 lemma box_valid_iff_not_diamond_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -829,7 +829,7 @@ lemma box_valid_iff_not_diamond_not
       (ls := ls) (φ := ¬ᶠ φ)).symm
   simp [Formula.not, Formula.box]
 
-/-- `♢ᶠ↓` is the De Morgan dual of `□ᶠ⇓` (Remark 3.7.7(3)). -/
+/-- `♢ᶠ↓` is the De Morgan dual of `□ᶠ⇓`. -/
 lemma diamondPast_valid_iff_not_boxEventually_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -884,7 +884,7 @@ lemma hasQuorumWitness_top_iff_nonempty
       using Sat.top (M := M)
         (w := ⟨p, †, M.history.val⟩)
 
-/-- `□ᶠ⇓` is the De Morgan dual of `♢ᶠ↓` (Remark 3.7.7(4)). -/
+/-- `□ᶠ⇓` is the De Morgan dual of `♢ᶠ↓`. -/
 lemma boxEventually_valid_iff_not_diamondPast_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -907,7 +907,7 @@ lemma boxEventually_valid_iff_not_diamondPast_not
           (M := M) (w := ⟨p, †, M.history.val⟩)
           (ts := ls) (φ := φ)).2 hSat
 
-/-- `♢ᶠ⇓` and `□ᶠ↓` are De Morgan duals (Remark 3.7.7(5)). -/
+/-- `♢ᶠ⇓` and `□ᶠ↓` are De Morgan duals. -/
 lemma diamondEventually_valid_iff_not_boxPast_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -930,7 +930,7 @@ lemma diamondEventually_valid_iff_not_boxPast_not
         (φ := ♢ᶠ⇓[ls] φ)
         (ψ := ¬ᶠ (□ᶠ↓[ls] (¬ᶠ φ))) hEquiv
 
-/-- `□ᶠ↓` and `♢ᶠ⇓` are De Morgan duals (Remark 3.7.7(6)). -/
+/-- `□ᶠ↓` and `♢ᶠ⇓` are De Morgan duals. -/
 lemma boxPast_valid_iff_not_diamondEventually_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
@@ -1125,9 +1125,9 @@ lemma hasQuorumWitness.seq_to_past
         hSeqWorld⟩
   exact ⟨p, hpAll, hSeqPast⟩
 
-/-! ## Results from Section 4 -/
+/-! ## Quorum intersection results -/
 
-/-- N-way quorum intersection witness (Lemma~\ref{lemm.n.quorum.intersection}(1)).
+/-- N-way quorum intersection witness).
 
 Characterizes the global diamond modality `♢ᶠ[ls] φ` in terms of quorum witnesses:
 a formula holds under the diamond modality if and only if there exists a witness
@@ -1168,7 +1168,7 @@ theorem nWayQuorumIntersectionWitness
         (ls := ls) (φ := φ)
         (w := ⟨p, †, M.history.val⟩)).2 hCheck
 
-/-- N-way quorum intersection nonemptiness (Lemma~\ref{lemm.n.quorum.intersection}(2)).
+/-- N-way quorum intersection nonemptiness).
 
 Specializes the witness characterization to the trivial formula `⊤`: the global diamond
 `♢ᶠ[ls] ⊤ᶠ` holds if and only if all quorum families have nonempty intersection.
@@ -1195,7 +1195,7 @@ theorem nWayQuorumIntersectionNonempty
       using (Sat.top (M := M)
         (w := ⟨p, †, M.history.val⟩))
 
-/-- Quorum witness implies nonemptiness (Lemma~\ref{lemm.n.quorum.intersection}(3)).
+/-- Quorum witness implies nonemptiness).
 
 If a formula has a quorum witness (satisfies `♢ᶠ[ls] φ`), then the quorum families
 have nonempty intersection (satisfies `♢ᶠ[ls] ⊤ᶠ`). This weakening is useful when
@@ -1218,23 +1218,23 @@ lemma quorumWitnessImpliesNonempty
   exact
     (nWayQuorumIntersectionNonempty (M := M) (ls := ls)).2 hNonempty
 
-/-- Nonempty quorum intersections from Notation~\ref{nttn.intersecting.quorums}. -/
+/-- Nonempty quorum intersections. -/
 @[simp] def hasNonemptyIntersections
     (M : Model S P) (ls : List S.Value) : Prop :=
   ⊨[M] (♢ᶠ[ls] ⊤ᶠ)
 
-/-- Sequential quorum intersections from Notation~\ref{nttn.intersecting.quorums}. -/
+/-- Sequential quorum intersections. -/
 @[simp] def hasSequentialIntersections
     (M : Model S P) (ls : List S.Value) : Prop :=
   ⊨[M] (♢ᶠ[ls] Formula.seq)
 
-/-- Live quorum intersections from Notation~\ref{nttn.intersecting.quorums}. -/
+/-- Live quorum intersections. -/
 @[simp] def hasLiveIntersections
     (M : Model S P) (liveSymb : Signature.PredSymb S)
     (ls : List S.Value) : Prop :=
   ⊨[M] (♢ᶠ[ls] (Formula.predicate0 liveSymb))
 
-/-- Present-time box implies past-guarded box (Lemma~\ref{lemm.n.quorum.intersection}).
+/-- Present-time box implies past-guarded box.
 
 Quorum witnesses correspond to present-time diamonds: having a quorum witness
 is equivalent to the global diamond modality holding.
@@ -1258,7 +1258,7 @@ lemma localSat_eventuallyPast_top_eq
   classical
   simp [Formula.eventuallyPast, Formula.not, Formula.top, Sat]
 
-/-- Past-guarded box at top world (Lemma~\ref{lemm.n.quorum.intersection}).
+/-- Past-guarded box at top world.
 
 Nonempty quorum intersections correspond to eventually-past diamonds: having
 a quorum witness for ⊤ is equivalent to the eventually-past diamond holding.
@@ -1288,7 +1288,7 @@ theorem pastBoxAtTopWorld
           (localSat_eventuallyPast_top_eq (M := M)
             (w := ⟨q, †, M.history.val⟩)).symm))
 
-/-- Past box at top implies predecessor (Lemma~\ref{lemm.n.quorum.intersection}).
+/-- Past box at top implies predecessor.
 
 Under the activity assumption (□ᶠ[] (↓ᶠ ⊤ᶠ)), quorum witnesses for ⊤ correspond
 to past-guarded diamonds ♢ᶠ↓[ls] ⊤ᶠ. The activity assumption ensures that all
@@ -1333,7 +1333,7 @@ theorem pastBoxTopImpliesPredecessor
             (w := ⟨p, †, M.history.val⟩)))
         hWitnessPast
 
-/-- Past box for sequentiality implies predecessor (Lemma~\ref{lemm.n.quorum.intersection}).
+/-- Past box for sequentiality implies predecessor.
 
 Under the activity assumption, sequential witnesses persist: having a sequential
 quorum witness implies the past-guarded sequential diamond holds. Note that the
@@ -1357,9 +1357,9 @@ theorem pastBoxSeqImpliesPredecessor
     (presentBoxImpliesPastBox (M := M) (ls := ls)
       (φ := ↓ᶠ Formula.seq)).1 hWitnessPast
 
-/-! ## Section 4.2: Interplay between `↓`, `↕`, and quorum modalities -/
+/-! ## Interplay between `↓`, `↕`, and quorum modalities -/
 
-/-- Singleton box implies diamond (Lemma~\ref{lemm.atd.implies.someone}(1)).
+/-- Singleton box implies diamond).
 
 A singleton quorum box □ᶠ↓[[l]]φ guarantees that every quorum from learner l
 satisfies the past-guarded formula, which implies the empty diamond ♢ᶠ↓[[]] φ
@@ -1384,7 +1384,7 @@ lemma singletonBoxImpliesDiamond
       (w := w) (φ := ↓ᶠ φ)
       ⟨q, hAll q hq⟩
 
-/-- Global singleton box implies diamond (Lemma~\ref{lemm.atd.implies.someone}(1)).
+/-- Global singleton box implies diamond).
 
 The global version: if □ᶠ[[l]] φ holds globally, then ♢ᶠ[] φ holds globally.
 This lifts the local singleton box implication to the global level.
@@ -1408,7 +1408,7 @@ lemma globalSingletonBoxImpliesDiamond
       (w := ⟨p, †, M.history.val⟩) (φ := φ)
       ⟨q, hAll q hq⟩
 
-/-- Quorum box implies empty diamond (Lemma~\ref{lemm.atd.implies.someone}(2)).
+/-- Quorum box implies empty diamond).
 
 A singleton quorum box □ᶠ[[l]] φ at any world implies the empty diamond ♢ᶠ[] φ
 at that world. This is a strengthening that works for arbitrary histories, not
@@ -1481,7 +1481,7 @@ private lemma sat_boxPast_of_predecessor
       (φ := φ) (hSubset := hSubset_t) hPast
   simpa [World.place, World.event, World.time] using hPast'
 
-/-- Quorum box global implies empty diamond (Lemma~\ref{lemm.atedot.idempotent}).
+/-- Quorum box global implies empty diamond.
 
 Past diamonds are idempotent: ♢ᶠ↓[[]] (↓ᶠ φ) is equivalent to ♢ᶠ↓[[]] φ.
 This shows that nested past operators collapse, simplifying reasoning about
@@ -1559,7 +1559,7 @@ lemma quorumBoxGlobalImpliesEmptyDiamond
       (w := w) (φ := ↓ᶠ φ)).2 ⟨q, hPastFinal⟩
   simpa [Formula.diamondPast] using hDiamondFinal
 
-/-- Past box collapses to present box (Lemma~\ref{lemm.itp.atddot}(1)).
+/-- Past box collapses to present box).
 
 A past-guarded box ↓ᶠ (□ᶠ↓[[l]] φ) collapses to a present box □ᶠ↓[[l]] φ.
 This idempotency property shows that nested temporal operators can be simplified,
@@ -1589,7 +1589,7 @@ lemma pastBoxCollapsesToPresentBox
           using hBox_t)
   simpa [Formula.boxPast] using hBox
 
-/-- Past diamond-box collapses to present box (Lemma~\ref{lemm.itp.atddot}(2)).
+/-- Past diamond-box collapses to present box).
 
 A past-guarded diamond containing a box ♢ᶠ↓[[]] (□ᶠ↓[[l]] φ) collapses to a
 present box □ᶠ↓[[l]] φ. This strengthens the previous collapsing lemma by showing

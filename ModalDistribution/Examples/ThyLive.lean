@@ -7,10 +7,10 @@ import ModalDistribution.Core.History
 /-!
 # Theory `ThyLive`
 
-We formalise the liveness theory from Section 5.2 of the paper.  The theory is
+We formalise the liveness theory.  The theory is
 parametrised by a distinguished predicate symbol `liveSymb`, and contains the
 axioms `LiveAlways`, `LiveSeq`, `LiveActive`, together with two knowledge axiom
-schemes.  This file records the theory and the Section 5.2 lemmas and
+schemes.  This file records the theory and lemmas and
 propositions that depend on it.
 -/
 
@@ -98,7 +98,7 @@ variable {ls₁ ls₂ : List (Signature.Value S)}
 variable {w w' t : World P (Signature.EventType S)}
 variable {H : History P (Signature.EventType S)}
 
-/-- Lemma~\ref{lemm.sometime.itp}: sometime knowledge lifts to the end of time. -/
+/-- Sometime knowledge lifts to the end of time. -/
 lemma sometime_past_end
     {w : World P (Signature.EventType S)}
     (hSat : ⟪w⟫ ⊨[M]↕ᶠ(♢ᶠ[]↓ᶠ (Formula.ofEvent evt))) :
@@ -314,9 +314,8 @@ lemma live_guard_predecessor_data
   simpa [Formula.predicate0, Sat, World.place, World.event, World.time, hPre_val]
     using this
 
-/-- Liveness at world equivalent to liveness at end-of-time (Lemma 5.2.9(1)).
-
-Liveness does not depend on time: a participant is live at a specific world
+/-- Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
+ Liveness does not depend on time: a participant is live at a specific world
 if and only if it is live at the end-of-time world for that participant.
 This follows from the liveness-always axiom (live ⇔ ⤒ live).
 
@@ -381,10 +380,8 @@ lemma alwaysLiveEquivForward
     simpa [Sat, World.place, World.event, World.time]
       using hLocal'
 
-/-- Liveness at any two worlds with same participant
-(Lemma~\ref{lemm.live.then.live.now}(\ref{item.live.then.live.now.2})).
-
-Liveness does not depend on time: if two worlds have the same participant (place),
+/-- Liveness at any two worlds with same participant.
+ Liveness does not depend on time: if two worlds have the same participant (place),
 then liveness holds at one if and only if it holds at the other. This is a direct
 consequence of the forward direction applied twice.
 
@@ -792,7 +789,7 @@ private lemma promote_live_atddot_past
       (φ := (Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ)).2
       ⟨tBox, htBox_mem, htBox_place, hConj⟩
 
-/-- Lemma~\ref{lemm.promote.live.atddot}: liveness quorum boxes promote to nested
+/-- Liveness quorum boxes promote to nested
 quorum boxes under `ThyLive`. -/
 lemma promote_live_atddot
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -1324,7 +1321,7 @@ lemma live_knows_eventually_quorum_past
   cases hw_place
   simpa [hφBox] using hResult
 
-/-- Proposition~\ref{prop.live.eventually.knows}: live quorums eventually know past facts. -/
+/-- Live quorums eventually know past facts. -/
 theorem live_eventually_knows
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1362,8 +1359,7 @@ theorem live_eventually_knows
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Corollary~\ref{corr.live.eventually.knows}(\ref{item.live.eventually.knows.1}):
-live quorums eventually know of past events. -/
+/-- Live quorums eventually know of past events. -/
 theorem live_eventually_knows_event
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1428,8 +1424,7 @@ theorem live_eventually_knows_event
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Corollary~\ref{corr.live.eventually.knows}(\ref{item.live.eventually.knows.2}):
-live quorums eventually learn of performed events. -/
+/-- Live quorums eventually learn of performed events. -/
 theorem live_eventually_knows_performed
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1441,8 +1436,7 @@ theorem live_eventually_knows_performed
     live_eventually_knows (M := M)
       (hTheory := hTheory) (hLive := hLive) (hEvent := hEvent)
 
-/-- Corollary~\ref{corr.live.eventually.knows}(\ref{item.live.eventually.knows.3}):
-live quorums eventually know quorum facts. -/
+/-- Live quorums eventually know quorum facts. -/
 theorem live_eventually_knows_quorum
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1481,8 +1475,7 @@ theorem live_eventually_knows_quorum
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Proposition~\ref{prop.intertwined.two.quorums}:
-live quorum intersections expose live witnesses. -/
+/-- Live quorum intersections expose live witnesses. -/
 theorem intertwined_two_quorums
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hIntersect : ⊨[M]♢ᶠ[id [l, l₁]]⊤ᶠ)

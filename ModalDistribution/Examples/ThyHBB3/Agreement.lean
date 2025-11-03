@@ -8,7 +8,7 @@ import ModalDistribution.Logic.Properties
 # ThyHBB3 Agreement Property
 
 This file states the agreement property for `ThyHBB3`, formalising
-Proposition~\ref{prop.3.agreement}. If two learners are everywhere correlated,
+Agreement property for ThyHBB3. If two learners are everywhere correlated,
 then any two deliveries for those learners must agree on the value.
 -/
 
@@ -32,7 +32,7 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- Agreement property for ThyHBB3 (Proposition~\ref{prop.3.agreement}).
+/-- Agreement property for ThyHBB3.
 
 Correlation between l₁ and l₂ forces any deliveries for those learners
 to agree on the value. This uses the correlation predicate to establish quorum
@@ -297,7 +297,7 @@ lemma agreementThyHBB3
           (hCorr := hCorr_now)
       exact by simp [Sat, hEqVotes.symm]
 
-/-- Corollary of Proposition~\ref{prop.3.agreement}: if deliveries for learners
+/-- If deliveries for learners
 `l₁` and `l₂` both occur, their values coincide. -/
 lemma agreementThyHBB3_of_deliveries
     (hTheory : M ⊨ᵀ

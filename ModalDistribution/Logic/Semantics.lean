@@ -7,11 +7,11 @@ import ModalDistribution.Logic.Syntax
 /-!
 # Modal logic semantics
 
-We formalise the satisfaction relation from Definition~\ref{defn.valid} /
-Figure~\ref{fig.valid} of the HBB paper.  Satisfaction is defined for a model, a
+We formalise the satisfaction relation from
+the validity figure.  Satisfaction is defined for a model, a
 participant, a local history, and a variable assignment.  We also introduce
 end-of-time validity, event-driven validity, and the notion of active
-participants (Definition~\ref{defn.active.p}).
+participants .
 -/
 
 namespace ModalDistribution
@@ -67,7 +67,7 @@ private lemma depth_forall_body (body : S.Value → Formula S) (v : S.Value) :
   · -- If S.Value is empty, there's no v to consider, contradiction
     exact absurd ⟨v⟩ h
 
-/-- Satisfaction relation `p \dx H ⊨[M]φ` (Figure~\ref{fig.valid}). -/
+/-- Satisfaction relation `p \dx H ⊨[M]φ`. -/
 def Sat (M : Model S P)
     (p : P)
     (evt : MaybeEvent S.EventType)
@@ -1089,7 +1089,7 @@ lemma diamondEventually_not_boxPast_not
 
 end Sat
 
-/-- End-of-time validity (Definition~\ref{defn.valid} / Figure~\ref{fig.valid}). -/
+/-- End-of-time validity. -/
 @[simp] def EndValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ p : P,
@@ -1129,7 +1129,7 @@ lemma EndValid.congr
     exact EndValid.of_imp (M := M)
       (φ := ψ) (ψ := φ) (h := fun p => (h p).2) hψ
 
-/-- Event-driven validity (Definition~\ref{defn.valid} / Figure~\ref{fig.valid}). -/
+/-- Event-driven validity. -/
 @[simp] def AllWorldValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ {t : World P S.EventType},
@@ -1155,7 +1155,7 @@ lemma AllWorldValid.of_mem_history
 notation:55 "□W⊨[" M "]" φ =>
   AllWorldValid M φ
 
-/-- Active participant predicate (Definition~\ref{defn.active.p}). -/
+/-- Active participant predicate . -/
 @[simp] def IsActive
     (H : History P (S.EventType))
     (p : P) : Prop :=
@@ -1199,7 +1199,7 @@ lemma exists_active_of_history_ne_empty
           refine ⟨World.place t, ?_⟩
           exact ⟨t, by simp [hHistory], rfl⟩
 
-/-- Lemma 3.5.3 in the paper. -/
+/-- Active participants characterization. -/
 theorem active_iff_past_top
     (M : Model S P)
     (p : P) :
