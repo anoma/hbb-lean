@@ -4,7 +4,6 @@ import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
-import ModalDistribution.Tactics
 import ModalDistribution.Core.History
 
 /-!
