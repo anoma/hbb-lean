@@ -87,7 +87,7 @@ This will:
 - Download and build Mathlib4 (the standard mathematical library)
 - Build all formalized proofs
 
-**Note**: The first build takes several minutes to several hours depending on system specs it compiles Mathlib4. Subsequent builds are much faster. Note that it needs to bould roughly 3100 files, which should give a clear idea how much progress has been made as you watch it build.
+**Note**: The first build takes several minutes to several hours depending on system specs as it compiles Mathlib4. Subsequent builds are much faster. Note that it needs to build roughly 3100 files, which should give a clear idea how much progress has been made as you watch it build.
 
 #### 4. (Optional) Install VS Code with Lean 4 extension
 
