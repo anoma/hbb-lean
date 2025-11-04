@@ -1,6 +1,6 @@
 # ModalDistribution
 
-A Lean 4 library formalizing modal logic and broadcast algorithms from the paper "Modal logic specification and semantics of distributed algorithms, with application to heterogeneous broadcast".
+A Lean 4 library formalizing modal logic and broadcast algorithms from the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures".
 
 ## Overview
 
