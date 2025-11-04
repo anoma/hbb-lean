@@ -118,8 +118,8 @@ Same as Figure 2 ([ModalDistribution/Logic/Syntax.lean](ModalDistribution/Logic/
 - `accessible_irrefl` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
 
 ### Definition 3.4.7 (History H at p)
-Part 1: `historyAt` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
-Part 2: `historyAt` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
+- Part 1: `historyAt` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
+- Part 2: `historyAt` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 
 ### Definition 3.4.9 (Sequentiality)
 - `isSequential` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
@@ -135,12 +135,12 @@ Part 2: `historyAt` ([ModalDistribution/Core/History.lean](ModalDistribution/Cor
 - `active_iff_past_top` ([ModalDistribution/Logic/Semantics.lean](ModalDistribution/Logic/Semantics.lean))
 
 ### Remark 3.7.7 (De Morgan dualities)
-Part 1: `diamond_valid_iff_not_box_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
-Part 2: `box_valid_iff_not_diamond_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
-Part 3: `diamondPast_valid_iff_not_boxEventually_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
-Part 4: `boxEventually_valid_iff_not_diamondPast_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
-Part 5: `diamondEventually_valid_iff_not_boxPast_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
-Part 6: `boxPast_valid_iff_not_diamondEventually_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 1: `diamond_valid_iff_not_box_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 2: `box_valid_iff_not_diamond_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 3: `diamondPast_valid_iff_not_boxEventually_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 4: `boxEventually_valid_iff_not_diamondPast_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 5: `diamondEventually_valid_iff_not_boxPast_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 6: `boxPast_valid_iff_not_diamondEventually_not` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 
 ---
 
@@ -151,9 +151,9 @@ Part 6: `boxPast_valid_iff_not_diamondEventually_not` ([ModalDistribution/Logic/
 - `familyQuorums`, `familyInter`, `familyInterNonempty`, `familyInterWitness` ([ModalDistribution/Core/Semifilter.lean](ModalDistribution/Core/Semifilter.lean))
 - `allFamilyInterNonempty`, `allFamilyInterWitness`, `sequentialFamilyIntersections` ([ModalDistribution/Core/Semifilter.lean](ModalDistribution/Core/Semifilter.lean))
 
-Part 1: `familyInterWitness_iff`, `nWayQuorumIntersectionWitness` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
-Part 2: `familyInterNonempty_iff`, `nWayQuorumIntersectionNonempty` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
-Part 3: `familyInterWitness_imp_nonempty`, `quorumWitnessImpliesNonempty` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 1: `familyInterWitness_iff`, `nWayQuorumIntersectionWitness` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 2: `familyInterNonempty_iff`, `nWayQuorumIntersectionNonempty` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 3: `familyInterWitness_imp_nonempty`, `quorumWitnessImpliesNonempty` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
 
 **Supporting lemmas:**
 - `hasQuorumWitness`, `presentBoxImpliesPastBox`, `pastBoxAtTopWorld` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
@@ -185,8 +185,8 @@ Part 3: `familyInterWitness_imp_nonempty`, `quorumWitnessImpliesNonempty` ([Moda
 - `accessible_subset_of_accessible` ([ModalDistribution/Logic/Properties/Sequentiality.lean](ModalDistribution/Logic/Properties/Sequentiality.lean))
 
 ### Proposition 5.1.4 (Sequentiality monotonicity)
-Part 1: `seq_monotone_of_subset` ([ModalDistribution/Logic/Properties/Sequentiality.lean](ModalDistribution/Logic/Properties/Sequentiality.lean))
-Part 2: `seq_monotone_allItp` ([ModalDistribution/Logic/Properties/Sequentiality.lean](ModalDistribution/Logic/Properties/Sequentiality.lean))
+- Part 1: `seq_monotone_of_subset` ([ModalDistribution/Logic/Properties/Sequentiality.lean](ModalDistribution/Logic/Properties/Sequentiality.lean))
+- Part 2: `seq_monotone_allItp` ([ModalDistribution/Logic/Properties/Sequentiality.lean](ModalDistribution/Logic/Properties/Sequentiality.lean))
 Also: `sequentiality_monotone` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 
 ### Proposition 5.1.5 (Two quorums interaction with sequentiality)
@@ -207,9 +207,9 @@ Also: `sequentiality_monotone` ([ModalDistribution/Core/History.lean](ModalDistr
 - `live_eventually_knows` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 
 ### Corollary 5.2.9 (Consequences of eventual knowledge)
-Part 1: `live_eventually_knows_event` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
-Part 2: `live_eventually_knows_performed` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
-Part 3: `live_eventually_knows_quorum` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
+- Part 1: `live_eventually_knows_event` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
+- Part 2: `live_eventually_knows_performed` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
+- Part 3: `live_eventually_knows_quorum` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 
 ### Lemma 5.2.9(1) (Liveness at world equivalent to liveness at end-of-time)
 - `alwaysLiveEquivForward` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
@@ -235,12 +235,12 @@ Safety axioms for echo, vote, and deliver predicates ([ModalDistribution/Example
 - `agreementFromDeliveriesThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
 
 ### Lemma 6.4.1 (Safety monotonicity)
-Part 1: `safe_monotone_subset` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
-Part 2: `safe_allPast` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
+- Part 1: `safe_monotone_subset` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
+- Part 2: `safe_allPast` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 
 ### Lemma 6.4.2 (Eventual quorum lifting)
-Part 1: `atddot_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
-Part 2: `atddot_live_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
+- Part 1: `atddot_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
+- Part 2: `atddot_live_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 
 ### Lemma 6.4.3 (End-of-time consequence composition)
 - `live_eventually_consequent` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
@@ -315,18 +315,18 @@ Same as Proposition 6.3.1 above ([ModalDistribution/Examples/ThyHBB1/Agreement.l
 - `threeTwined_phi` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 
 ### Lemma 8.4.2 (Votes imply quorum of echoes)
-Part 1: `vote_implies_echo_quorum_local` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-Part 2: `vote_implies_echo_quorum_end` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 1: `vote_implies_echo_quorum_local` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 2: `vote_implies_echo_quorum_end` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 
 ### Lemma 8.4.3 (Echo quorums/votes agreeing)
-Part 1: `echo_quorums_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-Part 2: `votes_eventually_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-Part 3: `correlated_vote_eventually` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-Part 4: `live_echo_eventually_vote` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 1: `echo_quorums_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 2: `votes_eventually_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 3: `correlated_vote_eventually` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 4: `live_echo_eventually_vote` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 
 ### Lemma 8.4.4 (Correlation implies intersections)
-Part 1: `correlationImpliesPairwiseQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-Part 2: `correlationImpliesQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 1: `correlationImpliesPairwiseQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- Part 2: `correlationImpliesQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 Also: `correlationEveryoneImpliesIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 
 ### Proposition 8.4.5 (Liveness property 2 for ThyHBB3)
