@@ -72,8 +72,8 @@ source ~/.profile  # or source ~/.bashrc
 #### 2. Clone this repository
 
 ```bash
-git clone https://github.com/AHartNtkn/modal-dist-lean.git
-cd modal-dist-lean
+git clone https://github.com/anoma/hbb-lean.git
+cd hbb-lean
 ```
 
 #### 3. Build the project
