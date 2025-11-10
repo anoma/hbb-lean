@@ -76,27 +76,46 @@ git clone https://github.com/AHartNtkn/modal-dist-lean.git
 cd modal-dist-lean
 ```
 
-#### 3. Build the project
+(Or unpack the zip archive of this repository, if you have downloaded it from a DOI or other source.)
+
+#### 3. Build and verify the proofs
 
 ```bash
 lake build
 ```
 
-This will:
+This command both builds the project **and verifies all proofs**. It will:
 - Automatically install the correct Lean version (v4.24.0-rc1)
 - Download and build Mathlib4 (the standard mathematical library)
-- Build all formalized proofs
+- Build and verify all formalized correctness proofs for ThyHBB1, ThyHBB2, and ThyHBB3
 
-**Note**: The first build takes several minutes to several hours depending on system specs it compiles Mathlib4. Subsequent builds are much faster. Note that it needs to bould roughly 3100 files, which should give a clear idea how much progress has been made as you watch it build.
+**What to expect during the build:**
+- The first build takes several minutes to several hours depending on system specs, as it compiles Mathlib4
+- You'll see messages like "✔ [2440/3111] Built Mathlib.Topology.UniformSpace.Completion (31s)" as modules are being processed
+- The build compiles roughly 3100 files total, which can be used to gauge build progress
+- When you see modules from `ModalDistribution.Examples.ThyHBB1`, `ThyHBB2`, and `ThyHBB3` being processed, that's when the correctness properties (Agreement, Liveness 1, and Liveness 2) for each protocol are being verified
+- Subsequent builds are much faster
+
+**If the build completes without errors, all proofs are mechanically verified correct.** This means the correctness properties of all three broadcast protocols have been formally proven.
+
+To see verification announcements as each protocol is verified during the build, run:
+```bash
+./build_with_announcements.sh
+```
 
 #### 4. (Optional) Install VS Code with Lean 4 extension
 
 For the best experience viewing and stepping through proofs:
 
 1. Install [Visual Studio Code](https://code.visualstudio.com/)
-2. Install the "Lean 4" extension from the VS Code marketplace
-3. Open this repository in VS Code: `code .`
-4. Open any `.lean` file to see syntax highlighting and proof states
+2. Open this repository in VS Code by running `code .` from the terminal in the repository directory
+3. Install the "Lean 4" extension:
+   - Click the "Extensions" icon in the VS Code sidebar (or press Ctrl+Shift+X / Cmd+Shift+X)
+   - Search for "Lean 4"
+   - Install the extension published by "leanprover"
+   - **Note**: You may see a warning about installing extensions from unverified publishers. This is normal for first-time installation. The Lean 4 extension is the official extension from the Lean development team. You can verify this at the [official Lean installation page](https://lean-lang.org/install/)
+4. Open any `.lean` file (e.g., `ModalDistribution.lean`) to see syntax highlighting and proof states
+   - If prompted about opening in Restricted mode, you can choose either option
 
 ## How to explore the formalization
 
@@ -108,25 +127,16 @@ If you're reading the paper and want to see how something is formalized:
 2. Find the definition/theorem from the paper (e.g., "Definition 2.3.5")
 3. Follow the file path to see the Lean code
 
-Example: To see the Agreement proof for ThyHBB1 (Proposition 6.3.1), open `ModalDistribution/Examples/ThyHBB1/Agreement.lean`.
+Example: To see the Agreement proof for ThyHBB1 (Proposition 6.3.1), open `ModalDistribution/Examples/ThyHBB1/Agreement.lean`, or you may find the entry for that proposition in PAPER_MAPPING.md and click on its link, which will take you to the same place.
 
 ### In VS Code
 
-1. Open a `.lean` file
+1. Open a `.lean` file (e.g., `ModalDistribution.lean`)
 2. Click anywhere in a proof
 3. The "Lean Infoview" panel shows the proof state at that point
 4. Hover over identifiers to see their types
 5. Ctrl+click (or Cmd+click) on names to jump to definitions
-
-## Verifying the proofs
-
-To check that all proofs are valid:
-
-```bash
-lake build
-```
-
-If this completes without errors, all proofs are mechanically verified correct.
+6. Right click on terms to get a list of interactions
 
 ## License
 
