@@ -1,6 +1,6 @@
 # Heterogeneous Broadcast in Lean 4
 
-A complete Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of three Byzantine broadcast algorithms using history structures and modal logic.
+A complete Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of three broadcast algorithms using history structures and modal logic.
 
 ## What's in this repository?
 
@@ -72,8 +72,8 @@ source ~/.profile  # or source ~/.bashrc
 #### 2. Clone this repository
 
 ```bash
-git clone https://github.com/AHartNtkn/modal-dist-lean.git
-cd modal-dist-lean
+git clone https://github.com/anoma/hbb-lean.git
+cd hbb-lean
 ```
 
 (Or unpack the zip archive of this repository, if you have downloaded it from a DOI or other source.)
