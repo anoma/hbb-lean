@@ -81,10 +81,12 @@ cd hbb-lean
 #### 3. Build and verify the proofs
 
 ```bash
+# EITHER type
 lake build
+# OR (for informative verification announcements as each protocol is verified during the build) type
+./build_with_accouncements.sh
 ```
-
-This command both builds the project **and verifies all proofs**. It will:
+This builds the project **and verifies all proofs**. It will:
 - Automatically install the correct Lean version (v4.24.0-rc1)
 - Download and build Mathlib4 (the standard mathematical library)
 - Build and verify all formalized correctness proofs for ThyHBB1, ThyHBB2, and ThyHBB3
@@ -97,11 +99,6 @@ This command both builds the project **and verifies all proofs**. It will:
 - Subsequent builds are much faster
 
 **If the build completes without errors, all proofs are mechanically verified correct.** This means the correctness properties of all three broadcast protocols have been formally proven.
-
-To see verification announcements as each protocol is verified during the build, run:
-```bash
-./build_with_announcements.sh
-```
 
 #### 4. (Optional) Install VS Code with Lean 4 extension
 
