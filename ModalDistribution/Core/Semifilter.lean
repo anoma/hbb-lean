@@ -9,25 +9,25 @@ open History
 # Semifilter Structures
 
 This file introduces semifilters as the set-theoretic foundation for quorums, following
-Notation and definition for semifilters. Semifilters capture nonempty,
+Notation 3.2.1 and Definition 3.2.2 of the HBB paper. Semifilters capture nonempty,
 up-closed families of pairwise intersecting quorums on a set of participants.
 
 ## Main definitions
 
-* `Semifilter.intersects` (`≬`): quorum-intersection predicate.
+* `Semifilter.intersects` (`≬`): quorum-intersection predicate from Notation 3.2.1.
 * `Semifilter`: structure of nonempty up-closed pairwise-intersecting families of quorums.
 
 ## References
 
-* Paper notation for quorum intersection.
-* Paper definition for semifilters.
+* Notation 3.2.1 in "Logical Analysis of Heterogeneous Broadcasts".
+* Definition 3.2.2 in "Logical Analysis of Heterogeneous Broadcasts".
 -/
 
 namespace Semifilter
 
 variable {P : Type*}
 
-/-- Quorum intersection: `O ≬ O'` when two quorums intersect (their intersection is nonempty). -/
+/-- Notation 3.2.1: `O ≬ O'` when two quorums intersect (their intersection is nonempty). -/
 @[simp] def intersects (O O' : Set P) : Prop := (O ∩ O').Nonempty
 
 end Semifilter
@@ -36,16 +36,16 @@ scoped[Semifilter] infix:50 " ≬ " => Semifilter.intersects
 
 open scoped Semifilter
 
-/-- A semifilter is: A semifilter is a nonempty up-closed family of pairwise
+/-- Definition 3.2.2: A semifilter is a nonempty up-closed family of pairwise
 intersecting quorums over a participant set `P`. -/
 structure Semifilter (P : Type*) where
   /-- Carrier set of quorums. -/
   quorums : Set (Set P)
-  /-- Property 1: the family of quorums is nonempty. -/
+  /-- Definition 3.2.2(1): the family of quorums is nonempty. -/
   nonempty : quorums.Nonempty
-  /-- Property 2: the family is up-closed under supersets inside `P`. -/
+  /-- Definition 3.2.2(2): the family is up-closed under supersets inside `P`. -/
   upwardClosed : ∀ ⦃O O' : Set P⦄, O ∈ quorums → O ⊆ O' → O' ∈ quorums
-  /-- Property 3: quorums pairwise intersect. -/
+  /-- Definition 3.2.2(3): quorums pairwise intersect. -/
   pairwiseInter : ∀ ⦃O O' : Set P⦄, O ∈ quorums → O' ∈ quorums → O ≬ O'
 
 namespace Semifilter
@@ -108,19 +108,19 @@ lemma intersects_mono {O O' O₁ O₂ : Set P}
   refine ⟨p, ?_⟩
   exact ⟨h₁ hp.1, h₂ hp.2⟩
 
-/-- Property 2: Supersets of quorums remain quorums. -/
+/-- Definition 3.2.2(2): Supersets of quorums remain quorums. -/
 lemma upwards_of_subset {L : Semifilter P} {O O' : Set P}
     (hO : O ∈ L.quorums) (h_subset : O ⊆ O') :
     O' ∈ L.quorums := by
   exact L.upwardClosed hO h_subset
 
-/-- Property 3: Quorums intersect pairwise. -/
+/-- Definition 3.2.2(3): Quorums intersect pairwise. -/
 lemma intersects_mem {L : Semifilter P} {O O' : Set P}
     (hO : O ∈ L.quorums) (hO' : O' ∈ L.quorums) :
     O ≬ O' := by
   exact L.pairwiseInter hO hO'
 
-/-- Property 1: Every quorum in a semifilter is nonempty. -/
+/-- Definition 3.2.2(1): Every quorum in a semifilter is nonempty. -/
 lemma quorum_nonempty {L : Semifilter P} {O : Set P}
     (hO : O ∈ L.quorums) :
     O.Nonempty := by
@@ -133,7 +133,7 @@ lemma intersects_of_mem_quorums {L : Semifilter P} {O₁ O₂ : Set P}
     O₁ ≬ O₂ :=
   L.pairwiseInter h₁ h₂
 
-/-- Property 1: A semifilter contains at least one quorum. -/
+/-- Definition 3.2.2(1): A semifilter contains at least one quorum. -/
 lemma exists_quorum (L : Semifilter P) :
     ∃ O : Set P, O ∈ L.quorums := by
   exact L.nonempty
@@ -206,7 +206,7 @@ lemma intersects_mono_right {O O' O'' : Set P}
       subst this
       rfl
 
-/-! ### N-way intersection notation  -/
+/-! ### N-way intersection notation (Lemma 4.1.1) -/
 
 variable {ι : Type*}
 
@@ -251,11 +251,11 @@ lemma familyQuorums_mono_subset
     exact hF i (hs hi)
 
 /-- Nonemptiness of the family intersection. Matches “n-way quorum intersection is
-nonempty" property. -/
+nonempty” in Lemma 4.1.1(2). -/
 def familyInterNonempty (s : Finset ι) (F : ι → Set P) : Prop :=
   (familyInter (P := P) s F).Nonempty
 
-/-- Witnessed property over the intersection. Captures n-way intersection property in set form. -/
+/-- Witnessed property over the intersection. Captures Lemma 4.1.1(1) in set form. -/
 def familyInterWitness (s : Finset ι) (F : ι → Set P) (R : P → Prop) : Prop :=
   ∃ p, p ∈ familyInter (P := P) s F ∧ R p
 
@@ -268,7 +268,7 @@ def allFamilyInterWitness (L : Semifilter P) (s : Finset ι) (R : P → Prop) : 
   ∀ F, familyQuorums (P := P) L s F → familyInterWitness (P := P) s F R
 
 /-- Sequential quorum intersections: every indexed family of quorums meets at a
-participant sequential in the ambient history. (Specialized to
+participant sequential in the ambient history. (Paper Lemma 4.1.1 specialized to
 `seq`.) -/
 def sequentialFamilyIntersections
     {P Event : Type*} (H : History P Event)
@@ -280,7 +280,7 @@ def sequentialFamilyIntersections
 def nonemptyFamilyIntersections (L : Semifilter P) (s : Finset ι) : Prop :=
   allFamilyInterNonempty (P := P) (ι := ι) L s
 
-/-- Property 1: set-theoretic form. -/
+/-- Lemma 4.1.1(1): set-theoretic form. -/
 lemma familyInterWitness_iff
     (L : Semifilter P) (s : Finset ι) (R : P → Prop) :
     allFamilyInterWitness (P := P) (ι := ι) L s R ↔
@@ -326,7 +326,7 @@ lemma familyInter_subset_of_pointwise
     exact hFG i hi (hmem i hi)
   simpa [familyInter] using hmem'
 
-/-- Property 2: nonempty intersections are equivalent to the nonempty predicate. -/
+/-- Lemma 4.1.1(2): nonempty intersections are equivalent to the nonempty predicate. -/
 lemma familyInterNonempty_iff
     (L : Semifilter P) (s : Finset ι) :
     nonemptyFamilyIntersections (P := P) (ι := ι) L s ↔
@@ -335,7 +335,7 @@ lemma familyInterNonempty_iff
   classical
   rfl
 
-/-- Property 3: witnessed intersections imply nonempty intersections. -/
+/-- Lemma 4.1.1(3): witnessed intersections imply nonempty intersections. -/
 lemma familyInterWitness_imp_nonempty
     (L : Semifilter P) (s : Finset ι) (R : P → Prop) :
     allFamilyInterWitness (P := P) (ι := ι) L s R →
@@ -390,7 +390,7 @@ lemma familyInterWitness_mono_property
   obtain ⟨p, hp, hRp⟩ := (familyInterWitness_iff (P := P) (ι := ι) L s R).mp h F hF
   exact ⟨p, hp, hRR' p hRp⟩
 
-/-- Two-way intersections: special case for pairs. -/
+/-- Two-way intersections: special case of Lemma 4.1.1 for pairs. -/
 lemma twoWayIntersections
     (L : Semifilter P) (R : P → Prop)
     (O₁ O₂ : Set P)

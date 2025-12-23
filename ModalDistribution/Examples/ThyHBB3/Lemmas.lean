@@ -213,7 +213,7 @@ lemma eventually_echo
 
 end Unique
 
-/-- `3twined` combines three guarded box facts
+/-- Lemma~\ref{lemm.3twined.phi}: `3twined` combines three guarded box facts
 into a joint diamond witness. -/
 lemma threeTwined_phi
     {l₁ l₂ l₃ : Signature.Value S}
@@ -237,7 +237,7 @@ lemma threeTwined_phi
       (φ := ((□ᶠ[[l₁]] φ₁) ∧ᶠ (□ᶠ[[l₂]] φ₂)) ∧ᶠ (□ᶠ[[l₃]] φ₃))
       (ψ := ♢ᶠ[] (φ₁ ∧ᶠ φ₂ ∧ᶠ φ₃)) ?_
   intro hBoxes
-  -- Separate the three `□` guards.
+  -- Separate the three `□` guards. (Paper Lemma 3twined.phi → `sat_box_singleton_exists`).
   have hPairAnd :=
     (Sat.and (M := M) (w := w)
       (φ := (□ᶠ[[l₁]] φ₁) ∧ᶠ (□ᶠ[[l₂]] φ₂))
@@ -424,7 +424,7 @@ lemma vote_implies_echo_quorum_height_step
     ∃ source : Signature.Value S,
       ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
-  -- Instantiate `Vote?` (the theory assumptions) from the theory assumptions.
+  -- Instantiate `Vote?` (Figure~\ref{fig.HBB3}) from the theory assumptions.
   have hVoteAx :
       AllWorldValid M
         (voteBackwardAxiom echoSymb voteSymb correlationSymb) := by
@@ -614,7 +614,7 @@ lemma vote_implies_echo_quorum_height_induction
               hTheory hMem hEq hIH hVote
   exact hMain n (w := w) hMem hBound (learner := learner) (value := value) hVote
 
-/-- a realised vote yields an
+/-- Lemma~\ref{lemm.vote.implies.quorum.echo}(1): a realised vote yields an
 `Echo` quorum for the same value. -/
 lemma vote_implies_echo_quorum_local
     (hTheory : M ⊨ᵀ
@@ -635,7 +635,7 @@ lemma vote_implies_echo_quorum_local
       hTheory hMem (n := PreHistory.height t.time)
       hBound (learner := learner) (value := value) hVote
 
-/-- votes witnessed in the past
+/-- Lemma~\ref{lemm.vote.implies.quorum.echo}(2): votes witnessed in the past
 produce a global echo quorum. -/
 lemma vote_implies_echo_quorum_end
     (hTheory : M ⊨ᵀ
@@ -831,7 +831,7 @@ lemma voteNonEquiv_local
       (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
   simpa [Sat] using hEq
 
-/-- sequential echo quorums fix the
+/-- Lemma~\ref{lemm.3twined.echodup}(1): sequential echo quorums fix the
 broadcast value. -/
 lemma echo_quorums_agree
     (hTheory : M ⊨ᵀ
@@ -849,7 +849,7 @@ lemma echo_quorums_agree
       (l := l₁)
       (φ := ofEvent ⟨echoSymb, [v₁]⟩)
       (hBox := hEcho₁)
-  -- Intermediate sequential-collision step using sequential quorum intersection.
+  -- Intermediate sequential-collision step (paper Lemma 8.x / Prop.~\ref{prop.seq.two.quorums}(2)).
   have hSeqEchoDiamond :
       ⊨[M]
         ♢ᶠ[[]]
@@ -1026,7 +1026,7 @@ lemma echo_quorums_agree
           exact hEq.symm
     exact hEquality
 
-/-- past votes also determine a unique
+/-- Lemma~\ref{lemm.3twined.echodup}(2): past votes also determine a unique
 value once sequentiality holds. -/
 lemma votes_eventually_agree
     (hTheory : M ⊨ᵀ
@@ -1559,7 +1559,7 @@ lemma agree_on_correlated_votes
       (hSeq := hSeq)
       (hVote₁ := hVote₁_global) (hVote₂ := hVote₂_global)
 
-/-- correlated live knowledge of a vote
+/-- Lemma~\ref{lemm.3twined.echodup}(3): correlated live knowledge of a vote
 forces eventual votes for the correlated learner. -/
 lemma correlated_vote_eventually
     (hTheory : M ⊨ᵀ
@@ -1689,7 +1689,7 @@ lemma agree_on_echo_and_vote
   have hValueEq : v₂ = v := hValueEq'.symm
   simpa [hValueEq] using hVote₂
 
-/-- a live echo quorum yields eventual
+/-- Lemma~\ref{lemm.3twined.echodup}(4): a live echo quorum yields eventual
 votes for the same learner. -/
 lemma live_echo_eventually_vote
     (hTheory : M ⊨ᵀ
@@ -1733,7 +1733,7 @@ lemma live_echo_eventually_vote
   -- Prove values agree and simplify
   exact agree_on_echo_and_vote hTheory hSubset_history hSeq hEchoLocal hVote₂
 
-/-- if someone believes `l₁` correlates
+/-- Lemma~\ref{lemm.mnta.intersections}(1): if someone believes `l₁` correlates
 with `l₂`, then their quorums intersect. -/
 lemma correlationImpliesPairwiseQuorumIntersection
     (hTheory : M ⊨ᵀ
@@ -1784,7 +1784,7 @@ lemma correlationImpliesPairwiseQuorumIntersection
   exact (sat_diamond_top_iff_hasQuorumNonempty (M := M)
     (w := wTop) (ls := [l₁, l₂])).2 hNonempty
 
-/-- Correlation implies quorum intersection 
+/-- Correlation implies quorum intersection (Lemma~\ref{lemm.mnta.intersections}(1)).
 
 The three-twined axiom from ThyHBB3 guarantees that any pair of learners has
 intersecting quorums, by exploiting the three-way intersection property. This
@@ -1840,7 +1840,7 @@ lemma correlationImpliesQuorumIntersection
   exact (sat_diamond_top_iff_hasQuorumNonempty (M := M)
     (w := wTop) (ls := [l₁, l₂])).2 hNonempty
 
-/-- Universal correlation implies intersection 
+/-- Universal correlation implies intersection (Lemma~\ref{lemm.mnta.intersections}(2)).
 
 Universal correlation (□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) also guarantees
 quorum intersection for learners l₁ and l₂. The universal box assumption is

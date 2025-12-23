@@ -10,7 +10,7 @@ import ModalDistribution.Logic.Properties.Modalities
 # ThyHBB2 Liveness 2
 
 This file records the Liveness~2 statement for `ThyHBB2`, matching
-Liveness property 2 for ThyHBB2. Intersecting reporting quorums together
+Proposition~\ref{prop.2.liveness.2}. Intersecting reporting quorums together
 with a live quorum for `l₂'` ensure that deliveries for `(l₁',\thel)` propagate
 to `(l₂',\thel)`.
 -/
@@ -34,7 +34,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- If reporting learners `l₁'` and `l₂'`
+/-- Proposition~\ref{prop.2.liveness.2}: if reporting learners `l₁'` and `l₂'`
 have intersecting quorums and learner `l₂'` is live, then any delivery for
 `(l₁', \thel)` propagates to `(l₂', \thel)`. -/
 lemma livenessTwoThyHBB2
@@ -273,7 +273,7 @@ lemma livenessTwoThyHBB2
         hDeliverEventually hLiveHere
   simpa [wTop] using hGoal
 
-/-- A delivery for `(l₁', ℓ)`
+/-- Corollary of Proposition~\ref{prop.2.liveness.2}: a delivery for `(l₁', ℓ)`
 forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)` was
 delivered. -/
 lemma livenessTwoAtPastDownThyHBB2
@@ -358,7 +358,7 @@ lemma livenessTwoAtPastDownThyHBB2
       simpa using hPast
   exact hPastDeliver_q
 
-/-- A delivery for `(l₁', ℓ)`
+/-- Corollary of Proposition~\ref{prop.2.liveness.2}: a delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
 lemma livenessTwoAtPastThyHBB2
     (hTheory : M ⊨ᵀ

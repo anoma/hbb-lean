@@ -6,7 +6,7 @@ import ModalDistribution.Logic.Properties
 # ThyHBB3 Axioms
 
 This file records the axiom schemes for the `ThyHBB3` broadcast protocol. The
-Theory ThyHBB3 axioms:
+statements mirror Figure~\ref{fig.HBB3} of the paper:
 
 * Backward rules `Echo?`, `Vote?`, and `Deliver?`
 * Non-equivocation axioms `EchoNE` and `VoteNE`
@@ -34,7 +34,7 @@ variable {S : Signature}
 section BackwardRules
 
 /-- Backward rule `Echo?`: every `Echo(v)` arises from a past `Propose(v)`.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def echoBackwardAxiom
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun value =>
@@ -42,7 +42,7 @@ Backward rule axiom. -/
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)
 
 /-- Backward rule `Vote?`: votes are justified either by an echo quorum or by a
-correlated chain of prior votes. Backward rule axiom. -/
+correlated chain of prior votes. Figure~\ref{fig.HBB3}. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S) : Formula S :=
@@ -54,7 +54,7 @@ correlated chain of prior votes. Backward rule axiom. -/
             ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩))
 
 /-- Backward rule `Deliver?`: deliveries require an `l`-quorum of votes.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun value =>
@@ -66,7 +66,7 @@ end BackwardRules
 section NonEquivocation
 
 /-- Axiom `EchoNE`: sequential participants echo at most one value.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def echoNonEquivAxiom
     (echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun value => ∀ᶠ fun altValue =>
@@ -75,7 +75,7 @@ Backward rule axiom. -/
         (value ≃ᶠ altValue)
 
 /-- Axiom `VoteNE`: correlated vote chains determine a unique value.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def voteNonEquivAxiom
     (voteSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S) : Formula S :=
@@ -91,13 +91,13 @@ end NonEquivocation
 section Correlation
 
 /-- Axiom `3twined`: three correlated learners always intersect.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def threeTwinedAxiom : Formula S :=
   ∀ᶠ fun learner₁ => ∀ᶠ fun learner₂ => ∀ᶠ fun learner₃ =>
     ♢ᶠ[[learner₁, learner₂, learner₃]] ⊤ᶠ
 
 /-- Axiom `$\mnta\tf{seq}$`: correlated learners have sequential intersections.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def mntaSeqAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
@@ -105,7 +105,7 @@ Backward rule axiom. -/
       ♢ᶠ[[learner, correlated]] Formula.seq
 
 /-- Axiom `$\mnta\utn$`: correlation is historically persistent.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def mntaEventuallyAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
@@ -113,7 +113,7 @@ Backward rule axiom. -/
       ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
 
 /-- Axiom `$\mnta$symm`: correlation is symmetric.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def mntaSymmAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
@@ -121,7 +121,7 @@ Backward rule axiom. -/
       ofPredicate ⟨correlationSymb, [correlated, learner]⟩
 
 /-- Axiom `$\mnta$tran`: correlation is transitive.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def mntaTransAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun middle => ∀ᶠ fun correlated =>
@@ -134,7 +134,7 @@ end Correlation
 section ForwardRules
 
 /-- Forward rule `Echo!`: live knowledge of a proposal triggers some echo.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def echoForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
@@ -145,7 +145,7 @@ Backward rule axiom. -/
         ↕ᶠ (ofEvent ⟨echoSymb, [witnessed]⟩)
 
 /-- Forward rule `Vote!`: live learners eventually vote after echo quorums.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -156,7 +156,7 @@ Backward rule axiom. -/
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
 /-- Forward rule `Vote'!`: correlated live knowledge propagates votes.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def voteForwardCorrelatedAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb : Signature.EventSymb S)
@@ -169,7 +169,7 @@ Backward rule axiom. -/
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
 /-- Forward rule `Deliver!`: live vote quorums eventually lead to deliveries.
-Backward rule axiom. -/
+Figure~\ref{fig.HBB3}. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -187,8 +187,8 @@ variable
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S)
 
-/-- Theory ThyHBB3 .
-It extends `ThyLive` with the `ThyHBB3`-specific axioms in Backward rule axiom. -/
+/-- Theory `ThyHBB3` from Definition~\ref{defn.HBB3}.
+It extends `ThyLive` with the `ThyHBB3`-specific axioms in Figure~\ref{fig.HBB3}. -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
@@ -213,7 +213,7 @@ end ThyHBB3
 
 open ThyHBB3
 
-/-- Theory ThyHBB3  as a reusable alias. -/
+/-- Theory `ThyHBB3` from Definition~\ref{defn.HBB3} as a reusable alias. -/
 @[simp] def ThyHBB3
     {S : Signature}
     (liveSymb : Signature.PredSymb S)

@@ -10,7 +10,7 @@ import ModalDistribution.Logic.Properties.Modalities
 # ThyHBB3 Liveness 2
 
 This file states the Liveness~2 property for `ThyHBB3`, following
-Liveness property 2 for ThyHBB3. When `l₁` and `l₂` are always correlated
+Proposition~\ref{prop.3.liveness.2}. When `l₁` and `l₂` are always correlated
 and `l₂` has a live quorum, any delivery for `l₁` eventually propagates to a
 live delivery for `l₂`.
 -/
@@ -35,7 +35,7 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- If learners `l₁` and `l₂` are always
+/-- Proposition~\ref{prop.3.liveness.2}: if learners `l₁` and `l₂` are always
 correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
   lemma livenessTwoThyHBB3
@@ -137,7 +137,7 @@ forces a live delivery for `l₂`. -/
         (w := wTop)
         (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₁, v]⟩))).1
         hDiamondNil
-    -- Apply correlation lemma to get quorum intersections.
+    -- Apply Lemma~\ref{lemm.mnta.intersections}.
     exact hIntersectGlobal p
   -- Correlation persists through every local past (available as an event-valid fact).
   have hCorrelationAlways :
@@ -198,7 +198,7 @@ forces a live delivery for `l₂`. -/
         ⟨O, hO, ?_⟩
     intro q' hqO
     exact hAllGlobal q' hqO
-  -- The vote quorum meets a live witness.
+  -- Proposition~\ref{prop.intertwined.two.quorums}: the vote quorum meets a live witness.
   have hLiveVoteDiamond :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ↓[[]]
@@ -289,7 +289,7 @@ forces a live delivery for `l₂`. -/
           (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l₁, v]⟩))).2
           ⟨tVote.place, hPastConjEnd⟩
-    -- Instantiate eventual knowledge for learner `l₂`.
+    -- Instatiate Proposition~\ref{prop.live.eventually.knows} for learner `l₂`.
     have hLiveVoteBoxGlobal :
         ⊨[M]
           □ᶠ↓[[l₂]]
@@ -304,7 +304,7 @@ forces a live delivery for `l₂`. -/
         (hEvent := hEventGlobal)
     simpa [wTop]
       using hLiveVoteBoxGlobal p
-  -- Correlated votes propagate the value to `l₂`.
+  -- Lemma~\ref{lemm.3twined.echodup}(3): correlated votes propagate the value to `l₂`.
   have hVotesBox_l₂ :
       ⟪wTop⟫ ⊨[M]
         □ᶠ↓[[l₂]]
@@ -694,7 +694,7 @@ forces a live delivery for `l₂`. -/
 
   exact hDeliverEventually
 
-/-- A delivery for `l₁`
+/-- Corollary of Proposition~\ref{prop.3.liveness.2}: a delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
 the same value. -/
 lemma livenessTwoAtPastDownThyHBB3
@@ -777,7 +777,7 @@ lemma livenessTwoAtPastDownThyHBB3
       simpa using hPast
   exact hPastDeliver_q
 
-/-- A delivery for `l₁`
+/-- Corollary of Proposition~\ref{prop.3.liveness.2}: a delivery for `l₁`
 produces a delivery for `l₂` somewhere in the past. -/
 lemma livenessTwoAtPastThyHBB3
     (hTheory : M ⊨ᵀ

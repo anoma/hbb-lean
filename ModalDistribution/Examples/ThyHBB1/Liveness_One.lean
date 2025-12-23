@@ -13,7 +13,7 @@ This file contains the liveness one theorem for the ThyHBB1 broadcast protocol:
 
 - **Liveness 1** (`livenessOneThyHBB1`): Under uniqueness of proposals and a live quorum,
   if a live participant knows a proposal, it will eventually be delivered.
-  Liveness property 1: under uniqueness, live proposals are eventually delivered.
+  Corresponds to Proposition 6.5.3 (prop.1.liveness.1) in the paper.
 -/
 
 namespace ModalDistribution
@@ -36,7 +36,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Liveness One for ThyHBB1 (Liveness property 1).
+/-- Liveness One for ThyHBB1 (Proposition 6.5.3 / prop.1.liveness.1).
 
 Under uniqueness of proposals and a live quorum, if a live participant knows
 a proposal for value v, then v will eventually be delivered. This establishes
@@ -61,7 +61,7 @@ lemma livenessOneThyHBB1
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLivep
 
-  -- Abbreviations for the staged liveness argument.
+  -- Abbreviations mirroring the staged argument in Proposition 6.5.3.
   let φLivePropose :=
     predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
   let φLiveEcho :=
@@ -80,7 +80,7 @@ lemma livenessOneThyHBB1
   have hLiveBox : ⊨[M]□ᶠ[id [l]] predicate0 liveSymb := by
     simpa using hLiveQuorum
 
-  -- Step 1: lift the local knowledge into learner `l`'s quorum.
+  -- Step 1 (Corollary 5.2.8(1)): lift the local knowledge into learner `l`'s quorum.
   have hPastWitness :
       ∃ qProp : P,
         ⟪⟨qProp, †, M.history.val⟩⟫ ⊨[M]
@@ -125,7 +125,7 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLivePropose := by
     simpa [wTop] using hStep1Global p
 
-  -- Step 2: unique proposals imply eventual echoes.
+  -- Step 2 (Lemma 6.4.2(2) + Lemma 6.4.1): unique proposals imply eventual echoes.
   have hStep2Global :
       ⊨[M] □ᶠ↓[[l]] φLiveEcho := by
     have hImpEcho :
@@ -173,7 +173,7 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLiveEcho := by
     simpa [wTop] using hStep2Global p
 
-  -- Step 3: promote echoes to nested quorum knowledge.
+  -- Step 3 (Lemma 6.4.3): promote echoes to nested quorum knowledge.
   have hStep3Global :
       ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho :=
     _root_.ModalDistribution.Examples.promote_live_atddot
@@ -186,7 +186,7 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho := by
     simpa [wTop] using hStep3Global p
 
-  -- Step 4: combine nested echoes with safety.
+  -- Step 4 (Lemma 6.4.5 + Lemma 6.4.4): combine nested echoes with safety.
   have step4 :
       ⟪wTop⟫ ⊨[M]
         (□ᶠ↓[[l]] φLiveNestedEcho) ∧ᶠ ⇕ᶠ φSafe := by
@@ -206,14 +206,20 @@ lemma livenessOneThyHBB1
       obtain ⟨t, ht_mem, ht_place, hNotSafe⟩ :=
         (Sat.sometime (M := M) (w := wTop)
           (φ := ¬ᶠ φSafe)).1 hSome
-      have hAcc : t ≪⁻ wTop := by
-        refine ⟨?_, ?_⟩
-        · simpa [wTop, World.time] using ht_mem
-        · simpa [wTop, World.place] using ht_place
+      have hStrict : t ≪ wTop := by
+        refine ⟨t, ?_, PreHistory.worldEq_refl t⟩
+        simpa [wTop, World.time] using ht_mem
+      have hAcc : t ≪⁻ wTop := ⟨hStrict, by simpa [wTop, World.place] using ht_place⟩
+      have ht_mem_time : t ∈ wTop.time := by
+        simpa [wTop, World.time] using ht_mem
       have hBefore :
           t.time ⪯ wTop.time :=
-        PreHistory.happensBeforeEq_of_accessible
-          (P := P) (Event := Signature.EventType S) hAcc.1
+        Or.inl <|
+          Exists.intro t.place <|
+            Exists.intro t.event
+              (by
+                simpa [World.place, World.event, World.time]
+                  using ht_mem_time)
       have hSafe_t : ⟪t⟫ ⊨[M] φSafe :=
         safe_monotone_subset
           (M := M)
@@ -234,7 +240,7 @@ lemma livenessOneThyHBB1
         (ψ := ⇕ᶠ φSafe)).2
         ⟨step3, hSafeAlwaysTop⟩
 
-  -- Step 5: obtain votes for learner `l`.
+  -- Step 5 (Lemma 6.4.2(2) + rule `Vote!`): obtain votes for learner `l`.
   classical
 
   have hVoteForwardAx :
@@ -269,23 +275,24 @@ lemma livenessOneThyHBB1
               ↕ᶠ (ofEvent ⟨voteSymb, [l, value]⟩)))
         (v := v) hLearner
 
+    let wt : World P (Signature.EventType S) := ⟨t.place, †, M.history.val⟩
     have hSafeTop :
-        ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M] φSafe := by
-      simpa [World.place, World.time]
+        ⟪wt⟫ ⊨[M] φSafe := by
+      simpa [wt, World.place, World.time]
         using hSafeGlobal t.place
     have hSubsetTop :
-        (World.time ⟨t.place, †, M.history.val⟩) ⊆trn M.history.val := by
-      simpa [World.time]
+        wt.time ⊆trn M.history.val := by
+      simpa [wt, World.time]
         using History.transitiveSubset_refl (H := M.history)
     have hSafeLocal : ⟪t⟫ ⊨[M] φSafe :=
       safe_monotone_subset
         (M := M)
-        (w := ⟨t.place, †, M.history.val⟩)
+        (w := wt)
         (w' := t)
         (l := l)
         (hSubset := hSubsetTop)
         (hBefore := by
-          simpa [World.time] using ht_mem)
+          simpa [wt, World.time] using ht_mem)
         (hPlace := rfl)
         (hSafe := hSafeTop)
 
@@ -297,26 +304,28 @@ lemma livenessOneThyHBB1
       obtain ⟨s, hs_mem, hs_place, hNotSafe⟩ :=
         (Sat.sometime (M := M) (w := t)
           (φ := ¬ᶠ φSafe)).1 hSome
-      have hAcc_s : s ≪⁻ ⟨t.place, †, M.history.val⟩ :=
-        ⟨by
-            simpa [World.time]
-              using hs_mem,
-          by
-            simpa [World.place]
-              using hs_place⟩
+      have hStrict_s :
+          s ≪ wt := by
+        refine ⟨s, ?_, PreHistory.worldEq_refl s⟩
+        simpa [wt, World.time] using hs_mem
+      have hAcc_s : s ≪⁻ wt :=
+        ⟨hStrict_s, by simpa [wt, World.place] using hs_place⟩
+      have hs_mem_time : s ∈ wt.time :=
+        by simpa [wt, World.time] using hs_mem
       have hSafe_s : ⟪s⟫ ⊨[M] φSafe :=
         safe_monotone_subset
           (M := M)
-          (w := ⟨t.place, †, M.history.val⟩)
+          (w := wt)
           (w' := s)
           (l := l)
           (hSubset := hSubsetTop)
           (hBefore :=
-            by
-              simpa [World.time] using
-                PreHistory.happensBeforeEq_of_accessible
-                  (P := P) (Event := Signature.EventType S)
-                  hAcc_s.1)
+            Or.inl <|
+              Exists.intro s.place <|
+                Exists.intro s.event
+                  (by
+                    simpa [World.place, World.event, World.time]
+                      using hs_mem_time))
           (hPlace := by
             simpa [World.place] using hAcc_s.2)
           (hSafe := hSafeTop)
@@ -409,7 +418,7 @@ lemma livenessOneThyHBB1
     simpa [wTop]
       using hKnow p
 
-  -- Step 7: conclude eventual delivery.
+  -- Step 7 (Lemma 6.4.6 + rule `Deliver!`): conclude eventual delivery.
   have step7 :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ
@@ -446,7 +455,7 @@ lemma livenessOneThyHBB1
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
       step7 hLivep
 
-/-- Whenever a live learner
+/-- Corollary of Proposition~\ref{prop.1.liveness.1}: whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
 lemma livenessOneAtPastDownThyHBB1
@@ -533,7 +542,7 @@ lemma livenessOneAtPastDownThyHBB1
       simpa using hPast
   exact hPastDeliver_q
 
-/-- Witnessing the guarded
+/-- Corollary of Proposition~\ref{prop.1.liveness.1}: witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
 lemma livenessOneAtPastThyHBB1
     (hTheory : M ⊨ᵀ

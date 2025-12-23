@@ -12,7 +12,7 @@ import ModalDistribution.Logic.Properties.Modalities
 # ThyHBB2 Liveness 1
 
 This file records the Liveness~1 statement for `ThyHBB2`, mirroring
-Liveness property 1 for ThyHBB2. Under a live quorum for learner `l` and a
+Proposition~\ref{prop.2.liveness.1}. Under a live quorum for learner `l` and a
 unique proposed value, any live participant that learns about the proposal will
 eventually deliver it for `(l,l)`.
 -/
@@ -36,7 +36,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- If learner `l` has a live quorum and
+/-- Proposition~\ref{prop.2.liveness.1}: if learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `(l,l)`. -/
 lemma livenessOneThyHBB2
@@ -295,7 +295,7 @@ lemma livenessOneThyHBB2
         hLiveHere
   simpa [wTop] using hGoal
 
-/-- When the guarded proposal
+/-- Corollary of Proposition~\ref{prop.2.liveness.1}: when the guarded proposal
 diamond holds, every member of learner `l`'s quorum knows (in the past) that the
 value was delivered. -/
 lemma livenessOneAtPastDownThyHBB2
@@ -381,7 +381,7 @@ lemma livenessOneAtPastDownThyHBB2
       simpa using hPast
   exact hPastDeliver_q
 
-/-- The guarded proposal diamond
+/-- Corollary of Proposition~\ref{prop.2.liveness.1}: the guarded proposal diamond
 ensures the delivery diamond for learner `l`. -/
 lemma livenessOneAtPastThyHBB2
     (hTheory : M ⊨ᵀ

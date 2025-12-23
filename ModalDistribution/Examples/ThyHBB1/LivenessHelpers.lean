@@ -90,7 +90,7 @@ lemma deliver_from_vote_box_local
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [reporting, learner, value]⟩))).1
       hValue hDeliverGuard
 
-/-- From end-of-time knowledge of a vote quorum, deduce eventual
+/-- Lemma 6.4.6: from end-of-time knowledge of a vote quorum, deduce eventual
 delivery.  This packages the `Deliver!` instantiation together with the
 time-shifting arguments based on `ThyLive`. -/
 lemma deliver_from_vote_box

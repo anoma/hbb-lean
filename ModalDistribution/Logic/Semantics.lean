@@ -7,11 +7,11 @@ import ModalDistribution.Logic.Syntax
 /-!
 # Modal logic semantics
 
-We formalise the satisfaction relation from
-the validity figure.  Satisfaction is defined for a model, a
+We formalise the satisfaction relation from Definition~\ref{defn.valid} /
+Figure~\ref{fig.valid} of the HBB paper.  Satisfaction is defined for a model, a
 participant, a local history, and a variable assignment.  We also introduce
 end-of-time validity, event-driven validity, and the notion of active
-participants .
+participants (Definition~\ref{defn.active.p}).
 -/
 
 namespace ModalDistribution
@@ -29,32 +29,6 @@ set_option autoImplicit false
 -- Fix at Type 0 to match Syntax.lean
 variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
-/-- Depth measure for formulas. Needed for termination of Sat. -/
-@[simp] private noncomputable def depth : Formula S → ℕ
-  | .bot => 0
-  | .imp φ ψ => 1 + max (depth φ) (depth ψ)
-  | .eq _ _ => 0
-  | .forall body =>
-      open Classical in
-      if h : Nonempty S.Value then
-        1 + depth (body (choice h))
-      else
-        0
-  | .event _ => 0
-  | .predicate _ => 0
-  | .past φ => 1 + depth φ
-  | .atEnd φ => 1 + depth φ
-  | .diamond _ φ => 1 + depth φ
-  | .seq => 0
-
-/-- Axiom: depth is uniform across body applications (parametricity).
-    Note: This is only true so long as body is parametrically polymorphic in v;
-          which it is for all reasonable formulas. We can get rid of this axiom by,
-          for example, using de Bruijin indices, but we have to make some compromise
-          like this for the convenience of HOAS. -/
-private axiom depth_uniform [Nonempty S.Value] (body : S.Value → Formula S) (v₁ v₂ : S.Value) :
-  depth (body v₁) = depth (body v₂)
-
 /-- Depth of forall body is bounded (follows from depth_uniform). -/
 private lemma depth_forall_body (body : S.Value → Formula S) (v : S.Value) :
   depth (body v) < depth (.forall body) := by
@@ -67,7 +41,7 @@ private lemma depth_forall_body (body : S.Value → Formula S) (v : S.Value) :
   · -- If S.Value is empty, there's no v to consider, contradiction
     exact absurd ⟨v⟩ h
 
-/-- Satisfaction relation `p \dx H ⊨[M]φ`. -/
+/-- Satisfaction relation `p \dx H ⊨[M]φ` (Figure~\ref{fig.valid}). -/
 def Sat (M : Model S P)
     (p : P)
     (evt : MaybeEvent S.EventType)
@@ -78,9 +52,13 @@ def Sat (M : Model S P)
   | .forall body => ∀ v : Signature.Value S, Sat M p evt H (body v)
   | .event atom =>
       evt = MaybeEvent.some ⟨atom.sym, atom.args⟩ ∧
-        (p, MaybeEvent.some ⟨atom.sym, atom.args⟩, H) ∈ M.history.val
+        ∃ H' : PreHistory P (S.EventType),
+          (p, MaybeEvent.some ⟨atom.sym, atom.args⟩, H') ∈ M.history.val ∧
+            PreHistory.histEq H' H
   | .predicate pred =>
-      ⟨pred.sym, pred.args⟩ ∈ M.predInterp p H
+      ∃ H' : PreHistory P (S.EventType),
+        PreHistory.histEq H' H ∧
+          ⟨pred.sym, pred.args⟩ ∈ M.predInterp p H'
   | .past φ =>
       ∃ t ∈ H,
         t.place = p ∧
@@ -275,30 +253,6 @@ lemma boxEmpty
         (φ := ♢ᶠ[] (¬ᶠ φ))).2 hImp
     simpa [Formula.boxEmpty, Formula.box] using hNotDiamond
 
-/-- Events witnessed at a history automatically satisfy sometime. -/
-lemma event_sometime
-    (M : Model S P)
-    (p : P)
-    (H : PreHistory P (S.EventType))
-    (E : S.EventType)
-    (hEvent : ⟪⟨p, MaybeEvent.some E, H⟩⟫ ⊨[M]Formula.ofEvent E) :
-    ⟪⟨p, MaybeEvent.some E, H⟩⟫ ⊨[M]↕ᶠ (Formula.ofEvent E) := by
-  classical
-  have hMem : (p, MaybeEvent.some E, H) ∈ M.history.val := by
-    simpa [Formula.ofEvent, Sat] using hEvent
-  have hPast :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↓ᶠ (Formula.ofEvent E) := by
-    have :
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↓ᶠ (Formula.ofEvent E)) ↔
-          ∃ t ∈ M.history.val, t.place = p ∧
-            Sat M (t.place) (World.event t) (World.time t)
-              (Formula.ofEvent E) := by
-      simp [Sat]
-    refine this.mpr ?_
-    refine ⟨⟨p, MaybeEvent.some E, H⟩, hMem, rfl, ?_⟩
-    simpa [Formula.ofEvent, Sat] using hEvent
-  simpa [Formula.sometime, Sat] using hPast
-
 /-- The truth constant is satisfied if and only if `True`. -/
 @[simp] lemma top_iff (M : Model S P) (w : World P S.EventType) :
     (⟪w⟫ ⊨[M]⊤ᶠ) ↔ True := by
@@ -478,7 +432,9 @@ lemma event_of_mem
     (evt : EventAtom S)
     (hmem : (place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w) ∈ M.history.val) :
     ⟪⟨place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w⟩⟫ ⊨[M]Formula.event evt := by
-  simpa [Sat]
+  classical
+  simp only [Sat]
+  exact ⟨rfl, time w, hmem, PreHistory.histEq_refl _⟩
 
 /-- Event atoms reduce to membership in the enclosing history. -/
 @[simp] lemma event
@@ -486,8 +442,18 @@ lemma event_of_mem
     (w : World P S.EventType)
     (evt : EventAtom S) :
     (⟪⟨place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w⟩⟫ ⊨[M]Formula.event evt) ↔
-      (place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w) ∈ M.history.val := by
-  simp [Sat]
+      ∃ H' : PreHistory P (S.EventType),
+        (place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, H') ∈ M.history.val ∧
+          PreHistory.histEq H' (time w) := by
+  classical
+  constructor
+  · intro h
+    simp only [Sat] at h
+    obtain ⟨-, H', hMem, hSame⟩ := h
+    exact ⟨H', hMem, hSame⟩
+  · intro ⟨H', hMem, hSame⟩
+    simp only [Sat]
+    exact ⟨rfl, H', hMem, hSame⟩
 
 /-! ### Simp lemmas for derived connectives -/
 
@@ -498,16 +464,49 @@ lemma event_of_mem
     (E : S.EventType) :
     (⟪w⟫ ⊨[M]Formula.ofEvent E) ↔
       (World.event w = MaybeEvent.some E ∧
-        (World.place w, MaybeEvent.some E, World.time w) ∈ M.history.val) := by
+        ∃ H' : PreHistory P (S.EventType),
+          (World.place w, MaybeEvent.some E, H') ∈ M.history.val ∧
+            PreHistory.histEq H' (World.time w)) := by
   classical
   rcases w with ⟨p, evt, H⟩
   constructor
   · intro h
-    simpa [Formula.ofEvent, Sat]
-      using h
+    simpa [Formula.ofEvent, Sat] using h
   · intro h
-    simpa [Formula.ofEvent, Sat]
-      using h
+    simpa [Formula.ofEvent, Sat] using h
+
+/-- Transfer `Formula.ofEvent` satisfaction along world equivalence. -/
+lemma ofEvent_of_worldEq
+    (M : Model S P)
+    {w w' : World P S.EventType}
+    {E : S.EventType}
+    (hEq : PreHistory.worldEq w w')
+    (hSat : ⟪w⟫ ⊨[M]Formula.ofEvent E) :
+    ⟪w'⟫ ⊨[M]Formula.ofEvent E := by
+  classical
+  obtain ⟨hp, hEvt, hHist⟩ :=
+    (PreHistory.worldEq_spec (P := P) (Event := S.EventType) w w').1 hEq
+  obtain ⟨hEvt_w, H', hMem, hSame⟩ :=
+    (ofEvent (M := M) (w := w) (E := E)).1 hSat
+  have hp' : w.1 = w'.1 := by
+    simpa [World.place] using hp
+  have hEvt' : World.event w' = MaybeEvent.some E := by
+    simpa [World.event] using hEvt.symm.trans hEvt_w
+  have hMem_place :
+      (w.1, MaybeEvent.some E, H') ∈ M.history.val := by
+    simpa [World.place] using hMem
+  have hMem_place' :
+      (w'.1, MaybeEvent.some E, H') ∈ M.history.val := by
+    simpa [hp'] using hMem_place
+  have hMem' :
+      (World.place w', MaybeEvent.some E, H') ∈ M.history.val := by
+    simpa [World.place] using hMem_place'
+  have hSame' :
+      PreHistory.histEq H' (World.time w') :=
+    PreHistory.histEq_trans hSame hHist
+  exact
+    (ofEvent (M := M) (w := w') (E := E)).2
+      ⟨hEvt', H', hMem', hSame'⟩
 
 /-- Past modality satisfaction. -/
 lemma past
@@ -531,6 +530,33 @@ lemma sometime
   rcases w with ⟨p, evt, H⟩
   simp [Formula.sometime, Sat]
 
+/-- Events witnessed at a history automatically satisfy sometime. -/
+lemma event_sometime
+    (M : Model S P)
+    (p : P)
+    (H : PreHistory P (S.EventType))
+    (E : S.EventType)
+    (hEvent : ⟪⟨p, MaybeEvent.some E, H⟩⟫ ⊨[M]Formula.ofEvent E) :
+    ⟪⟨p, MaybeEvent.some E, H⟩⟫ ⊨[M]↕ᶠ (Formula.ofEvent E) := by
+  classical
+  have hExpanded :
+      (World.event ⟨p, MaybeEvent.some E, H⟩ =
+          MaybeEvent.some E) ∧
+        ∃ H' : PreHistory P (S.EventType),
+          (p, MaybeEvent.some E, H') ∈ M.history.val ∧
+            PreHistory.histEq H' H := by
+    simpa [Formula.ofEvent, Sat]
+      using hEvent
+  rcases hExpanded with ⟨-, ⟨H', hMem, -⟩⟩
+  have hPast :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↓ᶠ (Formula.ofEvent E) :=
+    (Sat.past (M := M) (w := ⟨p, †, M.history.val⟩)
+        (φ := Formula.ofEvent E)).2
+      ⟨⟨p, MaybeEvent.some E, H'⟩, hMem, rfl, by
+        simp only [Formula.ofEvent, Sat]
+        exact ⟨rfl, H', hMem, PreHistory.histEq_refl _⟩⟩
+  simpa [Formula.sometime, Sat] using hPast
+
 /-- Box with past guard unfolds. -/
 lemma boxPast
     (M : Model S P)
@@ -550,6 +576,210 @@ lemma diamondPast
     (⟪w⟫ ⊨[M]Formula.diamondPast ls φ) ↔
       (⟪w⟫ ⊨[M]♢ᶠ[ls] (↓ᶠ φ)) := by
   simp [Formula.diamondPast]
+
+/-- Satisfaction is invariant under extensionally equal histories. -/
+lemma congr_histEq
+    {M : Model S P}
+    {p : P} {evt : MaybeEvent S.EventType}
+    {H H' : PreHistory P (S.EventType)}
+    (hHist : PreHistory.histEq H H')
+    (φ : Formula S) :
+    Sat M p evt H φ ↔ Sat M p evt H' φ := by
+  revert H H'
+  induction φ generalizing p evt with
+  | bot =>
+      intro H H' hHist
+      simp [Sat]
+  | imp φ ψ ihφ ihψ =>
+      intro H H' hHist
+      simp only [Sat]
+      constructor
+      · intro h hφ
+        have hφ' : Sat M p evt H φ :=
+          (ihφ (hHist := hHist)).mpr hφ
+        have hψ : Sat M p evt H ψ := h hφ'
+        exact (ihψ (hHist := hHist)).mp hψ
+      · intro h hφ
+        have hφ' : Sat M p evt H' φ :=
+          (ihφ (hHist := hHist)).mp hφ
+        have hψ' : Sat M p evt H' ψ := h hφ'
+        exact (ihψ (hHist := hHist)).mpr hψ'
+  | eq v₁ v₂ =>
+      intro H H' hHist
+      simp [Sat]
+  | «forall» body ih =>
+      intro H H' hHist
+      simp only [Sat]
+      constructor
+      · intro h v
+        exact (ih v (hHist := hHist)).mp (h v)
+      · intro h v
+        exact (ih v (hHist := hHist)).mpr (h v)
+  | event atom =>
+      intro H H' hHist
+      simp only [Sat]
+      constructor
+      · intro ⟨hEvt, H₀, hMem, hSame⟩
+        exact ⟨hEvt, H₀, hMem, PreHistory.histEq_trans hSame hHist⟩
+      · intro ⟨hEvt, H₀, hMem, hSame⟩
+        exact ⟨hEvt, H₀, hMem, PreHistory.histEq_trans hSame (PreHistory.histEq_symm hHist)⟩
+  | predicate pred =>
+      intro H H' hHist
+      simp [Sat]
+      constructor
+      · intro ⟨H₀, hSame, hMem⟩
+        exact
+          ⟨H₀,
+            PreHistory.histEq_trans hSame hHist,
+            hMem⟩
+      · intro ⟨H₀, hSame, hMem⟩
+        exact
+          ⟨H₀,
+            PreHistory.histEq_trans
+              hSame
+              (PreHistory.histEq_symm hHist),
+            hMem⟩
+  | past φ ih =>
+      intro H H' hHist
+      constructor
+      · intro h
+        have hPast :
+            ⟪⟨p, evt, H⟩⟫ ⊨[M] ↓ᶠ φ :=
+          by simpa [Sat] using h
+        rcases
+            (Sat.past (M := M)
+              (w := ⟨p, evt, H⟩)
+              (φ := φ)).1 hPast with
+          ⟨t, ht_mem, ht_place, ht_sat⟩
+        obtain ⟨t', ht'_mem, ht_eq⟩ :=
+          PreHistory.histEq_fwd hHist t ht_mem
+        rcases
+            (PreHistory.worldEq_spec
+              (P := P) (Event := S.EventType) t t').1 ht_eq with
+          ⟨hplace_eq, hevent_eq, htime_eq⟩
+        have hplace_eq' :
+            t.place = t'.place := by
+          simpa [World.place] using hplace_eq
+        have hevent_eq' :
+            t.event = t'.event := by
+          simpa [World.event] using hevent_eq
+        have ht'_place :
+            t'.place = p := by
+          calc
+            t'.place = t.place := by
+              simpa [World.place] using hplace_eq'.symm
+            _ = p := ht_place
+        have ht_sat_mod :
+            Sat M t'.place t'.event t.time φ := by
+          have ht' :=
+            Eq.subst
+              (motive := fun place => Sat M place t.event t.time φ)
+              hplace_eq' ht_sat
+          have ht'' :=
+            Eq.subst
+              (motive := fun evt => Sat M t'.place evt t.time φ)
+              hevent_eq' ht'
+          simpa [World.place, World.event] using ht''
+        have ht_sat' :
+            Sat M t'.place t'.event t'.time φ :=
+          (ih
+              (p := t'.place)
+              (evt := t'.event)
+              (H := t.time)
+              (H' := t'.time)
+              (hHist := htime_eq)).mp ht_sat_mod
+        have hPast' :
+            ⟪⟨p, evt, H'⟩⟫ ⊨[M] ↓ᶠ φ :=
+          (Sat.past (M := M)
+            (w := ⟨p, evt, H'⟩)
+            (φ := φ)).2
+            ⟨t', ht'_mem, ht'_place, ht_sat'⟩
+        simpa [Sat] using hPast'
+      · intro h
+        have hPast :
+            ⟪⟨p, evt, H'⟩⟫ ⊨[M] ↓ᶠ φ :=
+          by simpa [Sat] using h
+        rcases
+            (Sat.past (M := M)
+              (w := ⟨p, evt, H'⟩)
+              (φ := φ)).1 hPast with
+          ⟨t', ht'_mem, ht'_place, ht'_sat⟩
+        obtain ⟨t, ht_mem, ht_eq⟩ :=
+          PreHistory.histEq_bwd hHist t' ht'_mem
+        rcases
+            (PreHistory.worldEq_spec
+              (P := P) (Event := S.EventType) t t').1 ht_eq with
+          ⟨hplace_eq, hevent_eq, htime_eq⟩
+        have hplace_eq' :
+            t.place = t'.place := by
+          simpa [World.place] using hplace_eq
+        have hevent_eq' :
+            t.event = t'.event := by
+          simpa [World.event] using hevent_eq
+        have ht_place :
+            t.place = p := by
+          calc
+            t.place = t'.place := by
+              simpa [World.place] using hplace_eq'
+            _ = p := ht'_place
+        have ht_sat_mod :
+            Sat M t.place t.event t'.time φ := by
+          have ht' :=
+            Eq.subst
+              (motive := fun place => Sat M place t'.event t'.time φ)
+              hplace_eq'.symm ht'_sat
+          have ht'' :=
+            Eq.subst
+              (motive := fun evt => Sat M t.place evt t'.time φ)
+              hevent_eq'.symm ht'
+          simpa [World.place, World.event] using ht''
+        have ht_sat :
+            Sat M t.place t.event t.time φ :=
+          (ih
+              (p := t.place)
+              (evt := t.event)
+              (H := t.time)
+              (H' := t'.time)
+              (hHist := htime_eq)).mpr ht_sat_mod
+        have hPast' :
+            ⟪⟨p, evt, H⟩⟫ ⊨[M] ↓ᶠ φ :=
+          (Sat.past (M := M)
+            (w := ⟨p, evt, H⟩)
+            (φ := φ)).2
+            ⟨t, ht_mem, ht_place, ht_sat⟩
+        simpa [Sat] using hPast'
+  | atEnd φ ih =>
+      intro H H' hHist
+      simp [Sat]
+  | diamond learners φ ih =>
+      intro H H' hHist
+      have hBody : ∀ p' : P, Sat M p' † H φ ↔ Sat M p' † H' φ :=
+        fun p' => ih (p := p') (evt := †) (hHist := hHist)
+      have hCheck :
+          ∀ acc : Set P, Sat.check M H φ learners acc ↔ Sat.check M H' φ learners acc := by
+        induction learners with
+        | nil =>
+            intro acc
+            simp only [Sat.check]
+            constructor
+            · intro ⟨p', hp', hSat⟩
+              exact ⟨p', hp', (hBody p').mp hSat⟩
+            · intro ⟨p', hp', hSat⟩
+              exact ⟨p', hp', (hBody p').mpr hSat⟩
+        | cons learner learners ihCheck =>
+            intro acc
+            simp only [Sat.check]
+            constructor
+            · intro h O hO
+              exact (ihCheck (acc ∩ O)).mp (h O hO)
+            · intro h O hO
+              exact (ihCheck (acc ∩ O)).mpr (h O hO)
+      simp only [Sat]
+      exact hCheck Set.univ
+  | seq =>
+      intro H H' hHist
+      simp only [Sat]
+      exact isSequential_congr_histEq (p := p) (hHist := hHist)
 
 /-- Conjunction satisfaction unfolds to both conjuncts. -/
 @[simp] lemma and
@@ -1089,7 +1319,7 @@ lemma diamondEventually_not_boxPast_not
 
 end Sat
 
-/-- End-of-time validity. -/
+/-- End-of-time validity (Definition~\ref{defn.valid} / Figure~\ref{fig.valid}). -/
 @[simp] def EndValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ p : P,
@@ -1129,7 +1359,7 @@ lemma EndValid.congr
     exact EndValid.of_imp (M := M)
       (φ := ψ) (ψ := φ) (h := fun p => (h p).2) hψ
 
-/-- Event-driven validity. -/
+/-- Event-driven validity (Definition~\ref{defn.valid} / Figure~\ref{fig.valid}). -/
 @[simp] def AllWorldValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ {t : World P S.EventType},
@@ -1155,7 +1385,7 @@ lemma AllWorldValid.of_mem_history
 notation:55 "□W⊨[" M "]" φ =>
   AllWorldValid M φ
 
-/-- Active participant predicate . -/
+/-- Active participant predicate (Definition~\ref{defn.active.p}). -/
 @[simp] def IsActive
     (H : History P (S.EventType))
     (p : P) : Prop :=
@@ -1199,7 +1429,7 @@ lemma exists_active_of_history_ne_empty
           refine ⟨World.place t, ?_⟩
           exact ⟨t, by simp [hHistory], rfl⟩
 
-/-- Active participants characterization. -/
+/-- Lemma 3.5.3 in the paper. -/
 theorem active_iff_past_top
     (M : Model S P)
     (p : P) :

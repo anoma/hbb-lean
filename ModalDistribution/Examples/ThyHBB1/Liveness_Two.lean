@@ -13,7 +13,7 @@ This file contains the two liveness two theorem for the ThyHBB1 broadcast protoc
 
 - **Liveness 2** (`livenessTwoThyHBB1`): If a value is delivered to one learner and certain
   liveness/intersection conditions hold, it will eventually be delivered to another learner.
-  Liveness property 2: deliveries propagate across intersecting learner quorums.
+  Corresponds to Proposition 6.5.4 (prop.1.liveness.2) in the paper.
 -/
 
 namespace ModalDistribution
@@ -36,7 +36,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Liveness property 2 specialised to `ThyHBB1`.
+/-- Proposition 6.5.4 (prop.1.liveness.2) (Liveness 2) specialised to `ThyHBB1`.
 If a value is delivered to learner l₁' and:
 - Learners l₁' and l₂' have intersecting quorums
 - The safe condition holds for learner l
@@ -557,13 +557,13 @@ lemma livenessTwoThyHBB1
         obtain ⟨s, hs_mem, hs_place, hNotSafe⟩ :=
           (Sat.sometime (M := M) (w := t)
             (φ := ¬ᶠ (safeFormula proposeSymb l))).1 hSome
+        have hStrict_s : s ≪ wt := by
+          refine ⟨s, ?_, PreHistory.worldEq_refl s⟩
+          simpa [wt, World.time] using hs_mem
         have hAcc_s : s ≪⁻ wt :=
-          ⟨by
-              simpa [wt, World.time]
-                using hs_mem,
-            by
-              simpa [wt, World.place]
-                using hs_place⟩
+          ⟨hStrict_s, by simpa [wt, World.place] using hs_place⟩
+        have hs_mem_time : s ∈ wt.time := by
+          simpa [wt, World.time] using hs_mem
         have hSafe_s :
             ⟪s⟫ ⊨[M] safeFormula proposeSymb l :=
           safe_monotone_subset
@@ -573,11 +573,12 @@ lemma livenessTwoThyHBB1
             (l := l)
             (hSubset := hSubsetWt)
             (hBefore :=
-              by
-                simpa [World.time] using
-                  PreHistory.happensBeforeEq_of_accessible
-                    (P := P) (Event := Signature.EventType S)
-                    hAcc_s.1)
+              Or.inl <|
+                Exists.intro s.place <|
+                  Exists.intro s.event
+                    (by
+                      simpa [World.place, World.event, World.time]
+                        using hs_mem_time))
             (hPlace := by simpa [World.place] using hAcc_s.2)
             (hSafe := hSafeTopWorld)
         exact
@@ -687,7 +688,7 @@ lemma livenessTwoThyHBB1
 
   exact step8 hLivep
 
-/-- Corollary: a delivery for `(l₁', l)`
+/-- Corollary of Proposition~\ref{prop.1.liveness.2}: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
 lemma livenessTwoAtPastDownThyHBB1
@@ -771,7 +772,7 @@ lemma livenessTwoAtPastDownThyHBB1
       simpa using hPast
   exact hPastDeliver_q
 
-/-- Corollary: a delivery for `(l₁', l)`
+/-- Corollary of Proposition~\ref{prop.1.liveness.2}: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
 lemma livenessTwoAtPastThyHBB1
     (hTheory : M ⊨ᵀ

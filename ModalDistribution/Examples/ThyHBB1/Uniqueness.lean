@@ -2,6 +2,7 @@ import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Properties
+import ModalDistribution.Tactics
 import ModalDistribution.Core.History
 
 /-!
@@ -30,7 +31,7 @@ The file is organized into several categories:
 - **Echo existence and equality lemmas**: Derive echo properties from unique proposals
   - `uniquePropose_exists_witness_echo`: Antecedent ensures echoes exist
   - `uniquePropose_eventually_echo_core`: Combines existence and equality
-  - `uniquePropose_eventually_echo`: Main result 
+  - `uniquePropose_eventually_echo`: Main result (\cref{lemm.only.one.propose.only.one.echo0})
 
 - **Helper lemmas for event-level reasoning**:
   - `sometime_echo_event_exists`: Witness explicit echo events
@@ -39,7 +40,7 @@ The file is organized into several categories:
   - `echoNonEquiv_diamond`: Echo non-equivalence constraint
 
 - **Safety lemmas**:
-  - `atMostOnePropose_safe`: Uniqueness implies safety 
+  - `atMostOnePropose_safe`: Uniqueness implies safety (\cref{lemm.one.propose.safe})
 -/
 
 namespace ModalDistribution
@@ -460,39 +461,51 @@ lemma echo_backward_diamond_from_sometime
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
   classical
   rcases w with ⟨p, evt, Hw⟩
-  obtain ⟨hEvent_eq, ht⟩ :=
-    (by
-      simpa [Formula.ofEvent, Sat] using hEvent)
-  have hw_mem : (p, evt, Hw) ∈ M.history.val := by
-    simpa [hEvent_eq]
-      using ht
-  have hLocal :
-      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
+  obtain ⟨hEvent_eq, hWitness⟩ := by
+    simpa [Formula.ofEvent, Sat] using hEvent
+  rcases hWitness with ⟨Hw', hMemWitness, hSame⟩
+  have hLocalWitness :
+      ⟪⟨p, MaybeEvent.some ⟨echoSymb, [value]⟩, Hw'⟩⟫ ⊨[M]
         echoBackwardAxiom proposeSymb echoSymb :=
     AllWorldValid.of_mem_history
       (M := M)
       (φ := echoBackwardAxiom proposeSymb echoSymb)
-      hEchoBack hw_mem
+      hEchoBack hMemWitness
+  have hLocal :
+      ⟪⟨p, MaybeEvent.some ⟨echoSymb, [value]⟩, Hw⟩⟫ ⊨[M]
+        echoBackwardAxiom proposeSymb echoSymb :=
+    (Sat.congr_histEq
+        (M := M)
+        (p := p)
+        (evt := MaybeEvent.some ⟨echoSymb, [value]⟩)
+        (H := Hw') (H' := Hw)
+        (hHist := hSame)
+        (φ := echoBackwardAxiom proposeSymb echoSymb)).mp
+      hLocalWitness
   have hImp :=
-    Sat.forall_elim (M := M) (w := ⟨p, evt, Hw⟩)
+    Sat.forall_elim
+      (M := M)
+      (w := ⟨p, MaybeEvent.some ⟨echoSymb, [value]⟩, Hw⟩)
       (body := fun v =>
         ofEvent ⟨echoSymb, [v]⟩ ⇒ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
       (v := value) hLocal
   have hImp' :
-      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
+      ⟪⟨p, MaybeEvent.some ⟨echoSymb, [value]⟩, Hw⟩⟫ ⊨[M]
         ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
-    simpa [Formula.ofEvent, Sat, hEvent_eq]
-      using hImp
+    simpa [Formula.ofEvent, Sat] using hImp
   have hEvent' :
-      ⟪⟨p, evt, Hw⟩⟫ ⊨[M]ofEvent ⟨echoSymb, [value]⟩ := by
-    simpa [Formula.ofEvent, Sat, hEvent_eq]
-      using hEvent
-  exact (Sat.imp (M := M) (w := ⟨p, evt, Hw⟩)
-    (φ := ofEvent ⟨echoSymb, [value]⟩)
-    (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1
-    hImp' hEvent'
+      ⟪⟨p, MaybeEvent.some ⟨echoSymb, [value]⟩, Hw⟩⟫ ⊨[M]ofEvent ⟨echoSymb, [value]⟩ := by
+    have := hEvent
+    simpa [Formula.ofEvent, Sat, hEvent_eq] using this
+  have hConclusion :=
+    (Sat.imp (M := M)
+      (w := ⟨p, MaybeEvent.some ⟨echoSymb, [value]⟩, Hw⟩)
+      (φ := ofEvent ⟨echoSymb, [value]⟩)
+      (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1
+      hImp' hEvent'
+  simpa [hEvent_eq] using hConclusion
 
 lemma boxEcho_to_propose_diamond
     {w : World P (Signature.EventType S)}
@@ -536,23 +549,12 @@ lemma boxEcho_to_propose_diamond
 
   have hEchoMem_H :
       (wEcho.place, wEcho.event, wEcho.time) ∈ Hw := hEcho_memHw
-  have hEcho_event_mem :
-      wEcho.event = MaybeEvent.some ⟨echoSymb, [value]⟩ ∧
-        (wEcho.place, MaybeEvent.some ⟨echoSymb, [value]⟩, wEcho.time) ∈ M.history.val :=
-    by
-      simpa [Formula.ofEvent, Sat] using hEcho_local
-  have hEcho_event :
-      wEcho.event = MaybeEvent.some ⟨echoSymb, [value]⟩ :=
-    hEcho_event_mem.1
-  have hEchoMem :
-      (wEcho.place, MaybeEvent.some ⟨echoSymb, [value]⟩, wEcho.time) ∈ M.history.val :=
-    hEcho_event_mem.2
-  have hEchoMem_world : wEcho ∈ M.history.val := by
-    rcases wEcho with ⟨place, event, time⟩
-    have : event = MaybeEvent.some ⟨echoSymb, [value]⟩ := by
-      simpa using hEcho_event
-    subst this
-    simpa using hEchoMem
+  obtain ⟨hEcho_event, _⟩ :=
+    (by
+      simpa [Formula.ofEvent, Sat] using hEcho_local)
+  have hEchoMem_world :
+      wEcho ∈ M.history.val :=
+    hSubsetPlain _ hEcho_memHw
   have hEchoBack_local :
       ⟪wEcho⟫ ⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
     AllWorldValid.of_mem_history
@@ -586,12 +588,9 @@ lemma boxEcho_to_propose_diamond
       simpa [Sat] using hProp_event
 
   -- Show the witnessed proposal lies inside the base history `Hw`.
-  have hAccEcho : wEcho ≪ ⟨qEcho, †, Hw⟩ :=
-    by
-      simpa [World.accessible] using hEcho_memHw
   have hBeforeEcho : wEcho.time ≺− Hw :=
-    PreHistory.happensBefore_of_accessible
-      (P := P) (Event := Signature.EventType S) hAccEcho
+    ⟨wEcho.place, wEcho.event,
+      by simpa [World.place, World.event, World.time] using hEcho_memHw⟩
   let HW := History.mk Hw hHerHw
   have hEchoData :=
     History.predecessor_data (H := HW) hBeforeEcho
@@ -734,7 +733,7 @@ lemma uniquePropose_guard_specialise_value
       (v := value) hGuard
   exact hForValue
 
-/-- Main result: a sequential quorum guard suffices to ensure safety. -/
+/-- Lemma `\cref{fig.HBB1}`: a sequential quorum guard suffices to ensure safety. -/
 lemma seq_guard_implies_safe
     {w : World P (Signature.EventType S)}
     (l : Signature.Value S)
@@ -750,7 +749,7 @@ lemma seq_guard_implies_safe
       (Or.inr hSeqGuard)
   simpa using h
 
-/-- Main result: safety holds precisely when uniqueness or the sequential
+/-- Lemma `\cref{fig.HBB1}`: safety holds precisely when uniqueness or the sequential
 guard is satisfied. -/
 lemma safe_implies_unique_or_seq_guard
     {w : World P (Signature.EventType S)}
@@ -946,7 +945,8 @@ lemma uniquePropose_witness_eq_value
     simpa [Sat] using hEq_global
   simp [Sat, hEq_val]
 
-/-- a unique proposal guarantees eventual echoes. -/
+/-- Lemma `\cref{lemm.only.one.propose.only.one.echo0}`:
+a unique proposal guarantees eventual echoes. -/
 lemma uniquePropose_eventually_echo
     (value : S.Value)
     (hHBB1 :
@@ -984,7 +984,7 @@ lemma uniquePropose_eventually_echo
               ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
             ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
 
-/-- at most one proposal implies every learner is safe. -/
+/-- Lemma `\cref{lemm.one.propose.safe}`: at most one proposal implies every learner is safe. -/
 lemma atMostOnePropose_safe
     (l : Signature.Value S) :
     ⊨[M](∃≤ᶠ1 v ↦

@@ -7,7 +7,7 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This module packages the lemmas and propositions whose primary focus is the
 sequentiality modality `Formula.seq`.  They were originally developed inside
-`Properties.lean` but are isolated here so that future work on the
+`Properties.lean` (Section 5.1) but are isolated here so that future work on the
 sequential fragment can build on a dedicated library.
 -/
 
@@ -42,7 +42,8 @@ lemma local_event_predecessor
   · simp [History.predecessorHistory, World.time]
   · simpa [History.predecessorHistory, World.place, World.event, World.time]
 
-/-- Accessible predecessors preserve in-place accessibility slices. -/
+/-- Lemma~\ref{lemm.accessible.subset}:
+accessible predecessors preserve in-place accessibility slices. -/
 lemma accessible_subset_of_accessible
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
@@ -52,29 +53,37 @@ lemma accessible_subset_of_accessible
   classical
   intro t ht
   obtain ⟨ht_acc, ht_place⟩ := ht
-  have ht_mem : t ∈ w'.time := by
-    simpa [World.accessible] using ht_acc
-  have hw'_mem : w' ∈ Hw.val := by
-    simpa [World.accessible, hwTime] using hAcc.1
-  have hw'_before : w'.time ≺− Hw.val := by
-    simpa [World.time] using
-      (History.happensBefore_of_mem
-        (P := P) (Event := Signature.EventType S) hw'_mem)
-  have hSubset : w'.time ⊆ Hw.val :=
-    History.subset_of_happensBefore (H := Hw) hw'_before
-  have ht_mem_hw : t ∈ Hw.val := hSubset _ ht_mem
-  have ht_mem_w : t ∈ w.time := by simpa [hwTime] using ht_mem_hw
+  obtain ⟨v, hv_mem, hv_eq⟩ := ht_acc
+  obtain ⟨u, hu_mem, hu_eq⟩ := hAcc.1
+  have hu_mem_hw : u ∈ Hw.val := by simpa [hwTime] using hu_mem
+  have hu_before : u.time ≺− Hw.val :=
+    History.happensBefore_of_mem
+      (P := P) (Event := Signature.EventType S) hu_mem_hw
+  have hSubset_u : u.time ⊆ Hw.val :=
+    History.subset_of_happensBefore (H := Hw) hu_before
+  have hSameHist :
+      PreHistory.histEq w'.time u.time := by
+    have := (PreHistory.worldEq_spec
+      (P := P) (Event := Signature.EventType S) w' u).1 hu_eq
+    exact this.2.2
+  obtain ⟨v', hv'_mem, hv'_eq⟩ :=
+    PreHistory.histEq_fwd hSameHist v hv_mem
+  have hv'_mem_w : v' ∈ w.time := by
+    have hv'_mem_hw : v' ∈ Hw.val := hSubset_u v' hv'_mem
+    simpa [hwTime] using hv'_mem_hw
   have hPlace_eq : t.place = w.place := by
     calc
       t.place = w'.place := ht_place
       _ = w.place := hAcc.2
   refine ⟨?_, hPlace_eq⟩
-  simpa [World.accessible] using ht_mem_w
+  exact
+    ⟨v', hv'_mem_w, PreHistory.worldEq_trans hv_eq hv'_eq⟩
 
 variable [Nonempty P]
 variable {M : Model S P}
 
-/-- Sequentiality persists along same-place accessibility. -/
+/-- Proposition~\ref{prop.seq.monotone}(1):
+sequentiality persists along same-place accessibility. -/
 lemma seq_monotone_of_subset
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
@@ -84,16 +93,77 @@ lemma seq_monotone_of_subset
   classical
   have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
     simpa [Sat, hwTime] using hSeq
-  have hMem : w' ∈ Hw.val := by
-    simpa [World.accessible, hwTime] using hAcc.1
-  have hBefore : w'.time ≺− Hw.val :=
-    History.happensBefore_of_mem (P := P) (Event := Signature.EventType S) hMem
+  obtain ⟨u, hu_mem, hu_eq⟩ := hAcc.1
+  have hu_mem_hw : u ∈ Hw.val := by simpa [hwTime] using hu_mem
+  have hBefore : u.time ≺− Hw.val :=
+    History.happensBefore_of_mem
+      (P := P) (Event := Signature.EventType S) hu_mem_hw
+  have hSeqTime_u :
+      isSequential (P := P) (Event := Signature.EventType S) w.place u.time :=
+    History.sequentiality_of_predecessor
+      (p := w.place) (H := Hw) (h' := u.time)
+      (h_before := hBefore) (hseq := hSeqHw)
+  have hSameHist :
+      PreHistory.histEq w'.time u.time := by
+    have := (PreHistory.worldEq_spec
+      (P := P) (Event := Signature.EventType S) w' u).1 hu_eq
+    exact this.2.2
   have hSeqTime :
       isSequential (P := P) (Event := Signature.EventType S) w.place w'.time := by
-    exact
-      (History.sequentiality_of_predecessor
-        (p := w.place) (H := Hw) (h' := w'.time)
-        (h_before := hBefore) (hseq := hSeqHw))
+    refine fun {t₁ t₂} ht₁ ht₂ hp₁ hp₂ => ?_
+    have := PreHistory.histEq_fwd hSameHist t₁ ht₁
+    obtain ⟨t₁', ht₁'_mem, ht₁'_eq⟩ := this
+    have := PreHistory.histEq_fwd hSameHist t₂ ht₂
+    obtain ⟨t₂', ht₂'_mem, ht₂'_eq⟩ := this
+    have ht₁'_eq_symm := PreHistory.worldEq_symm ht₁'_eq
+    have ht₂'_eq_symm := PreHistory.worldEq_symm ht₂'_eq
+    have hp₁' : World.place t₁' = w.place := by
+      have := PreHistory.worldEq_place ht₁'_eq
+      simp [World.place] at this ⊢
+      rw [← this]; exact hp₁
+    have hp₂' : World.place t₂' = w.place := by
+      have := PreHistory.worldEq_place ht₂'_eq
+      simp [World.place] at this ⊢
+      rw [← this]; exact hp₂
+    have hSeq_u := hSeqTime_u ht₁'_mem ht₂'_mem hp₁' hp₂'
+    rcases hSeq_u with h1 | h2 | h3
+    · left
+      have hSame_t₂' :
+          PreHistory.histEq t₂.time t₂'.time := by
+        have := (PreHistory.worldEq_spec
+          (P := P) (Event := Signature.EventType S) t₂ t₂').1 ht₂'_eq
+        exact this.2.2
+      have hSame_t₂ :
+          PreHistory.histEq t₂'.time t₂.time :=
+        PreHistory.histEq_symm hSame_t₂'
+      obtain ⟨v, hv_mem, hv_eq⟩ := h1
+      obtain ⟨v', hv'_mem, hv'_eq⟩ :=
+        PreHistory.histEq_fwd hSame_t₂ v hv_mem
+      exact
+        ⟨v', hv'_mem,
+          PreHistory.worldEq_trans ht₁'_eq
+            (PreHistory.worldEq_trans hv_eq hv'_eq)⟩
+    · right; left
+      have hSame_t₁' :
+          PreHistory.histEq t₁.time t₁'.time := by
+        have := (PreHistory.worldEq_spec
+          (P := P) (Event := Signature.EventType S) t₁ t₁').1 ht₁'_eq
+        exact this.2.2
+      have hSame_t₁ :
+          PreHistory.histEq t₁'.time t₁.time :=
+        PreHistory.histEq_symm hSame_t₁'
+      obtain ⟨v, hv_mem, hv_eq⟩ := h2
+      obtain ⟨v', hv'_mem, hv'_eq⟩ :=
+        PreHistory.histEq_fwd hSame_t₁ v hv_mem
+      exact
+        ⟨v', hv'_mem,
+          PreHistory.worldEq_trans ht₂'_eq
+            (PreHistory.worldEq_trans hv_eq hv'_eq)⟩
+    · right; right
+      exact
+        PreHistory.worldEq_trans
+          ht₁'_eq
+          (PreHistory.worldEq_trans h3 (PreHistory.worldEq_symm ht₂'_eq))
   have hSeqTime' :
       isSequential (P := P) (Event := Signature.EventType S) w'.place w'.time := by
     refine fun {t₁ t₂} ht₁ ht₂ hp₁ hp₂ => ?_
@@ -102,7 +172,7 @@ lemma seq_monotone_of_subset
     exact hSeqTime ht₁ ht₂ hp₁' hp₂'
   exact (Sat.seq (M := M) (w := w')).2 hSeqTime'
 
-/-- Sequentiality implies `⇓ᶠ`-sequentiality. -/
+/-- Proposition~\ref{prop.seq.monotone}(2): sequentiality implies `⇓ᶠ`-sequentiality. -/
 lemma seq_monotone_allItp
     (Hw : History P (Signature.EventType S))
     (hwTime : Hw.val = w.time)
@@ -134,7 +204,8 @@ lemma seq_monotone_allItp
     (Sat.seq (M := M) (w := t)).2 hSeq_t_place
   exact (Sat.not_elim (M := M) (w := t) (φ := Formula.seq)) ht_notSeq hSeq_t
 
-/-- Quorum intersections furnish a joint witness. -/
+/-- Proposition~\ref{prop.seq.two.quorums}(\ref{item.seq.two.quorums.1}):
+quorum intersections furnish a joint witness. -/
 theorem two_quorums_exists
     {ls : Signature.Value S}
     {ls' : Signature.Value S}
@@ -176,35 +247,57 @@ theorem two_quorums_exists
     sat_diamondEmpty_of_local (M := M)
       (w := w) (φ := ((ψ ∧ᶠ φ) ∧ᶠ φ')) hWitness
 
-/-- Sequentiality coincides with linear ordering of the in-place slice. -/
-lemma seq_iff_linear_accessible
-    : (⟪w⟫ ⊨[M]Formula.seq) ↔
+/-- Lemma~\ref{lemm.char.seq}:
+sequentiality coincides with linear ordering of the in-place slice. -/
+lemma seq_iff_linear_accessible :
+    (⟪w⟫ ⊨[M]Formula.seq) ↔
       (∀ {w₁ w₂ : World P (Signature.EventType S)},
         w₁ ≪⁻ w → w₂ ≪⁻ w →
-          (w₁ ≪ w₂ ∨ w₂ ≪ w₁ ∨ w₁ = w₂)) := by
+          (w₁ ≪ w₂ ∨ w₂ ≪ w₁ ∨ worldEq w₁ w₂)) := by
   classical
   constructor
   · intro hSeq
-    have hSeq' : isSequential (P := P) (Event := Signature.EventType S)
-        w.place w.time :=
+    have hSeq' :
+        isSequential (P := P) (Event := Signature.EventType S)
+          w.place w.time :=
       (Sat.seq (M := M) (w := w)).1 hSeq
     intro w₁ w₂ hw₁ hw₂
-    have hw₁_mem : w₁ ∈ w.time := by
-      simpa [World.accessible] using hw₁.1
-    have hw₂_mem : w₂ ∈ w.time := by
-      simpa [World.accessible] using hw₂.1
+    obtain ⟨v₁, hv₁_mem, hv₁_eq⟩ := hw₁.1
+    obtain ⟨v₂, hv₂_mem, hv₂_eq⟩ := hw₂.1
     have hw₁_place : World.place w₁ = w.place := hw₁.2
     have hw₂_place : World.place w₂ = w.place := hw₂.2
-    exact hSeq' hw₁_mem hw₂_mem hw₁_place hw₂_place
+    have hv₁_place : World.place v₁ = w.place := by
+      have := PreHistory.worldEq_place hv₁_eq
+      simp [World.place] at this ⊢
+      rw [← this]; exact hw₁_place
+    have hv₂_place : World.place v₂ = w.place := by
+      have := PreHistory.worldEq_place hv₂_eq
+      simp [World.place] at this ⊢
+      rw [← this]; exact hw₂_place
+    have hSeq_v := hSeq' hv₁_mem hv₂_mem hv₁_place hv₂_place
+    rcases hSeq_v with h1 | h2 | h3
+    · left
+      exact
+        PreHistory.accessible_of_worldEq_accessible
+          hv₁_eq h1 hv₂_eq
+    · right; left
+      exact
+        PreHistory.accessible_of_worldEq_accessible
+          hv₂_eq h2 hv₁_eq
+    · right; right
+      exact
+        PreHistory.worldEq_trans
+          hv₁_eq
+          (PreHistory.worldEq_trans h3 (PreHistory.worldEq_symm hv₂_eq))
   · intro h
     have hSeq :
         isSequential (P := P) (Event := Signature.EventType S)
           w.place w.time := by
       intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
       have ht₁_access : t₁ ≪⁻ w :=
-        ⟨by simpa [World.accessible] using ht₁, hp₁⟩
+        ⟨⟨t₁, ht₁, PreHistory.worldEq_refl t₁⟩, hp₁⟩
       have ht₂_access : t₂ ≪⁻ w :=
-        ⟨by simpa [World.accessible] using ht₂, hp₂⟩
+        ⟨⟨t₂, ht₂, PreHistory.worldEq_refl t₂⟩, hp₂⟩
       exact h (w₁ := t₁) (w₂ := t₂) ht₁_access ht₂_access
     exact (Sat.seq (M := M) (w := w)).2 hSeq
 
@@ -263,34 +356,30 @@ lemma seq_preHistory_of_happensBefore
   have ht₂_time : t₂ ∈ w.time := by simpa [hTime.symm] using ht₂_H
   exact hSeq_time ht₁_time ht₂_time hp₁ hp₂
 
-/-- Sequentiality linearly orders any two prefixes for the same participant. -/
+/-- Sequentiality linearly orders any two prefixes for the same participant up to `histEq`. -/
 lemma seq_compare_prefixes
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht₁ : t₁ ∈ H.val) (ht₂ : t₂ ∈ H.val)
     (hp₁ : t₁.place = w.place) (hp₂ : t₂.place = w.place) :
-    t₁.time ⪯ t₂.time ∨ t₂.time ⪯ t₁.time := by
+    (∃ h, PreHistory.histEq t₁.time h ∧ h ⪯ t₂.time) ∨
+      (∃ h, PreHistory.histEq t₂.time h ∧ h ⪯ t₁.time) := by
   classical
-  have hSeq_time : isSequential (P := P) (Event := Signature.EventType S) w.place w.time := by
+  have hSeq_time :
+      isSequential (P := P) (Event := Signature.EventType S) w.place w.time := by
     simpa [Sat] using hSeq
   have ht₁_time : t₁ ∈ w.time := by simpa [hTime.symm] using ht₁
   have ht₂_time : t₂ ∈ w.time := by simpa [hTime.symm] using ht₂
   have hCompare := hSeq_time ht₁_time ht₂_time hp₁ hp₂
-  cases hCompare with
-  | inl hIn =>
-      have hBeforeEq : t₁.time ⪯ t₂.time :=
-        PreHistory.happensBeforeEq_of_accessible (P := P) (Event := Signature.EventType S) hIn
-      exact Or.inl hBeforeEq
-  | inr hInOrEq =>
-      cases hInOrEq with
-      | inl hIn =>
-          have hBeforeEq : t₂.time ⪯ t₁.time :=
-            PreHistory.happensBeforeEq_of_accessible (P := P) (Event := Signature.EventType S) hIn
-          exact Or.inr hBeforeEq
-      | inr hEq =>
-          have hEqTime : t₁.time = t₂.time := congrArg World.time hEq
-          exact Or.inl (PreHistory.happensBeforeEq_of_eq
-                          (P := P) (Event := Signature.EventType S) hEqTime)
+  rcases hCompare with hAcc | hAcc | hEq
+  · exact Or.inl (PreHistory.happensBeforeEq_of_accessible hAcc)
+  · exact Or.inr (PreHistory.happensBeforeEq_of_accessible hAcc)
+  · have hSpec :=
+        (PreHistory.worldEq_spec
+          (P := P) (Event := Signature.EventType S) t₁ t₂).1 hEq
+    refine Or.inl ?_
+    refine ⟨t₂.time, hSpec.2.2, ?_⟩
+    exact PreHistory.happensBeforeEq_refl (P := P) (Event := Signature.EventType S) t₂.time
 
 /-- Worlds in a sequential participant's local history are comparable. -/
 lemma seq_compare_historyAt
@@ -298,9 +387,10 @@ lemma seq_compare_historyAt
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht : t ∈ History.historyAt H w.place)
     (ht' : t' ∈ History.historyAt H w.place) :
-    (t ∈ World.time t') ∨ (t' ∈ World.time t) ∨ t = t' := by
+    t ≪ t' ∨ t' ≪ t ∨ worldEq t t' := by
   classical
-  have hSeq_time : isSequential (P := P) (Event := Signature.EventType S) w.place w.time := by
+  have hSeq_time :
+      isSequential (P := P) (Event := Signature.EventType S) w.place w.time := by
     simpa [Sat] using hSeq
   obtain ⟨ht_mem, ht_place⟩ := ht
   obtain ⟨ht'_mem, ht'_place⟩ := ht'
@@ -308,32 +398,30 @@ lemma seq_compare_historyAt
   have ht'_mem_time : t' ∈ w.time := by simpa [hTime.symm] using ht'_mem
   exact hSeq_time ht_mem_time ht'_mem_time ht_place ht'_place
 
-/-- Sequential participants totally order their local event times. -/
+/-- Sequential participants totally order their local event times up to `histEq`. -/
 lemma seq_compare_event_times
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht₁ : t₁ ∈ H.val) (ht₂ : t₂ ∈ H.val)
     (hp₁ : t₁.place = w.place) (hp₂ : t₂.place = w.place) :
-    t₁.time ⪯ t₂.time ∨ t₂.time ⪯ t₁.time := by
+    (∃ h, PreHistory.histEq t₁.time h ∧ h ⪯ t₂.time) ∨
+      (∃ h, PreHistory.histEq t₂.time h ∧ h ⪯ t₁.time) := by
   classical
-  have hSeq_time : isSequential (P := P) (Event := Signature.EventType S) w.place w.time := by
+  have hSeq_time :
+      isSequential (P := P) (Event := Signature.EventType S) w.place w.time := by
     simpa [Sat] using hSeq
   have ht₁_time : t₁ ∈ w.time := by simpa [hTime.symm] using ht₁
   have ht₂_time : t₂ ∈ w.time := by simpa [hTime.symm] using ht₂
   have hCompare := hSeq_time ht₁_time ht₂_time hp₁ hp₂
-  cases hCompare with
-  | inl hAcc =>
-      exact Or.inl (PreHistory.happensBeforeEq_of_accessible
-                      (P := P) (Event := Signature.EventType S) hAcc)
-  | inr hAccOrEq =>
-      cases hAccOrEq with
-      | inl hAcc =>
-          exact Or.inr (PreHistory.happensBeforeEq_of_accessible
-                          (P := P) (Event := Signature.EventType S) hAcc)
-      | inr hEq =>
-          have hEqTime : t₁.time = t₂.time := congrArg World.time hEq
-          exact Or.inl (PreHistory.happensBeforeEq_of_eq
-                          (P := P) (Event := Signature.EventType S) hEqTime)
+  rcases hCompare with hAcc | hAcc | hEq
+  · exact Or.inl (PreHistory.happensBeforeEq_of_accessible hAcc)
+  · exact Or.inr (PreHistory.happensBeforeEq_of_accessible hAcc)
+  · have hSpec :=
+        (PreHistory.worldEq_spec
+          (P := P) (Event := Signature.EventType S) t₁ t₂).1 hEq
+    refine Or.inl ?_
+    refine ⟨t₂.time, hSpec.2.2, ?_⟩
+    exact PreHistory.happensBeforeEq_refl (P := P) (Event := Signature.EventType S) t₂.time
 
 /-- Sequentiality descends to the local time component of any owned event. -/
 lemma seq_event_time_sequential
@@ -555,8 +643,8 @@ lemma sat_diamondPast_empty_participant_iff
         (w := ⟨p₁, evt₁, H₁⟩)
         (φ := ↓ᶠ φ)).2 ⟨p, hp₂⟩
 
-/-- Specialized to local witnesses: sequential world with two distinct local events
-implies temporal ordering. -/
+/-- Proposition~\ref{prop.seq.two.quorums}(\ref{item.seq.two.quorums.1})
+specialised to local witnesses. -/
 theorem seq_two_quorums_events
     {w : World P (Signature.EventType S)}
     {evt evt' : Signature.EventType S}
@@ -592,15 +680,26 @@ theorem seq_two_quorums_events
       _ = t₂.place := hp₂.symm
   cases hOrder with
   | inl hIn =>
-      have ht₁_in_t₂ : t₁ ∈ t₂.time := by
-        simpa [World.accessible] using hIn
+      obtain ⟨v, hv_mem, hv_eq⟩ := hIn
+      have hv_place_t₁ :
+          v.place = t₁.place := by
+        have := PreHistory.worldEq_place hv_eq
+        simp [World.place] at this
+        simpa [World.place] using this.symm
+      have hv_place :
+          v.place = t₂.place :=
+        hv_place_t₁.trans hp_eq
+      have hv_event :
+          ⟪v⟫ ⊨[M] Formula.ofEvent evt :=
+        Sat.ofEvent_of_worldEq
+          (M := M) (w := t₁) (w' := v) (E := evt) hv_eq ht₁_event
       have hDown_evt :
           ⟪t₂⟫ ⊨[M] ↓ᶠ (Formula.ofEvent evt) :=
         Sat.past_intro_of_prefix (M := M)
-          (w := t₂) (t := t₁)
-          (ht := ht₁_in_t₂)
-          (hp := hp_eq)
-          (hφ := ht₁_event)
+          (w := t₂) (t := v)
+          (ht := hv_mem)
+          (hp := hv_place)
+          (hφ := hv_event)
       have hConj :
           ⟪t₂⟫ ⊨[M]
             ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)) :=
@@ -633,15 +732,26 @@ theorem seq_two_quorums_events
   | inr hInOrEq =>
       cases hInOrEq with
       | inl hIn =>
-          have ht₂_in_t₁ : t₂ ∈ t₁.time := by
-            simpa [World.accessible] using hIn
+          obtain ⟨v, hv_mem, hv_eq⟩ := hIn
+          have hv_place_t₂ :
+              v.place = t₂.place := by
+            have := PreHistory.worldEq_place hv_eq
+            simp [World.place] at this
+            simpa [World.place] using this.symm
+          have hv_place :
+              v.place = t₁.place :=
+            hv_place_t₂.trans hp_eq.symm
+          have hv_event :
+              ⟪v⟫ ⊨[M] Formula.ofEvent evt' :=
+            Sat.ofEvent_of_worldEq
+              (M := M) (w := t₂) (w' := v) (E := evt') hv_eq ht₂_event
           have hDown_evt' :
               ⟪t₁⟫ ⊨[M] ↓ᶠ (Formula.ofEvent evt') :=
             Sat.past_intro_of_prefix (M := M)
-              (w := t₁) (t := t₂)
-              (ht := ht₂_in_t₁)
-              (hp := hp_eq.symm)
-              (hφ := ht₂_event)
+              (w := t₁) (t := v)
+              (ht := hv_mem)
+              (hp := hv_place)
+              (hφ := hv_event)
           have hConj :
               ⟪t₁⟫ ⊨[M]
                 ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')) :=
@@ -672,13 +782,20 @@ theorem seq_two_quorums_events
                         ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))
               hDiamond'
       | inr hEq =>
-          cases hEq
-          have hMaybe : MaybeEvent.some evt = MaybeEvent.some evt' :=
-            (Eq.trans hEvt₂_place.symm hEvt₁_place).symm
+          have hSpec :=
+            (PreHistory.worldEq_spec
+              (P := P) (Event := Signature.EventType S) t₁ t₂).1 hEq
+          have hMaybe :
+              MaybeEvent.some evt = MaybeEvent.some evt' := by
+            calc
+              MaybeEvent.some evt = t₁.event :=
+                (hEvt₁_place.symm)
+              _ = t₂.event := hSpec.2.1
+              _ = MaybeEvent.some evt' := hEvt₂_place
           have hEqual : evt = evt' := MaybeEvent.some.inj hMaybe
           exact (hDistinct hEqual).elim
 
-/-- Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
+/-- Proposition~\ref{prop.seq.two.quorums}(\ref{item.seq.two.quorums.2}). -/
 theorem seq_two_quorums_eventually
     {H : History P (Signature.EventType S)}
     {w : World P (Signature.EventType S)}

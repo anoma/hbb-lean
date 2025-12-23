@@ -9,7 +9,7 @@ import ModalDistribution.Logic.Properties
 # ThyHBB2 Agreement Property
 
 This file records the agreement statement for the `ThyHBB2` broadcast theory.
-Agreement property for ThyHBB2: under a
+It formalises Proposition~\ref{prop.2.agreement} from Section 7: under a
 sequential quorum intersection between the source learners, any two deliveries
 agree on the value.
 -/
@@ -34,7 +34,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Agreement property for ThyHBB2.
+/-- Agreement property for ThyHBB2 (Proposition~\ref{prop.2.agreement}).
 
 Sequential quorum intersections between l₁ and l₂ force any deliveries for
 (l₁', l₁) and (l₂', l₂) to agree on the value. This is the agreement property
@@ -188,7 +188,7 @@ lemma agreementThyHBB2
         simpa [Sat] using hEq.symm
   simpa [wTop] using hEquality
 
-/-- When both deliveries for
+/-- Corollary of Proposition~\ref{prop.2.agreement}: when both deliveries for
 `(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
 lemma agreementThyHBB2_of_deliveries
     (hTheory : M ⊨ᵀ
