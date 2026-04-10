@@ -18,3 +18,4 @@ import ModalDistribution.Grassroots.HBBBridge
 import ModalDistribution.Grassroots.LiftableFragment
 import ModalDistribution.Grassroots.LiftHistory
 import ModalDistribution.Grassroots.LiftPreservation
+import ModalDistribution.Grassroots.TheoryPreservation
