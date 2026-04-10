@@ -10,3 +10,11 @@ import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Examples.ThyHBB1
 import ModalDistribution.Examples.ThyHBB2
 import ModalDistribution.Examples.ThyHBB3
+import ModalDistribution.Grassroots.Sequentiality
+import ModalDistribution.Grassroots.Coalescent
+import ModalDistribution.Grassroots.LeaderRooted
+import ModalDistribution.Grassroots.Abstract
+import ModalDistribution.Grassroots.HBBBridge
+import ModalDistribution.Grassroots.LiftableFragment
+import ModalDistribution.Grassroots.LiftHistory
+import ModalDistribution.Grassroots.LiftPreservation
