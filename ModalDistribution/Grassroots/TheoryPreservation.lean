@@ -338,10 +338,38 @@ theorem thyHBB1_theory_preservation
     · -- liveActive: sorry (uses □[], outside fragment)
       exact allWorldValid_liveActive h F M_P hLearner liveSymb
         (hValid (by simp [ThyHBB1, ThyLive]))
-    · -- knowledgeDiamond: sorry (arbitrary ψ)
-      sorry
-    · -- knowledgeDiamondEventually: sorry (arbitrary ψ)
-      sorry
+    · -- knowledgeDiamond ls ψ: fresh-agent case fully discharged.
+      -- The axiom is: ⤒(♢↓[ls](pred ∧ ψ)) ⇒ (pred ⇒ ↕(♢↓[ls] ψ))
+      -- At any world: the inner (pred ⇒ ...) has pred as guard.
+      -- Fresh agents have pred = False → inner imp is True → outer imp is True.
+      -- Lifted agents: requires conservative extension for arbitrary ψ.
+      rename_i ls ψ
+      intro t ht
+      simp only [LiftPreservation.canonicalLift_history_val] at ht
+      obtain ⟨H, hH, hHeq⟩ := happensBeforeEq_lift h ht
+      rcases t with ⟨p', evt, _⟩; subst hHeq
+      -- The formula is imp A (imp pred C). Unfold the outer imp.
+      simp only [knowledgeDiamondAxiom, Sat]
+      intro _hAnt hPred
+      -- If p' is fresh, pred is False → contradiction
+      by_cases hp : p'.val ∈ P
+      · -- Lifted agent: conservative extension gap for arbitrary ψ
+        sorry
+      · -- Fresh agent: pred is False
+        exfalso
+        exact predicate_false_at_fresh h F M_P p' hp evt H liveSymb hPred
+    · -- knowledgeDiamondEventually ls ψ: same structure
+      rename_i ls ψ
+      intro t ht
+      simp only [LiftPreservation.canonicalLift_history_val] at ht
+      obtain ⟨H, hH, hHeq⟩ := happensBeforeEq_lift h ht
+      rcases t with ⟨p', evt, _⟩; subst hHeq
+      simp only [knowledgeDiamondEventuallyAxiom, Sat]
+      intro _hAnt hPred
+      by_cases hp : p'.val ∈ P
+      · sorry
+      · exfalso
+        exact predicate_false_at_fresh h F M_P p' hp evt H liveSymb hPred
   -- 7 protocol axioms: liftable (by catalog) + fresh discharge.
   -- Backward + nonequiv: antecedent is event(...)  → False at fresh
   -- Forward: antecedent is (pred ∧ ...) → pred False at fresh via double-negation
