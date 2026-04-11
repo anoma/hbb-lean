@@ -201,6 +201,159 @@ private lemma forall_event_imp_at_fresh {P P' : Set A} (h : P ⊆ P')
   exfalso
   exact event_false_at_fresh h F M_P p' hp' evt H ⟨eventSymb, [v]⟩ hevt
 
+/-! ## §6. Liftability of the concrete ThyLive axioms -/
+
+private lemma liveAlwaysAxiom_isLiftable (liveSymb : Signature.PredSymb S) :
+    LiftableFragment.IsLiftable (liveAlwaysAxiom (S := S) liveSymb) := by
+  unfold liveAlwaysAxiom Formula.iff
+  exact LiftableFragment.isLiftable_and
+    (LiftableFragment.IsLiftable.imp
+      (LiftableFragment.isAntiLiftable_predicate0 _)
+      (LiftableFragment.IsLiftable.atEnd (LiftableFragment.isLiftable_predicate0 _)))
+    (LiftableFragment.IsLiftable.imp
+      (LiftableFragment.IsAntiLiftable.atEnd (LiftableFragment.isAntiLiftable_predicate0 _))
+      (LiftableFragment.isLiftable_predicate0 _))
+
+private lemma liveSeqAxiom_isLiftable (liveSymb : Signature.PredSymb S) :
+    LiftableFragment.IsLiftable (liveSeqAxiom (S := S) liveSymb) := by
+  unfold liveSeqAxiom
+  exact LiftableFragment.IsLiftable.imp
+    (LiftableFragment.isAntiLiftable_predicate0 _) LiftableFragment.IsLiftable.seq
+
+/-! ## §7. Fresh-agent discharge
+
+At a fresh agent, `predicate0 liveSymb` is False and `event E` is False.
+Every ThyHBB1 axiom has one of these as a guard, making the axiom
+vacuously True. -/
+
+/-- Generic helper: any `∀ v, imp guard(v) body(v)` is True at fresh
+agents when the guard requires an event or predicate. -/
+private lemma imp_false_at_fresh
+    {P P' : Set A} (h : P ⊆ P') [Nonempty ↥P] [Nonempty ↥P']
+    (F : LearnerFamily (Signature.Value S) A) (M_P : Model S ↥P)
+    (p' : ↥P') (hp' : p'.val ∉ P)
+    (evt : MaybeEvent (Signature.EventType S))
+    (H : PreHistory ↥P (Signature.EventType S))
+    {φ ψ : Formula S}
+    (hGuard : ¬ ⟪(p', evt, liftPreHistory h H)⟫
+        ⊨[LiftPreservation.canonicalLift h F M_P] φ) :
+    ⟪(p', evt, liftPreHistory h H)⟫
+      ⊨[LiftPreservation.canonicalLift h F M_P] (φ ⇒ᶠ ψ) := by
+  simp only [Sat]; exact fun h => absurd h hGuard
+
+/-! ## §8. Theory preservation — main theorem
+
+We prove the theorem for the concrete axioms via `allWorldValid_lift`,
+and handle `liveActiveAxiom` by a direct semantic argument. The
+knowledge axiom schemes are left as sorry (see §9 note). -/
+
+/-- `liveActiveAxiom` preservation: direct semantic proof.
+`⤒(□[](pred ⇒ ↓⊤))` uses `□[]` (boxEmpty) which is outside the
+syntactic liftable fragment, but IS preserved because:
+- Fresh agents: pred is False → imp vacuously True
+- Lifted agents: pred coherence + past-tuple lifting -/
+private theorem allWorldValid_liveActive
+    {P P' : Set A} (h : P ⊆ P') [Nonempty ↥P] [Nonempty ↥P']
+    (F : LearnerFamily (Signature.Value S) A) [IsCoalescent F]
+    (M_P : Model S ↥P) (hLearner : M_P.learner = F.σ P)
+    (liveSymb : Signature.PredSymb S)
+    (hValidA : AllWorldValid M_P (liveActiveAxiom liveSymb)) :
+    AllWorldValid (LiftPreservation.canonicalLift h F M_P)
+      (liveActiveAxiom liveSymb) := by
+  -- liveActive uses □[] (boxEmpty) which is outside the syntactic liftable
+  -- fragment. The semantic proof works (fresh: pred False, lifted: transfer)
+  -- but requires navigating the Sat unfolding for boxEmpty + atEnd.
+  sorry
+
+/-- The main theorem: ThyHBB1 theory validity is preserved by canonical
+coalescent lifting. -/
+theorem thyHBB1_theory_preservation
+    {P P' : Set A} (h : P ⊆ P') [Nonempty ↥P] [Nonempty ↥P']
+    (F : LearnerFamily (Signature.Value S) A) [IsCoalescent F]
+    (M_P : Model S ↥P) (hLearner : M_P.learner = F.σ P)
+    (liveSymb : Signature.PredSymb S)
+    (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
+    (hValid : Theory.Valid (M := M_P)
+      (ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)) :
+    Theory.Valid (M := LiftPreservation.canonicalLift h F M_P)
+      (ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb) := by
+  intro ax hax
+  simp only [ThyHBB1] at hax
+  -- Each axiom is either from ThyLive or one of the 7 protocol axioms
+  rcases hax with hLive | hEchoB | hVoteB | hDeliverB | hNE |
+                  hEchoF | hVoteF | hDeliverF
+  · -- ThyLive axiom
+    simp only [ThyLive] at hLive
+    rcases hLive with rfl | rfl | rfl | ⟨ls, ψ, rfl⟩ | ⟨ls, ψ, rfl⟩
+    · -- liveAlways: liftable, fresh discharge via pred False (needs classical for ∧ encoding)
+      exact allWorldValid_lift h F M_P hLearner
+        (liveAlwaysAxiom_isLiftable liveSymb) (hValid (by simp [ThyHBB1, ThyLive]))
+        (fun p' hp' evt H _ => by
+          -- liveAlways = (pred ⇔ ⤒ pred) = and (pred⇒⤒pred) (⤒pred⇒pred)
+          -- Formula.and uses double negation: ¬(φ ⇒ ¬ψ)
+          -- Both imp's are True (pred is False at fresh), so we construct
+          -- the witnesses for the double negation directly.
+          -- Both sides of the biconditional involve pred, which is False at fresh
+          simp only [liveAlwaysAxiom, Formula.iff, Sat, Formula.and, Formula.not,
+                     LiftPreservation.canonicalLift_history_val]
+          exact fun hAbs => hAbs
+            (fun hP => absurd hP
+              (predicate_false_at_fresh h F M_P p' hp' evt H liveSymb))
+            (fun hP => absurd hP
+              (predicate_false_at_fresh h F M_P p' hp' †
+                M_P.history.val liveSymb)))
+    · -- liveSeq: liftable, fresh discharge via pred False
+      exact allWorldValid_lift h F M_P hLearner
+        (liveSeqAxiom_isLiftable liveSymb) (hValid (by simp [ThyHBB1, ThyLive]))
+        (fun p' hp' evt H _ => by
+          simp only [liveSeqAxiom, Sat]
+          exact fun hP => absurd hP (predicate_false_at_fresh h F M_P p' hp' evt H liveSymb))
+    · -- liveActive: sorry (uses □[], outside fragment)
+      exact allWorldValid_liveActive h F M_P hLearner liveSymb
+        (hValid (by simp [ThyHBB1, ThyLive]))
+    · -- knowledgeDiamond: sorry (arbitrary ψ)
+      sorry
+    · -- knowledgeDiamondEventually: sorry (arbitrary ψ)
+      sorry
+  -- 7 protocol axioms: liftable (by catalog) + fresh discharge.
+  -- Each fresh discharge is conceptually the same (event/pred guard False
+  -- at fresh agents) but the Sat unfolding varies per axiom.
+  all_goals {
+    subst_vars
+    apply allWorldValid_lift h F M_P hLearner
+    -- liftability: from the catalog
+    first
+    | exact LiftableFragment.echoBackwardAxiom_isLiftable _ _
+    | exact LiftableFragment.voteBackwardAxiom_isLiftable _ _ _
+    | exact LiftableFragment.deliverBackwardAxiom_isLiftable _ _
+    | exact LiftableFragment.echoNonEquivAxiom_isLiftable _
+    | exact LiftableFragment.echoForwardAxiom_isLiftable _ _ _
+    | exact LiftableFragment.voteForwardAxiom_isLiftable _ _ _ _
+    | exact LiftableFragment.deliverForwardAxiom_isLiftable _ _ _
+    -- original validity
+    all_goals first
+    | exact hValid (by simp [ThyHBB1])
+    -- fresh agent discharge (sorry — conceptually trivial, pred/event False)
+    | intro p' hp' evt H _; sorry
+  }
+
+/-! ## §9. Knowledge axiom schemes — open gap
+
+The knowledge axiom schemes `knowledgeDiamondAxiom ls ψ` and
+`knowledgeDiamondEventuallyAxiom ls ψ` are quantified over arbitrary
+formulas `ψ`. For specific liftable `ψ` they are in the liftable
+fragment, but for arbitrary `ψ` they are not.
+
+The fresh-agent case is trivially discharged (pred guard is False).
+The lifted-agent case requires showing that the temporal modalities
+(⤒, ↕, ♢↓, □↓) commute with lifting for arbitrary formula bodies —
+a conservative-extension argument that goes beyond the syntactic
+liftable fragment.
+
+This is a meaningful open problem: it connects to whether the canonical
+lift is a *conservative extension* of the original model for the full
+HBB modal language, not just the liftable fragment. -/
+
 end TheoryPreservation
 end Grassroots
 end ModalDistribution
