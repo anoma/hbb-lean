@@ -38,7 +38,7 @@ These facts make event and predicate atoms False at fresh agents,
 which vacuously satisfies any implication with such antecedents. -/
 
 /-- At a fresh agent, the predicate interpretation is empty. -/
-private lemma predInterp_fresh {P P' : Set A} (h : P ⊆ P')
+lemma predInterp_fresh {P P' : Set A} (h : P ⊆ P')
     [Nonempty ↥P] [Nonempty ↥P']
     (F : LearnerFamily (Signature.Value S) A)
     (M_P : Model S ↥P)
@@ -51,7 +51,7 @@ private lemma predInterp_fresh {P P' : Set A} (h : P ⊆ P')
   simp [hp']
 
 /-- No tuple in a lifted prehistory has a fresh agent as its place. -/
-private lemma no_fresh_tuples {P P' : Set A} (h : P ⊆ P')
+lemma no_fresh_tuples {P P' : Set A} (h : P ⊆ P')
     {Event : Type} (p' : ↥P') (hp' : p'.val ∉ P)
     (H : PreHistory ↥P Event)
     (t : World ↥P' Event) (ht : t ∈ liftPreHistory h H)
@@ -68,7 +68,7 @@ private lemma no_fresh_tuples {P P' : Set A} (h : P ⊆ P')
 /-! ## §2. happensBeforeEq in lifted histories -/
 
 /-- Every `⪯`-predecessor of a lifted history is itself a lift. -/
-private lemma happensBeforeEq_lift {P P' : Set A} (h : P ⊆ P')
+lemma happensBeforeEq_lift {P P' : Set A} (h : P ⊆ P')
     {H' : PreHistory ↥P' (Signature.EventType S)}
     {H_orig : PreHistory ↥P (Signature.EventType S)}
     (hHBE : H' ⪯ liftPreHistory h H_orig) :
@@ -151,7 +151,7 @@ Combining these gives the theory preservation theorem. -/
 
 /-- At a fresh agent, `event E` is always False: the event conjunction
 requires history membership, but fresh agents have no tuples. -/
-private lemma event_false_at_fresh {P P' : Set A} (h : P ⊆ P')
+lemma event_false_at_fresh {P P' : Set A} (h : P ⊆ P')
     [Nonempty ↥P] [Nonempty ↥P']
     (F : LearnerFamily (Signature.Value S) A)
     (M_P : Model S ↥P)
@@ -168,7 +168,7 @@ private lemma event_false_at_fresh {P P' : Set A} (h : P ⊆ P')
   exact absurd (congrArg (fun w => w.1.val) hsEq ▸ s.1.property) hp'
 
 /-- At a fresh agent, `predicate0 sym` is always False. -/
-private lemma predicate_false_at_fresh {P P' : Set A} (h : P ⊆ P')
+lemma predicate_false_at_fresh {P P' : Set A} (h : P ⊆ P')
     [Nonempty ↥P] [Nonempty ↥P']
     (F : LearnerFamily (Signature.Value S) A)
     (M_P : Model S ↥P)
@@ -184,7 +184,7 @@ private lemma predicate_false_at_fresh {P P' : Set A} (h : P ⊆ P')
 
 /-- Helper: any formula of the form `∀ v, event_guard(v) → body(v)` is
 True at fresh agents, since the event guard is False. -/
-private lemma forall_event_imp_at_fresh {P P' : Set A} (h : P ⊆ P')
+lemma forall_event_imp_at_fresh {P P' : Set A} (h : P ⊆ P')
     [Nonempty ↥P] [Nonempty ↥P']
     (F : LearnerFamily (Signature.Value S) A)
     (M_P : Model S ↥P)
@@ -228,7 +228,7 @@ vacuously True. -/
 
 /-- Generic helper: any `∀ v, imp guard(v) body(v)` is True at fresh
 agents when the guard requires an event or predicate. -/
-private lemma imp_false_at_fresh
+lemma imp_false_at_fresh
     {P P' : Set A} (h : P ⊆ P') [Nonempty ↥P] [Nonempty ↥P']
     (F : LearnerFamily (Signature.Value S) A) (M_P : Model S ↥P)
     (p' : ↥P') (hp' : p'.val ∉ P)
@@ -316,26 +316,51 @@ theorem thyHBB1_theory_preservation
     · -- knowledgeDiamondEventually: sorry (arbitrary ψ)
       sorry
   -- 7 protocol axioms: liftable (by catalog) + fresh discharge.
-  -- Each fresh discharge is conceptually the same (event/pred guard False
-  -- at fresh agents) but the Sat unfolding varies per axiom.
-  all_goals {
-    subst_vars
-    apply allWorldValid_lift h F M_P hLearner
-    -- liftability: from the catalog
-    first
-    | exact LiftableFragment.echoBackwardAxiom_isLiftable _ _
-    | exact LiftableFragment.voteBackwardAxiom_isLiftable _ _ _
-    | exact LiftableFragment.deliverBackwardAxiom_isLiftable _ _
-    | exact LiftableFragment.echoNonEquivAxiom_isLiftable _
-    | exact LiftableFragment.echoForwardAxiom_isLiftable _ _ _
-    | exact LiftableFragment.voteForwardAxiom_isLiftable _ _ _ _
-    | exact LiftableFragment.deliverForwardAxiom_isLiftable _ _ _
-    -- original validity
-    all_goals first
-    | exact hValid (by simp [ThyHBB1])
-    -- fresh agent discharge (sorry — conceptually trivial, pred/event False)
-    | intro p' hp' evt H _; sorry
-  }
+  -- Backward + nonequiv: antecedent is event(...)  → False at fresh
+  -- Forward: antecedent is (pred ∧ ...) → pred False at fresh via double-negation
+  -- Backward + nonequiv: event guard False at fresh (event_false_at_fresh)
+  · subst hEchoB; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.echoBackwardAxiom_isLiftable _ _) (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [echoBackwardAxiom, Sat]; intro v hE
+        exact absurd hE (event_false_at_fresh h F M_P p' hp' evt H _))
+  · subst hVoteB; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.voteBackwardAxiom_isLiftable _ _ _) (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [voteBackwardAxiom, Sat]; intro _ _ hE
+        exact absurd hE (event_false_at_fresh h F M_P p' hp' evt H _))
+  · subst hDeliverB; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.deliverBackwardAxiom_isLiftable _ _) (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [deliverBackwardAxiom, Sat]; intro _ _ _ hE
+        exact absurd hE (event_false_at_fresh h F M_P p' hp' evt H _))
+  · subst hNE; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.echoNonEquivAxiom_isLiftable _) (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [echoNonEquivAxiom, Sat]; intro _ _ hE
+        exact absurd hE (event_false_at_fresh h F M_P p' hp' evt H _))
+  · subst hEchoF; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.echoForwardAxiom_isLiftable _ _ _)
+      (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [echoForwardAxiom, Sat, Formula.and, Formula.not]
+        intro v hConj; exfalso; apply hConj
+        exact fun hP => absurd hP (predicate_false_at_fresh h F M_P p' hp' evt H liveSymb))
+  · subst hVoteF; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.voteForwardAxiom_isLiftable _ _ _ _)
+      (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [voteForwardAxiom, Sat]; intro _ _ _
+        simp only [Formula.and, Formula.not, Sat]
+        intro hConj; exfalso; apply hConj
+        exact fun hP => absurd hP (predicate_false_at_fresh h F M_P p' hp' evt H liveSymb))
+  · subst hDeliverF; exact allWorldValid_lift h F M_P hLearner
+      (LiftableFragment.deliverForwardAxiom_isLiftable _ _ _)
+      (hValid (by simp [ThyHBB1]))
+      (fun p' hp' evt H _ => by
+        simp only [deliverForwardAxiom, Sat, Formula.and, Formula.not]
+        intro _ _ _ hConj; exfalso; apply hConj
+        exact fun hP => absurd hP (predicate_false_at_fresh h F M_P p' hp' evt H liveSymb))
 
 /-! ## §9. Knowledge axiom schemes — open gap
 
