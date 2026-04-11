@@ -260,10 +260,37 @@ private theorem allWorldValid_liveActive
     (hValidA : AllWorldValid M_P (liveActiveAxiom liveSymb)) :
     AllWorldValid (LiftPreservation.canonicalLift h F M_P)
       (liveActiveAxiom liveSymb) := by
-  -- liveActive uses □[] (boxEmpty) which is outside the syntactic liftable
-  -- fragment. The semantic proof works (fresh: pred False, lifted: transfer)
-  -- but requires navigating the Sat unfolding for boxEmpty + atEnd.
-  sorry
+  intro t ht
+  simp only [LiftPreservation.canonicalLift_history_val] at ht
+  obtain ⟨H, hH, hHeq⟩ := happensBeforeEq_lift h ht
+  rcases t with ⟨p', evt, _⟩; subst hHeq
+  simp only [liveActiveAxiom]
+  rw [Sat.atEnd, Sat.boxEmpty]
+  simp only [World.place, World.event, World.time,
+             LiftPreservation.canonicalLift_history_val]
+  intro q'
+  -- Goal: (pred ⇒ ↓⊤) at (q', †, M'.history.val)
+  by_cases hq : q'.val ∈ P
+  · -- Lifted agent: transfer from original
+    let q : ↥P := ⟨q'.val, hq⟩
+    have hOrig := hValidA (PreHistory.happensBeforeEq_refl M_P.history.val)
+      (t := (q, †, M_P.history.val))
+    simp only [liveActiveAxiom] at hOrig
+    rw [Sat.atEnd, Sat.boxEmpty] at hOrig
+    simp only [World.place, World.event, World.time] at hOrig
+    have hOrigQ := hOrig q
+    have hqEq : q' = liftAgent h q := Subtype.ext rfl
+    -- Unfold Sat for both hOrigQ and goal consistently
+    simp only [Sat, Formula.predicate0, Formula.top, World.place, World.time] at hOrigQ ⊢
+    intro hPred
+    -- Transfer pred: rewrite q' to liftAgent h q, then use predInterp coherence
+    rw [hqEq, LiftPreservation.canonicalLift_predInterp_at_lifted] at hPred
+    obtain ⟨s, hsMem, hsPlace, _⟩ := hOrigQ hPred
+    exact ⟨liftWorld h s, mem_liftPreHistory_of_mem h hsMem,
+           by simp [liftWorld, hsPlace, hqEq], id⟩
+  · -- Fresh agent: pred is False
+    simp only [Sat]; intro hPred; exfalso
+    exact predicate_false_at_fresh h F M_P q' hq † M_P.history.val liveSymb hPred
 
 /-- The main theorem: ThyHBB1 theory validity is preserved by canonical
 coalescent lifting. -/
