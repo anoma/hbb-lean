@@ -353,7 +353,20 @@ theorem thyHBB1_theory_preservation
       intro _hAnt hPred
       -- If p' is fresh, pred is False → contradiction
       by_cases hp : p'.val ∈ P
-      · -- Lifted agent: conservative extension gap for arbitrary ψ
+      · -- Lifted agent: monotonicity reduces antecedent, then bridge gap
+        -- _hAnt : ⤒(♢↓[ls](pred ∧ ψ)) at M', hPred : pred at M'
+        -- Goal : ↕(♢↓[ls] ψ) at M'
+        -- Step 1: monotonicity — drop pred from (pred ∧ ψ) to get ♢↓[ls] ψ at end-of-time
+        let M' := LiftPreservation.canonicalLift h F M_P
+        have hMono : ⟪(p', †, M'.history.val)⟫ ⊨[M'] ♢ᶠ↓[ls] ψ :=
+          Sat.diamond_of_imp (M := M') (w := ⟨p', †, M'.history.val⟩) ls
+            (fun q hPastAnd => Sat.past_of_imp (M := M')
+              (w := ⟨q, †, M'.history.val⟩)
+              (h := fun t _ _ hAnd => Sat.and_right M' t hAnd) hPastAnd)
+            _hAnt
+        -- Step 2: bridge atEnd(♢↓[ls] ψ) to sometime(♢↓[ls] ψ) = atEnd(past(♢↓[ls] ψ))
+        -- This requires finding a past tuple of p' whose sub-history
+        -- contains the antecedent's past-tuple witnesses. See §9 note.
         sorry
       · -- Fresh agent: pred is False
         exfalso
@@ -367,7 +380,15 @@ theorem thyHBB1_theory_preservation
       simp only [knowledgeDiamondEventuallyAxiom, Sat]
       intro _hAnt hPred
       by_cases hp : p'.val ∈ P
-      · sorry
+      · -- Lifted agent: same monotonicity argument as knowledgeDiamond
+        let M' := LiftPreservation.canonicalLift h F M_P
+        have hMono : ⟪(p', †, M'.history.val)⟫ ⊨[M'] □ᶠ↓[ls] ψ :=
+          Sat.box_of_imp (M := M') (w := ⟨p', †, M'.history.val⟩) ls
+            (fun q hPastAnd => Sat.past_of_imp (M := M')
+              (w := ⟨q, †, M'.history.val⟩)
+              (h := fun t _ _ hAnd => Sat.and_right M' t hAnd) hPastAnd)
+            _hAnt
+        sorry
       · exfalso
         exact predicate_false_at_fresh h F M_P p' hp evt H liveSymb hPred
   -- 7 protocol axioms: liftable (by catalog) + fresh discharge.
@@ -417,22 +438,42 @@ theorem thyHBB1_theory_preservation
         intro _ _ _ hConj; exfalso; apply hConj
         exact fun hP => absurd hP (predicate_false_at_fresh h F M_P p' hp' evt H liveSymb))
 
-/-! ## §9. Knowledge axiom schemes — open gap
+/-! ## §9. Knowledge axiom schemes — remaining gap
 
 The knowledge axiom schemes `knowledgeDiamondAxiom ls ψ` and
 `knowledgeDiamondEventuallyAxiom ls ψ` are quantified over arbitrary
-formulas `ψ`. For specific liftable `ψ` they are in the liftable
-fragment, but for arbitrary `ψ` they are not.
+formulas `ψ`. The fresh-agent case is discharged (pred guard is False).
 
-The fresh-agent case is trivially discharged (pred guard is False).
-The lifted-agent case requires showing that the temporal modalities
-(⤒, ↕, ♢↓, □↓) commute with lifting for arbitrary formula bodies —
-a conservative-extension argument that goes beyond the syntactic
-liftable fragment.
+For the lifted-agent case, the proof applies **monotonicity** within M'
+to reduce the antecedent: since `pred ∧ ψ → ψ` (by `Sat.and_right`), and
+`past` and `diamond`/`box` are monotone (`Sat.past_of_imp`, `Sat.diamond_of_imp`,
+`Sat.box_of_imp`), we obtain `⤒(♢↓[ls] ψ)` (resp. `⤒(□↓[ls] ψ)`) from the
+antecedent — all within M'.
 
-This is a meaningful open problem: it connects to whether the canonical
-lift is a *conservative extension* of the original model for the full
-HBB modal language, not just the liftable fragment. -/
+### The remaining gap
+
+The consequent `↕(♢↓[ls] ψ) = atEnd(past(♢↓[ls] ψ))` requires finding a
+**past tuple** of the current agent whose sub-history still supports the
+diamond/box check. We have `♢↓[ls] ψ` at end-of-time (full history) but
+need it at some sub-history `t.time` for a tuple `t` of the current agent.
+
+This is exactly the knowledge-persistence property: quorum knowledge at
+end-of-time implies quorum knowledge at some past moment of the agent.
+A general conservative extension (`Sat` equivalence between M_P and M'
+for all formulas) is **false** — `diamond [] φ` quantifies over `P' ⊃ P`,
+so `¬(diamond [] (¬pred))` is True in M_P but False in M' when fresh agents
+have `pred = False`. Both forward and backward transfer fail for arbitrary
+formulas.
+
+### Possible approaches
+
+1. **Model-level argument**: Show that the `liftPreHistory` structure
+   preserves the temporal ordering that the knowledge axiom exploits —
+   specifically that if `diamond ls (past ψ)` holds at the full lifted
+   history, it holds at some lifted sub-history of the current agent.
+2. **Axiom specialisation**: Use M_P's knowledge axiom with `ψ' = ⊤` to
+   extract a suitable sub-history `s₀.time`, then show the M' antecedent's
+   `past ψ` witnesses lie in `liftPreHistory h s₀.time`. -/
 
 end TheoryPreservation
 end Grassroots
