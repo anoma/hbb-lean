@@ -42,7 +42,7 @@ If a value is delivered to learner l₁' and:
 - The safe condition holds for learner l
 - All of learner l₂'s quorum members are live
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
-lemma livenessTwoThyHBB1
+theorem livenessTwoThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -672,7 +672,7 @@ lemma livenessTwoThyHBB1
 /-- Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
-lemma livenessTwoAtPastDownThyHBB1
+theorem livenessTwoAtPastDownThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -755,7 +755,7 @@ lemma livenessTwoAtPastDownThyHBB1
 
 /-- Corollary: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
-lemma livenessTwoAtPastThyHBB1
+theorem livenessTwoAtPastThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}

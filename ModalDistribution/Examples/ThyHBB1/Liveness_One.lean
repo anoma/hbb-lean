@@ -43,7 +43,7 @@ a proposal for value v, then v will eventually be delivered. This establishes
 that proposals from live participants will eventually propagate to delivery.
 
 See also: `livenessTwoThyHBB1`, `livenessOneAtPastDownThyHBB1`. -/
-lemma livenessOneThyHBB1
+theorem livenessOneThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -435,7 +435,7 @@ lemma livenessOneThyHBB1
 /-- Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
-lemma livenessOneAtPastDownThyHBB1
+theorem livenessOneAtPastDownThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -521,7 +521,7 @@ lemma livenessOneAtPastDownThyHBB1
 
 /-- Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
-lemma livenessOneAtPastThyHBB1
+theorem livenessOneAtPastThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}

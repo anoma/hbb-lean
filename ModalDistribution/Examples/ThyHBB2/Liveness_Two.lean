@@ -37,7 +37,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 /-- If reporting learners `l₁'` and `l₂'`
 have intersecting quorums and learner `l₂'` is live, then any delivery for
 `(l₁', \thel)` propagates to `(l₂', \thel)`. -/
-lemma livenessTwoThyHBB2
+theorem livenessTwoThyHBB2
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -237,7 +237,7 @@ lemma livenessTwoThyHBB2
 /-- A delivery for `(l₁', ℓ)`
 forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)` was
 delivered. -/
-lemma livenessTwoAtPastDownThyHBB2
+theorem livenessTwoAtPastDownThyHBB2
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -321,7 +321,7 @@ lemma livenessTwoAtPastDownThyHBB2
 
 /-- A delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
-lemma livenessTwoAtPastThyHBB2
+theorem livenessTwoAtPastThyHBB2
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}

@@ -51,7 +51,7 @@ variable {l : Signature.Value S} {ls' : List S.Value}
 @[simp] def head (F : QuorumFamily M (l :: ls')) : Set P :=
   F.choose ⟨0, Nat.succ_pos _⟩
 
-lemma head_mem (F : QuorumFamily M (l :: ls')) :
+theorem head_mem (F : QuorumFamily M (l :: ls')) :
     head (M := M) F ∈ (M.learner l).quorums := by
   classical
   simpa [head, List.get_cons_zero] using F.valid ⟨0, Nat.succ_pos _⟩
@@ -64,7 +64,7 @@ lemma head_mem (F : QuorumFamily M (l :: ls')) :
     classical
     simpa [List.get_cons_succ] using F.valid (Fin.succ i)
 
-@[simp] lemma tail_choose
+@[simp] theorem tail_choose
     (F : QuorumFamily M (l :: ls')) (i : Fin ls'.length) :
     (tail (M := M) F).choose i = F.choose (Fin.succ i) := rfl
 
@@ -81,17 +81,17 @@ lemma head_mem (F : QuorumFamily M (l :: ls')) :
     · intro j
       simpa [List.get_cons_succ] using F.valid j
 
-@[simp] lemma cons_choose_zero
+@[simp] theorem cons_choose_zero
     {O : Set P} {hO : O ∈ (M.learner l).quorums}
     {F : QuorumFamily M ls'} :
     (cons (M := M) (l := l) O hO F).choose ⟨0, Nat.succ_pos _⟩ = O := rfl
 
-@[simp] lemma cons_choose_succ
+@[simp] theorem cons_choose_succ
     {O : Set P} {hO : O ∈ (M.learner l).quorums}
     {F : QuorumFamily M ls'} (i : Fin ls'.length) :
     (cons (M := M) (l := l) O hO F).choose (Fin.succ i) = F.choose i := rfl
 
-@[simp] lemma forall_choose_cons
+@[simp] theorem forall_choose_cons
     (F : QuorumFamily M (l :: ls')) (p : P) :
     (∀ i, p ∈ F.choose i) ↔
       p ∈ F.head ∧ ∀ i, p ∈ (F.tail).choose i := by
@@ -109,7 +109,7 @@ lemma head_mem (F : QuorumFamily M (l :: ls')) :
     · intro j
       simpa [QuorumFamily.tail_choose] using hpTail j
 
-@[simp] lemma cons_forall_choose
+@[simp] theorem cons_forall_choose
     {O : Set P} {hO : O ∈ (M.learner l).quorums}
     {F : QuorumFamily M ls'} {p : P} :
     (∀ i, p ∈ (cons (M := M) (l := l) O hO F).choose i) ↔
@@ -127,7 +127,7 @@ lemma head_mem (F : QuorumFamily M (l :: ls')) :
     · intro j
       simpa [cons_choose_succ] using hpAll j
 
-lemma exists_forall_choose_cons
+theorem exists_forall_choose_cons
     (F : QuorumFamily M (l :: ls'))
     {acc : Set P} {R : P → Prop} :
     (∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧ R p) ↔
@@ -143,7 +143,7 @@ lemma exists_forall_choose_cons
     exact (QuorumFamily.forall_choose_cons (F := F) (p := p)).2
       ⟨hpHead, hpTail⟩
 
-lemma exists_forall_choose_cons_cons
+theorem exists_forall_choose_cons_cons
     {O : Set P} {hO : O ∈ (M.learner l).quorums}
     {F : QuorumFamily M ls'}
     {acc : Set P} {R : P → Prop} :
@@ -164,7 +164,7 @@ lemma exists_forall_choose_cons_cons
         (M := M) (l := l) (ls' := ls') (F := F)
         (O := O) (p := p) (hO := hO)).2 ⟨hpO, hpTail⟩
 
-@[simp] lemma exists_forall_choose_cons_inter
+@[simp] theorem exists_forall_choose_cons_inter
     (F : QuorumFamily M (l :: ls'))
     {acc : Set P} {R : P → Prop} :
     (∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧ R p) ↔

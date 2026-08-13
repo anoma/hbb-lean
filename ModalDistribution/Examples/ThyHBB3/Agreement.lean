@@ -39,7 +39,7 @@ to agree on the value. This uses the correlation predicate to establish quorum
 intersection, which is the key innovation of HBB3.
 
 See also: `agreementThyHBB1`, `agreementThyHBB2`, `agreementFromDeliveriesThyHBB3`. -/
-lemma agreementThyHBB3
+theorem agreementThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
@@ -299,7 +299,7 @@ lemma agreementThyHBB3
 
 /-- If deliveries for learners
 `l₁` and `l₂` both occur, their values coincide. -/
-lemma agreementThyHBB3_of_deliveries
+theorem agreementThyHBB3_of_deliveries
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}

@@ -40,7 +40,7 @@ noncomputable def isHereditarilyTransitive : PreHistory P Event → Prop :=
       ∀ h' : PreHistory P Event,
         ∀ h_before : h' ≺− h, rec h' h_before)
 
-lemma isHereditarilyTransitive_unfold (h : PreHistory P Event) :
+theorem isHereditarilyTransitive_unfold (h : PreHistory P Event) :
   isHereditarilyTransitive h ↔
     isTransitive h ∧
     ∀ h' : PreHistory P Event,
@@ -55,14 +55,14 @@ lemma isHereditarilyTransitive_unfold (h : PreHistory P Event) :
           ∀ h_before : h' ≺− h, rec h' h_before)
       h)
 
-lemma isHereditarilyTransitive.trans
+theorem isHereditarilyTransitive.trans
     {h : PreHistory P Event} :
     isHereditarilyTransitive h → isTransitive h := by
   intro h_hered
   have := (isHereditarilyTransitive_unfold h).mp h_hered
   exact this.1
 
-lemma isHereditarilyTransitive.desc
+theorem isHereditarilyTransitive.desc
     {h h' : PreHistory P Event}
     (hh : isHereditarilyTransitive h)
     (hb : h' ≺− h) :
@@ -98,7 +98,7 @@ def toPreHistory (h : History P Event) : PreHistory P Event := h.val
 theorem transitive (h : History P Event) : isTransitive h.val :=
   (isHereditarilyTransitive.trans (P := P) (Event := Event) h.hered)
 
-lemma subset_of_happensBefore {H : History P Event} {h' : PreHistory P Event}
+theorem subset_of_happensBefore {H : History P Event} {h' : PreHistory P Event}
     (h_before : h' ≺− H.val) : h' ⊆ H.val :=
   History.transitive H h' h_before
 
@@ -107,7 +107,7 @@ theorem hereditarilyTransitive (h : History P Event) : isHereditarilyTransitive 
   h.hered
 
 /-- Helper: data carried by the hereditary property for a specific predecessor. -/
-lemma predecessor_data {H : History P Event} {h' : PreHistory P Event}
+theorem predecessor_data {H : History P Event} {h' : PreHistory P Event}
     (h_before : h' ≺− H.val) :
     isTransitive h' ∧ isHereditarilyTransitive h' := by
   have h_hered := History.hereditarilyTransitive H
@@ -122,7 +122,7 @@ def predecessorHistory {H : History P Event} {h' : PreHistory P Event}
     hered := (predecessor_data (H := H) (h_before := h_before)).2 }
 
 /-- A predecessor packaged as a history embeds into the ambient history. -/
-lemma predecessorHistory_subset {H : History P Event}
+theorem predecessorHistory_subset {H : History P Event}
     {h' : PreHistory P Event} (h_before : h' ≺− H.val) :
     (predecessorHistory (H := H) h_before).val ⊆ H.val := by
   exact History.subset_of_happensBefore (H := H) h_before
@@ -164,7 +164,7 @@ namespace History
 def historyAt (H : History P Event) (p : P) : Set (World P Event) :=
   PreHistory.historyAt (P := P) (Event := Event) H.val p
 
-@[simp] lemma mem_historyAt {H : History P Event} {p : P} {t : World P Event} :
+@[simp] theorem mem_historyAt {H : History P Event} {p : P} {t : World P Event} :
     t ∈ historyAt (P := P) (Event := Event) H p ↔
       t ∈ H.val ∧ World.place t = p := Iff.rfl
 
@@ -194,18 +194,18 @@ def TransitiveSubset (h1 h2 : PreHistory P Event) : Prop :=
 infixl:50 " ⊆trn " => TransitiveSubset
 
 /-- Any transitive subset inclusion exposes an underlying subset inclusion. -/
-lemma transitiveSubset_subset {h₁ h₂ : PreHistory P Event}
+theorem transitiveSubset_subset {h₁ h₂ : PreHistory P Event}
     (h : h₁ ⊆trn h₂) : h₁ ⊆ h₂ := by
   exact h.1
 
 /-- Transitive subsets carry hereditary transitivity along the inclusion. -/
-lemma transitiveSubset_hereditarily {h₁ h₂ : PreHistory P Event}
+theorem transitiveSubset_hereditarily {h₁ h₂ : PreHistory P Event}
     (h : h₁ ⊆trn h₂) :
     isHereditarilyTransitive h₁ := by
   exact h.2
 
 /-- A hereditarily transitive substructure yields a transitive-subset inclusion. -/
-lemma transitiveSubset_of_subset
+theorem transitiveSubset_of_subset
     {h₁ h₂ : PreHistory P Event}
     (hsubset : h₁ ⊆ h₂)
     (hhered : isHereditarilyTransitive (P := P) (Event := Event) h₁) :
@@ -436,13 +436,13 @@ theorem localView_subset_history (H : History P Event)
   hsub.1
 
 /-- Predecessors of a history are contained in the ambient history. -/
-lemma happensBefore_subset {H : History P Event} {h' : PreHistory P Event} :
+theorem happensBefore_subset {H : History P Event} {h' : PreHistory P Event} :
     (h' ≺− H.val) → h' ⊆ H.val := by
   intro h_before
   exact (History.transitive H) h' h_before
 
 /-- Order-theoretic monotonicity for histories: `h₁ ≤ h₂` yields `h₁.val ⊆ h₂.val`. -/
-lemma subset_of_le {h₁ h₂ : History P Event} :
+theorem subset_of_le {h₁ h₂ : History P Event} :
     (h₁ ≤ h₂) → h₁.val ⊆ h₂.val := by
   intro h_le
   have h := (PreHistory.happensBeforeEq_iff (h₁.val) (h₂.val)).mp h_le
@@ -454,14 +454,14 @@ lemma subset_of_le {h₁ h₂ : History P Event} :
       simpa [h_eq] using ht
 
 /-- The transitive-subset relation is reflexive on histories. -/
-lemma transitiveSubset_refl (H : History P Event) :
+theorem transitiveSubset_refl (H : History P Event) :
     H.val ⊆trn H.val := by
   constructor
   · exact PreHistory.subset_refl H.val
   · exact History.hereditarilyTransitive H
 
 /-- The transitive-subset relation composes transitively. -/
-lemma transitiveSubset_trans {h₁ h₂ h₃ : PreHistory P Event} :
+theorem transitiveSubset_trans {h₁ h₂ h₃ : PreHistory P Event} :
     (h₁ ⊆trn h₂) → (h₂ ⊆trn h₃) → h₁ ⊆trn h₃ := by
   intro h₁₂ h₂₃
   rcases h₁₂ with ⟨h₁₂_subset, h₁₂_trn⟩
@@ -471,7 +471,7 @@ lemma transitiveSubset_trans {h₁ h₂ h₃ : PreHistory P Event} :
   · exact h₁₂_trn
 
 /-- Sequentiality expressed using the `historyAt` projection. -/
-lemma isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
+theorem isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
     isSequential (P := P) (Event := Event) p h ↔
       ∀ {t t' : World P Event},
         t ∈ PreHistory.historyAt (P := P) (Event := Event) h p →
@@ -492,7 +492,7 @@ lemma isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
 /-! ## Helper lemmas for sequentiality preservation -/
 
 /-- If an event is in H, its time component happens before H -/
-lemma happensBefore_of_mem {H : PreHistory P Event} {e : World P Event}
+theorem happensBefore_of_mem {H : PreHistory P Event} {e : World P Event}
   (he : e ∈ H) :
   e.2.2 ≺− H :=
   ⟨e.1, e.2.1, he⟩
@@ -511,7 +511,7 @@ theorem sequentiality_monotone (p : P) (h h' : History P Event) :
   exact seq_h ht₁_in ht₂_in hp₁ hp₂
 
 /-- Sequentiality is inherited by immediate predecessors of a history. -/
-lemma sequentiality_of_predecessor {p : P} {H : History P Event}
+theorem sequentiality_of_predecessor {p : P} {H : History P Event}
     {h' : PreHistory P Event}
     (h_before : h' ≺− H.val)
     (hseq : isSequential (P := P) (Event := Event) p H.val) :

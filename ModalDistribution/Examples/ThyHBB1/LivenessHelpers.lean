@@ -35,7 +35,7 @@ variable {value : Signature.Value S}
 /-- Helper: instantiate the `Deliver!` forward rule at a concrete history
 point.  This lifts a local vote quorum and liveness witness into an eventual
 delivery fact at the same world. -/
-lemma deliver_from_vote_box_local
+theorem deliver_from_vote_box_local
     (hDeliverAx : AllWorldValid M
       (deliverForwardAxiom liveSymb voteSymb deliverSymb))
     {t : World P (Signature.EventType S)}
@@ -93,7 +93,7 @@ lemma deliver_from_vote_box_local
 /-- From end-of-time knowledge of a vote quorum, deduce eventual
 delivery.  This packages the `Deliver!` instantiation together with the
 time-shifting arguments based on `ThyLive`. -/
-lemma deliver_from_vote_box
+theorem deliver_from_vote_box
     (hThyLive : M ⊨ᵀ ThyLive liveSymb)
     (hDeliverAx : AllWorldValid M
       (deliverForwardAxiom liveSymb voteSymb deliverSymb))

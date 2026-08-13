@@ -26,7 +26,7 @@ variable {S : Signature} {P : Type}
 variable {w w' : World P (Signature.EventType S)}
 
 /-- Package a local event as a predecessor history together with the witnessing world. -/
-lemma local_event_predecessor
+theorem local_event_predecessor
     {H : History P (Signature.EventType S)}
     {t : World P (Signature.EventType S)}
     (ht : t ∈ H.val) :
@@ -43,7 +43,7 @@ lemma local_event_predecessor
   · simpa [History.predecessorHistory, World.place, World.event, World.time]
 
 /-- Accessible predecessors preserve in-place accessibility slices. -/
-lemma accessible_subset_of_accessible
+theorem accessible_subset_of_accessible
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
     (hwTime : Hw.val = w.time) :
@@ -75,7 +75,7 @@ variable [Nonempty P]
 variable {M : Model S P}
 
 /-- Sequentiality persists along same-place accessibility. -/
-lemma seq_monotone_of_subset
+theorem seq_monotone_of_subset
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
     (hwTime : Hw.val = w.time)
@@ -103,7 +103,7 @@ lemma seq_monotone_of_subset
   exact (Sat.seq (M := M) (w := w')).2 hSeqTime'
 
 /-- Sequentiality implies `⇓ᶠ`-sequentiality. -/
-lemma seq_monotone_allItp
+theorem seq_monotone_allItp
     (Hw : History P (Signature.EventType S))
     (hwTime : Hw.val = w.time)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
@@ -177,7 +177,7 @@ theorem two_quorums_exists
       (w := w) (φ := ((ψ ∧ᶠ φ) ∧ᶠ φ')) hWitness
 
 /-- Sequentiality coincides with linear ordering of the in-place slice. -/
-lemma seq_iff_linear_accessible
+theorem seq_iff_linear_accessible
     : (⟪w⟫ ⊨[M]Formula.seq) ↔
       (∀ {w₁ w₂ : World P (Signature.EventType S)},
         w₁ ≪⁻ w → w₂ ≪⁻ w →
@@ -219,7 +219,7 @@ variable {evt evt' : Signature.EventType S}
 variable {φ ψ φ' : Formula S}
 
 /-- Sequentiality depends only on the place and timeline of the current world. -/
-lemma seq_localView_of_seq
+theorem seq_localView_of_seq
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (hPlace : w'.place = w.place)
     (hTime : w'.time = w.time) :
@@ -234,7 +234,7 @@ lemma seq_localView_of_seq
 
 /-- Sequentiality is invariant under changing the event component
 while keeping place and time fixed. -/
-lemma seq_localView_iff
+theorem seq_localView_iff
     (hPlace : w'.place = w.place)
     (hTime : w'.time = w.time) :
     (⟪w⟫ ⊨[M]Formula.seq) ↔ (⟪w'⟫ ⊨[M]Formula.seq) := by
@@ -247,7 +247,7 @@ lemma seq_localView_iff
     exact seq_localView_of_seq (w := w') (w' := w) hSeq' hPlace' hTime'
 
 /-- Sequentiality propagates to any predecessor prehistory of the world’s timeline. -/
-lemma seq_preHistory_of_happensBefore
+theorem seq_preHistory_of_happensBefore
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (hBefore : h' ≺− H.val) :
@@ -264,7 +264,7 @@ lemma seq_preHistory_of_happensBefore
   exact hSeq_time ht₁_time ht₂_time hp₁ hp₂
 
 /-- Sequentiality linearly orders any two prefixes for the same participant. -/
-lemma seq_compare_prefixes
+theorem seq_compare_prefixes
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht₁ : t₁ ∈ H.val) (ht₂ : t₂ ∈ H.val)
@@ -293,7 +293,7 @@ lemma seq_compare_prefixes
                           (P := P) (Event := Signature.EventType S) hEqTime)
 
 /-- Worlds in a sequential participant's local history are comparable. -/
-lemma seq_compare_historyAt
+theorem seq_compare_historyAt
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht : t ∈ History.historyAt H w.place)
@@ -309,7 +309,7 @@ lemma seq_compare_historyAt
   exact hSeq_time ht_mem_time ht'_mem_time ht_place ht'_place
 
 /-- Sequential participants totally order their local event times. -/
-lemma seq_compare_event_times
+theorem seq_compare_event_times
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht₁ : t₁ ∈ H.val) (ht₂ : t₂ ∈ H.val)
@@ -336,7 +336,7 @@ lemma seq_compare_event_times
                           (P := P) (Event := Signature.EventType S) hEqTime)
 
 /-- Sequentiality descends to the local time component of any owned event. -/
-lemma seq_event_time_sequential
+theorem seq_event_time_sequential
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (ht : t ∈ H.val) :
@@ -354,7 +354,7 @@ lemma seq_event_time_sequential
             w.place (World.time t))
 
 /-- Sequential participants with a local event witness satisfy `↓ᶠ`-sequentiality. -/
-lemma seq_down_of_seq
+theorem seq_down_of_seq
     (hTime : w.time = H.val)
     (hLocal : ∃ t ∈ H.val, t.place = w.place)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
@@ -382,7 +382,7 @@ lemma seq_down_of_seq
       ⟨t, ht_time, ht_place, hSeq_t⟩
 
 /-- Sequentiality is idempotent under `⇓ᶠ`. -/
-lemma seq_allPast_idem
+theorem seq_allPast_idem
     (hTime : w.time = H.val)
     (hPast : ⟪w⟫ ⊨[M]⇓ᶠFormula.seq) :
     ⟪w⟫ ⊨[M] ⇓ᶠ ⇓ᶠ Formula.seq := by
@@ -408,7 +408,7 @@ lemma seq_allPast_idem
       (h := hImp) hPast
 
 /-- From a past witness for a sequential participant we obtain the empty past diamond. -/
-lemma sat_diamondPast_empty
+theorem sat_diamondPast_empty
     (hWitness : ∃ t ∈ H.val, t.place = w.place ∧ ⟪t⟫ ⊨[M]φ) :
     ⟪⟨w.place, w.event, H.val⟩⟫ ⊨[M] ♢ᶠ↓[[]] φ := by
   classical
@@ -428,7 +428,7 @@ lemma sat_diamondPast_empty
   simpa [Formula.diamondPast] using hDiamond
 
 /-- Sequential participants exhibit a past witness for `Formula.seq`. -/
-lemma seq_diamond_empty_of_seq
+theorem seq_diamond_empty_of_seq
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (hLocal : ∃ t ∈ H.val, t.place = w.place) :
@@ -451,7 +451,7 @@ lemma seq_diamond_empty_of_seq
   simpa [Formula.diamondPast] using hDiamond
 
 /-- A witness for the empty diamond yields a sequential participant on the same timeline. -/
-lemma seq_exists_local_witness
+theorem seq_exists_local_witness
     (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]♢ᶠ[[]]Formula.seq) :
     ∃ q, ⟪⟨q, w.event, H.val⟩⟫ ⊨[M]Formula.seq := by
@@ -476,7 +476,7 @@ lemma seq_exists_local_witness
     using hSeq_goal
 
 /-- Lift satisfaction of the left disjunct to the disjunction. -/
-lemma sat_or_of_left
+theorem sat_or_of_left
     {φ ψ : Formula S}
     (hφ : ⟪w⟫ ⊨[M]φ) :
     ⟪w⟫ ⊨[M] (φ ∨ᶠ ψ) := by
@@ -485,7 +485,7 @@ lemma sat_or_of_left
   exact (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).2 hDisj
 
 /-- Lift satisfaction of the right disjunct to the disjunction. -/
-lemma sat_or_of_right
+theorem sat_or_of_right
     {φ ψ : Formula S}
     (hψ : ⟪w⟫ ⊨[M]ψ) :
     ⟪w⟫ ⊨[M] (φ ∨ᶠ ψ) := by
@@ -494,7 +494,7 @@ lemma sat_or_of_right
   exact (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).2 hDisj
 
 /-- Resolve a satisfied disjunction into propositional alternatives. -/
-lemma sat_or_cases
+theorem sat_or_cases
     {φ ψ : Formula S}
     (h : ⟪w⟫ ⊨[M](φ ∨ᶠ ψ)) :
     (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := by
@@ -502,7 +502,7 @@ lemma sat_or_cases
   simpa using (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).1 h
 
 /-- Extract the left conjunct from a satisfied conjunction. -/
-lemma sat_and_left
+theorem sat_and_left
     {φ ψ : Formula S}
     (h : ⟪w⟫ ⊨[M](φ ∧ᶠ ψ)) :
     ⟪w⟫ ⊨[M] φ := by
@@ -511,7 +511,7 @@ lemma sat_and_left
   exact this.1
 
 /-- Extract the right conjunct from a satisfied conjunction. -/
-lemma sat_and_right
+theorem sat_and_right
     {φ ψ : Formula S}
     (h : ⟪w⟫ ⊨[M](φ ∧ᶠ ψ)) :
     ⟪w⟫ ⊨[M] ψ := by
@@ -521,7 +521,7 @@ lemma sat_and_right
 
 /-- Satisfaction of the empty past diamond depends only on the underlying timeline,
 not the distinguished participant. -/
-lemma sat_diamondPast_empty_participant_iff
+theorem sat_diamondPast_empty_participant_iff
     {w₁ w₂ : World P (Signature.EventType S)}
     (hTime : w₁.time = w₂.time) (φ : Formula S) :
     (⟪w₁⟫ ⊨[M] ♢ᶠ↓[[]] φ) ↔ (⟪w₂⟫ ⊨[M] ♢ᶠ↓[[]] φ) := by

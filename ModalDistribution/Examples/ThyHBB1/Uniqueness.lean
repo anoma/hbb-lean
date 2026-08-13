@@ -66,7 +66,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {w w' t : World P (Signature.EventType S)}
 
 /-- Auxiliary: uniqueness at a fixed world yields the guarded at-most-one witness. -/
-lemma uniquePropose_guard_at_history
+theorem uniquePropose_guard_at_history
     {w : World P (Signature.EventType S)}
     (hUnique :
       ⟪w⟫ ⊨[M]∃!ᶠ v ↦
@@ -87,7 +87,7 @@ lemma uniquePropose_guard_at_history
   exact hAnd.1
 
 /-- Auxiliary: uniqueness of proposals forces observed proposal diamonds to agree. -/
-lemma uniquePropose_equal_values
+theorem uniquePropose_equal_values
     {w : World P (Signature.EventType S)}
     (value altValue : S.Value)
     (hAtMost : ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -125,7 +125,7 @@ lemma uniquePropose_equal_values
   simpa [Sat] using hEq
 
 /-- Helper: specialise the existence implication at a concrete event. -/
-lemma uniquePropose_eventually_echo_core_exists_at_event
+theorem uniquePropose_eventually_echo_core_exists_at_event
     (value : S.Value)
     (hExists :
       □W⊨[M](predicate0 liveSymb ∧ᶠ
@@ -157,7 +157,7 @@ lemma uniquePropose_eventually_echo_core_exists_at_event
     World.place, World.event, World.time] using hLocal
 
 /-- Helper: specialise the equality implication at a concrete event. -/
-lemma uniquePropose_eventually_echo_core_eq_at_event
+theorem uniquePropose_eventually_echo_core_eq_at_event
     (value : S.Value)
     (hEq :
       □W⊨[M](predicate0 liveSymb ∧ᶠ
@@ -192,7 +192,7 @@ lemma uniquePropose_eventually_echo_core_eq_at_event
     World.place, World.event, World.time] using hLocal
 
 /-- Helper: extract a concrete witness from a modal existential at a fixed world. -/
-lemma uniquePropose_exists_witness_at_world
+theorem uniquePropose_exists_witness_at_world
     {w : World P (Signature.EventType S)}
     (hExists :
       ⟪w⟫ ⊨[M]∃ᶠ (fun witness =>
@@ -225,7 +225,7 @@ lemma uniquePropose_exists_witness_at_world
         hNeg hForallNot
 
 /-- Helper: equality implication yields value equality under a witness substitution. -/
-lemma uniquePropose_witness_eq_at_world
+theorem uniquePropose_witness_eq_at_world
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hEq :
@@ -251,7 +251,7 @@ lemma uniquePropose_witness_eq_at_world
   simpa [Sat] using hEqFormula
 
 /-- Helper: transport sometime from a witness value back to the target value. -/
-lemma uniquePropose_sometime_rewrite_value
+theorem uniquePropose_sometime_rewrite_value
     {w : World P (Signature.EventType S)}
     (value witness : Signature.Value S)
     (hEcho :
@@ -263,7 +263,7 @@ lemma uniquePropose_sometime_rewrite_value
   subst hVal
   simpa using hEcho
 
-lemma uniquePropose_eventually_echo_core_world
+theorem uniquePropose_eventually_echo_core_world
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hExists :
@@ -315,7 +315,7 @@ lemma uniquePropose_eventually_echo_core_world
       hEchoWitness hWitnessEq
 
 /-- Auxiliary: combining existence and equality of echoes yields the target echo. -/
-lemma uniquePropose_eventually_echo_core
+theorem uniquePropose_eventually_echo_core
     (value : S.Value)
     (hExists :
       □W⊨[M](predicate0 liveSymb ∧ᶠ
@@ -357,7 +357,7 @@ lemma uniquePropose_eventually_echo_core
       (hEq := hEq_loc)
 
 /-- Helper: a unique proposal at the global history restricts to predecessors. -/
-lemma uniquePropose_guard_at_predecessor
+theorem uniquePropose_guard_at_predecessor
     {t : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val)
     (hUnique : ⊨[M]∃!ᶠ v ↦
@@ -397,7 +397,7 @@ lemma uniquePropose_guard_at_predecessor
   simpa [wPred, wTop] using hGuard_pred
 
 /-- Auxiliary: the antecedent ensures echoes exist for some witness value. -/
-lemma uniquePropose_exists_witness_echo
+theorem uniquePropose_exists_witness_echo
     (value : S.Value)
     (hHBB1 :
       M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
@@ -431,7 +431,7 @@ lemma uniquePropose_exists_witness_echo
     using hSpecialised
 
 /-- Witness an explicit echo event from a sometime echo. -/
-lemma sometime_echo_event_exists
+theorem sometime_echo_event_exists
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hEcho :
@@ -449,7 +449,7 @@ lemma sometime_echo_event_exists
   simpa [Formula.ofEvent] using hEvent
 
 /-- Convert an observed echo event into a proposal diamond via the backward axiom. -/
-lemma echo_backward_diamond_from_sometime
+theorem echo_backward_diamond_from_sometime
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hEchoBack :
@@ -494,7 +494,7 @@ lemma echo_backward_diamond_from_sometime
     (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1
     hImp' hEvent'
 
-lemma boxEcho_to_propose_diamond
+theorem boxEcho_to_propose_diamond
     {w : World P (Signature.EventType S)}
     (hSubset : w.time ⊆trn M.history.val)
     (hEchoBack :
@@ -632,7 +632,7 @@ lemma boxEcho_to_propose_diamond
 
 /-- One-sided application of `EchoNE`: an echo followed by a past echo must
 share the same value. -/
-lemma echoNonEquiv_diamond
+theorem echoNonEquiv_diamond
     (hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb))
     {w : World P (Signature.EventType S)}
     (hSubset : w.time ⊆trn M.history.val)
@@ -711,7 +711,7 @@ lemma echoNonEquiv_diamond
       (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
   simpa [Sat] using hEq
 
-lemma uniquePropose_guard_specialise_value
+theorem uniquePropose_guard_specialise_value
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hGuard :
@@ -735,7 +735,7 @@ lemma uniquePropose_guard_specialise_value
   exact hForValue
 
 /-- Main result: a sequential quorum guard suffices to ensure safety. -/
-lemma seq_guard_implies_safe
+theorem seq_guard_implies_safe
     {w : World P (Signature.EventType S)}
     (l : Signature.Value S)
     (hSeqGuard :
@@ -752,7 +752,7 @@ lemma seq_guard_implies_safe
 
 /-- Main result: safety holds precisely when uniqueness or the sequential
 guard is satisfied. -/
-lemma safe_implies_unique_or_seq_guard
+theorem safe_implies_unique_or_seq_guard
     {w : World P (Signature.EventType S)}
     (l : Signature.Value S)
     (hSafe : ⟪w⟫ ⊨[M]safeFormula proposeSymb l) :
@@ -780,7 +780,7 @@ lemma safe_implies_unique_or_seq_guard
       hSafe
   exact hOr
 
-lemma uniquePropose_guard_implies_eq
+theorem uniquePropose_guard_implies_eq
     {w : World P (Signature.EventType S)}
     (value witness : S.Value)
     (hGuard :
@@ -825,7 +825,7 @@ lemma uniquePropose_guard_implies_eq
       (v₁ := value) (v₂ := witness)).1 hEqVal
   simpa [Sat] using hEq.symm
 
-lemma uniquePropose_witness_eq_value
+theorem uniquePropose_witness_eq_value
     (value : S.Value)
     (hHBB1 :
       M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -947,7 +947,7 @@ lemma uniquePropose_witness_eq_value
   simp [Sat, hEq_val]
 
 /-- a unique proposal guarantees eventual echoes. -/
-lemma uniquePropose_eventually_echo
+theorem uniquePropose_eventually_echo
     (value : S.Value)
     (hHBB1 :
       M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -985,7 +985,7 @@ lemma uniquePropose_eventually_echo
             ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
 
 /-- at most one proposal implies every learner is safe. -/
-lemma atMostOnePropose_safe
+theorem atMostOnePropose_safe
     (l : Signature.Value S) :
     ⊨[M](∃≤ᶠ1 v ↦
         (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ

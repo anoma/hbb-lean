@@ -36,7 +36,7 @@ namespace Deliver
 
 /-- Instantiates the `Deliver?` axiom to extract the vote quorum that backs a
 delivery observed at end of time. -/
-lemma box_witness
+theorem box_witness
     {p : P}
     {reporting learner value : Signature.Value S}
     (hDeliverAx : AllWorldValid M (deliverBackwardAxiom voteSymb deliverSymb))
@@ -105,7 +105,7 @@ lemma box_witness
   exact ⟨tDeliver, ht_mem_history, hSubset_history, hBox_at_event⟩
 
 /-- Lift a vote quorum box witnesses from a past world to end of time. -/
-lemma lift_box_to_end
+theorem lift_box_to_end
     {t : World P (Signature.EventType S)}
     {reporting learner value : Signature.Value S}
     (hSubset : t.time ⊆ M.history.val)
@@ -138,7 +138,7 @@ lemma lift_box_to_end
 end Deliver
 
 /-- Singleton past boxes yield a witness for the corresponding past diamond. -/
-lemma boxPast_singleton_to_diamond_nil
+theorem boxPast_singleton_to_diamond_nil
     {w : World P (Signature.EventType S)}
     {learner : Signature.Value S}
     {φ : Formula S}
@@ -164,7 +164,7 @@ lemma boxPast_singleton_to_diamond_nil
     using hDiamond
 
 /-- Lift a learner-guarded past box along the end-of-time inclusion. -/
-lemma lift_boxPast_to_end
+theorem lift_boxPast_to_end
     {t : World P (Signature.EventType S)}
     {learner : Signature.Value S}
     {φ : Formula S}
@@ -196,7 +196,7 @@ lemma lift_boxPast_to_end
 namespace Vote
 
 /-- Instantiates `Vote?` to extract echo quorums supporting a vote. -/
-lemma box_witness
+theorem box_witness
     {p : P}
     {learner value : Signature.Value S}
     (hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb))
@@ -258,7 +258,7 @@ lemma box_witness
 
 /-- At end of time, a vote for `(learner, value)` requires an `learner`-quorum of
 echoes backing it. -/
-lemma to_echo_box_end
+theorem to_echo_box_end
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {learner value : Signature.Value S}
@@ -290,7 +290,7 @@ namespace Unique
 
 /-- Auxiliary: the antecedent ensures echoes exist for some witness value under
 `ThyHBB2`. -/
-lemma exists_witness_echo
+theorem exists_witness_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
@@ -320,7 +320,7 @@ lemma exists_witness_echo
 
 /-- Auxiliary: uniqueness of proposals forces witnesses produced by
 `Echo!` to agree with the target value. -/
-lemma witness_eq_value
+theorem witness_eq_value
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -440,7 +440,7 @@ lemma witness_eq_value
 
 /-- Unique proposals in `ThyHBB2` guarantee eventual echoes for the chosen
 value. -/
-lemma eventually_echo
+theorem eventually_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -489,7 +489,7 @@ end Unique
 
 /-- Quorum intersections transport a vote witnessed at `l₁'` to some live
 member of the `l₂'` quorum. -/
-lemma live_vote_transfer
+theorem live_vote_transfer
     (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' learner : Signature.Value S}
     {value : Signature.Value S}
@@ -588,7 +588,7 @@ lemma live_vote_transfer
 
 /-- Refine a `live ∧ vote` diamond (at end of time) by exposing the supporting
 echo quorum via `Vote?`. -/
-lemma vote_live_to_echo_diamond
+theorem vote_live_to_echo_diamond
     (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {learner value : Signature.Value S}
     {p : P}
@@ -681,7 +681,7 @@ lemma vote_live_to_echo_diamond
     using hDiamond'
 
 /-- Lift a local `live ∧ φ` diamond to a `l₂'`-guarded box using `ThyLive`. -/
-lemma live_echo_box_from_diamond
+theorem live_echo_box_from_diamond
     (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₂' learner : Signature.Value S}
     {value : Signature.Value S}
@@ -728,7 +728,7 @@ lemma live_echo_box_from_diamond
     using hBoxLocal
 
 /-- Turn a live guarded echo box into a live guarded vote box via `Vote!`. -/
-lemma live_vote_box_from_echo
+theorem live_vote_box_from_echo
     (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₂' learner : Signature.Value S} {value : Signature.Value S} {p : P}
     (hEchoBox :
@@ -847,7 +847,7 @@ lemma live_vote_box_from_echo
           ⟨hLiveFuture, hVoteNow⟩⟩
 
 /-- Forget the left conjunct in an empty-guard past diamond. -/
-lemma diamondPast_nil_strip_left
+theorem diamondPast_nil_strip_left
     {w : World P (Signature.EventType S)}
     {φ ψ : Formula S}
     (h : ⟪w⟫ ⊨[M]♢ᶠ↓[[]](φ ∧ᶠ ψ)) :
@@ -886,7 +886,7 @@ lemma diamondPast_nil_strip_left
 
 /-- At end of time, a delivery for `(reporting, learner, value)` requires a
 vote quorum witnessed at `reporting`. -/
-lemma deliver_to_vote_box_end
+theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
       ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}

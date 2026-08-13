@@ -54,19 +54,19 @@ namespace Semifilter
 variable {P : Type u}
 
 /-/ Intersections are symmetric. -/
-lemma intersects_comm {O O' : Set P} :
+theorem intersects_comm {O O' : Set P} :
     (O ≬ O') ↔ (O' ≬ O) := by
   classical
   simp [Semifilter.intersects, inter_comm]
 
 /-- A quorum intersects itself exactly when it is nonempty. -/
-lemma intersects_self_iff_nonempty {O : Set P} :
+theorem intersects_self_iff_nonempty {O : Set P} :
     (O ≬ O) ↔ O.Nonempty := by
   classical
   simp [Semifilter.intersects, inter_self]
 
 /-- Intersections distribute over a shared witness. -/
-lemma intersects_of_mem {p : P} {O O' : Set P}
+theorem intersects_of_mem {p : P} {O O' : Set P}
     (hpO : p ∈ O) (hpO' : p ∈ O') :
     O ≬ O' := by
   classical
@@ -74,7 +74,7 @@ lemma intersects_of_mem {p : P} {O O' : Set P}
   exact ⟨hpO, hpO'⟩
 
 /-- Intersections are witnessed precisely by shared members. -/
-lemma intersects_iff {O O' : Set P} :
+theorem intersects_iff {O O' : Set P} :
     (O ≬ O') ↔ ∃ p, p ∈ O ∧ p ∈ O' := by
   classical
   constructor
@@ -85,7 +85,7 @@ lemma intersects_iff {O O' : Set P} :
     exact intersects_of_mem (P := P) hpO hpO'
 
 /-- Intersecting quorums are themselves nonempty on the left. -/
-lemma intersects_nonempty_left {O O' : Set P} :
+theorem intersects_nonempty_left {O O' : Set P} :
     O ≬ O' → O.Nonempty :=
   by
     intro hint
@@ -93,7 +93,7 @@ lemma intersects_nonempty_left {O O' : Set P} :
     exact ⟨p, hp.1⟩
 
 /-- Intersecting quorums are themselves nonempty on the right. -/
-lemma intersects_nonempty_right {O O' : Set P} :
+theorem intersects_nonempty_right {O O' : Set P} :
     O ≬ O' → O'.Nonempty :=
   by
     intro hint
@@ -101,7 +101,7 @@ lemma intersects_nonempty_right {O O' : Set P} :
     exact ⟨p, hp.2⟩
 
 /-- Intersections are monotone in their arguments. -/
-lemma intersects_mono {O O' O₁ O₂ : Set P}
+theorem intersects_mono {O O' O₁ O₂ : Set P}
     (h₁ : O ⊆ O₁) (h₂ : O' ⊆ O₂) (hint : O ≬ O') :
     O₁ ≬ O₂ := by
   classical
@@ -110,37 +110,37 @@ lemma intersects_mono {O O' O₁ O₂ : Set P}
   exact ⟨h₁ hp.1, h₂ hp.2⟩
 
 /-- Property 2: Supersets of quorums remain quorums. -/
-lemma upwards_of_subset {L : Semifilter P} {O O' : Set P}
+theorem upwards_of_subset {L : Semifilter P} {O O' : Set P}
     (hO : O ∈ L.quorums) (h_subset : O ⊆ O') :
     O' ∈ L.quorums := by
   exact L.upwardClosed hO h_subset
 
 /-- Property 3: Quorums intersect pairwise. -/
-lemma intersects_mem {L : Semifilter P} {O O' : Set P}
+theorem intersects_mem {L : Semifilter P} {O O' : Set P}
     (hO : O ∈ L.quorums) (hO' : O' ∈ L.quorums) :
     O ≬ O' := by
   exact L.pairwiseInter hO hO'
 
 /-- Property 1: Every quorum in a semifilter is nonempty. -/
-lemma quorum_nonempty {L : Semifilter P} {O : Set P}
+theorem quorum_nonempty {L : Semifilter P} {O : Set P}
     (hO : O ∈ L.quorums) :
     O.Nonempty := by
   have := L.pairwiseInter hO hO
   simpa [intersects_self_iff_nonempty] using this
 
 /-- Any two quorums in a semifilter intersect. -/
-lemma intersects_of_mem_quorums {L : Semifilter P} {O₁ O₂ : Set P}
+theorem intersects_of_mem_quorums {L : Semifilter P} {O₁ O₂ : Set P}
     (h₁ : O₁ ∈ L.quorums) (h₂ : O₂ ∈ L.quorums) :
     O₁ ≬ O₂ :=
   L.pairwiseInter h₁ h₂
 
 /-- Property 1: A semifilter contains at least one quorum. -/
-lemma exists_quorum (L : Semifilter P) :
+theorem exists_quorum (L : Semifilter P) :
     ∃ O : Set P, O ∈ L.quorums := by
   exact L.nonempty
 
 /-- If a property cannot be witnessed on every quorum, some quorum forces its negation. -/
-lemma exists_quorum_forall_not {L : Semifilter P} {R : P → Prop}
+theorem exists_quorum_forall_not {L : Semifilter P} {R : P → Prop}
     (h : ¬ ∀ O ∈ L.quorums, ∃ q ∈ O, R q) :
     ∃ O ∈ L.quorums, ∀ q ∈ O, ¬ R q := by
   classical
@@ -157,7 +157,7 @@ lemma exists_quorum_forall_not {L : Semifilter P} {R : P → Prop}
   simpa using this
 
 /-- Intersections grow monotonically with supersets on the left. -/
-lemma intersects_mono_left {O O' O'' : Set P}
+theorem intersects_mono_left {O O' O'' : Set P}
     (h_subset : O ⊆ O') (hint : O ≬ O'') :
     O' ≬ O'' := by
   classical
@@ -167,7 +167,7 @@ lemma intersects_mono_left {O O' O'' : Set P}
   simpa using hmono
 
 /-- Intersections grow monotonically with supersets on the right. -/
-lemma intersects_mono_right {O O' O'' : Set P}
+theorem intersects_mono_right {O O' O'' : Set P}
     (h_subset : O' ⊆ O'') (hint : O ≬ O') :
     O ≬ O'' := by
   classical
@@ -177,19 +177,19 @@ lemma intersects_mono_right {O O' O'' : Set P}
   simpa using hmono
 
 /-- The empty set fails to intersect any quorum. -/
-@[simp] lemma intersects_empty_left {O : Set P} :
+@[simp] theorem intersects_empty_left {O : Set P} :
     (∅ : Set P) ≬ O ↔ False := by
   classical
   simp [Semifilter.intersects]
 
 /-- Any quorum fails to intersect the empty set. -/
-@[simp] lemma intersects_empty_right {O : Set P} :
+@[simp] theorem intersects_empty_right {O : Set P} :
     O ≬ (∅ : Set P) ↔ False := by
   classical
   simp [Semifilter.intersects]
 
 /-- Extensionality: semifilters coincide when they have the same quorums. -/
-@[ext] lemma ext {L₁ L₂ : Semifilter P}
+@[ext] theorem ext {L₁ L₂ : Semifilter P}
     (h : ∀ O : Set P, O ∈ L₁.quorums ↔ O ∈ L₂.quorums) :
     L₁ = L₂ := by
   classical

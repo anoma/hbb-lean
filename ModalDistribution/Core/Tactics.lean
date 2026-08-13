@@ -4,22 +4,13 @@ import Lean.Elab.Tactic.ElabTerm
 /-!
 # Syntax extensions
 
-This file provides the `lemma` command and the `set` tactic used throughout the
-development.
+This file provides the `set` tactic used throughout the development.
+
+The `set` implementation is adapted from Mathlib (`Mathlib/Tactic/Set.lean`),
+Copyright (c) 2022 Ian Benway, released under Apache 2.0.
 -/
 
 open Lean
-
-/-- `lemma` means the same as `theorem`. It is used to denote "less important" theorems. -/
-syntax (name := lemma) declModifiers
-  group("lemma " declId ppIndent(declSig) declVal) : command
-
-/-- Implementation of the `lemma` command, by macro expansion to `theorem`. -/
-@[macro «lemma»] def expandLemma : Macro := fun stx =>
-  let stx := stx.modifyArg 1 fun stx =>
-    let stx := stx.modifyArg 0 (mkAtomFrom · "theorem" (canonical := true))
-    stx.setKind ``Parser.Command.theorem
-  pure <| stx.setKind ``Parser.Command.declaration
 
 namespace ModalDistribution.Tactic
 

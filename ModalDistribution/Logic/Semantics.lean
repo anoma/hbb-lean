@@ -56,7 +56,7 @@ private axiom depth_uniform [Nonempty S.Value] (body : S.Value → Formula S) (v
   depth (body v₁) = depth (body v₂)
 
 /-- Depth of forall body is bounded (follows from depth_uniform). -/
-private lemma depth_forall_body (body : S.Value → Formula S) (v : S.Value) :
+private theorem depth_forall_body (body : S.Value → Formula S) (v : S.Value) :
   depth (body v) < depth (.forall body) := by
   open Classical in
   simp only [depth]
@@ -118,41 +118,41 @@ variable {H : PreHistory P (S.EventType)}
 open Set
 
 /-- Satisfaction of `⊥` is never witnessed. -/
-@[simp] lemma bot (M : Model S P) (w : World P S.EventType) :
+@[simp] theorem bot (M : Model S P) (w : World P S.EventType) :
     (⟪w⟫ ⊨[M]⊥ᶠ) ↔ False := by
   simp [Sat]
 
 /-- Satisfaction of a negated formula coincides with refuting any witness of the body. -/
-@[simp] lemma not (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
+@[simp] theorem not (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
     (⟪w⟫ ⊨[M]¬ᶠ φ) ↔ ¬(⟪w⟫ ⊨[M]φ) := by
   simp [Formula.not, Sat]
 
 /-- Satisfaction of `¬φ` witnesses the failure of `φ`. -/
-lemma not_elim (M : Model S P) {w : World P S.EventType} {φ : Formula S} :
+theorem not_elim (M : Model S P) {w : World P S.EventType} {φ : Formula S} :
     (⟪w⟫ ⊨[M]¬ᶠ φ) → (⟪w⟫ ⊨[M]φ) → False := by
   classical
   intro hnot hφ
   exact ((not (M := M) (w := w) (φ := φ)).1 hnot) hφ
 
 /-- To establish `¬φ`, it suffices to refute any hypothetical proof of `φ`. -/
-lemma not_intro (M : Model S P) {w : World P S.EventType} {φ : Formula S}
+theorem not_intro (M : Model S P) {w : World P S.EventType} {φ : Formula S}
     (h : (⟪w⟫ ⊨[M]φ) → False) :
     ⟪w⟫ ⊨[M]¬ᶠ φ := by
   classical
   exact (not (M := M) (w := w) (φ := φ)).2 h
 
 /-- The negation of truth is never satisfiable. -/
-lemma not_top (M : Model S P) (w : World P S.EventType) :
+theorem not_top (M : Model S P) (w : World P S.EventType) :
     (⟪w⟫ ⊨[M]¬ᶠ ⊤ᶠ) ↔ False := by
   simp [Formula.not, Formula.top, Sat]
 
 /-- The negation of `⊥` always holds. -/
-lemma not_bot (M : Model S P) (w : World P S.EventType) :
+theorem not_bot (M : Model S P) (w : World P S.EventType) :
     ⟪w⟫ ⊨[M]¬ᶠ ⊥ᶠ := by
   simp [Formula.not, Sat]
 
 /-- A universally quantified formula can be specialised to any value (HOAS version). -/
-lemma forall_elim
+theorem forall_elim
     (M : Model S P) (w : World P S.EventType)
     (body : S.Value → Formula S)
     (v : Signature.Value S)
@@ -164,7 +164,7 @@ lemma forall_elim
 /--
 Version of `Sat.forall_elim` with implicit parameters, useful for chaining.
 -/
-lemma forall_elim'
+theorem forall_elim'
     {M : Model S P} {w : World P S.EventType}
     {body : S.Value → Formula S}
     (v : Signature.Value S)
@@ -173,7 +173,7 @@ lemma forall_elim'
   forall_elim (M := M) (w := w) (body := body) (v := v) h
 
 /-- To show a universal formula holds, show the body holds for every value (HOAS version). -/
-lemma forall_intro
+theorem forall_intro
     (M : Model S P) (w : World P S.EventType)
     (body : S.Value → Formula S)
     (h : ∀ v : Signature.Value S, ⟪w⟫ ⊨[M]body v) :
@@ -182,7 +182,7 @@ lemma forall_intro
   exact h
 
 /-- Existentials are satisfied as soon as a witness value realises the body (HOAS version). -/
-lemma exists_intro
+theorem exists_intro
     (M : Model S P) (w : World P S.EventType)
     (body : S.Value → Formula S)
     (h : ∃ v : Signature.Value S, ⟪w⟫ ⊨[M]body v) :
@@ -225,14 +225,14 @@ lemma exists_intro
 
 /-- Diamonds over empty quorum lists are characterised by any participant
 carrying the witness. -/
-lemma diamond_nil
+theorem diamond_nil
     (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
     (⟪w⟫ ⊨[M]♢ᶠ[[]] φ) ↔
       ∃ p' : P, ⟪⟨p', †, w.time⟩⟫ ⊨[M]φ :=
   Sat_diamond_nil (M := M) (w := w) (φ := φ)
 
 /-- The derived `♢ᶠ[]` notation shares the same semantics. -/
-lemma diamondEmpty
+theorem diamondEmpty
     (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
     (⟪w⟫ ⊨[M]♢ᶠ[] φ) ↔
       ∃ p' : P, ⟪⟨p', †, w.time⟩⟫ ⊨[M]φ := by
@@ -241,7 +241,7 @@ lemma diamondEmpty
 
 /-- Satisfaction of an empty box coincides with the guard holding for every
 participant at the same time slice. -/
-lemma boxEmpty
+theorem boxEmpty
     (M : Model S P)
     (w : World P S.EventType) (φ : Formula S) :
     (⟪w⟫ ⊨[M]□ᶠ[] φ) ↔ ∀ q : P, ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ := by
@@ -276,7 +276,7 @@ lemma boxEmpty
     simpa [Formula.boxEmpty, Formula.box] using hNotDiamond
 
 /-- Events witnessed at a history automatically satisfy sometime. -/
-lemma event_sometime
+theorem event_sometime
     (M : Model S P)
     (p : P)
     (H : PreHistory P (S.EventType))
@@ -300,13 +300,13 @@ lemma event_sometime
   simpa [Formula.sometime, Sat] using hPast
 
 /-- The truth constant is satisfied if and only if `True`. -/
-@[simp] lemma top_iff (M : Model S P) (w : World P S.EventType) :
+@[simp] theorem top_iff (M : Model S P) (w : World P S.EventType) :
     (⟪w⟫ ⊨[M]⊤ᶠ) ↔ True := by
   classical
   simp [Formula.top, Sat]
 
 /-- Satisfaction of implication agrees with pointwise entailment. -/
-@[simp] lemma imp
+@[simp] theorem imp
     (M : Model S P) (w : World P S.EventType)
     (φ ψ : Formula S) :
     (⟪w⟫ ⊨[M]φ ⇒ᶠ ψ) ↔
@@ -314,7 +314,7 @@ lemma event_sometime
   simp [Sat]
 
 /-- Conjoin two satisfiable formulas at the same point. -/
-lemma and_intro
+theorem and_intro
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S}
@@ -334,7 +334,7 @@ lemma and_intro
       (φ := ψ)) hNotψ hψ
 
 /-- Satisfaction of `⤒ φ` coincides with evaluating `φ` at the full history. -/
-@[simp] lemma atEnd
+@[simp] theorem atEnd
     (M : Model S P)
     (w : World P S.EventType)
     (φ : Formula S) :
@@ -343,21 +343,21 @@ lemma and_intro
   simp [Sat]
 
 /-- Satisfaction of `seq` is equivalent to sequentiality at the given history. -/
-@[simp] lemma seq
+@[simp] theorem seq
     (M : Model S P) (w : World P S.EventType) :
     (⟪w⟫ ⊨[M]Formula.seq (S := S)) ↔
       isSequential (Event := S.EventType) (World.place w) (World.time w) := by
   simp [Sat]
 
 /-- Satisfaction of the truth constant holds unconditionally. -/
-lemma top
+theorem top
     (M : Model S P)
     (w : World P S.EventType) :
     ⟪w⟫ ⊨[M]⊤ᶠ := by
   simp [Formula.top, Sat]
 
 /-- Satisfaction is monotone with respect to implication hypotheses. -/
-lemma imp_elim
+theorem imp_elim
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S} :
@@ -369,7 +369,7 @@ lemma imp_elim
   exact h hφ
 
 /-- Introduction form of implication in the satisfaction relation. -/
-lemma imp_intro
+theorem imp_intro
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S}
@@ -379,7 +379,7 @@ lemma imp_intro
     (φ := φ) (ψ := ψ)).2 h
 
 /-- Eliminate the left conjunct from `φ ∧ ψ`. -/
-lemma and_left
+theorem and_left
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S} :
@@ -400,7 +400,7 @@ lemma and_left
   exact hFalse
 
 /-- Eliminate the right conjunct from `φ ∧ ψ`. -/
-lemma and_right
+theorem and_right
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S} :
@@ -423,7 +423,7 @@ lemma and_right
   exact hFalse
 
 /-- Eliminate the forward implication from an `iff`. -/
-lemma iff_mp
+theorem iff_mp
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S}
@@ -442,7 +442,7 @@ lemma iff_mp
       (φ := φ) (ψ := ψ) hImp hφ
 
 /-- Eliminate the backward implication from an `iff`. -/
-lemma iff_mpr
+theorem iff_mpr
     (M : Model S P)
     (w : World P S.EventType)
     {φ ψ : Formula S}
@@ -461,18 +461,18 @@ lemma iff_mpr
       (φ := ψ) (ψ := φ) hImp hψ
 
 /-- Equality atoms are satisfied when the underlying values coincide. -/
-@[simp] lemma eq (M : Model S P) (w : World P S.EventType)
+@[simp] theorem eq (M : Model S P) (w : World P S.EventType)
     (v₁ v₂ : S.Value) :
     (⟪w⟫ ⊨[M]v₁ ≃ᶠ v₂) ↔ v₁ = v₂ := by
   simp [Sat]
 
 /-- Equality atoms witness reflexivity. -/
-lemma eq_refl (M : Model S P) (w : World P S.EventType) (v : S.Value) :
+theorem eq_refl (M : Model S P) (w : World P S.EventType) (v : S.Value) :
     ⟪w⟫ ⊨[M](v ≃ᶠ v) := by
   simp [Sat]
 
 /-- Event clauses are witnessed by membership in the ambient history. -/
-lemma event_of_mem
+theorem event_of_mem
     (M : Model S P)
     (w : World P S.EventType)
     (evt : EventAtom S)
@@ -481,7 +481,7 @@ lemma event_of_mem
   simpa [Sat]
 
 /-- Event atoms reduce to membership in the enclosing history. -/
-@[simp] lemma event
+@[simp] theorem event
     (M : Model S P)
     (w : World P S.EventType)
     (evt : EventAtom S) :
@@ -492,7 +492,7 @@ lemma event_of_mem
 /-! ### Simp lemmas for derived connectives -/
 
 /-- ofEvent satisfaction unfolds to event membership. -/
-@[simp] lemma ofEvent
+@[simp] theorem ofEvent
     (M : Model S P)
     (w : World P S.EventType)
     (E : S.EventType) :
@@ -510,7 +510,7 @@ lemma event_of_mem
       using h
 
 /-- Past modality satisfaction. -/
-lemma past
+theorem past
     (M : Model S P)
     (w : World P S.EventType)
     (φ : Formula S) :
@@ -521,7 +521,7 @@ lemma past
   simp [Sat]
 
 /-- Sometime (eventually in the future at end of time) unfolds. -/
-lemma sometime
+theorem sometime
     (M : Model S P)
     (w : World P S.EventType)
     (φ : Formula S) :
@@ -532,7 +532,7 @@ lemma sometime
   simp [Formula.sometime, Sat]
 
 /-- Box with past guard unfolds. -/
-lemma boxPast
+theorem boxPast
     (M : Model S P)
     (w : World P S.EventType)
     (ls : List S.Value)
@@ -542,7 +542,7 @@ lemma boxPast
   simp [Formula.boxPast]
 
 /-- Diamond with past guard unfolds. -/
-lemma diamondPast
+theorem diamondPast
     (M : Model S P)
     (w : World P S.EventType)
     (ls : List S.Value)
@@ -552,7 +552,7 @@ lemma diamondPast
   simp [Formula.diamondPast]
 
 /-- Conjunction satisfaction unfolds to both conjuncts. -/
-@[simp] lemma and
+@[simp] theorem and
     (M : Model S P)
     (w : World P S.EventType)
     (φ ψ : Formula S) :
@@ -566,7 +566,7 @@ lemma diamondPast
     exact and_intro (M := M) (w := w) hφψ.1 hφψ.2
 
 /-- Disjunction satisfaction unfolds to either disjunct. -/
-@[simp] lemma or
+@[simp] theorem or
     (M : Model S P)
     (w : World P S.EventType)
     (φ ψ : Formula S) :
@@ -582,7 +582,7 @@ lemma diamondPast
     · exact hψ
 
 /-- Universal quantification unfolds to satisfaction for all values. -/
-@[simp] lemma forall_sat
+@[simp] theorem forall_sat
     (M : Model S P)
     (w : World P S.EventType)
     (body : S.Value → Formula S) :
@@ -591,7 +591,7 @@ lemma diamondPast
   simp [Sat]
 
 /-- Existential quantification satisfaction unfolds to witness existence. -/
-@[simp] lemma exists_sat
+@[simp] theorem exists_sat
     (M : Model S P)
     (w : World P S.EventType)
     (body : S.Value → Formula S) :
@@ -605,7 +605,7 @@ lemma diamondPast
   · rintro ⟨v, hv⟩ h
     exact h v hv
 
-lemma check_of_imp {ts : List S.Value} {acc : Set P} {φ ψ : Formula S}
+theorem check_of_imp {ts : List S.Value} {acc : Set P} {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, H⟩⟫ ⊨[M]φ) → (⟪⟨q, †, H⟩⟫ ⊨[M]ψ)) :
     Sat.check M H φ ts acc → Sat.check M H ψ ts acc := by
   classical
@@ -621,7 +621,7 @@ lemma check_of_imp {ts : List S.Value} {acc : Set P} {φ ψ : Formula S}
       intro O hO
       exact ih (hCheck O hO)
 
-lemma diamond_of_imp
+theorem diamond_of_imp
     (ts : List S.Value) {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) → (⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ)) :
     (⟪w⟫ ⊨[M]♢ᶠ[ts] φ) → (⟪w⟫ ⊨[M]♢ᶠ[ts] ψ) := by
@@ -630,7 +630,7 @@ lemma diamond_of_imp
   simp [Sat] at hSat ⊢
   exact check_of_imp (M := M) (H := w.time) (ts := ts) (acc := Set.univ) h hSat
 
-lemma diamond_congr
+theorem diamond_congr
     (ts : List S.Value) {φ ψ : Formula S}
     (h : ∀ q,
         (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) ↔ (⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ)) :
@@ -647,7 +647,7 @@ lemma diamond_congr
       (ts := ts) (φ := ψ) (ψ := φ)
       (h := fun q => (h q).2) hSat
 
-lemma not_not_iff
+theorem not_not_iff
     {φ : Formula S} :
     (⟪w⟫ ⊨[M]¬ᶠ (¬ᶠ φ)) ↔
       (⟪w⟫ ⊨[M]φ) := by
@@ -661,7 +661,7 @@ lemma not_not_iff
     have : ¬¬ (⟪w⟫ ⊨[M]φ) := fun hn => hn h
     simpa [Formula.not, Sat] using this
 
-lemma not_of_imp
+theorem not_of_imp
     {φ ψ : Formula S}
     (h : (⟪w⟫ ⊨[M]φ) →
         (⟪w⟫ ⊨[M]ψ)) :
@@ -673,7 +673,7 @@ lemma not_of_imp
   intro hφ
   exact hNot (h hφ)
 
-lemma not_congr
+theorem not_congr
     {φ ψ : Formula S}
     (h : (⟪w⟫ ⊨[M]φ) ↔
            (⟪w⟫ ⊨[M]ψ)) :
@@ -688,7 +688,7 @@ lemma not_congr
     exact not_of_imp (M := M) (w := w)
       (φ := φ) (ψ := ψ) (h := fun hφ => (h.mp hφ)) hNot
 
-lemma atEnd_of_imp
+theorem atEnd_of_imp
     {φ ψ : Formula S}
     (h : (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]φ) →
         (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]ψ)) :
@@ -699,7 +699,7 @@ lemma atEnd_of_imp
   simpa [Formula.atEnd, Sat] using
     h (by simpa [Formula.atEnd, Sat] using hEnd)
 
-lemma atEnd_congr
+theorem atEnd_congr
     {φ ψ : Formula S}
     (h : (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]φ) ↔
         (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]ψ)) :
@@ -714,7 +714,7 @@ lemma atEnd_congr
     exact atEnd_of_imp (M := M) (w := w)
       (φ := ψ) (ψ := φ) (h := fun hψ => (h.mpr hψ)) hEnd
 
-lemma past_of_imp
+theorem past_of_imp
     {φ ψ : Formula S}
     (h : ∀ (t : World P S.EventType), t ∈ w.time → t.place = w.place →
         (⟪t⟫ ⊨[M]φ) → ⟪t⟫ ⊨[M]ψ) :
@@ -726,7 +726,7 @@ lemma past_of_imp
   exact (Sat.past (M := M) (w := w) (φ := ψ)).2 ⟨t, by simpa using ht, by simpa using hp, hψ⟩
 
 /-- A witness in the past establishes the past modality. -/
-lemma past_intro_of_prefix
+theorem past_intro_of_prefix
     {t : World P S.EventType}
     {φ : Formula S}
     (ht : t ∈ w.time)
@@ -740,7 +740,7 @@ lemma past_intro_of_prefix
   refine (Sat.past (M := M) (w := ⟨p, evt, H⟩) (φ := φ)).2 ?_
   exact ⟨t, ht', hp', hφ⟩
 
-lemma past_congr
+theorem past_congr
     {φ ψ : Formula S}
     (h : ∀ ⦃t : World P S.EventType⦄, t ∈ w.time → t.place = w.place →
         ((⟪t⟫ ⊨[M]φ) ↔ (⟪t⟫ ⊨[M]ψ))) :
@@ -769,7 +769,7 @@ lemma past_congr
       (h := fun t ht hp hψ => hImp ht hp hψ) hPast'
     simpa using hRes
 
-lemma sometime_of_imp
+theorem sometime_of_imp
     {φ ψ : Formula S}
     (h : ∀ {t : World P S.EventType},
         t ∈ M.history.val → t.place = w.place →
@@ -798,7 +798,7 @@ lemma sometime_of_imp
       (by simpa [Formula.sometime] using hSome)
   simpa [Formula.sometime] using hAtEnd
 
-lemma sometime_congr
+theorem sometime_congr
     {φ ψ : Formula S}
     (h : ∀ {t : World P S.EventType},
         t ∈ M.history.val → t.place = w.place →
@@ -815,7 +815,7 @@ lemma sometime_congr
       (φ := ψ) (ψ := φ)
       (h := fun {t} ht hp => (h ht hp).2) hSome
 
-lemma eventuallyPast_of_imp
+theorem eventuallyPast_of_imp
     {φ ψ : Formula S}
     (h : ∀ {t : World P S.EventType},
         t ∈ w.time → t.place = w.place →
@@ -840,7 +840,7 @@ lemma eventuallyPast_of_imp
     using hNotPast
       (by simpa [Formula.eventuallyPast] using hEv)
 
-lemma eventuallyPast_congr
+theorem eventuallyPast_congr
     {φ ψ : Formula S}
     (h : ∀ {t : World P S.EventType},
         t ∈ w.time → t.place = w.place →
@@ -857,7 +857,7 @@ lemma eventuallyPast_congr
       (φ := ψ) (ψ := φ)
       (h := fun {t} ht hp => (h ht hp).2) hEv
 
-lemma alwaysPast_of_imp
+theorem alwaysPast_of_imp
     {φ ψ : Formula S}
     (h : ∀ {t : World P S.EventType},
         t.place = w.place →
@@ -882,7 +882,7 @@ lemma alwaysPast_of_imp
     using hNotSome
       (by simpa [Formula.alwaysPast] using hAlways)
 
-lemma alwaysPast_congr
+theorem alwaysPast_congr
     {φ ψ : Formula S}
     (h : ∀ {t : World P S.EventType},
         t.place = w.place →
@@ -899,7 +899,7 @@ lemma alwaysPast_congr
       (φ := ψ) (ψ := φ)
       (h := fun {t} hp hψ => (h hp).2 hψ) hAlways
 
-lemma past_not_not_iff
+theorem past_not_not_iff
     {φ : Formula S} :
     (⟪w⟫ ⊨[M] ↓ᶠ (¬ᶠ (¬ᶠ φ))) ↔ (⟪w⟫ ⊨[M] ↓ᶠ φ) := by
   classical
@@ -908,7 +908,7 @@ lemma past_not_not_iff
     (fun {t} ht hp =>
       not_not_iff (M := M) (w := t) (φ := φ))
 
-lemma eventuallyPast_not_iff
+theorem eventuallyPast_not_iff
     {φ : Formula S} :
     (⟪w⟫ ⊨[M] ⇓ᶠ (¬ᶠ φ)) ↔ (⟪w⟫ ⊨[M] ¬ᶠ (↓ᶠ φ)) := by
   classical
@@ -918,7 +918,7 @@ lemma eventuallyPast_not_iff
   simpa [Formula.eventuallyPast, Formula.not]
     using hNot
 
-lemma box_of_imp
+theorem box_of_imp
     (ts : List S.Value) {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) → ⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ) :
     (⟪w⟫ ⊨[M]□ᶠ[ts] φ) →
@@ -947,7 +947,7 @@ lemma box_of_imp
   exact (Sat.not (M := M) (w := ⟨p, evt, H⟩)
       (φ := ♢ᶠ[ts] (¬ᶠ ψ))).2 hNoDiamondψ
 
-lemma box_congr
+theorem box_congr
     (ts : List S.Value) {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) ↔ (⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ)) :
     (⟪w⟫ ⊨[M]□ᶠ[ts] φ) ↔ (⟪w⟫ ⊨[M]□ᶠ[ts] ψ) := by
@@ -962,7 +962,7 @@ lemma box_congr
       (ts := ts) (φ := ψ) (ψ := φ)
       (h := fun q => (h q).2) hBox
 
-lemma diamond_eventuallyPast_not_iff
+theorem diamond_eventuallyPast_not_iff
     (ts : List S.Value) (φ : Formula S) :
     (⟪w⟫ ⊨[M] ♢ᶠ[ts] (⇓ᶠ (¬ᶠ φ))) ↔
       (⟪w⟫ ⊨[M] ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ))) := by
@@ -974,7 +974,7 @@ lemma diamond_eventuallyPast_not_iff
   simpa [Formula.eventuallyPast, Formula.not]
     using this
 
-lemma boxPast_not_diamondPast_not
+theorem boxPast_not_diamondPast_not
     (ts : List S.Value) (φ : Formula S) :
     (⟪w⟫ ⊨[M] □ᶠ↓[ts] φ) ↔
       (⟪w⟫ ⊨[M] ¬ᶠ (♢ᶠ⇓[ts] (¬ᶠ φ))) := by
@@ -1008,7 +1008,7 @@ lemma boxPast_not_diamondPast_not
     exact (Sat.not (M := M) (w := w)
       (φ := ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ)))).2 hNoDiamondPast
 
-lemma boxEventually_not_diamondPast_not
+theorem boxEventually_not_diamondPast_not
     (ts : List S.Value) (φ : Formula S) :
     (⟪w⟫ ⊨[M] □ᶠ⇓[ts] φ) ↔
       (⟪w⟫ ⊨[M] ¬ᶠ (♢ᶠ↓[ts] (¬ᶠ φ))) := by
@@ -1029,7 +1029,7 @@ lemma boxEventually_not_diamondPast_not
   simpa [Formula.boxEventually, Formula.box, Formula.diamondPast,
     Formula.not] using this
 
-lemma diamondPast_not_boxEventually_not
+theorem diamondPast_not_boxEventually_not
     (ts : List S.Value) (φ : Formula S) :
     (⟪w⟫ ⊨[M] ♢ᶠ↓[ts] φ) ↔
       (⟪w⟫ ⊨[M] ¬ᶠ (□ᶠ⇓[ts] (¬ᶠ φ))) := by
@@ -1062,7 +1062,7 @@ lemma diamondPast_not_boxEventually_not
       using this
   exact (hDiamond.symm).trans hNot'.symm
 
-lemma diamondEventually_not_boxPast_not
+theorem diamondEventually_not_boxPast_not
     (ts : List S.Value) (φ : Formula S) :
     (⟪w⟫ ⊨[M] ♢ᶠ⇓[ts] φ) ↔
       (⟪w⟫ ⊨[M] ¬ᶠ (□ᶠ↓[ts] (¬ᶠ φ))) := by
@@ -1108,14 +1108,14 @@ notation:55 "⊨[" M "]" φ =>
   EndValid M φ
 
 /-- End-of-time validity implies satisfaction for all participants. -/
-lemma EndValid.exists
+theorem EndValid.exists
     (M : Model S P) (φ : Formula S) :
     (⊨[M]φ) →
       ∀ p, ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ := by
   intro h
   exact h
 
-lemma EndValid.of_imp
+theorem EndValid.of_imp
     (M : Model S P) {φ ψ : Formula S}
     (h : ∀ p, (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) →
         ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ) :
@@ -1124,7 +1124,7 @@ lemma EndValid.of_imp
   intro hφ p
   exact h p (hφ p)
 
-lemma EndValid.congr
+theorem EndValid.congr
     (M : Model S P) {φ ψ : Formula S}
     (h : ∀ p, (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) ↔
         (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ)) :
@@ -1145,7 +1145,7 @@ lemma EndValid.congr
     t.time ⪯ M.history.val →
       ⟪t⟫ ⊨[M]φ
 
-lemma AllWorldValid.of_mem_history
+theorem AllWorldValid.of_mem_history
     (M : Model S P) {φ : Formula S}
     (h : AllWorldValid M φ)
     {t : World P S.EventType}
@@ -1162,7 +1162,7 @@ lemma AllWorldValid.of_mem_history
     exact h hBefore
 
 /-- Instantiate an event-driven validity at an end-of-time world. -/
-lemma AllWorldValid.at_end
+theorem AllWorldValid.at_end
     (M : Model S P) {φ : Formula S}
     (h : AllWorldValid M φ)
     (p : P) :
@@ -1179,7 +1179,7 @@ notation:55 "□W⊨[" M "]" φ =>
     (p : P) : Prop :=
   ∃ t : World P (S.EventType), t ∈ H.val ∧ t.place = p
 
-lemma isActive_of_mem_history
+theorem isActive_of_mem_history
     (M : ModalDistribution.Model S P)
     {p : P}
     {evt : MaybeEvent S.EventType}
@@ -1188,7 +1188,7 @@ lemma isActive_of_mem_history
     IsActive (H := M.history) p := by
   refine ⟨⟨p, evt, H'⟩, hMem, rfl⟩
 
-lemma history_ne_empty_of_isActive
+theorem history_ne_empty_of_isActive
     (M : ModalDistribution.Model S P)
     {p : P}
     (h : IsActive (H := M.history) p) :
@@ -1200,7 +1200,7 @@ lemma history_ne_empty_of_isActive
     simp [PreHistory.empty, hEmpty] at ht
   exact this
 
-lemma exists_active_of_history_ne_empty
+theorem exists_active_of_history_ne_empty
     (M : ModalDistribution.Model S P)
     (hne : M.history.val ≠ PreHistory.empty) :
     ∃ p : P,

@@ -38,7 +38,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- If learners `l₁` and `l₂` are always
 correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
-  lemma livenessTwoThyHBB3
+  theorem livenessTwoThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -654,7 +654,7 @@ forces a live delivery for `l₂`. -/
 /-- A delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
 the same value. -/
-lemma livenessTwoAtPastDownThyHBB3
+theorem livenessTwoAtPastDownThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -736,7 +736,7 @@ lemma livenessTwoAtPastDownThyHBB3
 
 /-- A delivery for `l₁`
 produces a delivery for `l₂` somewhere in the past. -/
-lemma livenessTwoAtPastThyHBB3
+theorem livenessTwoAtPastThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}

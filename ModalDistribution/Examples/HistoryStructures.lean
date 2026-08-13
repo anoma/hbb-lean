@@ -11,7 +11,7 @@ def minimalHistory_val : PreHistory Unit Unit :=
   PreHistory.mk [((), MaybeEvent.none, PreHistory.empty)]
 
 /-- `minimalHistory_val` is transitive. -/
-lemma minimalHistory_transitive :
+theorem minimalHistory_transitive :
     isTransitive minimalHistory_val := by
   intro h' hbefore
   rcases hbefore with ⟨p, e, hmem⟩
@@ -22,7 +22,7 @@ lemma minimalHistory_transitive :
   simp
 
 /-- `minimalHistory_val` is hereditarily transitive. -/
-lemma minimalHistory_hered :
+theorem minimalHistory_hered :
     isHereditarilyTransitive minimalHistory_val := by
   classical
   refine
@@ -50,7 +50,7 @@ def extendedHistory_val : PreHistory Unit Unit :=
     , ((), MaybeEvent.none, PreHistory.empty) ]
 
 /-- `extendedHistory_val` is transitive. -/
-lemma extendedHistory_transitive :
+theorem extendedHistory_transitive :
     isTransitive extendedHistory_val := by
   intro h' hbefore
   rcases hbefore with ⟨p, e, hmem⟩
@@ -68,7 +68,7 @@ lemma extendedHistory_transitive :
       simp
 
 /-- `extendedHistory_val` is hereditarily transitive. -/
-lemma extendedHistory_hered :
+theorem extendedHistory_hered :
     isHereditarilyTransitive extendedHistory_val := by
   classical
   refine

@@ -40,7 +40,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- If learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `l`. -/
-  lemma livenessOneThyHBB3
+  theorem livenessOneThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
@@ -470,7 +470,7 @@ the proposal will eventually deliver it for `l`. -/
 /-- When the guarded proposal
 statement holds, every member of learner `l`'s quorum knows (in the past) that
 `l` delivered the value. -/
-lemma livenessOneAtPastDownThyHBB3
+theorem livenessOneAtPastDownThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
@@ -553,7 +553,7 @@ lemma livenessOneAtPastDownThyHBB3
 
 /-- The guarded proposal
 statement guarantees the delivery diamond for learner `l`. -/
-lemma livenessOneAtPastThyHBB3
+theorem livenessOneAtPastThyHBB3
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}

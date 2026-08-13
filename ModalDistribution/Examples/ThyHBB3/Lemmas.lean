@@ -44,7 +44,7 @@ namespace Unique
 
 /-- Auxiliary: the antecedent ensures echoes exist for some witness value under
 `ThyHBB3`. -/
-lemma exists_witness_echo
+theorem exists_witness_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
@@ -76,7 +76,7 @@ lemma exists_witness_echo
 
 /-- Auxiliary: uniqueness of proposals forces witnesses produced by
 `Echo!` to agree with the target value. -/
-lemma witness_eq_value
+theorem witness_eq_value
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
@@ -187,7 +187,7 @@ lemma witness_eq_value
   simpa [Sat] using hEqGlobal
 
 /-- Unique proposals in `ThyHBB3` guarantee eventual echoes for the chosen value. -/
-lemma eventually_echo
+theorem eventually_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
@@ -215,7 +215,7 @@ end Unique
 
 /-- `3twined` combines three guarded box facts
 into a joint diamond witness. -/
-lemma threeTwined_phi
+theorem threeTwined_phi
     {l₁ l₂ l₃ : Signature.Value S}
     {φ₁ φ₂ φ₃ : Formula S} :
     ⊨[M]
@@ -285,7 +285,7 @@ lemma threeTwined_phi
       (φ := φ₁ ∧ᶠ φ₂ ∧ᶠ φ₃) hWitness
 
 /-- The `threeTwined` axiom forces triple learner quorums to intersect. -/
-lemma threeTwined_hasQuorumNonempty
+theorem threeTwined_hasQuorumNonempty
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
@@ -329,7 +329,7 @@ lemma threeTwined_hasQuorumNonempty
         (w := t) (ls := [l₁, l₂, l₃])).1 hDiamond
 
 /-- Lift a learner-guarded past box from a local world to end-of-time. -/
-lemma lift_boxPast_to_end
+theorem lift_boxPast_to_end
     {t : World P (Signature.EventType S)}
     {learner : Signature.Value S}
     {φ : Formula S}
@@ -359,7 +359,7 @@ lemma lift_boxPast_to_end
     using hBoxPast_top
 
 /-- Eliminate the existential quantifier encoded by `∃ᶠ` at the satisfaction level. -/
-@[simp] lemma sat_exists_iff
+@[simp] theorem sat_exists_iff
     (w : World P (Signature.EventType S))
     (body : Signature.Value S → Formula S) :
     (⟪w⟫ ⊨[M]∃ᶠ fun v => body v) ↔
@@ -391,7 +391,7 @@ lemma lift_boxPast_to_end
 
 omit [Nonempty P] in
 -- Auxiliary lemmas about zero height (not available yet, kept for future use).
-lemma prehistory_height_le_zero_false
+theorem prehistory_height_le_zero_false
     (h : PreHistory P (Signature.EventType S))
     (hLe : PreHistory.height h ≤ 0) : False := by
   classical
@@ -405,7 +405,7 @@ lemma prehistory_height_le_zero_false
 /-- Inductive step for the height-based argument in
 `vote_implies_echo_quorum_local`.  Assuming the result for all worlds strictly
 smaller than `w`, we obtain the required echo quorum for `w`. -/
-lemma vote_implies_echo_quorum_height_step
+theorem vote_implies_echo_quorum_height_step
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
@@ -558,7 +558,7 @@ lemma vote_implies_echo_quorum_height_step
 /-- Strong induction on `PreHistory.height` used to establish
 `vote_implies_echo_quorum_local`.  This lemma packages the base case and the
 inductive step so they can be reused when we eventually provide the full proof. -/
-lemma vote_implies_echo_quorum_height_induction
+theorem vote_implies_echo_quorum_height_induction
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
@@ -616,7 +616,7 @@ lemma vote_implies_echo_quorum_height_induction
 
 /-- a realised vote yields an
 `Echo` quorum for the same value. -/
-lemma vote_implies_echo_quorum_local
+theorem vote_implies_echo_quorum_local
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
@@ -637,7 +637,7 @@ lemma vote_implies_echo_quorum_local
 
 /-- votes witnessed in the past
 produce a global echo quorum. -/
-lemma vote_implies_echo_quorum_end
+theorem vote_implies_echo_quorum_end
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {learner value : Signature.Value S}
@@ -677,7 +677,7 @@ lemma vote_implies_echo_quorum_end
       hTheory ht_mem_history hVote_at
 
 /-- Deliveries witnessed at end of time yield the backing vote quorum. -/
-lemma deliver_to_vote_box_end
+theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {learner value : Signature.Value S}
@@ -748,7 +748,7 @@ lemma deliver_to_vote_box_end
 
 /-- One-sided application of `VoteNE`: a vote together with a past vote from a
 correlated learner forces value equality. -/
-lemma voteNonEquiv_local
+theorem voteNonEquiv_local
     (hVoteNE : AllWorldValid M (voteNonEquivAxiom voteSymb correlationSymb))
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
@@ -833,7 +833,7 @@ lemma voteNonEquiv_local
 
 /-- sequential echo quorums fix the
 broadcast value. -/
-lemma echo_quorums_agree
+theorem echo_quorums_agree
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l l₁ l₂ : Signature.Value S}
@@ -1028,7 +1028,7 @@ lemma echo_quorums_agree
 
 /-- past votes also determine a unique
 value once sequentiality holds. -/
-lemma votes_eventually_agree
+theorem votes_eventually_agree
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l l₁ l₂ : Signature.Value S}
@@ -1060,7 +1060,7 @@ lemma votes_eventually_agree
       (hEcho₁ := hEcho₁)
       (hEcho₂ := hEcho₂)
 
-lemma sat_and_assoc_left
+theorem sat_and_assoc_left
     {φ ψ χ : Formula S}
     {w : World P (Signature.EventType S)} :
     (⟪w⟫ ⊨[M] (φ ∧ᶠ ψ) ∧ᶠ χ) ↔
@@ -1102,7 +1102,7 @@ lemma sat_and_assoc_left
         (ψ := χ)).2 ⟨hφψ, hψχ.2⟩
 
 /-- Symmetric correlations also persist through the past. -/
-lemma always_corr_symm
+theorem always_corr_symm
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
@@ -1186,7 +1186,7 @@ lemma always_corr_symm
 
 /-- End-of-time correlation together with the persistence axiom yields
 correlation throughout each participant’s history. -/
-lemma correlation_global_allPast
+theorem correlation_global_allPast
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
@@ -1261,7 +1261,7 @@ lemma correlation_global_allPast
       hNoPast' hPastWitness
 
 /-- Correlated learners admit a sequential intersection witness. -/
-lemma correlation_seq_diamond
+theorem correlation_seq_diamond
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
@@ -1308,7 +1308,7 @@ lemma correlation_seq_diamond
       hImpCorrelated hCorrTop
 
 /-- Helper: Split antecedent `(live ∧ corr) ∧ ◊vote` into components -/
-lemma split_live_corr_vote_antecedent
+theorem split_live_corr_vote_antecedent
     {w : World P (Signature.EventType S)}
     {l₁ l₂ v : Signature.Value S}
     (hAnte : ⟪w⟫ ⊨[M]((predicate0 liveSymb ∧ᶠ
@@ -1331,7 +1331,7 @@ lemma split_live_corr_vote_antecedent
   exact ⟨hLiveCorr.1, hLiveCorr.2, hAnteSplit.2⟩
 
 /-- Helper: Chain three forall eliminations for vote correlation axiom -/
-lemma forall_elim_vote_correlated_chain
+theorem forall_elim_vote_correlated_chain
     {w : World P (Signature.EventType S)}
     {l₁ l₂ v : Signature.Value S}
     (hVoteCorrLocal : ⟪w⟫ ⊨[M]voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) :
@@ -1372,7 +1372,7 @@ lemma forall_elim_vote_correlated_chain
   simpa [voteForwardCorrelatedAxiom] using hVoteCorrFor₃
 
 /-- Helper: Chain two forall eliminations for vote forward axiom -/
-lemma forall_elim_vote_forward_chain
+theorem forall_elim_vote_forward_chain
     {w : World P (Signature.EventType S)}
     {l v : Signature.Value S}
     (hVoteLocal : ⟪w⟫ ⊨[M]voteForwardAxiom liveSymb echoSymb voteSymb) :
@@ -1401,7 +1401,7 @@ lemma forall_elim_vote_forward_chain
   exact hImpValue
 
 /-- Helper: Lift local `↕vote` to global `◊↓vote` using subset reasoning -/
-lemma lift_local_vote_to_global
+theorem lift_local_vote_to_global
     {t : World P (Signature.EventType S)}
     {l v : Signature.Value S}
     (ht : t.time ⪯ M.history.val)
@@ -1422,7 +1422,7 @@ lemma lift_local_vote_to_global
       hVote)
 
 /-- Helper: Unpack existential vote witness and lift to global diamond -/
-lemma vote_exists_to_global_diamond
+theorem vote_exists_to_global_diamond
     {t : World P (Signature.EventType S)}
     {l v : Signature.Value S}
     (hVote : ⟪t⟫ ⊨[M]↕ᶠ(ofEvent ⟨voteSymb, [l, v]⟩)) :
@@ -1451,7 +1451,7 @@ lemma vote_exists_to_global_diamond
 
 /-- Helper: splits the compound antecedent, obtains symmetric correlation,
 and rebuilds the antecedent with swapped learners. -/
-lemma split_and_swap_correlation
+theorem split_and_swap_correlation
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
@@ -1492,7 +1492,7 @@ lemma split_and_swap_correlation
 
 /-- Helper: applies the voteForwardCorrelatedAxiom via forall elimination
 and extracts the witness value from the existential. -/
-lemma apply_vote_corr_and_extract_witness
+theorem apply_vote_corr_and_extract_witness
     {t : World P (Signature.EventType S)}
     {l₁ l₂ : Signature.Value S}
     {v : Signature.Value S}
@@ -1525,7 +1525,7 @@ lemma apply_vote_corr_and_extract_witness
 
 /-- Helper: lifts both votes to global and applies agreement to prove
 the values are equal. -/
-lemma agree_on_correlated_votes
+theorem agree_on_correlated_votes
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
@@ -1561,7 +1561,7 @@ lemma agree_on_correlated_votes
 
 /-- correlated live knowledge of a vote
 forces eventual votes for the correlated learner. -/
-lemma correlated_vote_eventually
+theorem correlated_vote_eventually
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S}
@@ -1606,7 +1606,7 @@ lemma correlated_vote_eventually
 
 /-- Helper: applies the voteForwardAxiom via forall elimination
 and extracts the witness value from the existential. -/
-lemma apply_vote_forward_and_extract_witness
+theorem apply_vote_forward_and_extract_witness
     {t : World P (Signature.EventType S)}
     {l : Signature.Value S}
     {v : Signature.Value S}
@@ -1642,7 +1642,7 @@ lemma apply_vote_forward_and_extract_witness
 
 /-- Helper: lifts vote to global, extracts echo source, applies agreement,
 and returns simplified result. -/
-lemma agree_on_echo_and_vote
+theorem agree_on_echo_and_vote
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
@@ -1691,7 +1691,7 @@ lemma agree_on_echo_and_vote
 
 /-- a live echo quorum yields eventual
 votes for the same learner. -/
-lemma live_echo_eventually_vote
+theorem live_echo_eventually_vote
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S}
@@ -1735,7 +1735,7 @@ lemma live_echo_eventually_vote
 
 /-- if someone believes `l₁` correlates
 with `l₂`, then their quorums intersect. -/
-lemma correlationImpliesPairwiseQuorumIntersection
+theorem correlationImpliesPairwiseQuorumIntersection
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
@@ -1792,7 +1792,7 @@ establishes the quorum intersection needed for agreement properties.
 
 See also: `correlationEveryoneImpliesIntersection`,
 `correlationImpliesPairwiseQuorumIntersection`. -/
-lemma correlationImpliesQuorumIntersection
+theorem correlationImpliesQuorumIntersection
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
@@ -1848,7 +1848,7 @@ actually stronger than needed - quorum intersection follows from the three-twine
 axiom alone.
 
 See also: `correlationImpliesQuorumIntersection`, `correlationImpliesPairwiseQuorumIntersection`. -/
-lemma correlationEveryoneImpliesIntersection
+theorem correlationEveryoneImpliesIntersection
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)

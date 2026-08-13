@@ -65,7 +65,7 @@ The proof proceeds by contradiction, deriving a contradiction from the assumptio
 that two different values v₁ ≠ v₂ are delivered under sequentiality.
 
 See also: `agreementFromDeliveriesThyHBB1`, agreement properties for ThyHBB2 and ThyHBB3. -/
-lemma agreementThyHBB1
+theorem agreementThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
@@ -394,7 +394,7 @@ the delivered values must coincide. This factors out the core reasoning used in
 the main agreement theorem.
 
 See also: `agreementThyHBB1`. -/
-lemma agreementFromDeliveriesThyHBB1
+theorem agreementFromDeliveriesThyHBB1
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}

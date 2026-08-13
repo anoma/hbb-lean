@@ -55,7 +55,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {w w' : World P (Signature.EventType S)}
 
 /-/ Deliveries force vote quorums at end of time (`Deliver?`). -/
-private lemma deliver_box_witness
+private theorem deliver_box_witness
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
@@ -132,7 +132,7 @@ private lemma deliver_box_witness
   exact ⟨tDeliver, ht_mem_history, hSubset_history, hBox_at_event⟩
 
 /-- Lift a past box along the end-of-time inclusion. -/
-private lemma lift_vote_box_to_end
+private theorem lift_vote_box_to_end
     {reporting learner value : Signature.Value S}
     {t : World P (Signature.EventType S)}
     (hSubset : t.time ⊆ M.history.val)
@@ -163,7 +163,7 @@ private lemma lift_vote_box_to_end
   simpa [Formula.boxPast]
     using hBoxPast_top
 
-lemma deliver_to_vote_box_end
+theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
       ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
@@ -187,7 +187,7 @@ lemma deliver_to_vote_box_end
 variable {w w' : World P (Signature.EventType S)}
 
 /-- Monotonicity of the at-most-one proposal condition. -/
-lemma uniquePropose_monotone
+theorem uniquePropose_monotone
     (hSubset : w'.time ⊆trn w.time)
     (hUnique :
       ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦
@@ -272,7 +272,7 @@ lemma uniquePropose_monotone
     (Sat.eq (M := M) (w := w') (v₁ := v) (v₂ := v')).2 hEq''
 
 /-- Monotonicity of the sequential quorum guard in the `Safe` axiom. -/
-lemma safe_seq_guard_monotone
+theorem safe_seq_guard_monotone
     (l : Signature.Value S)
     (hSubset : w'.time ⊆trn w.time)
     (hPlace : w'.place = w.place)
@@ -312,7 +312,7 @@ lemma safe_seq_guard_monotone
   exact ⟨q, hqInter, hSeq_local'⟩
 
 /-- Monotonicity of the sequential guard instantiated with a constant learner. -/
-lemma safe_seq_guard_monotone_const
+theorem safe_seq_guard_monotone_const
     (l : Signature.Value S)
     (hSubset : w'.time ⊆trn w.time)
     (hPlace : w'.place = w.place)
@@ -325,7 +325,7 @@ lemma safe_seq_guard_monotone_const
       (hSeqGuard := hSeqGuard)
 
 /-- Monotonicity of the `Safe` axiom body with respect to transitive subsets. -/
-lemma safe_axiom_body_monotone
+theorem safe_axiom_body_monotone
     (l : Signature.Value S)
     (hSubset : w'.time ⊆trn w.time)
     (hPlace : w'.place = w.place)
@@ -373,7 +373,7 @@ lemma safe_axiom_body_monotone
   exact hSeqGuard'
 
 /-- Safety persists along same-place accessibility. -/
-lemma safe_monotone_subset
+theorem safe_monotone_subset
     (l : Signature.Value S)
     (hSubset : w.time ⊆trn M.history.val)
     (hBefore : w'.time ⪯ w.time)
@@ -415,7 +415,7 @@ lemma safe_monotone_subset
       (hBody := hSafe)
 
 /-- Safety implies it always held in the past. -/
-lemma safe_allPast
+theorem safe_allPast
     (l : Signature.Value S)
     (hwMem : w ∈ M.history.val)
     (hSafe : ⟪w⟫ ⊨[M]safeFormula proposeSymb l) :
@@ -455,7 +455,7 @@ lemma safe_allPast
 
 /-- Quorum knowledge of `φ` and a
 global implication to `ψ` lift `φ` to a future quorum of `ψ`. -/
-lemma atddot_of_eventual_quorum
+theorem atddot_of_eventual_quorum
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]φ)
@@ -517,7 +517,7 @@ lemma atddot_of_eventual_quorum
 
 /-- The previous result under the
 `ThyLive` assumption. -/
-lemma atddot_live_of_eventual_quorum
+theorem atddot_live_of_eventual_quorum
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
     (φ ψ : Formula S)
     (l : Signature.Value S)
@@ -642,7 +642,7 @@ lemma atddot_live_of_eventual_quorum
 
 /-- Composing eventual consequences at the end of
 time. -/
-lemma live_eventually_consequent
+theorem live_eventually_consequent
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
     (φ ψ : Formula S)
     (hLive : ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠφ))
@@ -729,7 +729,7 @@ lemma live_eventually_consequent
 
 /-- `\atd{l}` of `\sometime φ` coincides
 with `\atddot{l} φ`. -/
-lemma atd_sometime_iff_atddot
+theorem atd_sometime_iff_atddot
     (φ : Formula S)
     (l : Signature.Value S) :
     (⊨[M]□ᶠ[[l]] ↕ᶠφ) ↔

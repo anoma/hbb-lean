@@ -39,7 +39,7 @@ section DiamondSection
     ∃ p, (∀ i, p ∈ F.choose i) ∧
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] φ
 
-lemma hasQuorumWitness.of_imp
+theorem hasQuorumWitness.of_imp
     (M : Model S P)
     (ls : List S.Value) {φ ψ : Formula S}
     (h : ∀ p,
@@ -51,7 +51,7 @@ lemma hasQuorumWitness.of_imp
   obtain ⟨p, hpAll, hpSat⟩ := hWitness F
   exact ⟨p, hpAll, h p hpSat⟩
 
-lemma hasQuorumWitness.congr
+theorem hasQuorumWitness.congr
     (M : Model S P)
     (ls : List S.Value) {φ ψ : Formula S}
     (h : ∀ p,
@@ -75,7 +75,7 @@ lemma hasQuorumWitness.congr
     (ls : List S.Value) : Prop :=
   ∀ F : QuorumFamily M ls, QuorumFamily.intersectionNonempty F
 
-lemma diamondCheck_of_imp
+theorem diamondCheck_of_imp
     (M : Model S P)
     (ls : List S.Value)
     (φ ψ : Formula S) (acc : Set P)
@@ -108,7 +108,7 @@ lemma diamondCheck_of_imp
       intro O hO
       exact ih (acc := acc ∩ O) (hCons O hO)
 
-lemma diamondCheck_congr
+theorem diamondCheck_congr
     (M : Model S P)
     (ls : List S.Value)
     (φ ψ : Formula S) (acc : Set P)
@@ -138,7 +138,7 @@ def quorumWitnessAcc
     ∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] φ
 
-lemma diamondCheck_iff_quorumWitnessAcc
+theorem diamondCheck_iff_quorumWitnessAcc
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S)
     (acc : Set P) :
@@ -198,7 +198,7 @@ lemma diamondCheck_iff_quorumWitnessAcc
           refine ⟨p, ⟨hpAcc, hpO⟩, hpTail, hpSat⟩
         exact (ih (acc := acc ∩ O)).2 hWitnessTail
 
-lemma sat_diamond_iff_diamondCheck
+theorem sat_diamond_iff_diamondCheck
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S)
     (w : World P (Signature.EventType S)) :
@@ -208,7 +208,7 @@ lemma sat_diamond_iff_diamondCheck
   simp [Sat]
 
 /-- Extract a triple intersection witness from `♢ᶠ[[l₁,l₂,l₃]] ⊤ᶠ`. -/
-lemma sat_diamond_three_intersection
+theorem sat_diamond_three_intersection
     (M : Model S P)
     (w : World P (Signature.EventType S))
     {l₁ l₂ l₃ : Signature.Value S}
@@ -252,7 +252,7 @@ lemma sat_diamond_three_intersection
     simpa [Set.inter_univ] using hpInter.1.2
   exact ⟨p, hpO₁, hpO₂, hpO₃⟩
 
-@[simp] lemma sat_diamond_singleton_iff
+@[simp] theorem sat_diamond_singleton_iff
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S) :
@@ -294,7 +294,7 @@ lemma sat_diamond_three_intersection
         (ls := [l]) (φ := φ) (w := w)).2 hCons
 
 /-- Expand a pair of learner diamonds into quorum-intersection witnesses. -/
-@[simp] lemma sat_diamond_pair_iff
+@[simp] theorem sat_diamond_pair_iff
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l l' : Signature.Value S) (φ : Formula S) :
@@ -355,7 +355,7 @@ lemma sat_diamond_three_intersection
         (ls := [l, l']) (φ := φ) (w := w)).2 hCons
 
 /-- Singleton learner boxes exhibit a quorum whose members satisfy the guard. -/
-@[simp] lemma sat_box_singleton_exists
+@[simp] theorem sat_box_singleton_exists
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S) :
@@ -412,7 +412,7 @@ lemma sat_diamond_three_intersection
     simpa [Formula.box, Formula.not] using hNot
 
 /-- An end-of-time past box guarantees that the global history contains a witness. -/
-lemma exists_history_mem_of_end_boxPast
+theorem exists_history_mem_of_end_boxPast
     (M : Model S P)
     {l : Signature.Value S} {φ : Formula S}
     (hBox : ⊨[M]□ᶠ↓[[l]]φ) :
@@ -440,7 +440,7 @@ lemma exists_history_mem_of_end_boxPast
   exact ⟨t, by simpa using ht_mem⟩
 
 /-- Lift a local sometime fact to the end-of-time perspective. -/
-lemma lift_sometime_to_end
+theorem lift_sometime_to_end
     (M : Model S P)
     {t : World P (Signature.EventType S)} {φ : Formula S}
     (hSome : ⟪t⟫ ⊨[M]↕ᶠφ) :
@@ -451,7 +451,7 @@ lemma lift_sometime_to_end
 
 /-- Always-past facts depend only on the active participant, not on the local
 time slice. -/
-lemma lift_alwaysPast_of_same_place
+theorem lift_alwaysPast_of_same_place
     (M : Model S P)
     {w t : World P (Signature.EventType S)} {φ : Formula S}
     (hPlace : t.place = w.place)
@@ -483,7 +483,7 @@ lemma lift_alwaysPast_of_same_place
 
 /-- If a world lies in the global history, an always-past fact at that world
 forces the underlying proposition to hold immediately. -/
-lemma alwaysPast_now_of_mem
+theorem alwaysPast_now_of_mem
     (M : Model S P)
     {w : World P (Signature.EventType S)} {φ : Formula S}
     (hMem : w ∈ M.history.val)
@@ -508,7 +508,7 @@ lemma alwaysPast_now_of_mem
 
 /-- A local empty past diamond witnessed at end-of-time yields end-of-time
 validity for the same statement. -/
-lemma end_valid_diamondPast_nil_of_end
+theorem end_valid_diamondPast_nil_of_end
     (M : Model S P)
     {p : P} {φ : Formula S}
     (hDiamond : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]φ) :
@@ -532,7 +532,7 @@ lemma end_valid_diamondPast_nil_of_end
     using hDiamond_p'
 
 /-- Helper lemma for transporting empty diamonds from the local view. -/
-lemma sat_diamondEmpty_of_local
+theorem sat_diamondEmpty_of_local
     (M : Model S P)
     (w : World P (Signature.EventType S)) (φ : Formula S) :
     (∃ q, ⟪⟨q, †, w.time⟩⟫ ⊨[M] φ) →
@@ -545,7 +545,7 @@ lemma sat_diamondEmpty_of_local
       ∃ r ∈ Set.univ, ⟪⟨r, †, w.time⟩⟫ ⊨[M] φ)
 
 /-- Lift past-event satisfaction from a local view to the ambient history. -/
-lemma sat_past_event_of_subset_to_history
+theorem sat_past_event_of_subset_to_history
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (evt : Signature.EventType S)
@@ -567,7 +567,7 @@ lemma sat_past_event_of_subset_to_history
   exact ⟨t, ht', by simpa using hp, hEvt⟩
 
 /-- Lift past satisfaction along an inclusion of prehistories. -/
-lemma sat_past_of_subset
+theorem sat_past_of_subset
     (M : Model S P)
     {q : P}
     {H H' : PreHistory P (Signature.EventType S)}
@@ -586,7 +586,7 @@ lemma sat_past_of_subset
       ⟨t, ht', hp, hφ⟩
 
 /-- Lift singleton-quorum diamonds along a pointwise transfer principle. -/
-lemma sat_diamond_singleton_transfer
+theorem sat_diamond_singleton_transfer
     (M : Model S P)
     (w w' : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -614,7 +614,7 @@ lemma sat_diamond_singleton_transfer
       (w := ⟨p', evt', H'⟩) (l := l) (φ := φ)).2 hWitness'
 
 /-- Transfer singleton-quorum boxes along a pointwise implication. -/
-lemma sat_box_singleton_transfer
+theorem sat_box_singleton_transfer
     (M : Model S P)
     (w w' : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -639,7 +639,7 @@ lemma sat_box_singleton_transfer
   exact hTransfer q hφ
 
 /-- Singleton learner diamonds do not depend on the distinguished participant. -/
-lemma sat_diamond_singleton_participant_iff
+theorem sat_diamond_singleton_participant_iff
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (p q : P) (l : Signature.Value S) (φ : Formula S) :
@@ -664,7 +664,7 @@ lemma sat_diamond_singleton_participant_iff
         (w := ⟨p, evt, H⟩) (l := l) (φ := φ)).2 hWitness
 
 /-- Transport empty-guard past diamonds of event formulas along transitive subsets. -/
-lemma sat_diamondPast_nil_event_subset
+theorem sat_diamondPast_nil_event_subset
     (M : Model S P)
     (w w' : World P (Signature.EventType S))
     (symb : Signature.EventSymb S)
@@ -705,7 +705,7 @@ lemma sat_diamondPast_nil_event_subset
 
 /-- If an event occurs at some point in the history, then the corresponding
 end-of-time world satisfies the empty-guard past diamond for that event. -/
-lemma diamondPast_nil_of_event_at_history
+theorem diamondPast_nil_of_event_at_history
     (M : Model S P)
     {t : World P (Signature.EventType S)}
     (htMem : t ∈ M.history.val)
@@ -729,7 +729,7 @@ lemma diamondPast_nil_of_event_at_history
       (φ := ↓ᶠ (Formula.ofEvent E))).2
       ⟨t.place, hPast⟩
 
-lemma diamond_valid_eventuallyPast_not_iff
+theorem diamond_valid_eventuallyPast_not_iff
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] ♢ᶠ[ls]
@@ -749,7 +749,7 @@ lemma diamond_valid_eventuallyPast_not_iff
           (w := ⟨p, †, M.history.val⟩)
           (ts := ls) (φ := φ))
 
-lemma valid_not_not_iff
+theorem valid_not_not_iff
     (M : Model S P) (φ : Formula S) :
     (⊨[M] ¬ᶠ (¬ᶠ φ)) ↔ (⊨[M]φ) := by
   classical
@@ -766,7 +766,7 @@ lemma valid_not_not_iff
       (Sat.not_not_iff (M := M)
         (w := ⟨p, †, M.history.val⟩) (φ := φ)).2 hSat
 
-lemma valid_not_box_iff_diamond_not
+theorem valid_not_box_iff_diamond_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] ¬ᶠ (□ᶠ[ls] φ)) ↔
@@ -793,7 +793,7 @@ lemma valid_not_box_iff_diamond_not
 /-! ### De Morgan dualities between derived modalities -/
 
 /-- `♢` and `□` are De Morgan duals. -/
-lemma diamond_valid_iff_not_box_not
+theorem diamond_valid_iff_not_box_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] ♢ᶠ[ls] φ) ↔
@@ -821,7 +821,7 @@ lemma diamond_valid_iff_not_box_not
     exact hDiamondEquiv.trans hNotBox
 
 /-- `□` and `♢` are De Morgan duals. -/
-lemma box_valid_iff_not_diamond_not
+theorem box_valid_iff_not_diamond_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] □ᶠ[ls] φ) ↔
@@ -833,7 +833,7 @@ lemma box_valid_iff_not_diamond_not
   simp [Formula.not, Formula.box]
 
 /-- `♢ᶠ↓` is the De Morgan dual of `□ᶠ⇓`. -/
-lemma diamondPast_valid_iff_not_boxEventually_not
+theorem diamondPast_valid_iff_not_boxEventually_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] ♢ᶠ↓[ls] φ) ↔
@@ -855,7 +855,7 @@ lemma diamondPast_valid_iff_not_boxEventually_not
         (φ := ♢ᶠ↓[ls] φ)
         (ψ := ¬ᶠ (□ᶠ⇓[ls] (¬ᶠ φ))) hEquiv
 
-lemma quorumWitnessAcc_univ
+theorem quorumWitnessAcc_univ
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     quorumWitnessAcc M ls φ Set.univ ↔
@@ -870,7 +870,7 @@ lemma quorumWitnessAcc_univ
     exact ⟨p, by simp, hpAll, hpSat⟩
 
 /-- Witnesses for `⊤ᶠ` coincide with nonempty intersections. -/
-lemma hasQuorumWitness_top_iff_nonempty
+theorem hasQuorumWitness_top_iff_nonempty
     (M : Model S P)
     (ls : List S.Value) :
     hasQuorumWitness (M := M) ls ⊤ᶠ ↔
@@ -888,7 +888,7 @@ lemma hasQuorumWitness_top_iff_nonempty
         (w := ⟨p, †, M.history.val⟩)
 
 /-- `□ᶠ⇓` is the De Morgan dual of `♢ᶠ↓`. -/
-lemma boxEventually_valid_iff_not_diamondPast_not
+theorem boxEventually_valid_iff_not_diamondPast_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] □ᶠ⇓[ls] φ) ↔
@@ -911,7 +911,7 @@ lemma boxEventually_valid_iff_not_diamondPast_not
           (ts := ls) (φ := φ)).2 hSat
 
 /-- `♢ᶠ⇓` and `□ᶠ↓` are De Morgan duals. -/
-lemma diamondEventually_valid_iff_not_boxPast_not
+theorem diamondEventually_valid_iff_not_boxPast_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] ♢ᶠ⇓[ls] φ) ↔
@@ -934,7 +934,7 @@ lemma diamondEventually_valid_iff_not_boxPast_not
         (ψ := ¬ᶠ (□ᶠ↓[ls] (¬ᶠ φ))) hEquiv
 
 /-- `□ᶠ↓` and `♢ᶠ⇓` are De Morgan duals. -/
-lemma boxPast_valid_iff_not_diamondEventually_not
+theorem boxPast_valid_iff_not_diamondEventually_not
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] □ᶠ↓[ls] φ) ↔
@@ -956,7 +956,7 @@ lemma boxPast_valid_iff_not_diamondEventually_not
           (M := M) (w := ⟨p, †, M.history.val⟩)
           (ts := ls) (φ := φ)).2 hSat
 
-lemma AllWorldValid_predecessor
+theorem AllWorldValid_predecessor
     (M : Model S P) {φ : Formula S}
     (hEvent : AllWorldValid M φ)
     {p : P} {e : MaybeEvent (Signature.EventType S)}
@@ -990,7 +990,7 @@ lemma AllWorldValid_predecessor
   simpa [History.predecessorHistory, happensBefore_of_mem] using h
 
 /-- A world whose local history occurs before the model history inherits a transitive subset. -/
-lemma time_subset_trn_history
+theorem time_subset_trn_history
     (M : Model S P) {t : World P S.EventType}
     (ht : t.time ⪯ M.history.val) :
     t.time ⊆trn M.history.val := by
@@ -1014,7 +1014,7 @@ lemma time_subset_trn_history
           hEq.symm hTrans
 
 /-- Satisfaction of an empty box at the full history forces the guard everywhere. -/
-lemma sat_boxEmpty_full_iff_local
+theorem sat_boxEmpty_full_iff_local
     (M : Model S P)
     (w : World P (Signature.EventType S)) (φ : Formula S)
     (hTime : w.time = M.history.val) (hEvent : w.event = †) :
@@ -1035,7 +1035,7 @@ lemma sat_boxEmpty_full_iff_local
             (Sat.boxEmpty (M := M)
               (w := ⟨p, †, M.history.val⟩) (φ := φ))
 
-lemma EndValid.boxEmpty_guard
+theorem EndValid.boxEmpty_guard
     (M : Model S P) (φ : Formula S) :
     (⊨[M] □ᶠ[] φ) → ∀ p : P, ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] φ := by
   intro h p
@@ -1046,7 +1046,7 @@ lemma EndValid.boxEmpty_guard
       (φ := φ) (hTime := rfl) (hEvent := rfl)).1 hBox
   exact hLocal p
 
-lemma hasQuorumWitness.seq_to_past
+theorem hasQuorumWitness.seq_to_past
     (M : Model S P)
     (ls : List S.Value) :
     (⊨[M] □ᶠ[] (↓ᶠ ⊤ᶠ)) →
@@ -1185,7 +1185,7 @@ we only need to establish that quorums intersect, not that they intersect at wor
 satisfying a specific formula.
 
 See also: `nWayQuorumIntersectionWitness`, `nWayQuorumIntersectionNonempty`. -/
-lemma quorumWitnessImpliesNonempty
+theorem quorumWitnessImpliesNonempty
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
     (⊨[M] (♢ᶠ[ls] φ)) →
@@ -1233,7 +1233,7 @@ theorem presentBoxImpliesPastBox
       (nWayQuorumIntersectionWitness (M := M)
         (ls := ls) (φ := φ)).symm
 
-lemma localSat_eventuallyPast_top_eq
+theorem localSat_eventuallyPast_top_eq
     (M : Model S P)
     (w : World P (Signature.EventType S)) :
     (⟪w⟫ ⊨[M] (⇓ᶠ ⊤ᶠ)) ↔ ⟪w⟫ ⊨[M] ⊤ᶠ := by
@@ -1348,7 +1348,7 @@ satisfies the past-guarded formula, which implies the empty diamond ♢ᶠ↓[[]
 (someone satisfies the formula). This is the local version of the implication.
 
 See also: `globalSingletonBoxImpliesDiamond`, `quorumBoxImpliesEmptyDiamond`. -/
-lemma singletonBoxImpliesDiamond
+theorem singletonBoxImpliesDiamond
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1372,7 +1372,7 @@ The global version: if □ᶠ[[l]] φ holds globally, then ♢ᶠ[] φ holds glo
 This lifts the local singleton box implication to the global level.
 
 See also: `singletonBoxImpliesDiamond`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
-lemma globalSingletonBoxImpliesDiamond
+theorem globalSingletonBoxImpliesDiamond
     (M : Model S P)
     (l : Signature.Value S) (φ : Formula S) :
     (⊨[M] □ᶠ[[l]] φ) → (⊨[M] ♢ᶠ[] φ) := by
@@ -1397,7 +1397,7 @@ at that world. This is a strengthening that works for arbitrary histories, not
 just the global top history.
 
 See also: `singletonBoxImpliesDiamond`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
-lemma quorumBoxImpliesEmptyDiamond
+theorem quorumBoxImpliesEmptyDiamond
     (M : Model S P)
     (H : History P (Signature.EventType S)) (p : P)
     (l : Signature.Value S) (φ : Formula S) :
@@ -1417,7 +1417,7 @@ lemma quorumBoxImpliesEmptyDiamond
       ⟨q, hAll q hq⟩
 
 /-- Transport a past-box witness from a predecessor world to the current world. -/
-private lemma sat_boxPast_of_predecessor
+private theorem sat_boxPast_of_predecessor
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1470,7 +1470,7 @@ This shows that nested past operators collapse, simplifying reasoning about
 temporal formulas in distributed protocols.
 
 See also: `pastBoxCollapsesToPresentBox`, `pastDiamondBoxCollapsesToPresentBox`. -/
-lemma quorumBoxGlobalImpliesEmptyDiamond
+theorem quorumBoxGlobalImpliesEmptyDiamond
     (M : Model S P)
     (w : World P (Signature.EventType S)) (φ : Formula S)
     (hMem : w ∈ M.history.val) :
@@ -1548,7 +1548,7 @@ This idempotency property shows that nested temporal operators can be simplified
 making proofs about temporal formulas more tractable.
 
 See also: `pastDiamondBoxCollapsesToPresentBox`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
-lemma pastBoxCollapsesToPresentBox
+theorem pastBoxCollapsesToPresentBox
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1578,7 +1578,7 @@ present box □ᶠ↓[[l]] φ. This strengthens the previous collapsing lemma by
 that even with an intervening diamond, the box structure is preserved.
 
 See also: `pastBoxCollapsesToPresentBox`, `singletonBoxImpliesDiamond`. -/
-lemma pastDiamondBoxCollapsesToPresentBox
+theorem pastDiamondBoxCollapsesToPresentBox
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (l : Signature.Value S) (φ : Formula S)
@@ -1605,7 +1605,7 @@ lemma pastDiamondBoxCollapsesToPresentBox
   exact hBox
 
 /-- Evaluation of a `⊤ᶠ`-payload diamond does not depend on the timeline. -/
-lemma sat_check_top_congr
+theorem sat_check_top_congr
     (M : Model S P)
     (ls : List (Signature.Value S))
     {t₁ t₂ : PreHistory P (Signature.EventType S)}
@@ -1664,7 +1664,7 @@ lemma sat_check_top_congr
           (ih (acc := acc ∩ O)).2 hTail
 
 /-- Diamonds with payload `⊤ᶠ` depend only on the learners' quorums. -/
-lemma sat_diamond_top_iff_hasQuorumNonempty
+theorem sat_diamond_top_iff_hasQuorumNonempty
     (M : Model S P)
     (w : World P (Signature.EventType S))
     (ls : List (Signature.Value S)) :
@@ -1713,7 +1713,7 @@ lemma sat_diamond_top_iff_hasQuorumNonempty
         (w := w)).2 hCheck_time
 
 /-- Extract a double intersection witness from `♢ᶠ[[l₁,l₂]] ⊤ᶠ`. -/
-lemma sat_diamond_two_intersection
+theorem sat_diamond_two_intersection
     (M : Model S P)
     (w : World P (Signature.EventType S))
     {l₁ l₂ : Signature.Value S}

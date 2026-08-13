@@ -92,7 +92,7 @@ variable {w w' t : World P (Signature.EventType S)}
 variable {H : History P (Signature.EventType S)}
 
 /-- Sometime knowledge lifts to the end of time. -/
-lemma sometime_past_end
+theorem sometime_past_end
     {w : World P (Signature.EventType S)}
     (hSat : ⟪w⟫ ⊨[M]↕ᶠ(♢ᶠ[]↓ᶠ (Formula.ofEvent evt))) :
     ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ[]↓ᶠ (Formula.ofEvent evt) := by
@@ -142,7 +142,7 @@ lemma sometime_past_end
     using hDiamondEnd
 
 /-- `LiveAlways` transports end-of-time liveness to any witnessed prefix. -/
-lemma live_at_predecessor
+theorem live_at_predecessor
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
@@ -200,7 +200,7 @@ if and only if it is live at the end-of-time world for that participant.
 This follows from the liveness-always axiom (live ⇔ ⤒ live).
 
 See also: `alwaysLiveEquivBackward`, liveness-always axiom. -/
-lemma alwaysLiveEquivForward
+theorem alwaysLiveEquivForward
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {t : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val) :
@@ -266,7 +266,7 @@ then liveness holds at one if and only if it holds at the other. This is a direc
 consequence of the forward direction applied twice.
 
 See also: `alwaysLiveEquivForward`, liveness-always axiom. -/
-lemma alwaysLiveEquivBackward
+theorem alwaysLiveEquivBackward
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {t t' : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val)
@@ -320,7 +320,7 @@ lemma alwaysLiveEquivBackward
     exact h_t.2 hGlobal
 
 /-- Instantiate the knowledge axiom at an end-of-time world. -/
-lemma knowledgeDiamond_imp_at_end
+theorem knowledgeDiamond_imp_at_end
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ : Formula S}
     (p : P) :
@@ -343,7 +343,7 @@ lemma knowledgeDiamond_imp_at_end
 
 /-- Knowledge axiom `Knowledge₍⋄₎` yields an end-of-time sometime guarantee for
 arbitrary past guards. -/
-lemma knowledgeDiamond_sometime_at_end_formula
+theorem knowledgeDiamond_sometime_at_end_formula
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ : Formula S}
     {p : P}
@@ -384,7 +384,7 @@ lemma knowledgeDiamond_sometime_at_end_formula
       hLiveImp hLive
 
 /-- Specialisation of `knowledgeDiamond_sometime_at_end_formula` to event formulas. -/
-lemma knowledgeDiamond_sometime_at_end
+theorem knowledgeDiamond_sometime_at_end
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
@@ -403,7 +403,7 @@ lemma knowledgeDiamond_sometime_at_end
   quorum from its local perspective.  This packages the knowledge axiom
   `Knowledge₍⋄⇓₎`, and will be shared across the liveness developments.
 -/
-lemma live_eventually_knows_box
+theorem live_eventually_knows_box
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M](Formula.predicate0 liveSymb) ⇒ᶠ ↕ᶠ (□ᶠ↓[[l]] φ) := by
@@ -460,7 +460,7 @@ lemma live_eventually_knows_box
       (ψ := ↕ᶠ (□ᶠ↓[[l]] φ))
       hImp hLiveTop
 
-private lemma promote_live_atddot_past
+private theorem promote_live_atddot_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ))
     {q : P}
@@ -609,7 +609,7 @@ private lemma promote_live_atddot_past
 
 /-- Liveness quorum boxes promote to nested
 quorum boxes under `ThyLive`. -/
-lemma promote_live_atddot
+theorem promote_live_atddot
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ) := by
@@ -644,7 +644,7 @@ lemma promote_live_atddot
       (hQuorum := hQuorum) (q := q) hPastLiveφ
 
 /-- Specialisation of the knowledge axiom: live participants eventually know past events. -/
-lemma live_knows_eventually
+theorem live_knows_eventually
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
@@ -668,7 +668,7 @@ lemma live_knows_eventually
     using hDiamondPast
 
 /-- A live participant eventually reaches a past state where the event is known. -/
-lemma live_knows_eventually_past
+theorem live_knows_eventually_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
@@ -743,7 +743,7 @@ lemma live_knows_eventually_past
       (hp := ht_place)
       (hφ := hConjPast)
 
-lemma live_knows_eventually_event_past
+theorem live_knows_eventually_event_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
@@ -832,7 +832,7 @@ lemma live_knows_eventually_event_past
   simpa [hφ] using hPastIntro
 
 /-- Empty-learner past diamonds compose idempotently for event formulas. -/
-lemma diamondEmpty_past_event_flat
+theorem diamondEmpty_past_event_flat
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
     (hDiamond : ⟪w⟫ ⊨[M]♢ᶠ[]↓ᶠ (♢ᶠ[]↓ᶠ (Formula.ofEvent evt))) :
@@ -887,7 +887,7 @@ lemma diamondEmpty_past_event_flat
       (φ := ↓ᶠ (Formula.ofEvent evt)) ⟨q₂, hEvent_in_time⟩
 
 /-- A live participant eventually reaches a past state guaranteeing quorum knowledge. -/
-lemma live_knows_eventually_quorum_past
+theorem live_knows_eventually_quorum_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
