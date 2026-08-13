@@ -153,7 +153,7 @@ lemma diamondCheck_iff_quorumWitnessAcc
           (Sat.Sat_check_nil (M := M)
             (H := M.history.val) (φ := φ) (acc := acc)).1 h
         refine ⟨p, hpacc, ?_, hpSat⟩
-        simp [List.length_nil]
+        exact fun i => i.elim0
       · intro h
         obtain ⟨p, hpacc, _, hpSat⟩ :=
           h (QuorumFamily.nil (M := M))
@@ -365,7 +365,7 @@ lemma sat_diamond_three_intersection
   classical
   constructor
   · intro hBox
-    by_contra hNo
+    refine Classical.byContradiction fun hNo => ?_
     have hAll :
         ∀ O ∈ (M.learner l).quorums,
           ∃ q ∈ O, ⟪⟨q, †, w.time⟩⟫ ⊨[M] ¬ᶠ φ := by
@@ -373,8 +373,11 @@ lemma sat_diamond_three_intersection
       have hNotAll : ¬ ∀ q ∈ O, ⟪⟨q, †, w.time⟩⟫ ⊨[M] φ := by
         intro hAllφ
         exact hNo ⟨O, hO, hAllφ⟩
-      obtain ⟨q, hq⟩ := not_forall.mp hNotAll
-      obtain ⟨hqO, hqNotφ⟩ := Classical.not_imp.mp hq
+      obtain ⟨q, hqO, hqNotφ⟩ :
+          ∃ q, q ∈ O ∧ ¬ (⟪⟨q, †, w.time⟩⟫ ⊨[M] φ) := by
+        refine Classical.byContradiction fun hne => hNotAll ?_
+        intro q hqO
+        exact Classical.byContradiction fun hnφ => hne ⟨q, hqO, hnφ⟩
       have hqNot : ⟪⟨q, †, w.time⟩⟫ ⊨[M] ¬ᶠ φ :=
         Sat.not_intro (M := M) (w := ⟨q, †, w.time⟩) (φ := φ)
           (by
@@ -416,7 +419,7 @@ lemma exists_history_mem_of_end_boxPast
     ∃ t : World P (Signature.EventType S),
       t ∈ M.history.val := by
   classical
-  let p : P := Classical.arbitrary P
+  let p : P := Classical.ofNonempty
   have hBoxTop :
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ[[l]] (↓ᶠ φ) :=
     by simpa [Formula.boxPast] using hBox p
@@ -493,7 +496,7 @@ lemma alwaysPast_now_of_mem
   have hNoSome' :=
     (Sat.not (M := M) (w := w)
       (φ := ↕ᶠ (¬ᶠ φ))).1 hNoSome
-  by_contra hContr
+  refine Classical.byContradiction fun hContr => ?_
   have hNot : ⟪w⟫ ⊨[M] ¬ᶠ φ :=
     (Sat.not (M := M) (w := w) (φ := φ)).2 hContr
   have hSome :

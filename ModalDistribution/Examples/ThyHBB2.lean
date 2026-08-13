@@ -14,4 +14,3 @@ arrangement mirrors the theory structure:
 - **`ThyHBB2.Liveness_Two`**: Liveness property 2
 - **`ThyHBB2.Agreement`**: Agreement property
 -/
-

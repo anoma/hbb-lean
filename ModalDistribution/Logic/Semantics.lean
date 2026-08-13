@@ -1,4 +1,4 @@
-import Mathlib.Data.Set.Lattice
+import ModalDistribution.Core.Set
 import ModalDistribution.Core.Prehistory
 import ModalDistribution.Core.History
 import ModalDistribution.Core.Model
@@ -30,7 +30,7 @@ set_option autoImplicit false
 variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
 /-- Depth measure for formulas. Needed for termination of Sat. -/
-@[simp] private noncomputable def depth : Formula S → ℕ
+@[simp] private noncomputable def depth : Formula S → Nat
   | .bot => 0
   | .imp φ ψ => 1 + max (depth φ) (depth ψ)
   | .eq _ _ => 0
@@ -254,7 +254,7 @@ lemma boxEmpty
         by simpa [Formula.boxEmpty, Formula.box] using hBox
       exact (Sat.not (M := M) (w := ⟨p, evt, H⟩)
         (φ := ♢ᶠ[] (¬ᶠ φ))).1 hNeg
-    by_contra hContra
+    refine Classical.byContradiction fun hContra => ?_
     have hNot : ⟪⟨q, †, H⟩⟫ ⊨[M]¬ᶠ φ :=
       (Sat.not (M := M) (w := ⟨q, †, H⟩) (φ := φ)).2 hContra
     have hDiamond : ⟪⟨p, evt, H⟩⟫ ⊨[M]♢ᶠ[] (¬ᶠ φ) :=
@@ -389,7 +389,7 @@ lemma and_left
   intro hAnd
   have hNotImp : ⟪w⟫ ⊨[M]¬ᶠ (φ ⇒ᶠ ¬ᶠ ψ) := by
     simpa [Formula.and] using hAnd
-  by_contra hNotφ
+  refine Classical.byContradiction fun hNotφ => ?_
   have hImp : ⟪w⟫ ⊨[M]φ ⇒ᶠ ¬ᶠ ψ :=
     imp_intro (M := M) (w := w)
       (φ := φ) (ψ := ¬ᶠ ψ)
@@ -410,7 +410,7 @@ lemma and_right
   intro hAnd
   have hNotImp : ⟪w⟫ ⊨[M]¬ᶠ (φ ⇒ᶠ ¬ᶠ ψ) := by
     simpa [Formula.and] using hAnd
-  by_contra hNotψ
+  refine Classical.byContradiction fun hNotψ => ?_
   have hNotψSat : ⟪w⟫ ⊨[M]¬ᶠ ψ :=
     not_intro (M := M) (w := w)
       (φ := ψ) (fun hψ => hNotψ hψ)
@@ -574,7 +574,12 @@ lemma diamondPast
       (⟪w⟫ ⊨[M]φ) ∨ (⟪w⟫ ⊨[M]ψ) := by
   classical
   simp [Formula.or, Formula.not, Sat]
-  tauto
+  constructor
+  · intro h
+    exact (Classical.em _).elim Or.inl fun hn => Or.inr (h hn)
+  · rintro (hφ | hψ) hn
+    · exact absurd hφ hn
+    · exact hψ
 
 /-- Universal quantification unfolds to satisfaction for all values. -/
 @[simp] lemma forall_sat
@@ -593,8 +598,12 @@ lemma diamondPast
     (⟪w⟫ ⊨[M].exists_ body) ↔
       (∃ v, ⟪w⟫ ⊨[M]body v) := by
   simp only [Formula.exists_, not, forall_sat]
-  push_neg
-  rfl
+  constructor
+  · intro h
+    refine Classical.byContradiction fun hne => ?_
+    exact h fun v hv => hne ⟨v, hv⟩
+  · rintro ⟨v, hv⟩ h
+    exact h v hv
 
 lemma check_of_imp {ts : List S.Value} {acc : Set P} {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, H⟩⟫ ⊨[M]φ) → (⟪⟨q, †, H⟩⟫ ⊨[M]ψ)) :
@@ -647,9 +656,9 @@ lemma not_not_iff
   · intro h
     have : ¬¬ (⟪w⟫ ⊨[M]φ) := by
       simpa [Formula.not, Sat] using h
-    exact not_not.mp this
+    exact Classical.byContradiction this
   · intro h
-    have : ¬¬ (⟪w⟫ ⊨[M]φ) := not_not.mpr h
+    have : ¬¬ (⟪w⟫ ⊨[M]φ) := fun hn => hn h
     simpa [Formula.not, Sat] using this
 
 lemma not_of_imp

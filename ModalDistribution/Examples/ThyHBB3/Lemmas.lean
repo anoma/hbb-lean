@@ -368,8 +368,8 @@ lemma lift_boxPast_to_end
   constructor
   · intro hExists
     -- Suppose no witness exists, derive a contradiction with the existential.
-    by_contra hNone
-    push_neg at hNone
+    refine Classical.byContradiction fun hNoWitness => ?_
+    have hNone : ∀ v, ¬ (⟪w⟫ ⊨[M]body v) := fun v hv => hNoWitness ⟨v, hv⟩
     have hForall :
         ⟪w⟫ ⊨[M]∀ᶠ fun v => ¬ᶠ (body v) :=
       Sat.forall_intro (M := M) (w := w)
@@ -400,7 +400,7 @@ lemma prehistory_height_le_zero_false
       have hPos :
           0 < PreHistory.height (PreHistory.mk l) :=
         by simp [PreHistory.height]
-      exact (not_lt.mpr hLe) hPos
+      exact (Nat.not_lt.mpr hLe) hPos
 
 /-- Inductive step for the height-based argument in
 `vote_implies_echo_quorum_local`.  Assuming the result for all worlds strictly
@@ -626,7 +626,7 @@ lemma vote_implies_echo_quorum_local
     ∃ source : Signature.Value S,
       ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
-  have hBound : PreHistory.height t.time ≤ PreHistory.height t.time := le_rfl
+  have hBound : PreHistory.height t.time ≤ PreHistory.height t.time := Nat.le_refl _
   exact
     vote_implies_echo_quorum_height_induction
       (M := M) (liveSymb := liveSymb) (proposeSymb := proposeSymb)
@@ -646,7 +646,7 @@ lemma vote_implies_echo_quorum_end
       ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
   -- Evaluate the past vote at an end-of-time world.
-  let p : P := Classical.arbitrary P
+  let p : P := Classical.ofNonempty
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hVoteTop :
       ⟪wTop⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [learner, value]⟩) :=
@@ -934,7 +934,7 @@ lemma echo_quorums_agree
       cases hEvt
       exact hNe rfl
     -- Evaluate the diamond at the global end-of-time world.
-    let p₀ : P := Classical.arbitrary P
+    let p₀ : P := Classical.ofNonempty
     set wTop : World P (Signature.EventType S) := ⟨p₀, †, M.history.val⟩
     have hDiamondTop :
         ⟪wTop⟫ ⊨[M]
@@ -1784,7 +1784,7 @@ lemma correlationImpliesPairwiseQuorumIntersection
   exact (sat_diamond_top_iff_hasQuorumNonempty (M := M)
     (w := wTop) (ls := [l₁, l₂])).2 hNonempty
 
-/-- Correlation implies quorum intersection 
+/-- Correlation implies quorum intersection
 
 The three-twined axiom from ThyHBB3 guarantees that any pair of learners has
 intersecting quorums, by exploiting the three-way intersection property. This
@@ -1840,7 +1840,7 @@ lemma correlationImpliesQuorumIntersection
   exact (sat_diamond_top_iff_hasQuorumNonempty (M := M)
     (w := wTop) (ls := [l₁, l₂])).2 hNonempty
 
-/-- Universal correlation implies intersection 
+/-- Universal correlation implies intersection
 
 Universal correlation (□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) also guarantees
 quorum intersection for learners l₁ and l₂. The universal box assumption is
@@ -1870,8 +1870,7 @@ lemma correlationEveryoneImpliesIntersection
     refine (Sat.diamondEmpty (M := M)
     (w := ⟨p, †, M.history.val⟩)
     (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).2 ?_
-    use p
-    exact hAll p
+    exact ⟨p, hAll p⟩
     -- Apply the "someone" version
   exact correlationImpliesPairwiseQuorumIntersection hTheory hHistory hSomeone
 

@@ -147,13 +147,9 @@ Same as Figure 2 ([ModalDistribution/Logic/Syntax.lean](ModalDistribution/Logic/
 ## Section 4: The Modalities
 
 ### Lemma 4.1.1 (N-way quorum intersection)
-**Supporting semifilter definitions:**
-- `familyQuorums`, `familyInter`, `familyInterNonempty`, `familyInterWitness` ([ModalDistribution/Core/Semifilter.lean](ModalDistribution/Core/Semifilter.lean))
-- `allFamilyInterNonempty`, `allFamilyInterWitness`, `sequentialFamilyIntersections` ([ModalDistribution/Core/Semifilter.lean](ModalDistribution/Core/Semifilter.lean))
-
-- Part 1: `familyInterWitness_iff`, `nWayQuorumIntersectionWitness` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
-- Part 2: `familyInterNonempty_iff`, `nWayQuorumIntersectionNonempty` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
-- Part 3: `familyInterWitness_imp_nonempty`, `quorumWitnessImpliesNonempty` ([ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Core/Semifilter.lean, ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 1: `nWayQuorumIntersectionWitness` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 2: `nWayQuorumIntersectionNonempty` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- Part 3: `quorumWitnessImpliesNonempty` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 
 **Supporting lemmas:**
 - `hasQuorumWitness`, `presentBoxImpliesPastBox`, `pastBoxAtTopWorld` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))

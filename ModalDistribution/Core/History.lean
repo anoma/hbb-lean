@@ -1,8 +1,4 @@
 import ModalDistribution.Core.Prehistory
-import Mathlib.Order.Defs.PartialOrder
-import Mathlib.Data.Finset.Basic
-import Mathlib.Logic.Basic
-import Mathlib.Tactic
 
 open scoped PreHistory
 open Set
@@ -26,7 +22,9 @@ A history is a hereditarily transitive element of PreHistory(P, Event).
 * Local view properties and sequentiality lemmas
 -/
 
-variable {P Event : Type*}
+universe u v
+
+variable {P : Type u} {Event : Type v}
 
 /-- A prehistory is transitive when every strict predecessor is a subset. -/
 def isTransitive (h : PreHistory P Event) : Prop :=
@@ -75,7 +73,7 @@ lemma isHereditarilyTransitive.desc
 
 /-- Histories are the prehistories that are hereditarily transitive.
     The transitivity of the history follows from the hereditary property itself. -/
-structure History (P Event : Type*) where
+structure History (P : Type u) (Event : Type v) where
   val : PreHistory P Event
   hered : isHereditarilyTransitive val
 
@@ -139,7 +137,7 @@ theorem history_characterization (h : History P Event) :
     exact ⟨predecessorHistory (H := h) h_before, rfl⟩
 
 /-- The empty prehistory forms a history (no predecessors). -/
-def emptyHistory (P Event : Type*) : History P Event :=
+def emptyHistory (P : Type u) (Event : Type v) : History P Event :=
 {
   val := PreHistory.empty,
   hered := by
@@ -158,7 +156,7 @@ end History
 
 section HistoryAt
 
-variable {P Event : Type*}
+variable {P : Type u} {Event : Type v}
 
 namespace History
 
@@ -379,12 +377,15 @@ theorem happensBeforeEq_antisymm (h1 h2 : History P Event) :
       -- Both are equal, so h1 = h2
       exact History.ext h12_eq
 
-/-- Partial order instance for happens-before relation on histories -/
-instance : PartialOrder (History P Event) where
+/-- Order relation for the happens-before relation on histories.  Reflexivity,
+transitivity and antisymmetry are `PreHistory.happensBeforeEq_refl`,
+`happensBeforeEq_trans` and `happensBeforeEq_antisymm`. -/
+instance : LE (History P Event) where
   le h1 h2 := h1.val ⪯ h2.val
-  le_refl h := PreHistory.happensBeforeEq_refl h.val
-  le_trans h1 h2 h3 := happensBeforeEq_trans h1 h2 h3
-  le_antisymm h1 h2 := happensBeforeEq_antisymm h1 h2
+
+/-- Strict order relation for the happens-before relation on histories. -/
+instance : LT (History P Event) where
+  lt h1 h2 := h1 ≤ h2 ∧ ¬ h2 ≤ h1
 
 /-- Strict happens-before implies the corresponding order relation. -/
 theorem le_of_happensBefore {h₁ h₂ : History P Event} :
@@ -419,7 +420,7 @@ theorem eq_of_le_of_le_history {h₁ h₂ : History P Event} :
     h₁ ≤ h₂ → h₂ ≤ h₁ → h₁ = h₂ :=
   by
     intro h₁₂ h₂₁
-    exact le_antisymm h₁₂ h₂₁
+    exact happensBeforeEq_antisymm h₁ h₂ h₁₂ h₂₁
 
 /-- Predecessor histories sit strictly below the ambient history. -/
 theorem predecessorHistory_lt {H : History P Event}

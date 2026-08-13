@@ -30,7 +30,7 @@ The file is organized into several categories:
 - **Echo existence and equality lemmas**: Derive echo properties from unique proposals
   - `uniquePropose_exists_witness_echo`: Antecedent ensures echoes exist
   - `uniquePropose_eventually_echo_core`: Combines existence and equality
-  - `uniquePropose_eventually_echo`: Main result 
+  - `uniquePropose_eventually_echo`: Main result
 
 - **Helper lemmas for event-level reasoning**:
   - `sometime_echo_event_exists`: Witness explicit echo events
@@ -39,7 +39,7 @@ The file is organized into several categories:
   - `echoNonEquiv_diamond`: Echo non-equivalence constraint
 
 - **Safety lemmas**:
-  - `atMostOnePropose_safe`: Uniqueness implies safety 
+  - `atMostOnePropose_safe`: Uniqueness implies safety
 -/
 
 namespace ModalDistribution
@@ -201,7 +201,7 @@ lemma uniquePropose_exists_witness_at_world
       ⟪w⟫ ⊨[M]
         ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
   classical
-  by_contra hNoWitness
+  refine Classical.byContradiction fun hNoWitness => ?_
   have hNotForall : ∀ value : Signature.Value S,
       ¬ (⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)) :=
     not_exists.mp hNoWitness

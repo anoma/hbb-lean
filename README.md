@@ -88,13 +88,12 @@ lake build
 ```
 This builds the project **and verifies all proofs**. It will:
 - Automatically install the correct Lean version (v4.24.0-rc1)
-- Download and build Mathlib4 (the standard mathematical library)
 - Build and verify all formalized correctness proofs for ThyHBB1, ThyHBB2, and ThyHBB3
 
 **What to expect during the build:**
-- The first build takes several minutes to several hours depending on system specs, as it compiles Mathlib4
-- You'll see messages like "✔ [2440/3111] Built Mathlib.Topology.UniformSpace.Completion (31s)" as modules are being processed
-- The build compiles roughly 3100 files total, which can be used to gauge build progress
+- The project has no external dependencies beyond Lean itself, so the first build takes well under a minute on a typical machine
+- You'll see messages like "✔ [13/38] Built ModalDistribution.Logic.Properties.Modalities (842ms)" as modules are being processed
+- The build compiles 38 files total, which can be used to gauge build progress
 - When you see modules from `ModalDistribution.Examples.ThyHBB1`, `ThyHBB2`, and `ThyHBB3` being processed, that's when the correctness properties (Agreement, Liveness 1, and Liveness 2) for each protocol are being verified
 - Subsequent builds are much faster
 

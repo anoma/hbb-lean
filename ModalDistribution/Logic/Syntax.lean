@@ -1,4 +1,3 @@
-import Mathlib.Data.Finset.Basic
 import ModalDistribution.Core.Model
 
 open Lean

@@ -1,3 +1,6 @@
+import ModalDistribution.Core.Tactics
+import ModalDistribution.Core.Set
+import ModalDistribution.Core.Equiv
 import ModalDistribution.Core.Prehistory
 import ModalDistribution.Core.History
 import ModalDistribution.Core.Semifilter

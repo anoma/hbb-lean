@@ -1,8 +1,5 @@
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Set.Basic
-import Mathlib.Order.WellFounded
-import Mathlib.Data.List.Basic
-import Mathlib.Tactic
+import ModalDistribution.Core.Set
+import ModalDistribution.Core.Equiv
 
 /-!
 # Prehistory Structures
@@ -24,34 +21,36 @@ in a distributed system.
 * Basic properties of the happens-before relations
 -/
 
-variable {P Event : Type*}
+universe u v
+
+variable {P : Type u} {Event : Type v}
 
 -- Definition of maybe-events (Event†)
-inductive MaybeEvent (Event : Type*) where
+inductive MaybeEvent (Event : Type v) where
   | some : Event → MaybeEvent Event  -- Regular events
   | none : MaybeEvent Event          -- The non-event †
 
 notation:max "†" => MaybeEvent.none
 
 -- Prehistory inductive type.
--- Note: We use List instead of Finset due to Lean's positivity restrictions.
+-- Note: We use List instead of a finite-set type due to Lean's positivity restrictions.
 -- The paper acknowledges this approach (pages 4-5), noting that while it introduces
 -- redundancy (multiple lists can represent the same logical prehistory), all the
 -- mathematical development works with this representation.
 -- The paper's requirement that prehistories are finite (⊆fin) is automatically
 -- satisfied because: (1) inductive types in Lean are well-founded by construction,
 -- preventing infinite recursion, and (2) Lists have finite length.
-inductive PreHistory (P Event : Type*) where
+inductive PreHistory (P : Type u) (Event : Type v) where
   | mk : List (P × MaybeEvent Event × PreHistory P Event) → PreHistory P Event
 
 -- Event tuple type alias.
 -- An event tuple is (p, E, H) ∈ P × Event† × PreHistory(P, Event)
 -- Note: World must be defined after PreHistory due to dependency
-abbrev World (P Event : Type*) := P × MaybeEvent Event × PreHistory P Event
+abbrev World (P : Type u) (Event : Type v) := P × MaybeEvent Event × PreHistory P Event
 
 namespace World
 
-variable {P Event : Type*}
+variable {P : Type u} {Event : Type v}
 
 /-!
 ### Projection functions for event tuples
@@ -103,10 +102,6 @@ def singleton (t : World P Event) : PreHistory P Event :=
 -- Construct from a list (allows duplicates)
 def fromList (l : List (World P Event)) : PreHistory P Event :=
   mk l
-
--- Construct from a finite set (removes duplicates)
-noncomputable def fromFinset (s : Finset (World P Event)) : PreHistory P Event :=
-  mk s.toList
 
 -- Membership relation for event tuples in prehistories
 def mem (tuple : World P Event) (h : PreHistory P Event) : Prop :=
@@ -182,8 +177,16 @@ def accessibleLe (t' t : World P Event) : Prop :=
     accessibleLe t' t ↔
       accessible t' t ∧ World.place t' = World.place t := Iff.rfl
 
-scoped[PreHistory] infix:50 " ≪ " => World.accessible
-scoped[PreHistory] infix:50 " ≪⁻ " => World.accessibleLe
+end World
+
+namespace PreHistory
+
+scoped infix:50 " ≪ " => World.accessible
+scoped infix:50 " ≪⁻ " => World.accessibleLe
+
+end PreHistory
+
+namespace World
 
 open scoped PreHistory
 
@@ -341,7 +344,7 @@ private lemma heightList_ge_of_mem {P Event}
         rw [←h]
         apply Nat.le_max_left
       · -- t ∈ xs
-        exact le_trans (ih h) (Nat.le_max_right _ _)
+        exact Nat.le_trans (ih h) (Nat.le_max_right _ _)
 
 -- The measure strictly decreases along ≺−
 lemma height_lt_of_happensBefore {P Event}
@@ -460,24 +463,20 @@ lemma height_le_of_subset {h₁ h₂ : PreHistory P Event}
                       heightList (P := P) (Event := Event) ts ≤
                         heightList (P := P) (Event := Event) l₂ :=
                     ih (fun s hs => hsub s (by simp [hs]))
-                  simpa [heightList] using (max_le_iff).2 ⟨ht_le, hts_le⟩
+                  simpa [heightList] using Nat.max_le.2 ⟨ht_le, hts_le⟩
             exact aux hsubset_list
-          simpa [height] using add_le_add_right heightList_le 1
+          simpa [height] using Nat.add_le_add_right heightList_le 1
 
--- Final well-foundedness proof using onFun + mono
+-- Well-foundedness follows from the strict decrease of the height measure
 theorem happensBefore_wellFounded : WellFounded (@happensBefore P Event) := by
-  -- well-foundedness of `<` on Nat
-  have wfNat : WellFounded (fun a b : Nat => a < b) := Nat.lt_wfRel.wf
-  -- pull back along `height`
-  have wfOnHeight :
-      WellFounded (Function.onFun (fun a b : Nat => a < b) (height (P := P) (Event := Event))) :=
-    WellFounded.onFun wfNat
-  -- show ≺− ⊆ onFun(<, height)
-  refine WellFounded.mono wfOnHeight ?mono
+  -- pull well-foundedness of `<` on Nat back along `height`
+  have wfHeight :
+      WellFounded (InvImage (fun a b : Nat => a < b) (height (P := P) (Event := Event))) :=
+    InvImage.wf _ Nat.lt_wfRel.wf
+  refine Subrelation.wf ?_ wfHeight
   intro a b hab
   -- exactly the strict height decrease we proved
-  simpa [Function.onFun] using
-    (height_lt_of_happensBefore (P := P) (Event := Event) hab)
+  exact height_lt_of_happensBefore (P := P) (Event := Event) hab
 
 -- ≺− is irreflexive and transitive
 theorem happensBefore_irrefl (h : PreHistory P Event) : ¬(h ≺− h) := by
@@ -639,7 +638,7 @@ lemma happensBeforeEq_height_le
   · have h_lt := height_lt_of_happensBefore (P := P) (Event := Event) h_before
     exact (Nat.lt_succ_iff).1 (Nat.lt_succ_of_lt h_lt)
   · subst h_eq
-    exact le_rfl
+    exact Nat.le_refl _
 
 /-- No prehistory happens strictly before the empty prehistory. -/
 lemma not_happensBefore_empty (h : PreHistory P Event) :
@@ -708,7 +707,7 @@ instance [ToString P] [ToString Event] : ToString (PreHistory P Event) where
 
 section Examples
 
-variable (P : Type*) (Event : Type*) [ToString P] [ToString Event]
+variable (P : Type u) (Event : Type v) [ToString P] [ToString Event]
 
 -- Example 1: Empty prehistory
 -- Represents: ∅

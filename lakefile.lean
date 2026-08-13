@@ -9,12 +9,8 @@ package "ModalDistribution" where
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩,
     ⟨`maxSynthPendingDepth, .ofNat 3⟩,
-    ⟨`weak.linter.mathlibStandardSet, true⟩, -- Enable mathlib standard linters (conditional)
     ⟨`weak.linter.unnecessarySimpa, true⟩, -- Warn about unnecessary use of simp
-    ⟨`weak.linter.unreachableTactic, true⟩, -- Warn about unreachable tactics
   ]
-
-require "leanprover-community" / "mathlib"
 
 @[default_target]
 lean_lib «ModalDistribution» where
