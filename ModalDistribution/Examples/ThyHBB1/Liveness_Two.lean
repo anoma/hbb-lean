@@ -479,23 +479,6 @@ lemma livenessTwoThyHBB1
           (predicate0 liveSymb ∧ᶠ φVote) :=
     hStep5Global p
 
-  -- Ensure the history is inhabited for knowledge reasoning.
-  have hHistoryNonempty :
-      ∃ t : World P (Signature.EventType S), t ∈ M.history.val := by
-    obtain ⟨qDeliver, hPastDeliver⟩ :=
-      (Sat.Sat_diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₁', l, v]⟩))).1
-        (by simpa [Formula.diamondPast] using hDeliver)
-    obtain ⟨tDeliver, ht_mem, _, _⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qDeliver, †, wTop.time⟩)
-        (φ := ofEvent ⟨deliverSymb, [l₁', l, v]⟩)).1
-        hPastDeliver
-    refine ⟨tDeliver, ?_⟩
-    simpa [wTop, World.time]
-      using ht_mem
-
   -- Step 6: convert guarded knowledge into eventual votes via `Vote!` and the knowledge axiom.
   have hVotesGlobal :
       ⊨[M]
@@ -644,7 +627,6 @@ lemma livenessTwoThyHBB1
         (M := M) (liveSymb := liveSymb)
         (l := l₂') (φ := ofEvent ⟨voteSymb, [l, v]⟩)
         (hTheory := hThyLiveTheory)
-        (hNonempty := hHistoryNonempty)
         (hQuorum := hVotesGlobal)
     simpa [wTop]
       using hKnowledge p

@@ -9,7 +9,7 @@ import ModalDistribution.Core.History
 
 We formalise the liveness theory.  The theory is
 parametrised by a distinguished predicate symbol `liveSymb`, and contains the
-axioms `LiveAlways`, `LiveSeq`, `LiveActive`, together with two knowledge axiom
+axioms `LiveAlways` and `LiveSeq`, together with two knowledge axiom
 schemes.  This file records the theory and lemmas and
 propositions that depend on it.
 -/
@@ -43,12 +43,6 @@ section Axioms
     Formula S :=
   (Formula.predicate0 liveSymb) ⇒ᶠ Formula.seq
 
-/-- Axiom `LiveActive`: live participants are eventually active. -/
-@[simp] def liveActiveAxiom
-    (liveSymb : Signature.PredSymb S) :
-    Formula S :=
-  ⤒ᶠ (□ᶠ[] ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ))
-
 /-- Axiom-scheme `Knowledge₍⋄₎`. -/
 @[simp] def knowledgeDiamondAxiom
     (liveSymb : Signature.PredSymb S)
@@ -78,7 +72,6 @@ section Axioms
   { φ |
       φ = liveAlwaysAxiom (S := S) liveSymb ∨
       φ = liveSeqAxiom (S := S) liveSymb ∨
-      φ = liveActiveAxiom (S := S) liveSymb ∨
       (∃ ls ψ,
         φ = knowledgeDiamondAxiom (S := S) liveSymb ls ψ) ∨
       (∃ ls ψ,
@@ -148,51 +141,6 @@ lemma sometime_past_end
   simpa [Formula.diamondPast, Formula.diamondEmpty]
     using hDiamondEnd
 
-/-- Every model satisfying `ThyLive` admits a global past-activity guard. -/
-lemma live_guard_past
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    (hNonempty : ∃ t : World P (Signature.EventType S),
-      t ∈ M.history.val) :
-    ⊨[M] □ᶠ[] ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ) := by
-  classical
-  have hActiveMem :
-      liveActiveAxiom (S := S) liveSymb ∈ ThyLive liveSymb := by
-    simp [ThyLive]
-  have hActive :
-      AllWorldValid M (liveActiveAxiom (S := S) liveSymb) :=
-    hTheory hActiveMem
-  have hActiveEvent :
-      AllWorldValid M
-        (⤒ᶠ (□ᶠ[]
-          ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ))) := by
-    intro t ht
-    simpa [liveActiveAxiom]
-      using hActive ht
-  obtain ⟨w₀, hwTime, hBox⟩ :=
-    AllWorldValid_atEnd_exists (M := M)
-      (φ := □ᶠ[]
-        ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ))
-      hActiveEvent hNonempty
-  have hwTime' : w₀.time = M.history.val := hwTime
-  have hwTime'' : w₀.2.2 = M.history.val := by
-    simpa [World.time] using hwTime'
-  have hGuard :
-      ∀ q : P,
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]
-          ((Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ) := by
-    have hLocal :=
-      (Sat.boxEmpty (M := M)
-        (w := w₀)
-        (φ := (Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ)).1 hBox
-    intro q
-    have := hLocal q
-    simpa [World.time, hwTime''] using this
-  intro p
-  exact
-    (Sat.boxEmpty (M := M)
-      (w := ⟨p, †, M.history.val⟩)
-      (φ := (Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ)).2 hGuard
-
 /-- `LiveAlways` transports end-of-time liveness to any witnessed prefix. -/
 lemma live_at_predecessor
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -245,74 +193,6 @@ lemma live_at_predecessor
       using hLivePreEvent
   simpa [Hpre, hHpre]
     using hLivePre
-
-/-- Extract a predecessor event for a live participant using the guard axiom. -/
-lemma live_guard_predecessor_data
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    (hNonempty : ∃ t : World P (Signature.EventType S),
-      t ∈ M.history.val)
-    {w : World P (Signature.EventType S)}
-    (hLive : ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb) :
-    ∃ t : World P (Signature.EventType S),
-      t ∈ M.history.val ∧
-      t.place = w.place ∧
-      t.time ≺− M.history.val ∧
-      ⟪t⟫ ⊨[M] Formula.predicate0 liveSymb := by
-  classical
-  have hBox :=
-    live_guard_past (M := M)
-      (hTheory := hTheory) (hNonempty := hNonempty)
-  have hGuard :=
-    (Sat.boxEmpty (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
-      (φ := (Formula.predicate0 liveSymb) ⇒ᶠ ↓ᶠ ⊤ᶠ)).1
-      (hBox w.place)
-  have hPastTop :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M] ↓ᶠ ⊤ᶠ :=
-    Sat.imp_elim (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
-      (φ := Formula.predicate0 liveSymb)
-      (ψ := ↓ᶠ ⊤ᶠ) (hGuard w.place) hLive
-  obtain ⟨t, ht_mem, ht_place, _⟩ :=
-    (Sat.past (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
-      (φ := ⊤ᶠ)).1 hPastTop
-  have ht_mem' : t ∈ M.history.val := by
-    simpa [World.time] using ht_mem
-  have ht_place' : t.place = w.place := by
-    simpa [World.place] using ht_place
-  have hStrict : t.time ≺− M.history.val :=
-    happensBefore_of_mem (P := P)
-      (Event := Signature.EventType S) ht_mem'
-  have hLive_pred :
-      ⟨liveSymb, []⟩ ∈ M.predInterp w.place M.history.val := by
-    simpa [Formula.predicate0, Sat]
-      using hLive
-  have hLive_pred_t :
-      ⟨liveSymb, []⟩ ∈ M.predInterp t.place M.history.val := by
-    simpa using
-      (Eq.subst (motive := fun p =>
-        ⟨liveSymb, []⟩ ∈ M.predInterp p M.history.val)
-        ht_place'.symm hLive_pred)
-  have hLive_t :
-      ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
-        Formula.predicate0 liveSymb := by
-    simpa [Formula.predicate0, Sat] using hLive_pred_t
-  have hLivePre :=
-    live_at_predecessor (M := M)
-      (hTheory := hTheory)
-      (w := t)
-      (hMem := by simpa using ht_mem')
-      (hLive := hLive_t)
-  have hPre_val :
-      (predecessorHistory (H := M.history)
-        (happensBefore_of_mem (P := P)
-          (Event := Signature.EventType S) ht_mem')).val = t.time := by
-    simp [predecessorHistory]
-  refine ⟨t, ht_mem', ht_place', hStrict, ?_⟩
-  have := hLivePre
-  simpa [Formula.predicate0, Sat, World.place, World.event, World.time, hPre_val]
-    using this
 
 /-- Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
  Liveness does not depend on time: a participant is live at a specific world
@@ -439,68 +319,56 @@ lemma alwaysLiveEquivBackward
         using this
     exact h_t.2 hGlobal
 
-/-- Instantiate the knowledge axiom at a predecessor history. -/
-lemma knowledgeDiamond_imp_at_predecessor
+/-- Instantiate the knowledge axiom at an end-of-time world. -/
+lemma knowledgeDiamond_imp_at_end
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ : Formula S}
-    {t : World P (Signature.EventType S)}
-    (ht : t ∈ M.history.val) :
-    ⟪t⟫ ⊨[M]
+    (p : P) :
+    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
       (⤒ᶠ (♢ᶠ↓[[]]
         ((Formula.predicate0 liveSymb) ∧ᶠ φ))) ⇒ᶠ
         ((Formula.predicate0 liveSymb) ⇒ᶠ
           ↕ᶠ (♢ᶠ↓[[]] φ)) := by
   classical
-  rcases t with ⟨p, evt, H⟩
-  have ht' : (p, evt, H) ∈ M.history.val := by
-    simpa using ht
   have hKnowMem :
       knowledgeDiamondAxiom (S := S) liveSymb [] φ ∈ ThyLive liveSymb := by
     simp [ThyLive, Formula.sometime, Formula.diamondPast]
   have hKnow :
       AllWorldValid M (knowledgeDiamondAxiom (S := S) liveSymb [] φ) :=
     hTheory hKnowMem
-  have hPre :=
-    AllWorldValid_predecessor (M := M)
-      (hEvent := hKnow) (hMem := ht')
-  have hPre_val :
-      (predecessorHistory (H := M.history)
-        (happensBefore_of_mem (P := P)
-          (Event := Signature.EventType S) ht')).val = H := by
-    simp [predecessorHistory]
-  have := hPre
-  simpa [Formula.predicate0, Sat, hPre_val]
-    using this
+  exact
+    AllWorldValid.at_end (M := M)
+      (φ := knowledgeDiamondAxiom (S := S) liveSymb [] φ)
+      hKnow p
 
-/-- Knowledge axiom `Knowledge₍⋄₎` yields a local sometime guarantee for arbitrary past guards. -/
-lemma knowledgeDiamond_sometime_at_predecessor_formula
+/-- Knowledge axiom `Knowledge₍⋄₎` yields an end-of-time sometime guarantee for
+arbitrary past guards. -/
+lemma knowledgeDiamond_sometime_at_end_formula
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ : Formula S}
-    {t : World P (Signature.EventType S)}
-    (ht : t ∈ M.history.val)
-    (hLive : ⟪t⟫ ⊨[M]Formula.predicate0 liveSymb)
-    (hEvent : ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
-    ⟪t⟫ ⊨[M]↕ᶠ (♢ᶠ↓[[]] φ) := by
+    {p : P}
+    (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
+    (hEvent : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
+    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↕ᶠ (♢ᶠ↓[[]] φ) := by
   classical
   have hAtEnd :
-      ⟪t⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ⤒ᶠ (♢ᶠ↓[[]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φ)) :=
     (Sat.atEnd (M := M)
-      (w := t)
+      (w := ⟨p, †, M.history.val⟩)
       (φ :=
         ♢ᶠ↓[[]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φ))).2 hEvent
   have hImp :=
-    knowledgeDiamond_imp_at_predecessor (M := M)
-      (hTheory := hTheory) (φ := φ)
-      (t := t) (ht := ht)
+    knowledgeDiamond_imp_at_end (M := M)
+      (hTheory := hTheory) (φ := φ) (p := p)
   have hLiveImp :
-      ⟪t⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         (Formula.predicate0 liveSymb) ⇒ᶠ
           ↕ᶠ (♢ᶠ↓[[]] φ) :=
     Sat.imp_elim (M := M)
-      (w := t)
+      (w := ⟨p, †, M.history.val⟩)
       (φ :=
         ⤒ᶠ (♢ᶠ↓[[]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φ)))
@@ -510,58 +378,45 @@ lemma knowledgeDiamond_sometime_at_predecessor_formula
       hImp hAtEnd
   exact
     Sat.imp_elim (M := M)
-      (w := t)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := Formula.predicate0 liveSymb)
       (ψ := ↕ᶠ (♢ᶠ↓[[]] φ))
       hLiveImp hLive
 
-/-- Specialisation of `knowledgeDiamond_sometime_at_predecessor_formula` to event formulas. -/
-lemma knowledgeDiamond_sometime_at_predecessor
+/-- Specialisation of `knowledgeDiamond_sometime_at_end_formula` to event formulas. -/
+lemma knowledgeDiamond_sometime_at_end
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    {t : World P (Signature.EventType S)}
-    (ht : t ∈ M.history.val)
-    (hLive : ⟪t⟫ ⊨[M]Formula.predicate0 liveSymb)
-    (hEvent : ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb)
+    {p : P}
+    (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
+    (hEvent : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb)
       ∧ᶠ Formula.ofEvent evt)) :
-      ⟪t⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ↕ᶠ (♢ᶠ↓[[]] (Formula.ofEvent evt)) := by
   classical
   exact
-    knowledgeDiamond_sometime_at_predecessor_formula (M := M)
-      (hTheory := hTheory) (ht := ht)
+    knowledgeDiamond_sometime_at_end_formula (M := M)
+      (hTheory := hTheory)
       (hLive := hLive) (hEvent := hEvent)
 
 /-!
   A live participant that globally knows a quorum fact eventually comes to know that
   quorum from its local perspective.  This packages the knowledge axiom
-  `Knowledge₍⋄⇓₎` together with `live_guard_predecessor_data`, and will be shared
-  across the liveness developments.
+  `Knowledge₍⋄⇓₎`, and will be shared across the liveness developments.
 -/
 lemma live_eventually_knows_box
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    (hNonempty : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M](Formula.predicate0 liveSymb) ⇒ᶠ ↕ᶠ (□ᶠ↓[[l]] φ) := by
   classical
   intro p
-  let wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  refine Sat.imp_intro (M := M) (w := ⟨p, †, M.history.val⟩) ?_
   intro hLiveTop
-
-  -- Extract a concrete predecessor event witnessing the live participant.
-  obtain ⟨wPre, hw_mem, hw_place, hw_before, hLivePre⟩ :=
-    live_guard_predecessor_data (M := M)
-      (hTheory := hTheory)
-      (hNonempty := hNonempty)
-      (w := wTop)
-      (hLive := hLiveTop)
 
   -- The knowledge axiom instance we need.
   have hKnowMem :
       knowledgeDiamondEventuallyAxiom (S := S)
         liveSymb [l] φ ∈ ThyLive liveSymb := by
     dsimp [ThyLive]
-    refine Or.inr ?_
     refine Or.inr ?_
     refine Or.inr ?_
     refine Or.inr ?_
@@ -573,74 +428,38 @@ lemma live_eventually_knows_box
           liveSymb [l] φ) :=
     hTheory hKnowMem
 
-  -- The global quorum box at the predecessor participant.
-  have hQuorumPreTop :
-      ⟪⟨wPre.place, †, M.history.val⟩⟫ ⊨[M]
-        □ᶠ↓[[l]] ((Formula.predicate0 liveSymb) ∧ᶠ φ) :=
-    hQuorum wPre.place
+  have hAx :=
+    AllWorldValid.at_end (M := M)
+      (φ := knowledgeDiamondEventuallyAxiom (S := S)
+        liveSymb [l] φ)
+      hKnowledge p
 
   have hAtEnd :
-      ⟪wPre⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ⤒ᶠ (□ᶠ↓[[l]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φ)) :=
     (Sat.atEnd (M := M)
-      (w := wPre)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := □ᶠ↓[[l]]
-        ((Formula.predicate0 liveSymb) ∧ᶠ φ))).2
-      (by simpa using hQuorumPreTop)
+        ((Formula.predicate0 liveSymb) ∧ᶠ φ))).2 (hQuorum p)
 
-  -- Apply the knowledge axiom at the predecessor event.
-  have hKnowledgePre :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := knowledgeDiamondEventuallyAxiom (S := S)
-        liveSymb [l] φ)
-      hKnowledge hw_mem
-
-  have hImp :=
-    Sat.imp_elim (M := M) (w := wPre)
+  have hImp :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
+        (Formula.predicate0 liveSymb) ⇒ᶠ
+          ↕ᶠ (□ᶠ↓[[l]] φ) :=
+    Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩)
       (φ := ⤒ᶠ (□ᶠ↓[[l]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φ)))
       (ψ := (Formula.predicate0 liveSymb) ⇒ᶠ
           ↕ᶠ (□ᶠ↓[[l]] φ))
-      hKnowledgePre hAtEnd
+      hAx hAtEnd
 
-  -- The live hypothesis persists at the predecessor event.
-  have hLivePreLocal :
-      ⟪wPre⟫ ⊨[M] Formula.predicate0 liveSymb :=
-    hLivePre
-
-  have hSometimeBox :
-      ⟪wPre⟫ ⊨[M]
-        ↕ᶠ (□ᶠ↓[[l]] φ) :=
-    Sat.imp_elim (M := M) (w := wPre)
+  exact
+    Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩)
       (φ := Formula.predicate0 liveSymb)
       (ψ := ↕ᶠ (□ᶠ↓[[l]] φ))
-      hImp hLivePreLocal
+      hImp hLiveTop
 
-  -- Evaluate the sometime fact at the end of time for participant `p`.
-  have hPastBoxPre :
-      ⟪⟨wPre.place, †, M.history.val⟩⟫ ⊨[M]
-        ↓ᶠ (□ᶠ↓[[l]] φ) :=
-    (Sat.atEnd (M := M)
-      (w := wPre)
-      (φ := Formula.past (□ᶠ↓[[l]] φ))).1
-      (by simpa [Formula.sometime] using hSometimeBox)
-
-  have hPastBoxTop :
-      ⟪wTop⟫ ⊨[M]
-        ↓ᶠ (□ᶠ↓[[l]] φ) := by
-    cases hw_place
-    simpa [wTop, World.place] using hPastBoxPre
-
-  have hPastBox :
-      ⟪wTop⟫ ⊨[M]↕ᶠ (□ᶠ↓[[l]] φ) :=
-    (Sat.atEnd (M := M)
-      (w := wTop)
-      (φ := Formula.past (□ᶠ↓[[l]] φ))).2
-      hPastBoxTop
-
-  exact hPastBox
 private lemma promote_live_atddot_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ))
@@ -653,7 +472,6 @@ private lemma promote_live_atddot_past
       knowledgeDiamondEventuallyAxiom (S := S) liveSymb [l] φ ∈
         ThyLive liveSymb := by
     dsimp [ThyLive]
-    refine Or.inr ?_
     refine Or.inr ?_
     refine Or.inr ?_
     refine Or.inr ?_
@@ -825,25 +643,6 @@ lemma promote_live_atddot
       (hTheory := hTheory)
       (hQuorum := hQuorum) (q := q) hPastLiveφ
 
-/-- Any satisfied past-guarded empty diamond witnesses a global history event. -/
-lemma exists_history_of_diamondEmpty_past
-    {p : P} {φ : Formula S}
-    (hDiamond : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ[]↓ᶠ φ) :
-    ∃ t : World P (Signature.EventType S),
-      t ∈ M.history.val := by
-  classical
-  obtain ⟨r, hPast⟩ :=
-    (Sat.diamondEmpty (M := M)
-      (w := ⟨p, †, M.history.val⟩)
-      (φ := ↓ᶠ φ)).1 hDiamond
-  obtain ⟨t, ht_mem, _, _⟩ :=
-    (Sat.past (M := M)
-      (w := ⟨r, †, M.history.val⟩)
-      (φ := φ)).1 hPast
-  refine ⟨t, ?_⟩
-  simpa [World.time]
-    using ht_mem
-
 /-- Specialisation of the knowledge axiom: live participants eventually know past events. -/
 lemma live_knows_eventually
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -852,69 +651,19 @@ lemma live_knows_eventually
     (hEvent : ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ Formula.ofEvent evt)) :
     ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ↓[[]] (Formula.ofEvent evt) := by
   classical
-  have hEvent_p :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          ((Formula.predicate0 liveSymb) ∧ᶠ Formula.ofEvent evt) :=
-    hEvent p
-  have hDiamondWitness :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[] ↓ᶠ ((Formula.predicate0 liveSymb)
-          ∧ᶠ Formula.ofEvent evt) := by
-    simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-      using hEvent_p
-  obtain ⟨t, ht_mem⟩ :=
-    exists_history_of_diamondEmpty_past
-      (M := M) (P := P)
-      (hDiamond := hDiamondWitness)
-  obtain ⟨w, hw_mem, hw_place, hw_before, hLive_w⟩ :=
-    live_guard_predecessor_data (M := M)
-      (hTheory := hTheory) (hNonempty := ⟨t, ht_mem⟩)
-      (w := ⟨p, †, M.history.val⟩)
-      (hLive := hLive)
-  have hw_event :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          ((Formula.predicate0 liveSymb) ∧ᶠ Formula.ofEvent evt) := by
-    cases hw_place.symm with
-    | refl => simpa using hEvent_p
-  have hLive_w_local :
-      ⟪w⟫ ⊨[M]
-        Formula.predicate0 liveSymb :=
-    hLive_w
   have hSometime :=
-    knowledgeDiamond_sometime_at_predecessor (M := M)
-      (hTheory := hTheory) (ht := hw_mem)
-      (hLive := hLive_w_local) (hEvent := hw_event)
+    knowledgeDiamond_sometime_at_end (M := M)
+      (hTheory := hTheory)
+      (hLive := hLive) (hEvent := hEvent p)
   have hSometime' :
-      ⟪w⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ↕ᶠ (♢ᶠ[]↓ᶠ (Formula.ofEvent evt)) := by
     simpa [Formula.diamondPast, Formula.diamondEmpty, id]
       using hSometime
-  have hSubset_plain : w.time ⊆ M.history.val := by
-    have :=
-      History.predecessorHistory_subset (H := M.history) hw_before
-    simpa using this
-  have hSubset : w.time ⊆trn M.history.val :=
-    transitiveSubset_of_subset (P := P)
-      (Event := Signature.EventType S)
-      hSubset_plain
-      (by
-        simpa using
-          History.hereditarilyTransitive
-            (History.predecessorHistory
-              (H := M.history) hw_before))
-  have hDiamondPast_raw :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[]↓ᶠ (Formula.ofEvent evt) :=
+  have hDiamondPast :=
     sometime_past_end (M := M)
-      (w := w)
+      (w := ⟨p, †, M.history.val⟩)
       (hSat := hSometime')
-  have hDiamondPast :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[]↓ᶠ (Formula.ofEvent evt) := by
-    cases hw_place.symm with
-    | refl => simpa using hDiamondPast_raw
   simpa [Formula.diamondPast, Formula.diamondEmpty, id]
     using hDiamondPast
 
@@ -929,49 +678,27 @@ lemma live_knows_eventually_past
       ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ
         ♢ᶠ↓[[]] (Formula.ofEvent evt)) := by
   classical
-  have hDiamondWitness :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[] ↓ᶠ ((Formula.predicate0 liveSymb)
-          ∧ᶠ Formula.ofEvent evt) := by
-    simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-      using hEvent
-  obtain ⟨t, ht_mem⟩ :=
-    exists_history_of_diamondEmpty_past (M := M) (P := P)
-      (hDiamond := hDiamondWitness)
-  obtain ⟨w, hw_mem, hw_place, hw_before, hLive_w⟩ :=
-    live_guard_predecessor_data (M := M)
-      (hTheory := hTheory) (hNonempty := ⟨t, ht_mem⟩)
-      (w := ⟨p, †, M.history.val⟩)
-      (hLive := hLive)
-  have hw_event :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          ((Formula.predicate0 liveSymb) ∧ᶠ Formula.ofEvent evt) := by
-    cases hw_place.symm with
-    | refl => simpa using hEvent
-  have hLive_w_local :
-      ⟪w⟫ ⊨[M]
-        Formula.predicate0 liveSymb := hLive_w
   have hSometime :=
-    knowledgeDiamond_sometime_at_predecessor (M := M)
-      (hTheory := hTheory) (ht := hw_mem)
-      (hLive := hLive_w_local) (hEvent := hw_event)
+    knowledgeDiamond_sometime_at_end (M := M)
+      (hTheory := hTheory)
+      (hLive := hLive) (hEvent := hEvent)
   have hPastDiamond :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ↓ᶠ (♢ᶠ[]↓ᶠ (Formula.ofEvent evt)) :=
     (Sat.atEnd (M := M)
-      (w := w)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := ↓ᶠ (♢ᶠ[]↓ᶠ (Formula.ofEvent evt)))).1
       (by
         simpa [Formula.sometime]
           using hSometime)
   obtain ⟨tPast, ht_mem, ht_place, hDiamondPast⟩ :=
     (Sat.past (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := ♢ᶠ[]↓ᶠ (Formula.ofEvent evt))).1 hPastDiamond
   have ht_mem_history : tPast ∈ M.history.val := by
     simpa [World.time] using ht_mem
-  have ht_place_p : tPast.place = p := ht_place.trans hw_place
+  have ht_place_p : tPast.place = p := by
+    simpa [World.place] using ht_place
   have hLive_end :
       ⟪⟨tPast.place, †, M.history.val⟩⟫ ⊨[M]
         Formula.predicate0 liveSymb := by
@@ -1008,21 +735,13 @@ lemma live_knows_eventually_past
       (φ := Formula.predicate0 liveSymb)
       (ψ := ♢ᶠ↓[[]] (Formula.ofEvent evt))).2
       ⟨hLivePast_event, hDiamondPast⟩
-  have hPastIntro :=
+  exact
     Sat.past_intro_of_prefix (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
+      (w := ⟨p, †, M.history.val⟩)
       (t := tPast)
-      (ht := by
-        simpa [World.time] using ht_mem)
-      (hp := by
-        simpa [World.place] using ht_place)
+      (ht := ht_mem)
+      (hp := ht_place)
       (hφ := hConjPast)
-  have hResult :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ
-          ♢ᶠ↓[[]] (Formula.ofEvent evt)) := hPastIntro
-  cases hw_place
-  simpa using hResult
 
 lemma live_knows_eventually_event_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -1034,58 +753,35 @@ lemma live_knows_eventually_event_past
       ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ
         ♢ᶠ↓[[]]
           (♢ᶠ↓[[]] (Formula.ofEvent evt))) := by
+  classical
   set φ := ♢ᶠ↓[[]] (Formula.ofEvent evt) with hφ
   have hEvent_p :
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ♢ᶠ↓[[]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φ) := by
     simpa [hφ] using hEvent p
-  have hDiamondWitness :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[] ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ φ) := by
-    simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-      using hEvent_p
-  obtain ⟨t, ht_mem⟩ :=
-    exists_history_of_diamondEmpty_past (M := M) (P := P)
-      (hDiamond := hDiamondWitness)
-  obtain ⟨w, hw_mem, hw_place, hw_before, hLive_w⟩ :=
-    live_guard_predecessor_data (M := M)
-      (hTheory := hTheory)
-      (hNonempty := ⟨t, ht_mem⟩)
-      (w := ⟨p, †, M.history.val⟩)
-      (hLive := hLive)
-  have hw_event :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          ((Formula.predicate0 liveSymb) ∧ᶠ φ) := by
-    cases hw_place.symm with
-    | refl => simpa using hEvent_p
-  have hLive_w_local :
-      ⟪w⟫ ⊨[M] Formula.predicate0 liveSymb := hLive_w
   have hSometime :=
-    knowledgeDiamond_sometime_at_predecessor_formula (M := M)
+    knowledgeDiamond_sometime_at_end_formula (M := M)
       (hTheory := hTheory)
-      (ht := hw_mem)
-      (hLive := hLive_w_local)
-      (hEvent := hw_event)
+      (hLive := hLive)
+      (hEvent := hEvent_p)
   have hPastDiamond :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ↓ᶠ (♢ᶠ↓[[]] φ) :=
     (Sat.atEnd (M := M)
-      (w := w)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := ↓ᶠ (♢ᶠ↓[[]] φ))).1
       (by
         simpa [Formula.sometime]
           using hSometime)
   obtain ⟨tPast, ht_mem, ht_place, hDiamondPast⟩ :=
     (Sat.past (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := ♢ᶠ↓[[]] φ)).1 hPastDiamond
   have ht_mem_history : tPast ∈ M.history.val := by
     simpa [World.time] using ht_mem
-  have ht_place_w : tPast.place = w.place := by
+  have ht_place_p : tPast.place = p := by
     simpa [World.place] using ht_place
-  have ht_place_p : tPast.place = p := ht_place_w.trans hw_place
   have hLive_end :
       ⟪⟨tPast.place, †, M.history.val⟩⟫ ⊨[M]
         Formula.predicate0 liveSymb := by
@@ -1128,17 +824,12 @@ lemma live_knows_eventually_event_past
       ⟨hLivePast, hDiamondPast'⟩
   have hPastIntro :=
     Sat.past_intro_of_prefix (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
+      (w := ⟨p, †, M.history.val⟩)
       (t := tPast)
       (ht := ht_mem)
       (hp := ht_place)
       (hφ := hConjPast)
-  have hResult :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ
-          ♢ᶠ↓[[]] φ) := hPastIntro
-  cases hw_place
-  simpa [hφ] using hResult
+  simpa [hφ] using hPastIntro
 
 /-- Empty-learner past diamonds compose idempotently for event formulas. -/
 lemma diamondEmpty_past_event_flat
@@ -1213,50 +904,28 @@ lemma live_knows_eventually_quorum_past
         ♢ᶠ↓[[]]
           ((Formula.predicate0 liveSymb) ∧ᶠ φBox) := by
     simpa [hφBox] using hQuorum p
-  have hDiamondWitness :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[] ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ φBox) := by
-    simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-      using hQuorum_p
-  obtain ⟨t, ht_mem⟩ :=
-    exists_history_of_diamondEmpty_past (M := M)
-      (hDiamond := hDiamondWitness)
-  obtain ⟨w, hw_mem, hw_place, hw_before, hLive_w⟩ :=
-    live_guard_predecessor_data (M := M)
-      (hTheory := hTheory)
-      (hNonempty := ⟨t, ht_mem⟩)
-      (w := ⟨p, †, M.history.val⟩)
-      (hLive := hLive)
-  have hw_event :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          ((Formula.predicate0 liveSymb) ∧ᶠ φBox) := by
-    cases hw_place.symm with
-    | refl => simpa using hQuorum_p
-  have hLive_w_local :
-      ⟪w⟫ ⊨[M] Formula.predicate0 liveSymb := hLive_w
   have hSometime :=
-    knowledgeDiamond_sometime_at_predecessor_formula (M := M)
+    knowledgeDiamond_sometime_at_end_formula (M := M)
       (hTheory := hTheory)
-      (ht := hw_mem)
-      (hLive := hLive_w_local)
-      (hEvent := hw_event)
+      (hLive := hLive)
+      (hEvent := hQuorum_p)
   have hPastDiamond :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ↓ᶠ (♢ᶠ[]↓ᶠ φBox) :=
     (Sat.atEnd (M := M)
-      (w := w)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := ↓ᶠ (♢ᶠ[]↓ᶠ φBox))).1
       (by
         simpa [Formula.sometime]
           using hSometime)
   obtain ⟨tPast, ht_mem, ht_place, hDiamondPast⟩ :=
     (Sat.past (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
+      (w := ⟨p, †, M.history.val⟩)
       (φ := ♢ᶠ[]↓ᶠ φBox)).1 hPastDiamond
   have ht_mem_history : tPast ∈ M.history.val := by
     simpa [World.time] using ht_mem
-  have ht_place_p : tPast.place = p := ht_place.trans hw_place
+  have ht_place_p : tPast.place = p := by
+    simpa [World.place] using ht_place
   have hLive_end :
       ⟪⟨tPast.place, †, M.history.val⟩⟫ ⊨[M]
         Formula.predicate0 liveSymb := by
@@ -1310,16 +979,12 @@ lemma live_knows_eventually_quorum_past
       ⟨hLivePast, hBoxPast⟩
   have hPastIntro :=
     Sat.past_intro_of_prefix (M := M)
-      (w := ⟨w.place, †, M.history.val⟩)
+      (w := ⟨p, †, M.history.val⟩)
       (t := tPast)
       (ht := ht_mem)
       (hp := ht_place)
       (hφ := hConjPast)
-  have hResult :
-      ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]
-        ↓ᶠ ((Formula.predicate0 liveSymb) ∧ᶠ φBox) := hPastIntro
-  cases hw_place
-  simpa [hφBox] using hResult
+  simpa [hφBox] using hPastIntro
 
 /-- Live quorums eventually know past facts. -/
 theorem live_eventually_knows

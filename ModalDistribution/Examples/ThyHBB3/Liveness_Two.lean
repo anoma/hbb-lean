@@ -474,19 +474,12 @@ forces a live delivery for `l₂`. -/
     classical
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
-    obtain ⟨wPre, hw_mem, hw_place, _, hLivePre⟩ :=
-      live_guard_predecessor_data (M := M)
-        (hTheory := hThyLive)
-        (hNonempty := hHistoryNonempty)
-        (w := wTop)
-        (hLive := hLiveTop)
     -- Instantiate the knowledge axiom for `[l₂]` vote quorums.
     have hKnowledgeMem :
         knowledgeDiamondEventuallyAxiom (S := S)
           liveSymb [l₂]
           (ofEvent ⟨voteSymb, [l₂, v]⟩) ∈ ThyLive liveSymb := by
       dsimp [ThyLive]
-      refine Or.inr ?_
       refine Or.inr ?_
       refine Or.inr ?_
       refine Or.inr ?_
@@ -497,73 +490,37 @@ forces a live delivery for `l₂`. -/
             liveSymb [l₂]
             (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
       hThyLive hKnowledgeMem
-    -- Evaluate the box hypothesis at the predecessor participant.
-    have hQuorumPreTop :
-        ⟪⟨wPre.place, †, M.history.val⟩⟫ ⊨[M]
-          □ᶠ↓[[l₂]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩) := by
-      cases hw_place
-      simpa [wTop, World.place, World.time] using hVotesBox_l₂
+    -- Evaluate the box hypothesis at the end of time.
     have hAtEnd :
-        ⟪wPre⟫ ⊨[M]
+        ⟪wTop⟫ ⊨[M]
           ⤒ᶠ (□ᶠ↓[[l₂]]
             (predicate0 liveSymb ∧ᶠ
               ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
       (Sat.atEnd (M := M)
-        (w := wPre)
+        (w := wTop)
         (φ := □ᶠ↓[[l₂]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l₂, v]⟩))).2
-        (by simpa using hQuorumPreTop)
-    have hKnowledgePre :=
-      AllWorldValid.of_mem_history
-        (M := M)
-        (φ := knowledgeDiamondEventuallyAxiom (S := S)
-          liveSymb [l₂] (ofEvent ⟨voteSymb, [l₂, v]⟩))
-        hKnowledgeEvent hw_mem
+        (by simpa [wTop, World.place, World.time] using hVotesBox_l₂)
     have hImp :=
-      Sat.imp_elim (M := M) (w := wPre)
+      Sat.imp_elim (M := M) (w := wTop)
         (φ := ⤒ᶠ (□ᶠ↓[[l₂]]
             (predicate0 liveSymb ∧ᶠ
               ofEvent ⟨voteSymb, [l₂, v]⟩)))
         (ψ := predicate0 liveSymb ⇒ᶠ
             ↕ᶠ (□ᶠ↓[[l₂]]
               (ofEvent ⟨voteSymb, [l₂, v]⟩)))
-        hKnowledgePre hAtEnd
-    have hSometimeBox :
-        ⟪wPre⟫ ⊨[M]
-          ↕ᶠ (□ᶠ↓[[l₂]]
-            (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      Sat.imp_elim (M := M) (w := wPre)
+        (AllWorldValid.at_end (M := M)
+          (φ := knowledgeDiamondEventuallyAxiom (S := S)
+            liveSymb [l₂] (ofEvent ⟨voteSymb, [l₂, v]⟩))
+          hKnowledgeEvent p)
+        hAtEnd
+    exact
+      Sat.imp_elim (M := M) (w := wTop)
         (φ := predicate0 liveSymb)
         (ψ := ↕ᶠ (□ᶠ↓[[l₂]]
           (ofEvent ⟨voteSymb, [l₂, v]⟩)))
-        hImp hLivePre
-    have hPastBoxPre :
-        ⟪⟨wPre.place, †, M.history.val⟩⟫ ⊨[M]
-          ↓ᶠ (□ᶠ↓[[l₂]]
-            (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      (Sat.atEnd (M := M)
-        (w := wPre)
-        (φ := ↓ᶠ (□ᶠ↓[[l₂]]
-          (ofEvent ⟨voteSymb, [l₂, v]⟩)))).1
-        (by
-          simpa [Formula.sometime]
-            using hSometimeBox)
-    have hPastBoxTop :
-        ⟪wTop⟫ ⊨[M]
-          ↓ᶠ (□ᶠ↓[[l₂]]
-            (ofEvent ⟨voteSymb, [l₂, v]⟩)) := by
-      cases hw_place
-      simpa [wTop, World.place, World.time]
-        using hPastBoxPre
-    exact
-      (Sat.atEnd (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (□ᶠ↓[[l₂]]
-          (ofEvent ⟨voteSymb, [l₂, v]⟩)))).2
-        hPastBoxTop
+        hImp hLiveTop
   -- Votes for `l₂` lead to deliveries for `l₂`; see `ThyHBB3.deliverForwardAxiom`.
   have hLiveToDeliver :
       ⟪wTop⟫ ⊨[M]

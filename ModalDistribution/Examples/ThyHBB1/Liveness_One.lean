@@ -378,19 +378,6 @@ lemma livenessOneThyHBB1
       ⟪wTop⟫ ⊨[M] □ᶠ↓[[l]] φLiveVote := by
     simpa [wTop, φLiveVote] using hVotesGlobal p
 
-  have hHistoryNonempty :
-      ∃ t : World P (Signature.EventType S), t ∈ M.history.val := by
-    classical
-    obtain ⟨qProp, hPastProp⟩ :=
-      hPastWitness
-    obtain ⟨tPast, ht_mem, _, _⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qProp, †, M.history.val⟩)
-        (φ := (predicate0 liveSymb) ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))).1 hPastProp
-    refine ⟨tPast, ?_⟩
-    simpa [World.time] using ht_mem
-
   -- Step 6 (Knowledge$\atddot{}$): a live participant eventually knows the votes.
   have step6 :
       ⟪wTop⟫ ⊨[M]
@@ -404,7 +391,6 @@ lemma livenessOneThyHBB1
         (l := l)
         (φ := ofEvent ⟨voteSymb, [l, v]⟩)
         (hTheory := hThyLiveTheory)
-        (hNonempty := hHistoryNonempty)
         (hQuorum := hVotesGlobal)
     simpa [wTop]
       using hKnow p

@@ -953,27 +953,6 @@ lemma boxPast_valid_iff_not_diamondEventually_not
           (M := M) (w := ⟨p, †, M.history.val⟩)
           (ts := ls) (φ := φ)).2 hSat
 
-lemma AllWorldValid_atEnd_exists
-    (M : Model S P) {φ : Formula S}
-    (hEvent : AllWorldValid M (⤒ᶠφ))
-    (hNonempty : ∃ t : World P (Signature.EventType S),
-      t ∈ M.history.val) :
-    ∃ w : World P (Signature.EventType S),
-      w.time = M.history.val ∧ ⟪w⟫ ⊨[M] φ := by
-  classical
-  obtain ⟨t, ht⟩ := hNonempty
-  have hBefore :
-      t.time ⪯ M.history.val :=
-    PreHistory.happensBeforeEq_of_mem
-      (P := P) (Event := Signature.EventType S)
-      (hmem := by
-        simpa [World.place, World.event, World.time] using ht)
-  have hAtEnd := hEvent hBefore
-  have hSat : Sat M t.place † M.history.val φ := by
-    simpa [Formula.atEnd, Sat] using hAtEnd
-  refine ⟨⟨t.place, †, M.history.val⟩, rfl, ?_⟩
-  simpa using hSat
-
 lemma AllWorldValid_predecessor
     (M : Model S P) {φ : Formula S}
     (hEvent : AllWorldValid M φ)

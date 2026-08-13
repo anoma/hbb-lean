@@ -54,20 +54,6 @@ lemma livenessTwoThyHBB2
   intro hDeliverSource
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLiveHere
-  have hHistoryNonempty : ∃ t : World P (Signature.EventType S), t ∈ M.history.val := by
-    obtain ⟨qDeliver, hPastDeliver⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩))).1
-        (by
-          simpa [Formula.diamondPast, wTop]
-            using hDeliverSource)
-    obtain ⟨tDeliver, ht_mem, _, _⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qDeliver, †, wTop.time⟩)
-        (φ := ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩)).1
-        hPastDeliver
-    exact ⟨tDeliver, by simpa [wTop, World.time] using ht_mem⟩
   have hIntersectTop :
       ⟪wTop⟫ ⊨[M] ♢ᶠ[[l₁', l₂']]⊤ᶠ := by
     -- Instantiate the quorum intersection assumption at the top world.
@@ -170,29 +156,15 @@ lemma livenessTwoThyHBB2
       exact hTheory (Or.inl hAx)
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
-    obtain ⟨wPre, hw_mem, hw_place, hw_before, hLivePre⟩ :=
-      live_guard_predecessor_data (M := M)
-        (hTheory := hThyLive)
-        (hNonempty := hHistoryNonempty)
-        (w := wTop)
-        (hLive := hLiveTop)
-    have hw_place' : wPre.place = wTop.place := by
-      simpa [wTop] using hw_place
-    have hQuorumPreTop :
-        ⟪⟨wPre.place, †, M.history.val⟩⟫ ⊨[M]
-          □ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [ℓ, v]⟩) := by
-      cases hw_place'
-      simpa [wTop] using hVoteBoxTarget
     have hAtEnd :
-        ⟪wPre⟫ ⊨[M]
+        ⟪wTop⟫ ⊨[M]
           ⤒ᶠ (□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
       (Sat.atEnd (M := M)
-        (w := wPre)
+        (w := wTop)
         (φ := □ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
           ofEvent ⟨voteSymb, [ℓ, v]⟩))).2
-        (by simpa using hQuorumPreTop)
+        (by simpa [wTop] using hVoteBoxTarget)
     have hKnowledge : AllWorldValid M
         (knowledgeDiamondEventuallyAxiom (S := S)
           liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
@@ -201,34 +173,23 @@ lemma livenessTwoThyHBB2
           liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))
         (by
           dsimp [ThyLive]
-          exact Or.inr (Or.inr (Or.inr (Or.inr ⟨[l₂'], ofEvent ⟨voteSymb, [ℓ, v]⟩, rfl⟩))))
+          exact Or.inr (Or.inr (Or.inr ⟨[l₂'], ofEvent ⟨voteSymb, [ℓ, v]⟩, rfl⟩)))
     have hImp :=
-      (Sat.imp (M := M) (w := wPre)
+      (Sat.imp (M := M) (w := wTop)
         (φ := ⤒ᶠ (□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
               ofEvent ⟨voteSymb, [ℓ, v]⟩)))
         (ψ := predicate0 liveSymb ⇒ᶠ
               ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
-        (AllWorldValid.of_mem_history
+        (AllWorldValid.at_end
           (M := M)
           (φ := knowledgeDiamondEventuallyAxiom (S := S)
               liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩))
-          hKnowledge hw_mem) hAtEnd
-    have hSometimePre :=
-      (Sat.imp (M := M) (w := wPre)
+          hKnowledge p) hAtEnd
+    exact
+      (Sat.imp (M := M) (w := wTop)
         (φ := predicate0 liveSymb)
         (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
-        hImp hLivePre
-    obtain ⟨t, ht_mem, ht_place, hBox⟩ :=
-      (Sat.sometime (M := M)
-        (w := wPre)
-        (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩))).1 hSometimePre
-    have ht_place' : t.place = wTop.place := by
-      simpa [hw_place'] using ht_place.trans hw_place'
-    exact
-      (Sat.sometime (M := M)
-        (w := wTop)
-        (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩))).2
-        ⟨t, ht_mem, ht_place', hBox⟩
+        hImp hLiveTop
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ

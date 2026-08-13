@@ -1152,6 +1152,15 @@ lemma AllWorldValid.of_mem_history
           simpa [World.place, World.event, World.time] using ht)
     exact h hBefore
 
+/-- Instantiate an event-driven validity at an end-of-time world. -/
+lemma AllWorldValid.at_end
+    (M : Model S P) {φ : Formula S}
+    (h : AllWorldValid M φ)
+    (p : P) :
+    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ :=
+  h (PreHistory.happensBeforeEq_refl
+      (P := P) (Event := Signature.EventType S) M.history.val)
+
 notation:55 "□W⊨[" M "]" φ =>
   AllWorldValid M φ
 

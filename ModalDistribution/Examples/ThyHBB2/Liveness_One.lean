@@ -182,22 +182,6 @@ lemma livenessOneThyHBB2
             ofEvent ⟨voteSymb, [l, v]⟩) :=
     by simpa [wTop] using hVotesGlobal p
 
-  have hHistoryNonempty : ∃ t : World P (Signature.EventType S), t ∈ M.history.val := by
-    classical
-    obtain ⟨qProp, hPastProp⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1
-        (by simpa [Formula.diamondPast] using hProposeWitness)
-    obtain ⟨tProp, ht_mem, _, _⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qProp, †, wTop.time⟩)
-        (φ := predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))).1
-        hPastProp
-    exact ⟨tProp, by simpa [wTop, World.time] using ht_mem⟩
-
   have hVoteEventually :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩) := by
@@ -250,7 +234,6 @@ lemma livenessOneThyHBB2
         (l := l)
         (φ := ofEvent ⟨voteSymb, [l, v]⟩)
         (hTheory := hThyLive)
-        (hNonempty := hHistoryNonempty)
         (hQuorum := hVotesGlobal)
     simpa [wTop]
       using hKnow p
