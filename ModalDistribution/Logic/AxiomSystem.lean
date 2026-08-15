@@ -21,27 +21,27 @@ set_option autoImplicit false
 -- Fix at Type 0 to match Semantics.lean
 variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
-/-- Formulas regarded as axioms.
+/-- Paper: Definition 5.2.1(1). Formulas regarded as axioms.
 In HOAS, all formulas are inherently closed. -/
 abbrev Axiom (S : Signature.{0, 0, 0}) : Type 1 :=
   Formula S
 
 namespace Axiom
 
-/-- An axiom holds in a model when it is valid at every event. -/
+/-- Paper: Definition 5.2.1(2). An axiom is valid in a model when it holds at every possible world. -/
 @[simp] def Valid
     (M : Model S P) (ax : Axiom S) : Prop :=
   AllWorldValid M ax
 
 end Axiom
 
-/-- A theory is a (possibly infinite) set of axioms. -/
+/-- Paper: Definition 5.2.1(3). A theory is a (possibly infinite) set of axioms. -/
 abbrev Theory (S : Signature.{0, 0, 0}) : Type 1 :=
   Set (Axiom S)
 
 namespace Theory
 
-/-- A model satisfies a theory when it satisfies each of its axioms. -/
+/-- Paper: Definition 5.2.1(4). A model satisfies a theory when it satisfies each of its axioms. -/
 @[simp] def Valid (M : Model S P) (T : Theory S) : Prop :=
   ∀ ⦃ax : Axiom S⦄, ax ∈ T → Axiom.Valid (M := M) ax
 

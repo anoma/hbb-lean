@@ -35,7 +35,7 @@ variable {S : Signature}
 
 section BackwardRules
 
-/-- Backward rule `Vote?`: votes are justified either by an echo quorum or by a
+/-- Paper: Figure 11, rule (Vote?). Backward rule `Vote?`: votes are justified either by an echo quorum or by a
 correlated chain of prior votes. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S)
@@ -47,7 +47,7 @@ correlated chain of prior votes. -/
           ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩))
 
-/-- Backward rule `Deliver?`: deliveries require an `l`-quorum of votes. -/
+/-- Paper: Figure 11, rule (Deliver?). Backward rule `Deliver?`: deliveries require an `l`-quorum of votes. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun value =>
@@ -58,7 +58,7 @@ end BackwardRules
 
 section NonEquivocation
 
-/-- Axiom `VoteNE`: correlated vote chains determine a unique value. -/
+/-- Paper: Figure 11, axiom (VoteNE). Axiom `VoteNE`: correlated vote chains determine a unique value. -/
 @[simp] def voteNonEquivAxiom
     (voteSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S) : Formula S :=
@@ -73,33 +73,33 @@ end NonEquivocation
 
 section Correlation
 
-/-- Axiom `3twined`: any three quorums (of any three learners) intersect. -/
+/-- Paper: Figure 11, axiom (3twined). Axiom `3twined`: any three quorums (of any three learners) intersect. -/
 @[simp] def threeTwinedAxiom : Formula S :=
   ∀ᶠ fun learner₁ => ∀ᶠ fun learner₂ => ∀ᶠ fun learner₃ =>
     ♢ᶠ[[learner₁, learner₂, learner₃]] ⊤ᶠ
 
-/-- Axiom `$\mnta\tf{seq}$`: correlated learners have sequential intersections. -/
+/-- Paper: Figure 11, axiom (≐seq). Axiom `$\mnta\tf{seq}$`: correlated learners have sequential intersections. -/
 @[simp] def correlationSeqAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ♢ᶠ[[learner, correlated]] Formula.seq
 
-/-- Axiom `$\mnta\utn$`: correlation is historically persistent. -/
+/-- Paper: Figure 11, axiom (≐⇓). Axiom `$\mnta\utn$`: correlation is historically persistent. -/
 @[simp] def correlationMonotoneAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
 
-/-- Axiom `$\mnta$symm`: correlation is symmetric. -/
+/-- Paper: Figure 11, axiom (≐symm). Axiom `$\mnta$symm`: correlation is symmetric. -/
 @[simp] def correlationSymmAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ofPredicate ⟨correlationSymb, [correlated, learner]⟩
 
-/-- Axiom `$\mnta$tran`: correlation is transitive. -/
+/-- Paper: Figure 11, axiom (≐tran). Axiom `$\mnta$tran`: correlation is transitive. -/
 @[simp] def correlationTransAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun middle => ∀ᶠ fun correlated =>
@@ -111,7 +111,7 @@ end Correlation
 
 section ForwardRules
 
-/-- Forward rule `Vote!`: live learners eventually vote after echo quorums. -/
+/-- Paper: Figure 11, rule (Vote!). Forward rule `Vote!`: live learners eventually vote after echo quorums. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -121,7 +121,7 @@ section ForwardRules
       ∃ᶠ fun witnessed =>
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
-/-- Forward rule `Vote'!`: correlated live knowledge propagates votes. -/
+/-- Paper: Figure 11, rule (Vote'!). Forward rule `Vote'!`: correlated live knowledge propagates votes. -/
 @[simp] def voteForwardCorrelatedAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb : Signature.EventSymb S)
@@ -133,7 +133,7 @@ section ForwardRules
       ∃ᶠ fun witnessed =>
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
-/-- Forward rule `Deliver!`: live vote quorums eventually lead to deliveries. -/
+/-- Paper: Figure 11, rule (Deliver!). Forward rule `Deliver!`: live vote quorums eventually lead to deliveries. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -151,7 +151,7 @@ variable
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S)
 
-/-- Theory ThyHBB3 .
+/-- Paper: Definition 8.2.1 (theory ThyHBB3). Theory ThyHBB3 .
 It extends `ThyLive` with the `ThyHBB3`-specific axioms in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |

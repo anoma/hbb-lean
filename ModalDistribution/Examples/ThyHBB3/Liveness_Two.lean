@@ -38,7 +38,7 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- If learners `l₁` and `l₂` are always
+/-- Paper: Proposition 8.4.5 (Liveness 2). If learners `l₁` and `l₂` are always
 correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
   theorem livenessTwoThyHBB3
@@ -635,7 +635,7 @@ forces a live delivery for `l₂`. -/
 
   exact hDeliverEventually
 
-/-- A delivery for `l₁`
+/-- Paper: Proposition 8.4.5, first corollary. A delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
 the same value. -/
 theorem livenessTwoAtPastDownThyHBB3
@@ -659,7 +659,7 @@ theorem livenessTwoAtPastDownThyHBB3
         (hTheory := hTheory)
         (hCorrelation := hCorrelation)
         (hLiveQuorum := hLiveQuorum))
-/-- A delivery for `l₁`
+/-- Paper: Proposition 8.4.5, second corollary. A delivery for `l₁`
 produces a delivery for `l₂` somewhere in the past. -/
 theorem livenessTwoAtPastThyHBB3
     (hTheory : M ⊨ᵀ

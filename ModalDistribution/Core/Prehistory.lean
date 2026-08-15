@@ -26,6 +26,7 @@ universe u v
 variable {P : Type u} {Event : Type v}
 
 -- Definition of maybe-events (Event†)
+/-- Paper: Notation 2.2.2 (maybe-sets). -/
 inductive MaybeEvent (Event : Type v) where
   | some : Event → MaybeEvent Event  -- Regular events
   | none : MaybeEvent Event          -- The non-event †
@@ -40,12 +41,14 @@ notation:max "†" => MaybeEvent.none
 -- The paper's requirement that prehistories are finite (⊆fin) is automatically
 -- satisfied because: (1) inductive types in Lean are well-founded by construction,
 -- preventing infinite recursion, and (2) Lists have finite length.
+/-- Paper: Definition 2.2.4 (Prehistories). -/
 inductive PreHistory (P : Type u) (Event : Type v) where
   | mk : List (P × MaybeEvent Event × PreHistory P Event) → PreHistory P Event
 
 -- Event tuple type alias.
 -- An event tuple is (p, E, H) ∈ P × Event† × PreHistory(P, Event)
 -- Note: World must be defined after PreHistory due to dependency
+/-- Paper: Definition 2.2.6(1) (event-tuples). -/
 abbrev World (P : Type u) (Event : Type v) := P × MaybeEvent Event × PreHistory P Event
 
 namespace World
@@ -58,10 +61,13 @@ variable {P : Type u} {Event : Type v}
 The specification refers to the *place*, *(maybe-)event*, and *time* of
 an event tuple. We expose exactly those projections.
 -/
+/-- Paper: Definition 2.2.6(2). -/
 @[simp] def place (t : World P Event) : P := t.1
 
+/-- Paper: Definition 2.2.6(2). -/
 @[simp] def event (t : World P Event) : MaybeEvent Event := t.2.1
 
+/-- Paper: Definition 2.2.6(2). -/
 @[simp] def time (t : World P Event) : PreHistory P Event := t.2.2
 
 -- Constructor for event tuples (for convenience)
@@ -82,6 +88,7 @@ def singleton (t : World P Event) : PreHistory P Event :=
   mk [t]
 
 -- Construct from a list (allows duplicates)
+/-- Paper: Definition 2.2.6(5) (the "knows of" relation). -/
 def mem (tuple : World P Event) (h : PreHistory P Event) : Prop :=
   match h with
   | mk l => tuple ∈ l
@@ -118,11 +125,11 @@ We expose that relation directly on event tuples so that worlds can be modelled
 without introducing additional wrappers.
 -/
 
-/-- Strict accessibility: `t' ≪ t` when `t'` belongs to the time component of `t`. -/
+/-- Paper: Definition 3.4.2(3) (accessibility, ≪). Strict accessibility: `t' ≪ t` when `t'` belongs to the time component of `t`. -/
 def accessible (t' t : World P Event) : Prop :=
   t' ∈ World.time t
 
-/-- Same-place accessibility (`≪^{-}` in Accessibility(4)). -/
+/-- Paper: Definition 3.4.2(4) (in-place accessibility, ≪⁻). Same-place accessibility (`≪^{-}` in Accessibility(4)). -/
 def accessibleLe (t' t : World P Event) : Prop :=
   accessible t' t ∧ World.place t' = World.place t
 
@@ -135,15 +142,18 @@ namespace World
 open scoped PreHistory
 end World
 namespace PreHistory
+/-- Paper: Definition 3.4.7 (H at p). -/
 def historyAt (H : PreHistory P Event) (p : P) : Set (World P Event) :=
   { t | t ∈ H ∧ World.place t = p }
 
+/-- Paper: Definition 2.3.1(1) (element-of, ≺−). -/
 def happensBefore (h1 h2 : PreHistory P Event) : Prop :=
   ∃ (p : P) (e : MaybeEvent Event),
     (p, e, h1) ∈ h2
 
 -- H' ⪯ H: H' happens non-strictly before H
 -- iff H' ≺− H ∨ H' = H
+/-- Paper: Definition 2.3.1(2) (non-strict element-of, ⪯). -/
 def happensBeforeEq (h1 h2 : PreHistory P Event) : Prop :=
   happensBefore h1 h2 ∨ h1 = h2
 
@@ -153,7 +163,7 @@ infixl:50 " ⪯ " => happensBeforeEq
 
 -- Happens-before membership characterization
 
-/-- Combining accessibility and happens-before:
+/-- Paper: Lemma 3.4.3. Combining accessibility and happens-before:
 strict accessibility forces the predecessor time to happen before the
 successor. -/
 theorem happensBefore_of_accessible {t' t : World P Event}
@@ -277,7 +287,7 @@ theorem happensBefore_irrefl (h : PreHistory P Event) : ¬(h ≺− h) := by
   -- But this is impossible (n < n is false for any n)
   exact Nat.lt_irrefl (height h) this
 
-/-- accessibility is irreflexive. -/
+/-- Paper: Proposition 3.4.5 (irreflexivity). accessibility is irreflexive. -/
 theorem accessible_irrefl (t : World P Event) :
     ¬ t ≪ t := by
   intro hacc
@@ -319,6 +329,7 @@ theorem subset_of_happensBeforeEq {h₁ h₂ : PreHistory P Event}
 
 -- Mutual non-strict happens-before forces equality of prehistories.
 
+/-- Paper: Remark 2.2.7 (fixpoint characterisation). -/
 def prehistory_fixpoint : PreHistory P Event ≃ List (World P Event) where
   toFun := fun h => match h with | mk l => l
   invFun := mk

@@ -34,7 +34,7 @@ variable {S : Signature}
 
 section BackwardAxioms
 
-/-- The right-hand side of axiom `Safe`: either at most one value has been
+/-- Paper: Figure 7, right-hand side of axiom (Safe). The right-hand side of axiom `Safe`: either at most one value has been
 proposed, or the learner has sequential quorum intersections with every
 learner. -/
 @[simp] def safeFormula
@@ -43,14 +43,14 @@ learner. -/
   ((∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
       ∀ᶠ (fun l' => ♢ᶠ[[learner, l']] Formula.seq))
 
-/-- Axiom `Safe`: the `safe` predicate is characterised by `safeFormula`. -/
+/-- Paper: Figure 7, axiom (Safe). Axiom `Safe`: the `safe` predicate is characterised by `safeFormula`. -/
 @[simp] def safeAxiom
     (safeSymb : Signature.PredSymb S)
     (proposeSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner =>
     ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
 
-/-- Backward rule `Vote?`: voting requires safety and prior echoes. -/
+/-- Paper: Figure 7, rule (Vote?). Backward rule `Vote?`: voting requires safety and prior echoes. -/
 @[simp] def voteBackwardAxiom
     (safeSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -67,7 +67,7 @@ end NonEquivalenceAxiom
 
 section ForwardAxioms
 
-/-- Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
+/-- Paper: Figure 7, rule (Vote!). Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb safeSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -85,7 +85,7 @@ variable
     (liveSymb safeSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- The collection of axioms forming the theory `ThyHBB1`. -/
+/-- Paper: Definition 6.1.2 (theory ThyHBB1). The collection of axioms forming the theory `ThyHBB1`. -/
 @[simp] def theory : Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨

@@ -758,7 +758,7 @@ theorem uniquePropose_witness_eq_value
     simpa [Sat] using hEq_global
   simp [Sat, hEq_val]
 
-/-- a unique proposal guarantees eventual echoes. -/
+/-- Paper: Lemma 6.5.1. a unique proposal guarantees eventual echoes. -/
 theorem uniquePropose_eventually_echo
     (value : S.Value)
     (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb)
@@ -820,7 +820,7 @@ theorem atMostOnePropose_safeFormula
   simpa [uniqueCond, seqGuard, safeFormula]
     using hOr
 
-/-- If at most one value is proposed, then every learner is everywhere and
+/-- Paper: Lemma 6.5.2. If at most one value is proposed, then every learner is everywhere and
 always safe. -/
 theorem atMostOnePropose_safe
     (hTheory : M ⊨ᵀ

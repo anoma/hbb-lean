@@ -25,7 +25,7 @@ set_option autoImplicit false
 variable {S : Signature} {P : Type}
 variable {w w' : World P (Signature.EventType S)}
 
-/-- Accessible predecessors preserve in-place accessibility slices. -/
+/-- Paper: Lemma 5.1.3. Accessible predecessors preserve in-place accessibility slices. -/
 theorem accessible_subset_of_accessible
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
@@ -57,7 +57,7 @@ theorem accessible_subset_of_accessible
 variable [Nonempty P]
 variable {M : Model S P}
 
-/-- Sequentiality persists along same-place accessibility. -/
+/-- Paper: Proposition 5.1.4(1). Sequentiality persists along same-place accessibility. -/
 theorem seq_monotone_of_subset
     (hAcc : w' ≪⁻ w)
     (Hw : History P (Signature.EventType S))
@@ -86,7 +86,7 @@ theorem seq_monotone_of_subset
     exact hSeqTime t₁ t₂ ht₁ ht₂ hp₁' hp₂'
   exact (Sat.seq (M := M) (w := w')).2 hSeqTime'
 
-/-- Sequentiality implies `⇓ᶠ`-sequentiality. -/
+/-- Paper: Proposition 5.1.4(2). Sequentiality implies `⇓ᶠ`-sequentiality. -/
 theorem seq_monotone_allItp
     (Hw : History P (Signature.EventType S))
     (hwTime : Hw.val = w.time)
@@ -119,7 +119,7 @@ theorem seq_monotone_allItp
     (Sat.seq (M := M) (w := t)).2 hSeq_t_place
   exact (Sat.not_elim (M := M) (w := t) (φ := Formula.seq)) ht_notSeq hSeq_t
 
-/-- Quorum intersections furnish a joint witness. -/
+/-- Paper: Proposition 5.1.5(1). Quorum intersections furnish a joint witness. -/
 theorem two_quorums_exists
     {ls : Signature.Value S}
     {ls' : Signature.Value S}
@@ -161,7 +161,7 @@ theorem two_quorums_exists
     sat_diamondEmpty_of_local (M := M)
       (w := w) (φ := ((ψ ∧ᶠ φ) ∧ᶠ φ')) hWitness
 
-/-- Sequentiality coincides with linear ordering of the in-place slice. -/
+/-- Paper: Lemma 5.1.2. Sequentiality coincides with linear ordering of the in-place slice. -/
 theorem seq_iff_linear_accessible
     : (⟪w⟫ ⊨[M]Formula.seq) ↔
       (∀ {w₁ w₂ : World P (Signature.EventType S)},
@@ -288,7 +288,7 @@ theorem sat_diamondPast_empty_participant_iff
         (w := ⟨p₁, evt₁, H₁⟩)
         (φ := ↓ᶠ φ)).2 ⟨p, hp₂⟩
 
-/-- Specialized to local witnesses: sequential world with two distinct local events
+/-- Paper: Proposition 5.1.5(2). Specialized to local witnesses: sequential world with two distinct local events
 implies temporal ordering. -/
 theorem seq_two_quorums_events
     {w : World P (Signature.EventType S)}
@@ -411,7 +411,7 @@ theorem seq_two_quorums_events
           have hEqual : evt = evt' := MaybeEvent.some.inj hMaybe
           exact (hDistinct hEqual).elim
 
-/-- Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
+/-- Paper: Proposition 5.1.5(3). Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
 theorem seq_two_quorums_eventually
     {H : History P (Signature.EventType S)}
     {w : World P (Signature.EventType S)}

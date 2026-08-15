@@ -40,7 +40,7 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Liveness property 2 specialised to `ThyHBB1`.
+/-- Paper: Proposition 6.4.5 (Liveness 2). Liveness property 2 specialised to `ThyHBB1`.
 If a value is delivered to learner l₁' and:
 - Learners l₁' and l₂' have intersecting quorums
 - The safe condition holds for learner l
@@ -683,7 +683,7 @@ theorem livenessTwoThyHBB1
 
   exact step8 hLivep
 
-/-- Corollary: a delivery for `(l₁', l)`
+/-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
 theorem livenessTwoAtPastDownThyHBB1
@@ -709,7 +709,7 @@ theorem livenessTwoAtPastDownThyHBB1
         (hIntersect := hIntersect)
         (hSafe := hSafe)
         (hLive := hLive))
-/-- Corollary: a delivery for `(l₁', l)`
+/-- Paper: Proposition 6.4.5, second corollary. Corollary: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
 theorem livenessTwoAtPastThyHBB1
     (hTheory : M ⊨ᵀ

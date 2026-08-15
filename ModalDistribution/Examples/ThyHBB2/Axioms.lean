@@ -32,7 +32,7 @@ variable {S : Signature}
 
 section BackwardAxioms
 
-/-- Backward rule `Vote?`: votes require an `l`-quorum of echoes. -/
+/-- Paper: Figure 9, rule (Vote?). Backward rule `Vote?`: votes require an `l`-quorum of echoes. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
@@ -47,7 +47,7 @@ end NonEquivocation
 
 section ForwardAxioms
 
-/-- Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote. -/
+/-- Paper: Figure 9, rule (Vote!). Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -64,7 +64,7 @@ variable
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- Theory ThyHBB2 .
+/-- Paper: Definition 7.1.1 (theory ThyHBB2). Theory ThyHBB2 .
 It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |

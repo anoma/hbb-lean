@@ -35,7 +35,7 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- Agreement property for ThyHBB3.
+/-- Paper: Proposition 8.3.1 (Agreement). Agreement property for ThyHBB3.
 
 Correlation between l₁ and l₂ forces any deliveries for those learners
 to agree on the value. This uses the correlation predicate to establish quorum
@@ -300,7 +300,7 @@ theorem agreementThyHBB3
           (hCorr := hCorr_now)
       exact by simp [Sat, hEqVotes.symm]
 
-/-- If deliveries for learners
+/-- Paper: Proposition 8.3.1, hypothesis form. If deliveries for learners
 `l₁` and `l₂` both occur, their values coincide. -/
 theorem agreementThyHBB3_of_deliveries
     (hTheory : M ⊨ᵀ

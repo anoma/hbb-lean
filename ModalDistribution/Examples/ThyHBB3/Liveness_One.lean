@@ -40,7 +40,7 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- If learner `l` has a live quorum and
+/-- Paper: Proposition 8.5.1 (Liveness 1). If learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `l`. -/
   theorem livenessOneThyHBB3
@@ -473,7 +473,7 @@ the proposal will eventually deliver it for `l`. -/
         hPastDeliverTop
   exact hDeliverEventuallyTop
 
-/-- When the guarded proposal
+/-- Paper: Proposition 8.5.1, first corollary. When the guarded proposal
 statement holds, every member of learner `l`'s quorum knows (in the past) that
 `l` delivered the value. -/
 theorem livenessOneAtPastDownThyHBB3
@@ -497,7 +497,7 @@ theorem livenessOneAtPastDownThyHBB3
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
         (l := l) (v := v) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique))
-/-- The guarded proposal
+/-- Paper: Proposition 8.5.1, second corollary. The guarded proposal
 statement guarantees the delivery diamond for learner `l`. -/
 theorem livenessOneAtPastThyHBB3
     (hTheory : M ⊨ᵀ

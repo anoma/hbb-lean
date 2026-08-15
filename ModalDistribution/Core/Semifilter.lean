@@ -28,7 +28,7 @@ namespace Semifilter
 
 variable {P : Type u}
 
-/-- Quorum intersection: `O ≬ O'` when two quorums intersect (their intersection is nonempty). -/
+/-- Paper: Notation 3.3.1 (≬). Quorum intersection: `O ≬ O'` when two quorums intersect (their intersection is nonempty). -/
 @[simp] def intersects (O O' : Set P) : Prop := (O ∩ O').Nonempty
 
 scoped infix:50 " ≬ " => Semifilter.intersects
@@ -37,7 +37,7 @@ end Semifilter
 
 open scoped Semifilter
 
-/-- A semifilter is: A semifilter is a nonempty up-closed family of pairwise
+/-- Paper: Definition 3.3.2 (semifilters). A semifilter is: A semifilter is a nonempty up-closed family of pairwise
 intersecting quorums over a participant set `P`. -/
 structure Semifilter (P : Type u) where
   /-- Carrier set of quorums. -/

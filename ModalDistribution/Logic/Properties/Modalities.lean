@@ -695,7 +695,7 @@ theorem hasQuorumWitness.seq_to_past
 
 /-! ## Quorum intersection results -/
 
-/-- N-way quorum intersection witness).
+/-- Paper: Lemma 4.1.1(1). N-way quorum intersection witness).
 
 Characterizes the global diamond modality `♢ᶠ[ls] φ` in terms of quorum witnesses:
 a formula holds under the diamond modality if and only if there exists a witness
@@ -740,7 +740,7 @@ theorem nWayQuorumIntersectionWitness
         (ls := ls) (φ := φ)
         (w := ⟨p, †, M.history.val⟩)).2 hCheck
 
-/-- N-way quorum intersection nonemptiness).
+/-- Paper: Lemma 4.1.1(2). N-way quorum intersection nonemptiness).
 
 Specializes the witness characterization to the trivial formula `⊤`: the global diamond
 `♢ᶠ[ls] ⊤ᶠ` holds if and only if all quorum families have nonempty intersection.
@@ -767,7 +767,7 @@ theorem nWayQuorumIntersectionNonempty
       using (Sat.top (M := M)
         (w := ⟨p, †, M.history.val⟩))
 
-/-- Quorum witness implies nonemptiness).
+/-- Paper: Lemma 4.1.1(3). Quorum witness implies nonemptiness).
 
 If a formula has a quorum witness (satisfies `♢ᶠ[ls] φ`), then the quorum families
 have nonempty intersection (satisfies `♢ᶠ[ls] ⊤ᶠ`). This weakening is useful when
@@ -790,17 +790,17 @@ theorem quorumWitnessImpliesNonempty
   exact
     (nWayQuorumIntersectionNonempty (M := M) (ls := ls)).2 hNonempty
 
-/-- Nonempty quorum intersections. -/
+/-- Paper: Notation 4.1.2 (nonempty quorum intersections). Nonempty quorum intersections. -/
 @[simp] def hasNonemptyIntersections
     (M : Model S P) (ls : List S.Value) : Prop :=
   ⊨[M] (♢ᶠ[ls] ⊤ᶠ)
 
-/-- Sequential quorum intersections. -/
+/-- Paper: Notation 4.1.2 (sequential quorum intersections). Sequential quorum intersections. -/
 @[simp] def hasSequentialIntersections
     (M : Model S P) (ls : List S.Value) : Prop :=
   ⊨[M] (♢ᶠ[ls] Formula.seq)
 
-/-- Live quorum intersections. -/
+/-- Paper: Notation 4.1.2 (live quorum intersections). Live quorum intersections. -/
 @[simp] def hasLiveIntersections
     (M : Model S P) (liveSymb : Signature.PredSymb S)
     (ls : List S.Value) : Prop :=
@@ -931,7 +931,7 @@ theorem pastBoxSeqImpliesPredecessor
 
 /-! ## Interplay between `↓`, `↕`, and quorum modalities -/
 
-/-- Singleton box implies diamond).
+/-- Paper: Lemma 4.2.1(1). Singleton box implies diamond).
 
 A singleton quorum box □ᶠ↓[[l]]φ guarantees that every quorum from learner l
 satisfies the past-guarded formula, which implies the empty diamond ♢ᶠ↓[[]] φ
@@ -956,7 +956,7 @@ theorem singletonBoxImpliesDiamond
       (w := w) (φ := ↓ᶠ φ)
       ⟨q, hAll q hq⟩
 
-/-- Global singleton box implies diamond).
+/-- Paper: Lemma 4.2.1(2). Global singleton box implies diamond).
 
 The global version: if □ᶠ[[l]] φ holds globally, then ♢ᶠ[] φ holds globally.
 This lifts the local singleton box implication to the global level.
@@ -980,7 +980,7 @@ theorem globalSingletonBoxImpliesDiamond
       (w := ⟨p, †, M.history.val⟩) (φ := φ)
       ⟨q, hAll q hq⟩
 
-/-- Quorum box implies empty diamond).
+/-- Paper: Lemma 4.2.1(2). Quorum box implies empty diamond).
 
 A singleton quorum box □ᶠ[[l]] φ at any world implies the empty diamond ♢ᶠ[] φ
 at that world. This is a strengthening that works for arbitrary histories, not
@@ -1053,7 +1053,7 @@ private theorem sat_boxPast_of_predecessor
       (φ := φ) (hSubset := hSubset_t) hPast
   simpa [World.place, World.event, World.time] using hPast'
 
-/-- Quorum box global implies empty diamond.
+/-- Paper: Lemma 4.2.2 (the S4 axiom). Quorum box global implies empty diamond.
 
 Past diamonds are idempotent: ♢ᶠ↓[[]] (↓ᶠ φ) is equivalent to ♢ᶠ↓[[]] φ.
 This shows that nested past operators collapse, simplifying reasoning about
@@ -1131,7 +1131,7 @@ theorem diamondPast_idem
       (w := w) (φ := ↓ᶠ φ)).2 ⟨q, hPastFinal⟩
   simpa [Formula.diamondPast] using hDiamondFinal
 
-/-- Past box collapses to present box).
+/-- Paper: Lemma 4.2.3(1). Past box collapses to present box).
 
 A past-guarded box ↓ᶠ (□ᶠ↓[[l]] φ) collapses to a present box □ᶠ↓[[l]] φ.
 This idempotency property shows that nested temporal operators can be simplified,
@@ -1161,7 +1161,7 @@ theorem pastBoxCollapsesToPresentBox
           using hBox_t)
   simpa [Formula.boxPast] using hBox
 
-/-- Past diamond-box collapses to present box).
+/-- Paper: Lemma 4.2.3(2). Past diamond-box collapses to present box).
 
 A past-guarded diamond containing a box ♢ᶠ↓[[]] (□ᶠ↓[[l]] φ) collapses to a
 present box □ᶠ↓[[l]] φ. This strengthens the previous collapsing lemma by showing
@@ -1422,7 +1422,7 @@ theorem endValid_diamondPast_of_imp_sometime
   simpa [wTop] using hDiamond
 
 
-/-- Characterisation of the `♢↓` modality: `♢↓[ls]φ` holds at `w` exactly when
+/-- Paper: Lemma 3.6.4(3). Characterisation of the `♢↓` modality: `♢↓[ls]φ` holds at `w` exactly when
 every choice of one quorum per learner admits an accessible world whose place
 lies in the intersection and which satisfies `φ`. -/
 theorem sat_diamondPast_iff_quorum_witness

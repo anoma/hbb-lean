@@ -59,7 +59,7 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Agreement property for ThyHBB1.
+/-- Paper: Proposition 6.3.1 (Agreement). Agreement property for ThyHBB1.
 
 Under sequentiality assumptions, if two different values are delivered at different
 learners, they must be equal. This is the fundamental correctness property of the
@@ -398,7 +398,7 @@ theorem agreementThyHBB1
           (fun h => hNe h.symm) hRight
       simpa [Sat] using hEqFinal.symm
 
-/-- Agreement from deliveries helper for ThyHBB1 (Corollary of agreement property).
+/-- Paper: Proposition 6.3.1, hypothesis form. Agreement from deliveries helper for ThyHBB1 (Corollary of agreement property).
 
 Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of time,
 the delivered values must coincide. This factors out the core reasoning used in

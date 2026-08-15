@@ -316,7 +316,7 @@ theorem safeFormula_allPast
     Sat.not_elim (M := M) (w := t)
       (φ := safeFormula proposeSymb l) hNotSafe hSafe_t
 
-/-- Quorum knowledge of `φ` and a
+/-- Paper: Lemma 6.4.2(1). Quorum knowledge of `φ` and a
 global implication to `ψ` lift `φ` to a future quorum of `ψ`. -/
 theorem boxPast_of_eventual_quorum
     (φ ψ : Formula S)
@@ -378,7 +378,7 @@ theorem boxPast_of_eventual_quorum
     simpa using hPastψ_end
   simpa using hPastψ
 
-/-- The previous result under the
+/-- Paper: Lemma 6.4.2(2). The previous result under the
 `ThyLive` assumption. -/
 theorem boxPast_live_of_eventual_quorum
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -503,7 +503,7 @@ theorem boxPast_live_of_eventual_quorum
   simpa [wₚ]
     using hPastLiveψ
 
-/-- Composing eventual consequences at the end of
+/-- Paper: Lemma 6.4.3. Composing eventual consequences at the end of
 time. -/
 theorem live_eventually_consequent
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -590,7 +590,7 @@ theorem live_eventually_consequent
       (w := wₚ)
       (φ := Formula.past ψ)).2 hPastψ
 
-/-- `\atd{l}` of `\sometime φ` coincides
+/-- Paper: Lemma 6.4.4. `\atd{l}` of `\sometime φ` coincides
 with `\atddot{l} φ`. -/
 theorem box_sometime_iff_boxPast
     (φ : Formula S)
@@ -656,7 +656,7 @@ theorem box_sometime_iff_boxPast
         (φ := Formula.past φ)).2 hPast
     exact hSome
 
-/-- Safety of a learner is monotone along in-place accessibility: if `safe(l)`
+/-- Paper: Lemma 6.4.1(1). Safety of a learner is monotone along in-place accessibility: if `safe(l)`
 holds at a world of the model, it holds at every same-place predecessor. -/
 theorem safe_monotone
     (hTheory : M ⊨ᵀ
@@ -692,7 +692,7 @@ theorem safe_monotone
       hSafeF
   exact (safe_iff_safeFormula (M := M) (hTheory := hTheory) (w := w') hW' l).2 hSafeF'
 
-/-- Safety of a learner at an event-tuple of the model implies it held at every
+/-- Paper: Lemma 6.4.1(2). Safety of a learner at an event-tuple of the model implies it held at every
 past event at the same place. -/
 theorem safe_allPast
     (hTheory : M ⊨ᵀ

@@ -26,14 +26,14 @@ set_option autoImplicit false
 
 variable {S : Signature}
 
-/-- Backward rule `Echo?`: every `echo(v)` stems from a past `propose(v)`. -/
+/-- Paper: Figures 7/9/11, rule (Echo?). Backward rule `Echo?`: every `echo(v)` stems from a past `propose(v)`. -/
 @[simp] def echoBackwardAxiom
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value =>
     ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
 
-/-- Axiom `EchoNE`: sequential participants echo at most one value. -/
+/-- Paper: Figures 7/9/11, axiom (EchoNE). Axiom `EchoNE`: sequential participants echo at most one value. -/
 @[simp] def echoNonEquivAxiom
     (echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value => ∀ᶠ (fun altValue =>
@@ -41,7 +41,7 @@ variable {S : Signature}
       (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
         (value ≃ᶠ altValue)))
 
-/-- Forward rule `Echo!`: live knowledge of a proposal eventually triggers an
+/-- Paper: Figures 7/9/11, rule (Echo!). Forward rule `Echo!`: live knowledge of a proposal eventually triggers an
 echo of some (possibly different) value. -/
 @[simp] def echoForwardAxiom
     (liveSymb : Signature.PredSymb S)
@@ -52,7 +52,7 @@ echo of some (possibly different) value. -/
       ∃ᶠ (fun witness =>
         ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
 
-/-- Backward rule `Deliver?` (ternary deliver): deliveries require a
+/-- Paper: Figures 7/9, rule (Deliver?). Backward rule `Deliver?` (ternary deliver): deliveries require a
 reporting-learner quorum of past votes. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -60,7 +60,7 @@ reporting-learner quorum of past votes. -/
     ofEvent ⟨deliverSymb, [reporting, learner, value]⟩ ⇒ᶠ
       □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩))))
 
-/-- Forward rule `Deliver!` (ternary deliver): live knowledge of a vote quorum
+/-- Paper: Figures 7/9, rule (Deliver!). Forward rule `Deliver!` (ternary deliver): live knowledge of a vote quorum
 eventually leads to delivery. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)

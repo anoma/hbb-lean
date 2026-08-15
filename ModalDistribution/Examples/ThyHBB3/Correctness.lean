@@ -27,7 +27,7 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- The correctness properties of `ThyHBB3`, collected: Agreement
+/-- Paper: Theorem 8.2.3 / Figure 12. The correctness properties of `ThyHBB3`, collected: Agreement
 (Proposition 8.3.1), Liveness 1 (Proposition 8.5.1), and Liveness 2
 (Proposition 8.4.5). -/
 theorem correctness

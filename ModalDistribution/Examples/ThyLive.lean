@@ -30,20 +30,20 @@ variable {S : Signature}
 
 section Axioms
 
-/-- Axiom `LiveAlways`: being live is independent of time. -/
+/-- Paper: Figure 6, axiom (LiveAlways). Axiom `LiveAlways`: being live is independent of time. -/
 @[simp] def liveAlwaysAxiom
     (liveSymb : Signature.PredSymb S) :
     Formula S :=
   (Formula.predicate0 liveSymb) ⇔ᶠ
     ⤒ᶠ (Formula.predicate0 liveSymb)
 
-/-- Axiom `LiveSeq`: live participants act sequentially. -/
+/-- Paper: Figure 6, axiom (LiveSeq). Axiom `LiveSeq`: live participants act sequentially. -/
 @[simp] def liveSeqAxiom
     (liveSymb : Signature.PredSymb S) :
     Formula S :=
   (Formula.predicate0 liveSymb) ⇒ᶠ Formula.seq
 
-/-- Axiom-scheme `Knowledge₍⋄₎`. -/
+/-- Paper: Figure 6, axiom-scheme (Knowledge♢↓). Axiom-scheme `Knowledge₍⋄₎`. -/
 @[simp] def knowledgeDiamondAxiom
     (liveSymb : Signature.PredSymb S)
     (ls : List (Signature.Value S))
@@ -54,7 +54,7 @@ section Axioms
     ((Formula.predicate0 liveSymb) ⇒ᶠ
       ↕ᶠ (♢ᶠ↓[ls] φ))
 
-/-- Axiom-scheme `Knowledge₍⋄⇓₎`. -/
+/-- Paper: Figure 6, axiom-scheme (Knowledge□↓). Axiom-scheme `Knowledge₍⋄⇓₎`. -/
 @[simp] def knowledgeBoxAxiom
     (liveSymb : Signature.PredSymb S)
     (ls : List (Signature.Value S))
@@ -65,7 +65,7 @@ section Axioms
     ((Formula.predicate0 liveSymb) ⇒ᶠ
       ↕ᶠ (□ᶠ↓[ls] φ))
 
-/-- The collection of liveness axioms (`ThyLive`). -/
+/-- Paper: Definition 5.2.4 (the theory of liveness). The collection of liveness axioms (`ThyLive`). -/
 @[simp] def ThyLive
     (liveSymb : Signature.PredSymb S) :
     Set (Formula S) :=
@@ -91,7 +91,7 @@ variable {ls₁ ls₂ : List (Signature.Value S)}
 variable {w w' t : World P (Signature.EventType S)}
 variable {H : History P (Signature.EventType S)}
 
-/-- Sometime knowledge lifts to the end of time. -/
+/-- Paper: Lemma 5.2.7. Sometime knowledge lifts to the end of time. -/
 theorem sometime_past_end
     {w : World P (Signature.EventType S)}
     (hSat : ⟪w⟫ ⊨[M]↕ᶠ(♢ᶠ[]↓ᶠ (Formula.ofEvent evt))) :
@@ -194,7 +194,7 @@ theorem live_at_predecessor
   simpa [Hpre, hHpre]
     using hLivePre
 
-/-- Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
+/-- Paper: Lemma 5.2.10(1). Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
  Liveness does not depend on time: a participant is live at a specific world
 if and only if it is live at the end-of-time world for that participant.
 This follows from the liveness-always axiom (live ⇔ ⤒ live).
@@ -260,7 +260,7 @@ theorem alwaysLiveEquivForward
     simpa [Sat, World.place, World.event, World.time]
       using hLocal'
 
-/-- Liveness at any two worlds with same participant.
+/-- Paper: Lemma 5.2.10(2). Liveness at any two worlds with same participant.
  Liveness does not depend on time: if two worlds have the same participant (place),
 then liveness holds at one if and only if it holds at the other. This is a direct
 consequence of the forward direction applied twice.
@@ -318,6 +318,35 @@ theorem alwaysLiveEquivBackward
       simpa [Sat, World.place, World.event, World.time]
         using this
     exact h_t.2 hGlobal
+
+/-- Paper: Lemma 5.2.10(3). Liveness at an event-tuple of the model implies liveness at every past
+event at the same place. -/
+theorem live_allPast
+    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    {t : World P (Signature.EventType S)}
+    (ht : t ∈ M.history.val)
+    (hLive : ⟪t⟫ ⊨[M] Formula.predicate0 liveSymb) :
+    ⟪t⟫ ⊨[M]⇓ᶠ (Formula.predicate0 liveSymb) := by
+  classical
+  refine Sat.not_intro (M := M) (w := t)
+    (φ := ↓ᶠ (¬ᶠ (Formula.predicate0 liveSymb))) ?_
+  intro hPast
+  obtain ⟨t', ht'_mem, ht'_place, hNot⟩ :=
+    (Sat.past (M := M) (w := t)
+      (φ := ¬ᶠ (Formula.predicate0 liveSymb))).1 hPast
+  have ht'_hist : t' ∈ M.history.val := by
+    have hsub : t.time ⊆ M.history.val :=
+      History.subset_of_happensBefore (H := M.history)
+        (History.happensBefore_of_mem (P := P)
+          (Event := Signature.EventType S) ht)
+    exact hsub _ ht'_mem
+  have hLive_t' : ⟪t'⟫ ⊨[M] Formula.predicate0 liveSymb :=
+    (alwaysLiveEquivBackward (M := M) (hTheory := hTheory)
+      (ht := ht'_hist) (ht' := ht) (hplace := ht'_place)).2 hLive
+  exact
+    Sat.not_elim (M := M) (w := t')
+      (φ := Formula.predicate0 liveSymb) hNot hLive_t'
+
 
 /-- Instantiate the knowledge axiom at an end-of-time world. -/
 theorem knowledgeDiamond_imp_at_end
@@ -607,7 +636,7 @@ private theorem live_boxPast_nests_past
       (φ := (Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ)).2
       ⟨tBox, htBox_mem, htBox_place, hConj⟩
 
-/-- Liveness quorum boxes promote to nested
+/-- Paper: Lemma 5.2.12. Liveness quorum boxes promote to nested
 quorum boxes under `ThyLive`. -/
 theorem live_boxPast_nests
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -961,7 +990,7 @@ theorem live_knows_eventually_quorum_past
       (hφ := hConjPast)
   simpa [hφBox] using hPastIntro
 
-/-- Live quorums eventually know past facts. -/
+/-- Paper: Proposition 5.2.8. Live quorums eventually know past facts. -/
 theorem live_eventually_knows
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -999,7 +1028,7 @@ theorem live_eventually_knows
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Live quorums eventually know of past events. -/
+/-- Paper: Corollary 5.2.9(1). Live quorums eventually know of past events. -/
 theorem live_eventually_knows_event
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1064,7 +1093,7 @@ theorem live_eventually_knows_event
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Live quorums eventually learn of performed events. -/
+/-- Paper: Corollary 5.2.9(2). Live quorums eventually learn of performed events. -/
 theorem live_eventually_knows_performed
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1076,7 +1105,7 @@ theorem live_eventually_knows_performed
     live_eventually_knows (M := M)
       (hTheory := hTheory) (hLive := hLive) (hEvent := hEvent)
 
-/-- Live quorums eventually know quorum facts. -/
+/-- Paper: Corollary 5.2.9(3). Live quorums eventually know quorum facts. -/
 theorem live_eventually_knows_quorum
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -1115,7 +1144,7 @@ theorem live_eventually_knows_quorum
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Live quorum intersections expose live witnesses. -/
+/-- Paper: Proposition 5.2.11. Live quorum intersections expose live witnesses. -/
 theorem intertwined_two_quorums
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hIntersect : ⊨[M]♢ᶠ[id [l, l₁]]⊤ᶠ)

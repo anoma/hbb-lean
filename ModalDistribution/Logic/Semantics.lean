@@ -41,7 +41,7 @@ def Sat.check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
       ∀ O ∈ (M.learner ℓ).quorums,
         Sat.check M Q ls (acc ∩ O)
 
-/-- Satisfaction relation `p \dx H ⊨[M]φ`. -/
+/-- Paper: Definition 3.4.10(1) / Figure 3 (possible-world validity). Satisfaction relation `p \dx H ⊨[M]φ`. -/
 def Sat (M : Model S P)
     (p : P)
     (evt : MaybeEvent S.EventType)
@@ -402,7 +402,7 @@ theorem past
   rcases w with ⟨p, evt, H⟩
   simp [Sat]
 
-/-- Sometime (eventually in the future at end of time) unfolds. -/
+/-- Paper: Lemma 3.6.4(1). Sometime (eventually in the future at end of time) unfolds. -/
 theorem sometime
     (M : Model S P)
     (w : World P S.EventType)
@@ -413,7 +413,7 @@ theorem sometime
   rcases w with ⟨p, evt, H⟩
   simp [Formula.sometime, Sat]
 
-/-- Satisfaction of `⇕` (everytime): the body holds at every event-tuple of the
+/-- Paper: Lemma 3.6.4(2). Satisfaction of `⇕` (everytime): the body holds at every event-tuple of the
 model at the current place. -/
 theorem everytime
     (M : Model S P)
@@ -626,7 +626,7 @@ theorem box_of_imp
 
 end Sat
 
-/-- End-of-time validity. -/
+/-- Paper: Definition 3.4.10(2) (end-of-time validity ⊨). End-of-time validity. -/
 @[simp] def EndValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ p : P,
@@ -654,7 +654,7 @@ theorem EndValid.imp_elim
     Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩)
       (φ := φ) (ψ := ψ) (hImp p) (hφ p)
 
-/-- Event-driven validity. -/
+/-- Paper: Definition 3.4.10(3) (all-world validity □W⊨). Event-driven validity. -/
 @[simp] def AllWorldValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ {t : World P S.EventType},
@@ -689,13 +689,13 @@ theorem AllWorldValid.at_end
 notation:55 "□W⊨[" M "]" φ =>
   AllWorldValid M φ
 
-/-- Active participant predicate . -/
+/-- Paper: Definition 3.5.1 (active participants). Active participant predicate . -/
 @[simp] def IsActive
     (H : History P (S.EventType))
     (p : P) : Prop :=
   ∃ t : World P (S.EventType), t ∈ H.val ∧ t.place = p
 
-/-- Active participants characterization. -/
+/-- Paper: Lemma 3.5.3. Active participants characterization. -/
 theorem active_iff_past_top
     (M : Model S P)
     (p : P) :

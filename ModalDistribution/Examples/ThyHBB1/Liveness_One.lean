@@ -40,7 +40,7 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Liveness One for ThyHBB1 (Liveness property 1).
+/-- Paper: Proposition 6.5.3 (Liveness 1). Liveness One for ThyHBB1 (Liveness property 1).
 
 Under uniqueness of proposals and a live quorum, if a live participant knows
 a proposal for value v, then v will eventually be delivered. This establishes
@@ -452,7 +452,7 @@ theorem livenessOneThyHBB1
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
       step7 hLivep
 
-/-- Whenever a live learner
+/-- Paper: Proposition 6.5.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
 theorem livenessOneAtPastDownThyHBB1
@@ -478,7 +478,7 @@ theorem livenessOneAtPastDownThyHBB1
         (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum)
         (hUnique := hUnique))
-/-- Witnessing the guarded
+/-- Paper: Proposition 6.5.3, second corollary. Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
 theorem livenessOneAtPastThyHBB1
     (hTheory : M ⊨ᵀ

@@ -41,11 +41,11 @@ throughout the paper.
 * `Formula.allPast` / notation `⇓ᶠ φ` — the paper's ⇓ (at every past event).
 * `Formula.diamond ls φ` / notation `♢ᶠ[ls] φ` ↔ `\ate{l_1\dots l_n}\phi`.
 * `Formula.diamondPast ls φ` / notation `♢ᶠ↓[ls] φ` ↔ `\atedot{l_1\dots l_n}\phi`.
-* `Formula.diamondEventually ls φ` / notation `♢ᶠ⇓[ls] φ` ↔ `\atecirc{l_1\dots l_n}\phi`.
+* `Formula.diamondAllPast ls φ` / notation `♢ᶠ⇓[ls] φ` — the paper's ♢⇓.
 * `Formula.diamondEmpty φ` / notation `♢ᶠ[] φ` ↔ `\ate{}\phi`.
 * `Formula.box ls φ` / notation `□ᶠ[ls] φ` ↔ `\atd{l_1\dots l_n}\phi`.
 * `Formula.boxPast ls φ` / notation `□ᶠ↓[ls] φ` ↔ `\atddot{l_1\dots l_n}\phi`.
-* `Formula.boxEventually ls φ` / notation `□ᶠ⇓[ls] φ` ↔ `\atdcirc{l_1\dots l_n}\phi`.
+* `Formula.boxAllPast ls φ` / notation `□ᶠ⇓[ls] φ` — the paper's □⇓.
 * `Formula.boxEmpty φ` / notation `□ᶠ[] φ` ↔ `\atd{}\phi`.
 * `Formula.seq` ↔ the distinguished predicate `\tf{seq}`.
 * `World.accessible` / notation `t' ≪ t` ↔ `\accessible` .
@@ -75,17 +75,17 @@ set_option autoImplicit false
 -- This is acceptable since in practice all symbol and value types are finite.
 variable {S : Signature.{0, 0, 0}}
 
-/-- Event atoms `E(v₁,…,vₙ)`. -/
+/-- Paper: Figure 2 (event atoms). Event atoms `E(v₁,…,vₙ)`. -/
 structure EventAtom (S : Signature.{0, 0, 0}) where
   sym : S.EventSymb
   args : List S.Value
 
-/-- Predicate atoms `P(v₁,…,vₙ)`. -/
+/-- Paper: Figure 2 (predicate atoms). Predicate atoms `P(v₁,…,vₙ)`. -/
 structure PredicateAtom (S : Signature.{0, 0, 0}) where
   sym : S.PredSymb
   args : List S.Value
 
-/-- Modal formulas with HOAS quantifiers. -/
+/-- Paper: Definition 3.1.3 / Figure 2 (syntax of predicates). Modal formulas with HOAS quantifiers. -/
 inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
   | bot : Formula S
   | imp : Formula S → Formula S → Formula S
@@ -100,62 +100,63 @@ inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
 
 namespace Formula
 
-/-- Convenience: the always-true formula `⊤`. -/
+/-- Paper: Figure 4 sugar (⊤). Convenience: the always-true formula `⊤`. -/
 def top : Formula S := .imp .bot .bot
 
+/-- Paper: Figure 4 sugar (¬). -/
 def not (φ : Formula S) : Formula S :=
   .imp φ .bot
 
-/-- Conjunction. -/
+/-- Paper: Figure 4 sugar (∧). Conjunction. -/
 def and (φ ψ : Formula S) : Formula S :=
   not (.imp φ (not ψ))
 
-/-- Disjunction. -/
+/-- Paper: Figure 4 sugar (∨). Disjunction. -/
 def or (φ ψ : Formula S) : Formula S :=
   .imp (not φ) ψ
 
-/-- Bi-implication. -/
+/-- Paper: Figure 4 sugar (⇔). Bi-implication. -/
 def iff (φ ψ : Formula S) : Formula S :=
   and (.imp φ ψ) (.imp ψ φ)
 
-/-- Existential quantification. -/
+/-- Paper: Figure 4 sugar (∃). Existential quantification. -/
 def exists_ (body : S.Value → Formula S) : Formula S :=
   not (.forall (fun v => not (body v)))
 
-/-- Sometimes modality (`↕`) specialised to the current participant; sugar for `⤒↓`. -/
+/-- Paper: Figure 4 sugar (↕). Sometimes modality (`↕`) specialised to the current participant; sugar for `⤒↓`. -/
 def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 
-/-- Always in the past (`⇕`). -/
+/-- Paper: Figure 4 sugar (⇕). Always in the past (`⇕`). -/
 def everytime (φ : Formula S) : Formula S :=
   not (sometime (not φ))
 
-/-- Eventually in the past (`⇓`). -/
+/-- Paper: Figure 4 sugar (⇓). Eventually in the past (`⇓`). -/
 def allPast (φ : Formula S) : Formula S :=
   not (.past (not φ))
 
-/-- Box modality. -/
+/-- Paper: Figure 4 sugar (□ l₁…lₙ). Box modality. -/
 def box (ls : List S.Value) (φ : Formula S) : Formula S :=
   not (.diamond ls (not φ))
 
-/-- Diamond with past guard. -/
+/-- Paper: Figure 4 sugar (♢↓). Diamond with past guard. -/
 def diamondPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (.past φ)
 
-/-- Diamond with eventual past guard. -/
-def diamondEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
+/-- Paper: Figure 4 sugar (♢⇓). Diamond with eventual past guard. -/
+def diamondAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (allPast φ)
 
 /-- Diamond with empty learner list. -/
 @[simp] def diamondEmpty (φ : Formula S) : Formula S :=
   .diamond [] φ
 
-/-- Box with past guard. -/
+/-- Paper: Figure 4 sugar (□↓). Box with past guard. -/
 def boxPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (.past φ)
 
-/-- Box with eventual past guard. -/
-def boxEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
+/-- Paper: Figure 4 sugar (□⇓). Box with eventual past guard. -/
+def boxAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (Formula.allPast φ)
 
 /-- Box over the empty learner list. -/
@@ -204,14 +205,14 @@ scoped infix:55 " ⇔ᶠ " => Formula.iff
 /-- Helpful notation for existential quantification (HOAS style). -/
 scoped notation "∃ᶠ " body => Formula.exists_ body
 
-/-- At-most-one quantifier `∃≤₁` (HOAS version).
+/-- Paper: Figure 4 sugar (∃01). At-most-one quantifier `∃≤₁` (HOAS version).
     ∃≤₁ x. φ(x) means "for all x, y. φ(x) → φ(y) → x = y" -/
 def existsAtMostOne (body : S.Value → Formula S) : Formula S :=
   .forall fun x =>
     .forall fun y =>
       .imp (body x) (.imp (body y) (.eq x y))
 
-/-- Exact-one quantifier `∃!` (HOAS version). -/
+/-- Paper: Figure 4 sugar (∃1). Exact-one quantifier `∃!` (HOAS version). -/
 def existsUnique (body : S.Value → Formula S) : Formula S :=
   .and
     (existsAtMostOne body)
@@ -246,7 +247,7 @@ scoped notation "↕ᶠ" φ => Formula.sometime φ
 scoped notation "♢ᶠ↓[" ls "]" φ => Formula.diamondPast ls φ
 
 /-- Helpful notation for the eventual past diamond. -/
-scoped notation "♢ᶠ⇓[" ls "]" φ => Formula.diamondEventually ls φ
+scoped notation "♢ᶠ⇓[" ls "]" φ => Formula.diamondAllPast ls φ
 
 /-- Helpful notation for the empty diamond. -/
 scoped notation "♢ᶠ[]" φ => Formula.diamondEmpty φ
@@ -255,7 +256,7 @@ scoped notation "♢ᶠ[]" φ => Formula.diamondEmpty φ
 scoped notation "□ᶠ↓[" ls "]" φ => Formula.boxPast ls φ
 
 /-- Helpful notation for the eventual past box. -/
-scoped notation "□ᶠ⇓[" ls "]" φ => Formula.boxEventually ls φ
+scoped notation "□ᶠ⇓[" ls "]" φ => Formula.boxAllPast ls φ
 
 /-- Helpful notation for the empty box. -/
 scoped notation "□ᶠ[]" φ => Formula.boxEmpty φ

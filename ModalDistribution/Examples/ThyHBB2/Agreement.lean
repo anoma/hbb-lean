@@ -37,7 +37,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Agreement property for ThyHBB2.
+/-- Paper: Proposition 7.2.1 (Agreement). Agreement property for ThyHBB2.
 
 Sequential quorum intersections between l₁ and l₂ force any deliveries for
 (l₁', l₁) and (l₂', l₂) to agree on the value. This is the agreement property
@@ -191,7 +191,7 @@ theorem agreementThyHBB2
         simpa [Sat] using hEq.symm
   simpa [wTop] using hEquality
 
-/-- When both deliveries for
+/-- Paper: Proposition 7.2.1, hypothesis form. When both deliveries for
 `(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
 theorem agreementThyHBB2_of_deliveries
     (hTheory : M ⊨ᵀ

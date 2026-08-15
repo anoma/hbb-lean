@@ -26,11 +26,11 @@ universe u v
 
 variable {P : Type u} {Event : Type v}
 
-/-- A prehistory is transitive when every strict predecessor is a subset. -/
+/-- Paper: Definition 2.3.2 (transitive prehistories). A prehistory is transitive when every strict predecessor is a subset. -/
 def isTransitive (h : PreHistory P Event) : Prop :=
   ∀ h' : PreHistory P Event, h' ≺− h → h' ⊆ h
 
-/-- Hereditary transitivity demands every predecessor be transitive and itself
+/-- Paper: Definition 2.3.5. Hereditary transitivity demands every predecessor be transitive and itself
     satisfy hereditary transitivity. We construct this predicate by well-founded
     recursion on ≺−. -/
 noncomputable def isHereditarilyTransitive : PreHistory P Event → Prop :=
@@ -71,7 +71,7 @@ theorem isHereditarilyTransitive.desc
   have := (isHereditarilyTransitive_unfold h).mp hh
   exact this.2 h' hb
 
-/-- Histories are the prehistories that are hereditarily transitive.
+/-- Paper: Definition 2.3.5 (history structures). Histories are the prehistories that are hereditarily transitive.
     The transitivity of the history follows from the hereditary property itself. -/
 structure History (P : Type u) (Event : Type v) where
   val : PreHistory P Event
@@ -140,7 +140,7 @@ end History
 
 end HistoryAt
 
-/-- Participant `p` is sequential in `h` when its event-tuples are linearly
+/-- Paper: Definition 3.4.9(1) (p sequential at H). Participant `p` is sequential in `h` when its event-tuples are linearly
     ordered by accessibility. -/
 def isSequential (p : P) (h : PreHistory P Event) : Prop :=
   ∀ t₁ t₂ : World P Event,
@@ -185,21 +185,21 @@ theorem happensBefore_implies_transitiveSubset (h1 h2 : History P Event) :
   · -- isHereditarilyTransitive h1.val
     exact History.hereditarilyTransitive h1
 
-/-- A globally initial event-tuple. -/
+/-- Paper: Definition 2.3.13(2). A globally initial event-tuple. -/
 def isInitialTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, H' ≺− t.2.2
 
-/-- A globally final event-tuple. -/
+/-- Paper: Definition 2.3.13(3). A globally final event-tuple. -/
 def isFinalTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, t.2.2 ≺− H'
 
-/-- `(p, E, H)` is `p`-initial when no earlier `p`-event exists. -/
+/-- Paper: Definition 2.3.13(2). `(p, E, H)` is `p`-initial when no earlier `p`-event exists. -/
 def isInitialAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ World.place t = p ∧
     ¬ ∃ t' : World P Event,
         t' ∈ H ∧ World.place t' = p ∧ World.time t' ≺− World.time t
 
-/-- `(p, E, H)` is `p`-final when no later `p`-event exists. -/
+/-- Paper: Definition 2.3.13(3). `(p, E, H)` is `p`-final when no later `p`-event exists. -/
 def isFinalAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ World.place t = p ∧
     ¬ ∃ t' : World P Event,
@@ -263,7 +263,7 @@ theorem happensBefore_of_mem {H : PreHistory P Event} {e : World P Event}
   e.2.2 ≺− H :=
   ⟨e.1, e.2.1, he⟩
 
-/-- Sequentiality is monotone. -/
+/-- Paper: Proposition 5.1.4 (variant). Sequentiality is monotone. -/
 theorem sequentiality_monotone (p : P) (h h' : History P Event) :
   h' ⊆trn h.val →
   isSequential p h.val →
@@ -292,24 +292,24 @@ end History
 
 /-! ## Element-transitivity (paper Definition 2.3.11 and Lemma 2.3.12) -/
 
-/-- A prehistory is element-transitive when `≺−` is transitive into it. This is
+/-- Paper: Definition 2.3.11 (element-transitive). A prehistory is element-transitive when `≺−` is transitive into it. This is
 an alternative, strictly weaker notion than `isTransitive`. -/
 def isElementTransitive (h : PreHistory P Event) : Prop :=
   ∀ h'' h' : PreHistory P Event, h'' ≺− h' → h' ≺− h → h'' ≺− h
 
-/-- Transitive prehistories are element-transitive. -/
+/-- Paper: Lemma 2.3.12(1). Transitive prehistories are element-transitive. -/
 theorem isTransitive.isElementTransitive {h : PreHistory P Event}
     (ht : isTransitive h) : isElementTransitive h := by
   intro h'' h' h''h' h'h
   obtain ⟨p, x, hmem⟩ := h''h'
   exact ⟨p, x, ht h' h'h _ hmem⟩
 
-/-- Every history structure is element-transitive. -/
+/-- Paper: Lemma 2.3.12(3). Every history structure is element-transitive. -/
 theorem History.isElementTransitive (H : History P Event) :
     isElementTransitive H.val :=
   (History.transitive H).isElementTransitive
 
-/-- The reverse implication fails: an element-transitive prehistory need not be
+/-- Paper: Lemma 2.3.12(2). The reverse implication fails: an element-transitive prehistory need not be
 transitive. The witness is the paper's `H₂ = {(p, †, H₁), (q, †, ∅)}` with
 `H₁ = {(p, †, ∅)}`. -/
 theorem exists_elementTransitive_not_transitive :
@@ -375,7 +375,7 @@ theorem exists_elementTransitive_not_transitive :
 /-! ## Accessibility on the worlds of a history
 (paper Lemma 3.4.4 and the transitivity half of Proposition 3.4.5) -/
 
-/-- If `w` is a world of the model (its time weakly precedes the end of time)
+/-- Paper: Lemma 3.4.4. If `w` is a world of the model (its time weakly precedes the end of time)
 and `w' ≪ w`, then the time of `w'` strictly precedes the end of time. -/
 theorem accessible_happensBefore_history
     {H : History P Event} {w w' : World P Event}
@@ -390,7 +390,7 @@ theorem accessible_happensBefore_history
   · rw [heq] at hstep
     exact hstep
 
-/-- Accessibility is transitive on the worlds of a history. Together with
+/-- Paper: Proposition 3.4.5 (transitivity). Accessibility is transitive on the worlds of a history. Together with
 `PreHistory.accessible_irrefl` this is the paper's Proposition 3.4.5. -/
 theorem accessible_trans
     {H : History P Event} {w w' w'' : World P Event}
@@ -411,7 +411,7 @@ theorem accessible_trans
   have hmem' : w'' ∈ World.time w := hsub _ hmem
   simpa [World.accessible] using hmem'
 
-/-- A whole time is sequential when all of its event-tuples are linearly
+/-- Paper: Definition 3.4.9(2) (H sequential). A whole time is sequential when all of its event-tuples are linearly
 ordered by accessibility, regardless of place. -/
 def isSequentialAll (h : PreHistory P Event) : Prop :=
   ∀ t₁ t₂ : World P Event,

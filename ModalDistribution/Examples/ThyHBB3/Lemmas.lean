@@ -47,7 +47,7 @@ namespace Unique
 
 end Unique
 
-/-- `3twined` combines three guarded box facts
+/-- Paper: Lemma 8.4.1. `3twined` combines three guarded box facts
 into a joint diamond witness. -/
 theorem threeTwined_boxes_intersect
     {l₁ l₂ l₃ : Signature.Value S}
@@ -418,7 +418,7 @@ theorem vote_implies_echo_quorum_height_induction
               hTheory hMem hEq hIH hVote
   exact hMain n (w := w) hMem hBound (learner := learner) (value := value) hVote
 
-/-- a realised vote yields an
+/-- Paper: Lemma 8.4.2(1). a realised vote yields an
 `Echo` quorum for the same value. -/
 theorem vote_implies_echo_quorum_local
     (hTheory : M ⊨ᵀ
@@ -439,7 +439,7 @@ theorem vote_implies_echo_quorum_local
       hTheory hMem (n := PreHistory.height t.time)
       hBound (learner := learner) (value := value) hVote
 
-/-- votes witnessed in the past
+/-- Paper: Lemma 8.4.2(2). votes witnessed in the past
 produce a global echo quorum. -/
 theorem vote_implies_echo_quorum_end
     (hTheory : M ⊨ᵀ
@@ -635,7 +635,7 @@ theorem voteNonEquiv_local
       (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
   simpa [Sat] using hEq
 
-/-- sequential echo quorums fix the
+/-- Paper: Lemma 8.4.3(1). sequential echo quorums fix the
 broadcast value. -/
 theorem echo_quorums_agree
     (hTheory : M ⊨ᵀ
@@ -830,7 +830,7 @@ theorem echo_quorums_agree
           exact hEq.symm
     exact hEquality
 
-/-- past votes also determine a unique
+/-- Paper: Lemma 8.4.3(2). past votes also determine a unique
 value once sequentiality holds. -/
 theorem votes_eventually_agree
     (hTheory : M ⊨ᵀ
@@ -1321,7 +1321,7 @@ theorem agree_on_correlated_votes
       (hSeq := hSeq)
       (hVote₁ := hVote₁_global) (hVote₂ := hVote₂_global)
 
-/-- correlated live knowledge of a vote
+/-- Paper: Lemma 8.4.3(3). correlated live knowledge of a vote
 forces eventual votes for the correlated learner. -/
 theorem correlated_vote_eventually
     (hTheory : M ⊨ᵀ
@@ -1451,7 +1451,7 @@ theorem agree_on_echo_and_vote
   have hValueEq : v₂ = v := hValueEq'.symm
   simpa [hValueEq] using hVote₂
 
-/-- a live echo quorum yields eventual
+/-- Paper: Lemma 8.4.3(4). a live echo quorum yields eventual
 votes for the same learner. -/
 theorem live_echo_eventually_vote
     (hTheory : M ⊨ᵀ
@@ -1495,7 +1495,7 @@ theorem live_echo_eventually_vote
   -- Prove values agree and simplify
   exact agree_on_echo_and_vote hTheory hSubset_history hSeq hEchoLocal hVote₂
 
-/-- If someone believes `l₁` correlates with `l₂`, then their quorums
+/-- Paper: Lemma 8.4.4(1). If someone believes `l₁` correlates with `l₂`, then their quorums
 intersect. This is the paper's Lemma 8.4.4(1), proved from the `(≐seq)`
 axiom at the believing participant. -/
 theorem correlationImpliesPairwiseQuorumIntersection
@@ -1544,7 +1544,7 @@ theorem correlationImpliesPairwiseQuorumIntersection
       hSeqDiamond
   simpa [wq, wTop] using hTopDiamond
 
-/-- Universal correlation implies quorum intersection. This is the paper's
+/-- Paper: Lemma 8.4.4(2). Universal correlation implies quorum intersection. This is the paper's
 Lemma 8.4.4(2), derived from part 1 by weakening `□` to `♢`. -/
 theorem correlationImpliesQuorumIntersection
     (hTheory : M ⊨ᵀ

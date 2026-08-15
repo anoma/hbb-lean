@@ -26,7 +26,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- The correctness properties of `ThyHBB2`, collected: Agreement
+/-- Paper: Theorem 7.1.3 / Figure 10. The correctness properties of `ThyHBB2`, collected: Agreement
 (Proposition 7.2.1), Liveness 1 (Proposition 7.2.3), and Liveness 2
 (Proposition 7.2.2). -/
 theorem correctness

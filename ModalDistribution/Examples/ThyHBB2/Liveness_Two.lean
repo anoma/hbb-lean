@@ -37,7 +37,7 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- If reporting learners `l₁'` and `l₂'`
+/-- Paper: Proposition 7.2.2 (Liveness 2). If reporting learners `l₁'` and `l₂'`
 have intersecting quorums and learner `l₂'` is live, then any delivery for
 `(l₁', \thel)` propagates to `(l₂', \thel)`. -/
 theorem livenessTwoThyHBB2
@@ -237,7 +237,7 @@ theorem livenessTwoThyHBB2
         hDeliverEventually hLiveHere
   simpa [wTop] using hGoal
 
-/-- A delivery for `(l₁', ℓ)`
+/-- Paper: Proposition 7.2.2, first corollary. A delivery for `(l₁', ℓ)`
 forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)` was
 delivered. -/
 theorem livenessTwoAtPastDownThyHBB2
@@ -262,7 +262,7 @@ theorem livenessTwoAtPastDownThyHBB2
         (hTheory := hTheory)
         (hIntersect := hIntersect)
         (hLive := hLive))
-/-- A delivery for `(l₁', ℓ)`
+/-- Paper: Proposition 7.2.2, second corollary. A delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
 theorem livenessTwoAtPastThyHBB2
     (hTheory : M ⊨ᵀ
