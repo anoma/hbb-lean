@@ -41,7 +41,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- Paper: Proposition 8.4.5 (Liveness 2). If learners `l₁` and `l₂` are always
 correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
-  theorem livenessTwo
+theorem livenessTwo
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -52,42 +52,11 @@ forces a live delivery for `l₂`. -/
         predicate0 liveSymb ⇒ᶠ
         ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) := by
   classical
-  have hLiveSeqAx :
-      AllWorldValid M (liveSeqAxiom liveSymb) := by
-    apply hTheory
-    simp [theory]
   have hLiveSequentialGlobal :
-      ⊨[M]□ᶠ[[l₂]] Formula.seq := by
-    intro p
-    set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-    have hLiveTop :
-        ⟪wTop⟫ ⊨[M]□ᶠ[[l₂]] predicate0 liveSymb :=
-      by simpa [wTop] using hLiveQuorum p
-    obtain ⟨O, hO, hAllLive⟩ :=
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l₂)
-        (φ := predicate0 liveSymb)).1 hLiveTop
-    refine
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l₂)
-        (φ := Formula.seq)).2 ?_
-    refine ⟨O, hO, ?_⟩
-    intro q hqO
-    have hLive_q :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] predicate0 liveSymb :=
-      hAllLive q hqO
-    have hSeqImp :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]
-          liveSeqAxiom liveSymb :=
-      hLiveSeqAx
-        (by simp [World.time])
-    have hImp :=
-      (Sat.imp (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := predicate0 liveSymb)
-        (ψ := Formula.seq)).1
-        (by simpa [liveSeqAxiom] using hSeqImp)
-    exact hImp hLive_q
+      ⊨[M]□ᶠ[[l₂]] Formula.seq :=
+    live_quorum_seq (M := M)
+      (hTheory := fun _ hAx => hTheory (Or.inl hAx))
+      (hLiveQuorum := hLiveQuorum)
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
@@ -109,20 +78,6 @@ forces a live delivery for `l₂`. -/
       (deliverSymb := deliverSymb)
       (correlationSymb := correlationSymb)
       hTheory hCorrelation
-  have hQuorumIntersect :
-      ⟪wTop⟫ ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
-    -- Exhibit a concrete delivery event.
-    have hDiamondNil :
-        ⟪wTop⟫ ⊨[M]
-          ♢ᶠ[[]](↓ᶠ (ofEvent ⟨deliverSymb, [l₁, v]⟩)) :=
-      by simpa [Formula.diamondPast, wTop] using hDeliverDiamond
-    obtain ⟨qDeliver, hPastDeliver⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₁, v]⟩))).1
-        hDiamondNil
-    -- Apply correlation lemma to get quorum intersections.
-    exact hIntersectGlobal p
   -- Correlation persists through every local past (available as an event-valid fact).
   have hCorrelationAlways :
       □W⊨[M] (⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) := by
@@ -202,8 +157,8 @@ forces a live delivery for `l₂`. -/
     simpa [wTop]
       using hLiveVoteDiamondGlobal p
   -- Knowledge$\atddot{}$: live participants eventually learn about the `l₁` vote.
-  have hLiveVoteBox_l₂ :
-      ⟪wTop⟫ ⊨[M]
+  have hLiveVoteBoxGlobal_l₂ :
+      ⊨[M]
         □ᶠ↓[[l₂]]
           (predicate0 liveSymb ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) := by
@@ -286,23 +241,17 @@ forces a live delivery for `l₂`. -/
         (hTheory := hThyLive)
         (hLive := hLiveQuorum)
         (hEvent := hEventGlobal)
-    simpa [wTop]
-      using hLiveVoteBoxGlobal p
-  -- Correlated votes propagate the value to `l₂`.
+    exact hLiveVoteBoxGlobal
+  -- Lemma 6.4.2(2) with (Vote'!) as Lemma 8.4.3(3): correlated votes
+  -- propagate the value to `l₂`.
   have hVotesBox_l₂ :
       ⟪wTop⟫ ⊨[M]
         □ᶠ↓[[l₂]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l₂, v]⟩) := by
     classical
-    have hLiveVoteBox :
-        ⟪wTop⟫ ⊨[M]
-          □ᶠ[[l₂]]
-            ↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) := by
-      simpa [Formula.boxPast] using hLiveVoteBox_l₂
     have hVotePropagation :
-        AllWorldValid M
+        □W⊨[M]
           (((predicate0 liveSymb ∧ᶠ
                 ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
               ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
@@ -321,134 +270,46 @@ forces a live delivery for `l₂`. -/
         (l₂ := l₂)
         (v := v)
         (hSeq := hLiveSequentialGlobal)
-    obtain ⟨O, hO, hAllLiveDiamond⟩ :=
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l₂)
-        (φ :=
-          ↓ᶠ (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)))).1
-        hLiveVoteBox
-    have hBoxResult :
-        ⟪wTop⟫ ⊨[M]
-          □ᶠ[[l₂]]
-            ↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩) := by
-      refine
-        (sat_box_singleton_exists (M := M)
-          (w := wTop) (l := l₂)
-          (φ :=
-            ↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩))).2
-          ⟨O, hO, ?_⟩
-      intro q hqO
-      have hPastLiveDiamond :
-          ⟪⟨q, †, wTop.time⟩⟫ ⊨[M]
-            ↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) :=
-        hAllLiveDiamond q hqO
-      obtain ⟨t, ht_mem, ht_place, hLiveDiamond⟩ :=
-        (Sat.past (M := M)
-          (w := ⟨q, †, wTop.time⟩)
-          (φ :=
-            predicate0 liveSymb ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).1
-          hPastLiveDiamond
-      have hLiveDiamond_split :=
+    -- Fold the always-correlated fact into `Vote'!` to obtain the
+    -- implication shape consumed by Lemma 6.4.2(2).
+    have hImp :
+        □W⊨[M]((predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
+          ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩)) := by
+      intro t ht
+      refine Sat.imp_intro (M := M) (w := t) ?_
+      intro hAnte
+      have hSplit :=
         (Sat.and (M := M) (w := t)
           (φ := predicate0 liveSymb)
-          (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).1
-          hLiveDiamond
-      have hLive_t : ⟪t⟫ ⊨[M] predicate0 liveSymb :=
-        hLiveDiamond_split.1
-      have hDiamond_t :
-          ⟪t⟫ ⊨[M] ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩) :=
-        hLiveDiamond_split.2
-      have ht_mem' : t ∈ M.history.val := by
-        simpa [wTop, World.time] using ht_mem
-      have hCorrelation_t :
-          ⟪t⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
-        AllWorldValid.of_mem_history
-          (M := M)
-          (φ := ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
-          hCorrelationAlways ht_mem'
-      have hAnte :
-          ⟪t⟫ ⊨[M]
-            ((predicate0 liveSymb ∧ᶠ
-                ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) := by
-        refine
-          (Sat.and (M := M) (w := t)
-            (φ :=
-              predicate0 liveSymb ∧ᶠ
-                ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
-            (ψ :=
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).2
-            ?_
-        refine ⟨?_, hDiamond_t⟩
-        exact
-          (Sat.and (M := M) (w := t)
+          (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).1 hAnte
+      refine
+        Sat.imp_elim (M := M) (w := t)
+          (φ := (predicate0 liveSymb ∧ᶠ
+              ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))
+          (ψ := ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩))
+          (hVotePropagation ht) ?_
+      exact
+        (Sat.and (M := M) (w := t)
+          (φ := predicate0 liveSymb ∧ᶠ
+            ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
+          (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).2
+          ⟨(Sat.and (M := M) (w := t)
             (φ := predicate0 liveSymb)
             (ψ := ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))).2
-            ⟨hLive_t, hCorrelation_t⟩
-      have hVoteImp_t :=
-        AllWorldValid.of_mem_history
-          (M := M)
-          (φ := ((predicate0 liveSymb ∧ᶠ
-              ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
-            ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩))
-          hVotePropagation ht_mem'
-      have hSometimeVote :
-          ⟪t⟫ ⊨[M]
-            ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩) :=
-        Sat.imp_elim (M := M) (w := t)
-          (φ :=
-            (predicate0 liveSymb ∧ᶠ
-              ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))
-          (ψ := ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩))
-          hVoteImp_t hAnte
-      obtain ⟨tVote, htVote_mem, htVote_place, hVote_tVote⟩ :=
-        (Sat.sometime (M := M)
-          (w := t)
-          (φ := ofEvent ⟨voteSymb, [l₂, v]⟩)).1
-          hSometimeVote
-      have hPlaceEq : t.place = tVote.place := by
-        simpa [World.place] using htVote_place.symm
-      have hLive_tVote : ⟪tVote⟫ ⊨[M] predicate0 liveSymb := by
-        have hEquiv :=
-          alwaysLiveEquivBackward
-            (M := M)
-            (liveSymb := liveSymb)
-            (hTheory := hThyLive)
-            (t := t) (t' := tVote)
-            (ht := ht_mem') (ht' := htVote_mem)
-            (hplace := hPlaceEq)
-        exact (hEquiv).1 hLive_t
-      have hVoteConj :
-          ⟪tVote⟫ ⊨[M]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩) :=
-        (Sat.and (M := M) (w := tVote)
-          (φ := predicate0 liveSymb)
-          (ψ := ofEvent ⟨voteSymb, [l₂, v]⟩)).2
-          ⟨hLive_tVote, hVote_tVote⟩
-      have hPlace_tVote : tVote.place = q :=
-        htVote_place.trans ht_place
-      have hPastVote :
-          ⟪⟨q, †, wTop.time⟩⟫ ⊨[M]
-            ↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩) := by
-        refine (Sat.past (M := M)
-          (w := ⟨q, †, wTop.time⟩)
-          (φ :=
-            predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩)).2 ?_
-        refine ⟨tVote, ?_, ?_, hVoteConj⟩
-        · simpa [wTop, World.time] using htVote_mem
-        · simpa [World.place, wTop] using hPlace_tVote
-      simpa [wTop, World.time, World.place] using hPastVote
-    simpa [Formula.boxPast] using hBoxResult
+            ⟨hSplit.1, hCorrelationAlways ht⟩, hSplit.2⟩
+    have hGlobal :
+        ⊨[M]□ᶠ↓[[l₂]]
+          (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l₂, v]⟩) :=
+      ThyHBB1.boxPast_live_of_eventual_quorum (M := M)
+        (hLiveTheory := hThyLive)
+        (φ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))
+        (ψ := ofEvent ⟨voteSymb, [l₂, v]⟩)
+        (l := l₂)
+        (hQuorum := hLiveVoteBoxGlobal_l₂)
+        (hImp := hImp)
+    simpa [wTop] using hGlobal p
   -- Knowledge$\atddot{}$: persistent `l₂` votes become eventual knowledge.
   have hVotesEventuallyBox :
       ⟪wTop⟫ ⊨[M]

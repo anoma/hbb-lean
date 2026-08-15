@@ -377,6 +377,34 @@ theorem live_allPast
       (φ := Formula.predicate0 liveSymb) hNot hLive_t'
 
 
+/-- A quorum of live participants is a quorum of sequential participants,
+by the `(LiveSeq)` axiom. -/
+theorem live_quorum_seq
+    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveQuorum : ⊨[M]□ᶠ[[l]]Formula.predicate0 liveSymb) :
+    ⊨[M]□ᶠ[[l]]Formula.seq := by
+  classical
+  intro p
+  obtain ⟨O, hO, hAllLive⟩ :=
+    (sat_box_singleton_exists (M := M)
+      (w := ⟨p, †, M.history.val⟩) (l := l)
+      (φ := Formula.predicate0 liveSymb)).1 (hLiveQuorum p)
+  refine
+    (sat_box_singleton_exists (M := M)
+      (w := ⟨p, †, M.history.val⟩) (l := l)
+      (φ := Formula.seq)).2 ⟨O, hO, ?_⟩
+  intro q hqO
+  exact
+    (Sat.imp (M := M)
+      (w := ⟨q, †, M.history.val⟩)
+      (φ := Formula.predicate0 liveSymb)
+      (ψ := Formula.seq)).1
+      (by
+        simpa [liveSeqAxiom]
+          using thyLive_liveSeq (M := M) hTheory (t := ⟨q, †, M.history.val⟩)
+            (by simp [World.time]))
+      (hAllLive q hqO)
+
 /-- Instantiate the knowledge axiom at an end-of-time world. -/
 theorem knowledgeDiamond_imp_at_end
     (hTheory : M ⊨ᵀ ThyLive liveSymb)

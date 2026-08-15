@@ -42,7 +42,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- Paper: Proposition 8.5.1 (Liveness 1). If learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `l`. -/
-  theorem livenessOne
+theorem livenessOne
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
@@ -54,41 +54,11 @@ the proposal will eventually deliver it for `l`. -/
         predicate0 liveSymb ⇒ᶠ
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, v]⟩) := by
   classical
-  have hLiveSeqAx :
-      AllWorldValid M (liveSeqAxiom liveSymb) := by
-    apply hTheory
-    simp [theory]
   have hLiveSequentialGlobal :
-      ⊨[M]□ᶠ[[l]] Formula.seq := by
-    intro p
-    set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-    have hLiveTop :
-        ⟪wTop⟫ ⊨[M]□ᶠ[[l]] predicate0 liveSymb :=
-      by simpa [wTop] using hLiveQuorum p
-    obtain ⟨O, hO, hAllLive⟩ :=
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := predicate0 liveSymb)).1 hLiveTop
-    refine
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := Formula.seq)).2 ?_
-    refine ⟨O, hO, ?_⟩
-    intro q hqO
-    have hLive_q :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] predicate0 liveSymb :=
-      hAllLive q hqO
-    have hSeqImp :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]
-          liveSeqAxiom liveSymb :=
-      hLiveSeqAx (by simp [World.time])
-    have hImp :=
-      (Sat.imp (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := predicate0 liveSymb)
-        (ψ := Formula.seq)).1
-        (by simpa [liveSeqAxiom] using hSeqImp)
-    exact hImp hLive_q
+      ⊨[M]□ᶠ[[l]] Formula.seq :=
+    live_quorum_seq (M := M)
+      (hTheory := fun _ hAx => hTheory (Or.inl hAx))
+      (hLiveQuorum := hLiveQuorum)
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
@@ -164,157 +134,33 @@ the proposal will eventually deliver it for `l`. -/
       (hLiveTheory := hThyLive)
       (hQuorum := hProposeQuorumGlobal)
       (hImp := hImpEcho)
-  have hLiveEchoTop :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨echoSymb, [v]⟩) := by
-    simpa [wTop] using hEchoQuorumGlobal p
-  have hLiveNestedEchoTop :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
-    have hEchoQuorumTop :
-        ⟪wTop⟫ ⊨[M]
-          □ᶠ↓[[l]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨echoSymb, [v]⟩) :=
-      by simpa [wTop] using hEchoQuorumGlobal p
-    have hNestedGlobal :
-        ⊨[M]
-          □ᶠ↓[[l]]
-            (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-      live_boxPast_nests (M := M)
-        (liveSymb := liveSymb)
-        (l := l)
-        (φ := ofEvent ⟨echoSymb, [v]⟩)
-        (hTheory := hThyLive)
-        (hQuorum := hEchoQuorumGlobal)
-    simpa [wTop] using hNestedGlobal p
+  -- Lemma 6.4.2(2) with (Vote!) as Lemma 8.4.3(4): the live echo quorum
+  -- becomes a live vote quorum.
   have hLiveVoteTop :
       ⟪wTop⟫ ⊨[M]
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l, v]⟩) := by
-    classical
-    have hVoteImp :
-        AllWorldValid M
-          ((predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
-            ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) :=
-      live_echo_eventually_vote (M := M)
-        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-        (hTheory := hTheory) (l := l) (v := v)
-        (hSeq := hLiveSequentialGlobal)
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)))).1
-        hLiveNestedEchoTop
-    refine
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [l, v]⟩))).2 ?_
-    refine ⟨O, hO, ?_⟩
-    intro q hqO
-    have hPastNested :
-        ⟪⟨q, †, wTop.time⟩⟫ ⊨[M]
-          ↓ᶠ (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-      hAll q hqO
-    obtain ⟨t, ht_mem, ht_place, hLiveEcho⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨q, †, wTop.time⟩)
-        (φ := predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).1
-        hPastNested
-    have ht_mem_history : t ∈ M.history.val :=
-      by simpa [wTop, World.time] using ht_mem
-    have hSplit :=
-      (Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).1
-        hLiveEcho
-    have hLiveLocal :
-        ⟪t⟫ ⊨[M] predicate0 liveSymb := hSplit.1
-    have hEchoLocal :
-        ⟪t⟫ ⊨[M]
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩) := hSplit.2
-    have hVoteImpLocal :=
-      AllWorldValid.of_mem_history
-        (M := M)
-        (φ :=
-          (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
-            ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))
-        hVoteImp ht_mem_history
-    have hVoteGuard :
-        ⟪t⟫ ⊨[M]
-          (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-      (Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).2
-        ⟨hLiveLocal, hEchoLocal⟩
-    have hVoteLocal :
-        ⟪t⟫ ⊨[M]
-          ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩) :=
-      (Sat.imp (M := M) (w := t)
-        (φ := predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
-        (ψ := ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))).1
-        hVoteImpLocal hVoteGuard
-    obtain ⟨tVote, htVote_mem, htVote_place, hVoteEvent⟩ :=
-      (Sat.sometime (M := M)
-        (w := t)
-        (φ := ofEvent ⟨voteSymb, [l, v]⟩)).1
-        hVoteLocal
-    have hLiveTopAtPlace :
-        ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
-          predicate0 liveSymb :=
-      (alwaysLiveEquivForward (M := M)
-        (liveSymb := liveSymb)
-        (hTheory := hThyLive)
-        (t := t) (ht := ht_mem_history)).1
-        hLiveLocal
-    have hLiveTopVote :
-        ⟪⟨tVote.place, †, M.history.val⟩⟫ ⊨[M]
-          predicate0 liveSymb :=
-      (Eq.subst
-        (motive := fun p => Sat M p † M.history.val (predicate0 liveSymb))
-        htVote_place.symm
-        hLiveTopAtPlace)
-    have hLiveVote :
-        ⟪tVote⟫ ⊨[M] predicate0 liveSymb :=
-      (alwaysLiveEquivForward (M := M)
-        (liveSymb := liveSymb)
-        (hTheory := hThyLive)
-        (t := tVote)
-        (ht := htVote_mem)).2 hLiveTopVote
-    have ht_place_q : t.place = q := by
-      simpa [World.place] using ht_place
-    have htVote_place_q : tVote.place = q :=
-      htVote_place.trans ht_place_q
-    have hLiveVoteConj :
-        ⟪tVote⟫ ⊨[M]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩) :=
-      (Sat.and (M := M) (w := tVote)
-        (φ := predicate0 liveSymb)
-        (ψ := ofEvent ⟨voteSymb, [l, v]⟩)).2
-        ⟨hLiveVote, hVoteEvent⟩
-    exact
-      (Sat.past (M := M)
-        (w := ⟨q, †, wTop.time⟩)
-        (φ := predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [l, v]⟩)).2
-        ⟨tVote, htVote_mem, htVote_place_q, hLiveVoteConj⟩
+    have hGlobal :
+        ⊨[M]□ᶠ↓[[l]]
+          (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l, v]⟩) :=
+      ThyHBB1.boxPast_live_of_eventual_quorum (M := M)
+        (hLiveTheory := hThyLive)
+        (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
+        (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
+        (l := l)
+        (hQuorum := live_boxPast_nests (M := M)
+          (liveSymb := liveSymb) (l := l)
+          (φ := ofEvent ⟨echoSymb, [v]⟩)
+          (hTheory := hThyLive)
+          (hQuorum := hEchoQuorumGlobal))
+        (hImp := live_echo_eventually_vote (M := M)
+          (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+          (echoSymb := echoSymb) (voteSymb := voteSymb)
+          (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
+          (hTheory := hTheory) (l := l) (v := v)
+          (hSeq := hLiveSequentialGlobal))
+    simpa [wTop] using hGlobal p
   have hVoteEventuallyTop :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ
