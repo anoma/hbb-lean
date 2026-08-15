@@ -96,31 +96,12 @@ theorem box_witness
       hPastVote
   have ht_mem_history : tVote ∈ M.history.val := by
     simpa [wTop, World.time] using ht_mem
-  have hVoteLocal :
-      ⟪tVote⟫ ⊨[M]voteBackwardAxiom echoSymb voteSymb :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := voteBackwardAxiom echoSymb voteSymb)
-      hVoteAx ht_mem_history
-  have hImp_learner :=
-    Sat.forall_elim (M := M) (w := tVote)
-      (body := fun learner' =>
-        ∀ᶠ fun value' =>
-          ofEvent ⟨voteSymb, [learner', value']⟩ ⇒ᶠ
-            □ᶠ↓[[learner']](ofEvent ⟨echoSymb, [value']⟩))
-      (v := learner) hVoteLocal
-  have hImp_value :=
-    Sat.forall_elim (M := M) (w := tVote)
-      (body := fun value' =>
-        ofEvent ⟨voteSymb, [learner, value']⟩ ⇒ᶠ
-          □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value']⟩))
-      (v := value) hImp_learner
   have hBox_at_event :
       ⟪tVote⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) :=
-    (Sat.imp (M := M) (w := tVote)
-      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
-      (ψ := □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩))).1
-      hImp_value hVote_at
+    voteBackward_elim (M := M)
+      (hAx := hVoteAx)
+      (hMem := ht_mem_history)
+      (hVote := hVote_at)
   have hBefore_history : tVote.time ≺− M.history.val :=
     happensBefore_of_mem (P := P) (Event := Signature.EventType S)
       ht_mem_history
@@ -139,9 +120,8 @@ theorem to_echo_box_end
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [learner, value]⟩)) :
     ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
-  have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) := by
-    apply hTheory
-    simp [theory]
+  have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) :=
+    theory_voteBackward (M := M) hTheory
   obtain ⟨tVote, ht_mem, hSubset, hBox⟩ :=
     Vote.box_witness (M := M)
       (echoSymb := echoSymb) (voteSymb := voteSymb)
@@ -274,9 +254,8 @@ theorem vote_live_to_echo_diamond
           □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)) := by
   classical
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) := by
-    apply hTheory
-    simp [theory]
+  have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) :=
+    theory_voteBackward (M := M) hTheory
   obtain ⟨qVote, hPastConj⟩ :=
     (Sat.diamond_nil (M := M)
       (w := wTop)
@@ -300,32 +279,12 @@ theorem vote_live_to_echo_diamond
       ⟪tVote⟫ ⊨[M]predicate0 liveSymb := hConjSplit.1
   have hVoteAt :
       ⟪tVote⟫ ⊨[M] ofEvent ⟨voteSymb, [learner, value]⟩ := hConjSplit.2
-  have hVoteLocal :
-      ⟪tVote⟫ ⊨[M]voteBackwardAxiom echoSymb voteSymb :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := voteBackwardAxiom echoSymb voteSymb)
-      hVoteAx ht_mem_history
-  have hImpLearner :=
-    Sat.forall_elim (M := M) (w := tVote)
-      (body := fun learner' =>
-        ∀ᶠ fun value' =>
-          ofEvent ⟨voteSymb, [learner', value']⟩ ⇒ᶠ
-            □ᶠ↓[[learner']]
-              (ofEvent ⟨echoSymb, [value']⟩))
-      (v := learner) hVoteLocal
-  have hImpValue :=
-    Sat.forall_elim (M := M) (w := tVote)
-      (body := fun value' =>
-        ofEvent ⟨voteSymb, [learner, value']⟩ ⇒ᶠ
-          □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value']⟩))
-      (v := value) hImpLearner
   have hEchoBoxAt :
       ⟪tVote⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) :=
-    (Sat.imp (M := M) (w := tVote)
-      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
-      (ψ := □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩))).1
-      hImpValue hVoteAt
+    voteBackward_elim (M := M)
+      (hAx := hVoteAx)
+      (hMem := ht_mem_history)
+      (hVote := hVoteAt)
   have hConjEcho :
       ⟪tVote⟫ ⊨[M]predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) :=
@@ -365,12 +324,10 @@ theorem live_vote_box_from_echo
         ofEvent ⟨voteSymb, [learner, value]⟩) := by
   classical
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) := by
-    apply hTheory
-    simp [theory]
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-    intro ax hAx
-    exact hTheory (Or.inl hAx)
+  have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) :=
+    theory_voteForward (M := M) hTheory
+  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+    theory_thyLive (M := M) hTheory
   obtain ⟨O, hO, hAll⟩ :=
     (sat_box_singleton_exists (M := M)
       (w := wTop) (l := l₂')
@@ -406,37 +363,17 @@ theorem live_vote_box_from_echo
   have hEchoLocal :
       ⟪t⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) :=
     hLiveEchoSplit.2
-  have hVoteLocal :
-      ⟪t⟫ ⊨[M]voteForwardAxiom liveSymb echoSymb voteSymb :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := voteForwardAxiom liveSymb echoSymb voteSymb)
-      hVoteAx ht_mem_history
-  have hImpLearner :=
-    Sat.forall_elim (M := M) (w := t)
-      (body := fun learner' =>
-        ∀ᶠ fun value' =>
-          (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[learner']](ofEvent ⟨echoSymb, [value']⟩)) ⇒ᶠ
-              ↕ᶠ(ofEvent ⟨voteSymb, [learner', value']⟩))
-      (v := learner) hVoteLocal
-  have hImpValue :=
-    Sat.forall_elim (M := M) (w := t)
-      (body := fun value' =>
-        (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value']⟩)) ⇒ᶠ
-              ↕ᶠ(ofEvent ⟨voteSymb, [learner, value']⟩))
-      (v := value) hImpLearner
+  have ht_le : t.time ⪯ M.history.val :=
+    PreHistory.happensBeforeEq_of_mem
+      (P := P) (Event := Signature.EventType S)
+      (hmem := by
+        simpa [World.place, World.event, World.time] using ht_mem_history)
   have hVoteImp :=
-    (Sat.imp (M := M) (w := t)
-      (φ := predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩))
-      (ψ := ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))).1
-      hImpValue
-      ((Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩))).2
-        ⟨hLiveLocal, hEchoLocal⟩)
+    voteForward_elim (M := M)
+      (hAx := hVoteAx)
+      (hW := ht_le)
+      (hLive := hLiveLocal)
+      (hEchoBox := hEchoLocal)
   obtain ⟨t', ht'_mem, ht'_place, hVoteNow⟩ :=
     (Sat.sometime (M := M)
       (w := t)

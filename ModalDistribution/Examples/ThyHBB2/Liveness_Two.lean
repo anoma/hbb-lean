@@ -57,14 +57,6 @@ theorem livenessTwo
   intro hDeliverSource
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLiveHere
-  have hIntersectTop :
-      ⟪wTop⟫ ⊨[M] ♢ᶠ[[l₁', l₂']]⊤ᶠ := by
-    -- Instantiate the quorum intersection assumption at the top world.
-    simpa [wTop] using hIntersect p
-  have hLiveQuorumTop :
-      ⟪wTop⟫ ⊨[M] □ᶠ[[l₂']]predicate0 liveSymb := by
-    -- Instantiate the live quorum assumption for `l₂'` at the top world.
-    simpa [wTop] using hLive p
   have hVoteBox :
       ⟪wTop⟫ ⊨[M]
         □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [ℓ, v]⟩) := by
@@ -72,7 +64,7 @@ theorem livenessTwo
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := by apply hTheory; simp [theory])
+          (hDeliverAx := theory_deliverBackward (M := M) hTheory)
           (reporting := l₁') (learner := ℓ)
           (value := v) (p := p)
           (hDeliver := hDeliverSource)
@@ -111,8 +103,7 @@ theorem livenessTwo
     -- Promote the echo diamond across the intersecting quorums for `l₂'`.
     classical
     have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-      intro ax hAx
-      exact hTheory (Or.inl hAx)
+      exact fun _ hAx => hTheory (Or.inl hAx)
     obtain ⟨qEcho, hPastEcho⟩ :=
       (Sat.diamond_nil (M := M)
         (w := wTop)
@@ -155,8 +146,7 @@ theorem livenessTwo
     -- Live knowledge eventually learns the vote quorums.
     classical
     have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-      intro ax hAx
-      exact hTheory (Or.inl hAx)
+      exact fun _ hAx => hTheory (Or.inl hAx)
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
     have hAtEnd :
@@ -200,12 +190,10 @@ theorem livenessTwo
     -- Apply `Deliver!` once the vote quorum is known by all live members.
     classical
     have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-      intro ax hAx
-      exact hTheory (Or.inl hAx)
+      exact fun _ hAx => hTheory (Or.inl hAx)
     have hDeliverAx : AllWorldValid M
-        (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
-      apply hTheory
-      simp [theory]
+        (deliverForwardAxiom liveSymb voteSymb deliverSymb) :=
+      theory_deliverForward (M := M) hTheory
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
     have hVotesTop :

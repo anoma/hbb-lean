@@ -59,17 +59,8 @@ theorem livenessOne
   intro hSeenPropose
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLiveHere
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-    intro ax hAx
-    exact hTheory (Or.inl hAx)
-  have hLiveQuorumTop :
-      ⟪wTop⟫ ⊨[M] □ᶠ[[l]]predicate0 liveSymb := by
-    -- Instantiate the live-quorum hypothesis (assumption preceding Step 1).
-    simpa [wTop] using hLiveQuorum p
-  have hUniqueTop :
-      ⟪wTop⟫ ⊨[M] ∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩) := by
-    -- Instantiate the uniqueness guard used in Step 2.
-    simpa [wTop] using hUnique p
+  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+    theory_thyLive (M := M) hTheory
   have hProposeWitness :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ↓[[]]
@@ -105,12 +96,6 @@ theorem livenessOne
               ⟨q', by simpa [wTop] using hPast⟩
           simpa [Formula.diamondPast]
             using hDiamond)
-  have hProposeQuorum :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
-    by simpa [wTop] using hProposeQuorumGlobal p
   have hImpEcho :
       □W⊨[M]
         (predicate0 liveSymb ∧ᶠ
@@ -121,12 +106,8 @@ theorem livenessOne
       (proposeSymb := proposeSymb)
       (echoSymb := echoSymb)
       (value := v)
-      (hEcho := by
-        apply hTheory
-        simp [theory])
-      (hEchoBack := by
-        apply hTheory
-        simp [theory])
+      (hEcho := theory_echoForward (M := M) hTheory)
+      (hEchoBack := theory_echoBackward (M := M) hTheory)
       (hUnique := hUnique)
   have hEchoQuorumGlobal :
       ⊨[M]
@@ -142,12 +123,6 @@ theorem livenessOne
       (hLiveTheory := hThyLive)
       (hQuorum := hProposeQuorumGlobal)
       (hImp := hImpEcho)
-  have hEchoQuorum :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨echoSymb, [v]⟩) :=
-    by simpa [wTop] using hEchoQuorumGlobal p
   have hEchoNestedGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -160,12 +135,6 @@ theorem livenessOne
       (φ := ofEvent ⟨echoSymb, [v]⟩)
       (hTheory := hThyLive)
       (hQuorum := hEchoQuorumGlobal)
-  have hEchoNested :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    by simpa [wTop] using hEchoNestedGlobal p
   have hVotesGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -188,46 +157,6 @@ theorem livenessOne
             ofEvent ⟨voteSymb, [l, v]⟩) :=
     by simpa [wTop] using hVotesGlobal p
 
-  have hVoteEventually :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩) := by
-    classical
-    have hBoxPast :
-        ⟪wTop⟫ ⊨[M]
-          □ᶠ[[l]]
-            (↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l, v]⟩)) := by
-      simpa [Formula.boxPast]
-        using hVotesBox
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [l, v]⟩))).1 hBoxPast
-    obtain ⟨q, hq⟩ :=
-      (M.learner l).quorum_nonempty hO
-    have hPastLiveVote :=
-      hAll q hq
-    have hDiamondConj :
-        ⟪wTop⟫ ⊨[M]
-          ♢ᶠ↓[[]]
-            ((predicate0 liveSymb) ∧ᶠ
-              ofEvent ⟨voteSymb, [l, v]⟩) := by
-      have hDiamond :=
-        (Sat.diamond_nil (M := M)
-          (w := wTop)
-          (φ := ↓ᶠ ((predicate0 liveSymb) ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩))).2
-          ⟨q, hPastLiveVote⟩
-      simpa [Formula.diamondPast]
-        using hDiamond
-    exact
-      diamondPast_nil_strip_left (M := M)
-        (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
-        hDiamondConj
-
   have hLiveKnowsVotes :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ
@@ -248,10 +177,6 @@ theorem livenessOne
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
     -- Step 6: combine Step 5 with `Deliver!` via `ThyHBB1.deliver_from_vote_box`.
     classical
-    have hDeliverAx : AllWorldValid M
-        (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
-      apply hTheory
-      simp [theory]
     have hVotesSometime :
         ⟪wTop⟫ ⊨[M]
           ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)) :=
@@ -264,25 +189,11 @@ theorem livenessOne
         (liveSymb := liveSymb) (voteSymb := voteSymb) (deliverSymb := deliverSymb)
         (reporting := l) (learner := l) (value := v)
         (hThyLive := hThyLive)
-        (hDeliverAx := hDeliverAx)
+        (hDeliverAx := theory_deliverForward (M := M) hTheory)
         (p := p)
         (hLiveTop := hLiveHere)
         (hVotesTop := hVotesSometime)
-  have hGoal :
-      ⟪wTop⟫ ⊨[M]
-        ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-    -- Step 7: combine Step 6 with the local `live` hypothesis.
-    exact
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))).1
-        (Sat.imp_intro (M := M) (w := wTop)
-          (φ := predicate0 liveSymb) (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
-          (by
-            intro hLive
-            exact hDeliverEventually))
-        hLiveHere
-  simpa [wTop] using hGoal
+  simpa [wTop] using hDeliverEventually
 
 /-- Paper: Proposition 7.2.3, first corollary. When the guarded proposal
 diamond holds, every member of learner `l`'s quorum knows (in the past) that the
