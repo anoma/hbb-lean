@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB2.Axioms
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Logic.Semantics
@@ -16,6 +17,8 @@ vote quorums, instantiating the `Deliver?` axiom.
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB2
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

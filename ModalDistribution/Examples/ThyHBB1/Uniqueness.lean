@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Examples.ThyLive
@@ -45,6 +46,8 @@ The file is organized into several categories:
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB1
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

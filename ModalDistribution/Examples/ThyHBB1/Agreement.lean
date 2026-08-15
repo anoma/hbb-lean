@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Examples.ThyHBB1.Safety
@@ -40,6 +41,8 @@ The proof is extracted from the main ThyHBB1 file to improve modularity and main
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB1
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

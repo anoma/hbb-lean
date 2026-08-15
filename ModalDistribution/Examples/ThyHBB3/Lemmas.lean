@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Examples.ThyHBB3.Axioms
 import ModalDistribution.Examples.ThyLive
@@ -19,6 +20,8 @@ $\mnta$.
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB3
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

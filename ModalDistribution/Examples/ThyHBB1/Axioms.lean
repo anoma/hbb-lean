@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
@@ -21,6 +22,8 @@ namespace ModalDistribution
 namespace Examples
 namespace ThyHBB1
 
+open HBB
+
 open ModalDistribution
 open ModalDistribution.Logic
 open ModalDistribution.Logic.Formula
@@ -31,13 +34,6 @@ set_option autoImplicit false
 variable {S : Signature}
 
 section BackwardAxioms
-
-/-- Backward rule `Echo?`: every `Echo(v)` stems from a past `Propose(v)`. -/
-@[simp] def echoBackwardAxiom
-    (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ (fun v =>
-    ofEvent ⟨echoSymb, [v]⟩ ⇒ᶠ
-      ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
 
 /-- The right-hand side of axiom `Safe`: either at most one value has been
 proposed, or the learner has sequential quorum intersections with every
@@ -64,38 +60,13 @@ learner. -/
       (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
         □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
 
-/-- Backward rule `Deliver?`: deliveries require past votes. -/
-@[simp] def deliverBackwardAxiom
-    (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ (fun reporting => ∀ᶠ (fun learner => ∀ᶠ (fun value =>
-    ofEvent ⟨deliverSymb, [reporting, learner, value]⟩ ⇒ᶠ
-      □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩))))
-
 end BackwardAxioms
 
 section NonEquivalenceAxiom
 
-/-- Axiom `EchoNE`: sequential participants echo at most one value. -/
-@[simp] def echoNonEquivAxiom
-    (echoSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ (fun value => ∀ᶠ (fun altValue =>
-    ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
-      (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
-        (value ≃ᶠ altValue)))
-
 end NonEquivalenceAxiom
 
 section ForwardAxioms
-
-/-- Forward rule `Echo!`: live knowledge of a proposal eventually triggers an echo. -/
-@[simp] def echoForwardAxiom
-    (liveSymb : Signature.PredSymb S)
-    (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ (fun value =>
-    (predicate0 liveSymb ∧ᶠ
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-      ∃ᶠ (fun witness =>
-        ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
 
 /-- Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
 @[simp] def voteForwardAxiom
@@ -106,15 +77,6 @@ section ForwardAxioms
       ((predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))))
-
-/-- Forward rule `Deliver!`: live knowledge of votes leads to delivery. -/
-@[simp] def deliverForwardAxiom
-    (liveSymb : Signature.PredSymb S)
-    (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ (fun reporting => ∀ᶠ (fun learner => ∀ᶠ (fun value =>
-    (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩)) ⇒ᶠ
-      ↕ᶠ(ofEvent ⟨deliverSymb, [reporting, learner, value]⟩))))
 
 end ForwardAxioms
 

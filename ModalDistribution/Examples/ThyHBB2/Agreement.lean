@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB2.Axioms
 import ModalDistribution.Examples.ThyHBB2.Lemmas
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
@@ -17,6 +18,8 @@ agree on the value.
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB2
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

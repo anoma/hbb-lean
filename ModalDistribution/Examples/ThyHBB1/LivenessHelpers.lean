@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Logic.Semantics
@@ -13,6 +14,8 @@ Liveness~2 proofs, keeping the main theorems focused on the high-level flow.
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB1
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

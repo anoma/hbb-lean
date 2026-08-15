@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB1.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
@@ -34,6 +35,8 @@ These lemmas serve as building blocks for the main agreement and liveness theore
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB1
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

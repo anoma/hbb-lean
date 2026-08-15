@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB1.Agreement
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Examples.ThyHBB1.Safety
@@ -19,6 +20,8 @@ This file contains the two liveness two theorem for the ThyHBB1 broadcast protoc
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB1
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic

@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
@@ -22,6 +23,8 @@ namespace ModalDistribution
 namespace Examples
 namespace ThyHBB3
 
+open HBB
+
 open ModalDistribution
 open ModalDistribution.Logic
 open ModalDistribution.Logic.Formula
@@ -32,14 +35,6 @@ set_option autoImplicit false
 variable {S : Signature}
 
 section BackwardRules
-
-/-- Backward rule `Echo?`: every `Echo(v)` arises from a past `Propose(v)`.
-Backward rule axiom. -/
-@[simp] def echoBackwardAxiom
-    (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ fun value =>
-    ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
-      ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)
 
 /-- Backward rule `Vote?`: votes are justified either by an echo quorum or by a
 correlated chain of prior votes. Backward rule axiom. -/
@@ -64,15 +59,6 @@ Backward rule axiom. -/
 end BackwardRules
 
 section NonEquivocation
-
-/-- Axiom `EchoNE`: sequential participants echo at most one value.
-Backward rule axiom. -/
-@[simp] def echoNonEquivAxiom
-    (echoSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ fun value => ∀ᶠ fun altValue =>
-    ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
-      (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
-        (value ≃ᶠ altValue)
 
 /-- Axiom `VoteNE`: correlated vote chains determine a unique value.
 Backward rule axiom. -/
@@ -132,17 +118,6 @@ Backward rule axiom. -/
 end Correlation
 
 section ForwardRules
-
-/-- Forward rule `Echo!`: live knowledge of a proposal triggers some echo.
-Backward rule axiom. -/
-@[simp] def echoForwardAxiom
-    (liveSymb : Signature.PredSymb S)
-    (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
-  ∀ᶠ fun value =>
-    (predicate0 liveSymb ∧ᶠ
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-      ∃ᶠ fun witnessed =>
-        ↕ᶠ (ofEvent ⟨echoSymb, [witnessed]⟩)
 
 /-- Forward rule `Vote!`: live learners eventually vote after echo quorums.
 Backward rule axiom. -/

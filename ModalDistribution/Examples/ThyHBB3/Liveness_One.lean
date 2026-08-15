@@ -1,3 +1,4 @@
+import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB3.Axioms
 import ModalDistribution.Examples.ThyHBB3.Lemmas
 import ModalDistribution.Examples.ThyHBB1.Safety
@@ -20,6 +21,8 @@ eventually deliver it for `l`.
 namespace ModalDistribution
 namespace Examples
 namespace ThyHBB3
+
+open HBB
 
 open ModalDistribution
 open ModalDistribution.Logic
