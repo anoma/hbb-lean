@@ -71,8 +71,8 @@ theorem livenessTwoThyHBB2
     -- Use `Deliver?` to extract the votes that justify the source delivery.
     simpa [wTop]
       using
-        deliver_to_vote_box_end (M := M)
-          (hTheory := hTheory)
+        HBB.deliver_to_vote_box_end (M := M)
+          (hDeliverAx := by apply hTheory; simp [theory])
           (reporting := l₁') (learner := ℓ)
           (value := v) (p := p)
           (hDeliver := hDeliverSource)

@@ -70,8 +70,8 @@ theorem agreementThyHBB2
     -- Apply `Deliver?` to back out the vote quorum supporting the first delivery.
     simpa [wTop]
       using
-        deliver_to_vote_box_end (M := M)
-          (hTheory := hTheory)
+        HBB.deliver_to_vote_box_end (M := M)
+          (hDeliverAx := by apply hTheory; simp [theory])
           (reporting := l₁') (learner := l₁)
           (value := v₁) (p := p)
           (hDeliver := hDeliver₁)
@@ -81,8 +81,8 @@ theorem agreementThyHBB2
     -- Apply `Deliver?` to back out the vote quorum supporting the second delivery.
     simpa [wTop]
       using
-        deliver_to_vote_box_end (M := M)
-          (hTheory := hTheory)
+        HBB.deliver_to_vote_box_end (M := M)
+          (hDeliverAx := by apply hTheory; simp [theory])
           (reporting := l₂') (learner := l₂)
           (value := v₂) (p := p)
           (hDeliver := hDeliver₂)

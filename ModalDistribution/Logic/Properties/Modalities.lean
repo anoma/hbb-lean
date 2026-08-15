@@ -1300,6 +1300,39 @@ theorem sat_diamond_top_iff_hasQuorumNonempty
         (ls := ls) (φ := ⊤ᶠ)
         (w := w)).2 hCheck_time
 
+
+/-- Lift a learner-guarded past box from a world whose time embeds in the
+end-of-time history to validity at the end of time. -/
+theorem lift_boxPast_to_end
+    (M : Model S P)
+    {t : World P (Signature.EventType S)}
+    {learner : Signature.Value S}
+    {φ : Formula S}
+    (hSubset : t.time ⊆ M.history.val)
+    (hBox : ⟪t⟫ ⊨[M]□ᶠ↓[[learner]]φ) :
+    ⊨[M]□ᶠ↓[[learner]]φ := by
+  classical
+  have hBoxPast_at :
+      ⟪t⟫ ⊨[M]□ᶠ[[learner]](↓ᶠ φ) :=
+    by simpa [Formula.boxPast] using hBox
+  intro p
+  have hBoxPast_top :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ[[learner]](↓ᶠ φ) :=
+    sat_box_singleton_transfer (M := M)
+      (w := t) (w' := ⟨p, †, M.history.val⟩)
+      (l := learner)
+      (φ := ↓ᶠ φ)
+      (hTransfer := fun q hPast =>
+        sat_past_of_subset (M := M)
+          (q := q)
+          (H := t.time)
+          (H' := M.history.val)
+          (φ := φ)
+          (hSubset := hSubset) hPast)
+      hBoxPast_at
+  simpa [Formula.boxPast]
+    using hBoxPast_top
+
 end DiamondSection
 
 end Logic

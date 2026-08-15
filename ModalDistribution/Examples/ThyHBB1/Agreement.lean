@@ -94,8 +94,8 @@ theorem agreementThyHBB1
         □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
     simpa [wTop]
       using
-        deliver_to_vote_box_end (M := M)
-          (hTheory := hTheory)
+        HBB.deliver_to_vote_box_end (M := M)
+          (hDeliverAx := by apply hTheory; simp [theory])
           (reporting := l₁') (learner := l₁)
           (value := v₁) (p := p)
           (hDeliver := hDeliver₁)
@@ -104,8 +104,8 @@ theorem agreementThyHBB1
         □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
     simpa [wTop]
       using
-        deliver_to_vote_box_end (M := M)
-          (hTheory := hTheory)
+        HBB.deliver_to_vote_box_end (M := M)
+          (hDeliverAx := by apply hTheory; simp [theory])
           (reporting := l₂') (learner := l₂)
           (value := v₂) (p := p)
           (hDeliver := hDeliver₂)

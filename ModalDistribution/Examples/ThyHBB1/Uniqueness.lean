@@ -296,21 +296,13 @@ theorem uniquePropose_eventually_echo_core
 /-- Auxiliary: the antecedent ensures echoes exist for some witness value. -/
 theorem uniquePropose_exists_witness_echo
     (value : S.Value)
-    (hHBB1 :
-      M ⊨ᵀ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb) :
     □W⊨[M]
       (predicate0 liveSymb ∧ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
         ∃ᶠ (fun witness =>
           ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) := by
   classical
-  have hEchoMem :
-      echoForwardAxiom liveSymb proposeSymb echoSymb
-        ∈ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
-    simp [theory]
-  have hEcho :
-      □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb :=
-    hHBB1 (ax := echoForwardAxiom liveSymb proposeSymb echoSymb) hEchoMem
   intro t ht
   have hLocal :
       ⟪t⟫ ⊨[M]
@@ -655,8 +647,7 @@ theorem uniquePropose_guard_implies_eq
 
 theorem uniquePropose_witness_eq_value
     (value : S.Value)
-    (hHBB1 :
-      M ⊨ᵀ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
@@ -671,13 +662,6 @@ theorem uniquePropose_witness_eq_value
   set wPred : World P (Signature.EventType S) := t with hwPred_def
   set wTop : World P (Signature.EventType S) :=
     ⟨t.place, †, M.history.val⟩ with hwTop_def
-  have hEchoMem :
-      echoBackwardAxiom proposeSymb echoSymb
-        ∈ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
-    simp [theory]
-  have hEchoBack :
-      □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
-    hHBB1 (ax := echoBackwardAxiom proposeSymb echoSymb) hEchoMem
   have hUnique_global :
       ⟪wTop⟫ ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
@@ -777,8 +761,8 @@ theorem uniquePropose_witness_eq_value
 /-- a unique proposal guarantees eventual echoes. -/
 theorem uniquePropose_eventually_echo
     (value : S.Value)
-    (hHBB1 :
-      M ⊨ᵀ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb)
+    (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
@@ -792,7 +776,7 @@ theorem uniquePropose_eventually_echo
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
           ∃ᶠ (fun witness =>
             ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) :=
-    uniquePropose_exists_witness_echo (value := value) (hHBB1 := hHBB1)
+    uniquePropose_exists_witness_echo (value := value) (hEcho := hEcho)
   have hEq :
       □W⊨[M]
         (predicate0 liveSymb ∧ᶠ
@@ -802,7 +786,7 @@ theorem uniquePropose_eventually_echo
               (witness ≃ᶠ value)) :=
     uniquePropose_witness_eq_value
       (value := value)
-      (hHBB1 := hHBB1) (hUnique := hUnique)
+      (hEchoBack := hEchoBack) (hUnique := hUnique)
   exact
     (uniquePropose_eventually_echo_core
       (value := value)

@@ -116,14 +116,17 @@ theorem livenessOneThyHBB2
         (predicate0 liveSymb ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩) :=
-    Unique.eventually_echo (M := M)
+    ThyHBB1.uniquePropose_eventually_echo (M := M)
       (liveSymb := liveSymb)
       (proposeSymb := proposeSymb)
       (echoSymb := echoSymb)
-      (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb)
       (value := v)
-      (hTheory := hTheory)
+      (hEcho := by
+        apply hTheory
+        simp [theory])
+      (hEchoBack := by
+        apply hTheory
+        simp [theory])
       (hUnique := hUnique)
   have hEchoQuorumGlobal :
       ⊨[M]

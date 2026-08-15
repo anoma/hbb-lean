@@ -90,8 +90,8 @@ theorem livenessTwoThyHBB1
         □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l, v]⟩) := by
     simpa [wTop]
       using
-        deliver_to_vote_box_end (M := M)
-          (hTheory := hTheory)
+        HBB.deliver_to_vote_box_end (M := M)
+          (hDeliverAx := by apply hTheory; simp [theory])
           (reporting := l₁') (learner := l)
           (value := v) (p := p)
           (hDeliver := hDeliver)
