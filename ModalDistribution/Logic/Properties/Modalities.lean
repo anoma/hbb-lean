@@ -1333,6 +1333,88 @@ theorem lift_boxPast_to_end
   simpa [Formula.boxPast]
     using hBoxPast_top
 
+
+/-- From an end-of-time implication `(♢↓[]ψ) ⇒ G ⇒ ↕D` and a guard quorum
+`□[l]G`, conclude the past-box corollary `(♢↓[]ψ) ⇒ □↓[l]D`. This packages
+the derivation of the boxed corollaries of the liveness theorems. -/
+theorem endValid_boxPast_of_imp_sometime
+    (M : Model S P)
+    {l : Signature.Value S} {ψ G D : Formula S}
+    (hGuard : ⊨[M]□ᶠ[[l]]G)
+    (hMain : ⊨[M](♢ᶠ↓[[]]ψ) ⇒ᶠ (G ⇒ᶠ ↕ᶠ D)) :
+    ⊨[M](♢ᶠ↓[[]]ψ) ⇒ᶠ □ᶠ↓[[l]]D := by
+  classical
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  have hGuardTop : ⟪wTop⟫ ⊨[M] □ᶠ[[l]] G := by simpa [wTop] using hGuard p
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hAnte
+  obtain ⟨rProp, hPastAnte⟩ :=
+    (Sat.diamond_nil (M := M) (w := wTop)
+        (φ := Formula.past ψ)).1
+      (by simpa [Formula.diamondPast] using hAnte)
+  obtain ⟨O, hO, hAllG⟩ :=
+    (sat_box_singleton_exists (M := M)
+        (w := wTop) (l := l) (φ := G)).1 hGuardTop
+  refine
+    (sat_box_singleton_exists (M := M)
+        (w := wTop) (l := l) (φ := ↓ᶠ D)).2
+      ⟨O, hO, ?_⟩
+  intro q hqO
+  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
+  have hAnte_q : ⟪wq⟫ ⊨[M] ♢ᶠ↓[[]] ψ := by
+    have hPastWitness :
+        ⟪⟨rProp, †, wq.time⟩⟫ ⊨[M] Formula.past ψ := by
+      simpa [wq, wTop, World.time] using hPastAnte
+    have hDiamond :=
+      (Sat.diamond_nil (M := M) (w := wq)
+          (φ := Formula.past ψ)).2 ⟨rProp, hPastWitness⟩
+    simpa [Formula.diamondPast] using hDiamond
+  have hImp_q :
+      ⟪wq⟫ ⊨[M] (♢ᶠ↓[[]] ψ) ⇒ᶠ (G ⇒ᶠ ↕ᶠ D) := by
+    simpa [wq] using hMain q
+  have hNext :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := ♢ᶠ↓[[]] ψ) (ψ := G ⇒ᶠ ↕ᶠ D)
+      hImp_q hAnte_q
+  have hG_q : ⟪wq⟫ ⊨[M] G := by
+    simpa [wq, wTop, World.time] using hAllG q hqO
+  have hEventual :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := G) (ψ := ↕ᶠ D) hNext hG_q
+  have hPast :=
+    (Sat.atEnd (M := M) (w := wq)
+      (φ := Formula.past D)).1
+      (by simpa [Formula.sometime] using hEventual)
+  simpa using hPast
+
+/-- The diamond corollary of `endValid_boxPast_of_imp_sometime`:
+`(♢↓[]ψ) ⇒ ♢↓[]D`. -/
+theorem endValid_diamondPast_of_imp_sometime
+    (M : Model S P)
+    {l : Signature.Value S} {ψ G D : Formula S}
+    (hGuard : ⊨[M]□ᶠ[[l]]G)
+    (hMain : ⊨[M](♢ᶠ↓[[]]ψ) ⇒ᶠ (G ⇒ᶠ ↕ᶠ D)) :
+    ⊨[M](♢ᶠ↓[[]]ψ) ⇒ᶠ ♢ᶠ↓[[]]D := by
+  classical
+  have hBox :=
+    endValid_boxPast_of_imp_sometime (M := M)
+      (hGuard := hGuard) (hMain := hMain)
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hAnte
+  have hBoxPast :=
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := ♢ᶠ↓[[]] ψ)
+      (ψ := □ᶠ↓[[l]] D)
+      (by simpa [wTop] using hBox p)
+      hAnte
+  have hDiamond :=
+    singletonBoxImpliesDiamond (M := M) (w := wTop)
+      (l := l) (φ := D) hBoxPast
+  simpa [wTop] using hDiamond
+
 end DiamondSection
 
 end Logic

@@ -203,37 +203,17 @@ theorem agreementThyHBB2_of_deliveries
     (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
     ⊨[M] v₁ ≃ᶠ v₂ := by
   classical
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hImp :=
-    agreementThyHBB2 (M := M)
+  exact
+    EndValid.imp_elim (M := M)
+      (EndValid.imp_elim (M := M)
+        (agreementThyHBB2 (M := M)
       (hTheory := hTheory)
       (l₁ := l₁) (l₂ := l₂)
       (l₁' := l₁') (l₂' := l₂')
       (v₁ := v₁) (v₂ := v₂)
-      (hSeq := hSeq) p
-  have hDeliver₁Top :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩) :=
-    by simpa [wTop] using hDeliver₁ p
-  have hDeliver₂Top :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩) :=
-    by simpa [wTop] using hDeliver₂ p
-  have hStep :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
-      (ψ :=
-        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
-          (v₁ ≃ᶠ v₂))
-      hImp hDeliver₁Top
-  have hResult :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩))
-      (ψ := v₁ ≃ᶠ v₂)
-      hStep hDeliver₂Top
-  simpa [wTop] using hResult
-
+      (hSeq := hSeq))
+        hDeliver₁)
+      hDeliver₂
 end ThyHBB2
 end Examples
 end ModalDistribution

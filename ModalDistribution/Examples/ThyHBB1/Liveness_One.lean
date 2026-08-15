@@ -467,78 +467,17 @@ theorem livenessOneAtPastDownThyHBB1
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
          □ᶠ↓[[l]] (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
   classical
-  let φAnte :=
-    predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
-  let deliverEvt := ofEvent ⟨deliverSymb, [l, l, v]⟩
-  have hMain :=
-    livenessOneThyHBB1 (M := M)
-      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb) (l := l) (v := v)
-      (hTheory := hTheory)
-      (hLiveQuorum := hLiveQuorum)
-      (hUnique := hUnique)
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hLiveTop : ⟪wTop⟫ ⊨[M] □ᶠ[[l]] predicate0 liveSymb :=
-    by simpa [wTop] using hLiveQuorum p
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hAnte
-  obtain ⟨rProp, hPastAnte⟩ :=
-    (Sat.diamond_nil (M := M) (w := wTop)
-        (φ := Formula.past φAnte)).1
-      (by simpa [Formula.diamondPast, φAnte] using hAnte)
-  obtain ⟨O, hO, hAllLive⟩ :=
-    (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := predicate0 liveSymb)).1
-      hLiveTop
-  refine
-    (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l)
-        (φ := ↓ᶠ deliverEvt)).2
-      ⟨O, hO, ?_⟩
-  intro q hqO
-  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
-  have hAnte_q :
-      ⟪wq⟫ ⊨[M]
-        ♢ᶠ↓[[]] φAnte := by
-    have hPastWitness :
-        ⟪⟨rProp, †, wq.time⟩⟫ ⊨[M] Formula.past φAnte := by
-      simpa [wq, wTop, World.time] using hPastAnte
-    exact
-      (Sat.diamond_nil (M := M) (w := wq)
-          (φ := Formula.past φAnte)).2
-        ⟨rProp, hPastWitness⟩
-  have hImp_q :
-      ⟪wq⟫ ⊨[M]
-        (♢ᶠ↓[[]] φAnte) ⇒ᶠ
-          (predicate0 liveSymb ⇒ᶠ ↕ᶠ deliverEvt) := by
-    simpa [wq, φAnte, deliverEvt] using hMain q
-  have hNext :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := ♢ᶠ↓[[]] φAnte)
-      (ψ := predicate0 liveSymb ⇒ᶠ ↕ᶠ deliverEvt)
-      hImp_q hAnte_q
-  have hLive_q : ⟪wq⟫ ⊨[M] predicate0 liveSymb :=
-    by simpa [wq, wTop, World.time] using hAllLive q hqO
-  have hEventual :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ deliverEvt)
-      hNext hLive_q
-  have hPastDeliver_q :
-      ⟪wq⟫ ⊨[M] ↓ᶠ deliverEvt :=
-    by
-      have hPast :=
-        (Sat.atEnd (M := M) (w := wq)
-          (φ := Formula.past deliverEvt)).1
-          (by
-            simpa [Formula.sometime]
-              using hEventual)
-      simpa using hPast
-  exact hPastDeliver_q
-
+  exact
+    endValid_boxPast_of_imp_sometime (M := M)
+      (hGuard := hLiveQuorum)
+      (hMain :=
+      livenessOneThyHBB1 (M := M)
+        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+        (echoSymb := echoSymb) (voteSymb := voteSymb)
+        (deliverSymb := deliverSymb) (l := l) (v := v)
+        (hTheory := hTheory)
+        (hLiveQuorum := hLiveQuorum)
+        (hUnique := hUnique))
 /-- Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
 theorem livenessOneAtPastThyHBB1
@@ -553,32 +492,17 @@ theorem livenessOneAtPastThyHBB1
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
          ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
   classical
-  let φAnte :=
-    predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
-  let deliverEvt := ofEvent ⟨deliverSymb, [l, l, v]⟩
-  have hBox :=
-    livenessOneAtPastDownThyHBB1 (M := M)
-      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb) (l := l) (v := v)
-      (hTheory := hTheory)
-      (hLiveQuorum := hLiveQuorum)
-      (hUnique := hUnique)
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hAnte
-  have hBoxPast :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]] φAnte)
-      (ψ := □ᶠ↓[[l]] deliverEvt)
-      (by simpa [wTop, φAnte, deliverEvt] using hBox p)
-      hAnte
-  have hDiamond :=
-    singletonBoxImpliesDiamond (M := M) (w := wTop)
-      (l := l) (φ := deliverEvt) hBoxPast
-  simpa [wTop, φAnte, deliverEvt] using hDiamond
-
+  exact
+    endValid_diamondPast_of_imp_sometime (M := M)
+      (hGuard := hLiveQuorum)
+      (hMain :=
+      livenessOneThyHBB1 (M := M)
+        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+        (echoSymb := echoSymb) (voteSymb := voteSymb)
+        (deliverSymb := deliverSymb) (l := l) (v := v)
+        (hTheory := hTheory)
+        (hLiveQuorum := hLiveQuorum)
+        (hUnique := hUnique))
 end Liveness_One
 end ThyHBB1
 end Examples

@@ -250,78 +250,18 @@ theorem livenessTwoAtPastDownThyHBB2
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩)) ⇒ᶠ
          □ᶠ↓[[l₂']] (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
   classical
-  let deliver₁ := ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩
-  let deliver₂ := ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩
-  have hMain :=
-    livenessTwoThyHBB2 (M := M)
-      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb)
-      (l₁' := l₁') (l₂' := l₂') (ℓ := ℓ) (v := v)
-      (hTheory := hTheory)
-      (hIntersect := hIntersect)
-      (hLive := hLive)
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hLiveTop : ⟪wTop⟫ ⊨[M] □ᶠ[[l₂']] predicate0 liveSymb :=
-    by simpa [wTop] using hLive p
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver
-  obtain ⟨rDeliver, hPastDeliver⟩ :=
-    (Sat.diamond_nil (M := M) (w := wTop)
-        (φ := Formula.past deliver₁)).1
-      (by simpa [Formula.diamondPast, deliver₁, wTop] using hDeliver)
-  obtain ⟨O, hO, hAllLive⟩ :=
-    (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l₂')
-        (φ := predicate0 liveSymb)).1
-      hLiveTop
-  refine
-    (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l₂')
-        (φ := ↓ᶠ deliver₂)).2
-      ⟨O, hO, ?_⟩
-  intro q hqO
-  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
-  have hDeliver_q :
-      ⟪wq⟫ ⊨[M] ♢ᶠ↓[[]] deliver₁ := by
-    have hPastWitness :
-        ⟪⟨rDeliver, †, wq.time⟩⟫ ⊨[M] Formula.past deliver₁ := by
-      simpa [wq, wTop, World.time, deliver₁] using hPastDeliver
-    exact
-      (Sat.diamond_nil (M := M) (w := wq)
-          (φ := Formula.past deliver₁)).2
-        ⟨rDeliver, hPastWitness⟩
-  have hImp_q :
-      ⟪wq⟫ ⊨[M]
-        (♢ᶠ↓[[]] deliver₁) ⇒ᶠ
-          (predicate0 liveSymb ⇒ᶠ ↕ᶠ deliver₂) := by
-    simpa [wq, deliver₁, deliver₂]
-      using hMain q
-  have hNext :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := ♢ᶠ↓[[]] deliver₁)
-      (ψ := predicate0 liveSymb ⇒ᶠ ↕ᶠ deliver₂)
-      hImp_q hDeliver_q
-  have hLive_q : ⟪wq⟫ ⊨[M] predicate0 liveSymb :=
-    by simpa [wq, wTop, World.time] using hAllLive q hqO
-  have hEventual :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ deliver₂)
-      hNext hLive_q
-  have hPastDeliver_q :
-      ⟪wq⟫ ⊨[M] ↓ᶠ deliver₂ :=
-    by
-      have hPast :=
-        (Sat.atEnd (M := M) (w := wq)
-          (φ := Formula.past deliver₂)).1
-          (by
-            simpa [Formula.sometime]
-              using hEventual)
-      simpa using hPast
-  exact hPastDeliver_q
-
+  exact
+    endValid_boxPast_of_imp_sometime (M := M)
+      (hGuard := hLive)
+      (hMain :=
+      livenessTwoThyHBB2 (M := M)
+        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+        (echoSymb := echoSymb) (voteSymb := voteSymb)
+        (deliverSymb := deliverSymb)
+        (l₁' := l₁') (l₂' := l₂') (ℓ := ℓ) (v := v)
+        (hTheory := hTheory)
+        (hIntersect := hIntersect)
+        (hLive := hLive))
 /-- A delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
 theorem livenessTwoAtPastThyHBB2
@@ -334,32 +274,18 @@ theorem livenessTwoAtPastThyHBB2
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩)) ⇒ᶠ
          ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
   classical
-  let deliver₁ := ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩
-  let deliver₂ := ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩
-  have hBox :=
-    livenessTwoAtPastDownThyHBB2 (M := M)
-      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb)
-      (l₁' := l₁') (l₂' := l₂') (ℓ := ℓ) (v := v)
-      (hTheory := hTheory)
-      (hIntersect := hIntersect)
-      (hLive := hLive)
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver
-  have hBoxPast :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]] deliver₁)
-      (ψ := □ᶠ↓[[l₂']] deliver₂)
-      (by simpa [wTop, deliver₁, deliver₂] using hBox p)
-      hDeliver
-  have hDiamond :=
-    singletonBoxImpliesDiamond (M := M) (w := wTop)
-      (l := l₂') (φ := deliver₂) hBoxPast
-  simpa [wTop, deliver₁, deliver₂] using hDiamond
-
+  exact
+    endValid_diamondPast_of_imp_sometime (M := M)
+      (hGuard := hLive)
+      (hMain :=
+      livenessTwoThyHBB2 (M := M)
+        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+        (echoSymb := echoSymb) (voteSymb := voteSymb)
+        (deliverSymb := deliverSymb)
+        (l₁' := l₁') (l₂' := l₂') (ℓ := ℓ) (v := v)
+        (hTheory := hTheory)
+        (hIntersect := hIntersect)
+        (hLive := hLive))
 end ThyHBB2
 end Examples
 end ModalDistribution

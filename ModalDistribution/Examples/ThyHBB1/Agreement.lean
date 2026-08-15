@@ -415,41 +415,15 @@ theorem agreementFromDeliveriesThyHBB1
     (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
     ⊨[M] v₁ ≃ᶠ v₂ := by
   classical
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hImp :
-      ⟪wTop⟫ ⊨[M]
-        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
-          (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
-            (v₁ ≃ᶠ v₂) := by
-    simpa [wTop]
-      using
+  exact
+    EndValid.imp_elim (M := M)
+      (EndValid.imp_elim (M := M)
         (agreementThyHBB1 (M := M)
           (hTheory := hTheory) (l₁ := l₁) (l₂ := l₂)
           (l₁' := l₁') (l₂' := l₂') (v₁ := v₁) (v₂ := v₂)
-          (hSeq := hSeq) p)
-  have hDeliver₁Top :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩) :=
-    by simpa [wTop] using hDeliver₁ p
-  have hDeliver₂Top :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩) :=
-    by simpa [wTop] using hDeliver₂ p
-  have hImp' :
-      ⟪wTop⟫ ⊨[M]
-        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
-          (v₁ ≃ᶠ v₂) :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
-      (ψ :=
-        (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
-          (v₁ ≃ᶠ v₂)) hImp hDeliver₁Top
-  have hEq :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩))
-      (ψ := v₁ ≃ᶠ v₂) hImp' hDeliver₂Top
-  simpa [wTop] using hEq
+          (hSeq := hSeq))
+        hDeliver₁)
+      hDeliver₂
 
 end ThyHBB1
 end Examples

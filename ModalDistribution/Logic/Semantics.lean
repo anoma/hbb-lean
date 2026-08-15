@@ -511,21 +511,6 @@ theorem not_of_imp
   intro hφ
   exact hNot (h hφ)
 
-theorem not_congr
-    {φ ψ : Formula S}
-    (h : (⟪w⟫ ⊨[M]φ) ↔
-           (⟪w⟫ ⊨[M]ψ)) :
-    (⟪w⟫ ⊨[M]¬ᶠ φ) ↔
-      (⟪w⟫ ⊨[M]¬ᶠ ψ) := by
-  classical
-  constructor
-  · intro hNot
-    exact not_of_imp (M := M) (w := w)
-      (φ := ψ) (ψ := φ) (h := fun hψ => (h.mpr hψ)) hNot
-  · intro hNot
-    exact not_of_imp (M := M) (w := w)
-      (φ := φ) (ψ := ψ) (h := fun hφ => (h.mp hφ)) hNot
-
 theorem past_of_imp
     {φ ψ : Formula S}
     (h : ∀ (t : World P S.EventType), t ∈ w.time → t.place = w.place →
@@ -581,15 +566,6 @@ theorem past_congr
       (h := fun t ht hp hψ => hImp ht hp hψ) hPast'
     simpa using hRes
 
-theorem past_not_not_iff
-    {φ : Formula S} :
-    (⟪w⟫ ⊨[M] ↓ᶠ (¬ᶠ (¬ᶠ φ))) ↔ (⟪w⟫ ⊨[M] ↓ᶠ φ) := by
-  classical
-  refine past_congr (M := M) (w := w)
-    (φ := ¬ᶠ (¬ᶠ φ)) (ψ := φ)
-    (fun {t} ht hp =>
-      not_not_iff (M := M) (w := t) (φ := φ))
-
 theorem box_of_imp
     (ts : List S.Value) {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) → ⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ) :
@@ -638,6 +614,16 @@ theorem EndValid.of_imp
   classical
   intro hφ p
   exact h p (hφ p)
+
+/-- Modus ponens for end-of-time validity. -/
+theorem EndValid.imp_elim
+    (M : Model S P) {φ ψ : Formula S}
+    (hImp : ⊨[M]φ ⇒ᶠ ψ) (hφ : ⊨[M]φ) : ⊨[M]ψ := by
+  classical
+  intro p
+  exact
+    Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩)
+      (φ := φ) (ψ := ψ) (hImp p) (hφ p)
 
 /-- Event-driven validity. -/
 @[simp] def AllWorldValid
