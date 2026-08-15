@@ -175,7 +175,7 @@ end HistoryAt
 /-- Participant `p` is sequential in `h` when its event-tuples are linearly
     ordered by accessibility. -/
 def isSequential (p : P) (h : PreHistory P Event) : Prop :=
-  ∀ {t₁ t₂ : World P Event},
+  ∀ t₁ t₂ : World P Event,
     t₁ ∈ h →
     t₂ ∈ h →
     World.place t₁ = p →
@@ -481,7 +481,7 @@ theorem isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
   · intro hSeq t t' ht ht'
     obtain ⟨ht_mem, ht_place⟩ := ht
     obtain ⟨ht'_mem, ht'_place⟩ := ht'
-    exact hSeq ht_mem ht'_mem ht_place ht'_place
+    exact hSeq t t' ht_mem ht'_mem ht_place ht'_place
   · intro hSeq t₁ t₂ ht₁ ht₂ hp₁ hp₂
     have ht₁_history :
         t₁ ∈ PreHistory.historyAt (P := P) (Event := Event) h p := ⟨ht₁, hp₁⟩
@@ -508,7 +508,7 @@ theorem sequentiality_monotone (p : P) (h h' : History P Event) :
   intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
   have ht₁_in : t₁ ∈ h.val := hsub _ ht₁
   have ht₂_in : t₂ ∈ h.val := hsub _ ht₂
-  exact seq_h ht₁_in ht₂_in hp₁ hp₂
+  exact seq_h t₁ t₂ ht₁_in ht₂_in hp₁ hp₂
 
 /-- Sequentiality is inherited by immediate predecessors of a history. -/
 theorem sequentiality_of_predecessor {p : P} {H : History P Event}
@@ -520,6 +520,6 @@ theorem sequentiality_of_predecessor {p : P} {H : History P Event}
   intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
   have ht₁' : t₁ ∈ H.val := hsubset _ ht₁
   have ht₂' : t₂ ∈ H.val := hsubset _ ht₂
-  exact hseq ht₁' ht₂' hp₁ hp₂
+  exact hseq t₁ t₂ ht₁' ht₂' hp₁ hp₂
 
 end History

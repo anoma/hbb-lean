@@ -84,7 +84,7 @@ cd hbb-lean
 # EITHER type
 lake build
 # OR (for informative verification announcements as each protocol is verified during the build) type
-./build_with_accouncements.sh
+./build_with_announcements.sh
 ```
 This builds the project **and verifies all proofs**. It will:
 - Automatically install the correct Lean version (v4.24.0-rc1)
@@ -93,7 +93,7 @@ This builds the project **and verifies all proofs**. It will:
 **What to expect during the build:**
 - The project has no external dependencies beyond Lean itself, so the first build takes well under a minute on a typical machine
 - You'll see messages like "✔ [13/38] Built ModalDistribution.Logic.Properties.Modalities (842ms)" as modules are being processed
-- The build compiles 38 files total, which can be used to gauge build progress
+- The build compiles 39 files total, which can be used to gauge build progress
 - When you see modules from `ModalDistribution.Examples.ThyHBB1`, `ThyHBB2`, and `ThyHBB3` being processed, that's when the correctness properties (Agreement, Liveness 1, and Liveness 2) for each protocol are being verified
 - Subsequent builds are much faster
 

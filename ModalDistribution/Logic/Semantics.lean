@@ -29,43 +29,17 @@ set_option autoImplicit false
 -- Fix at Type 0 to match Syntax.lean
 variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
-/-- Depth measure for formulas. Needed for termination of Sat. -/
-@[simp] private noncomputable def depth : Formula S → Nat
-  | .bot => 0
-  | .imp φ ψ => 1 + max (depth φ) (depth ψ)
-  | .eq _ _ => 0
-  | .forall body =>
-      open Classical in
-      if h : Nonempty S.Value then
-        1 + depth (body (choice h))
-      else
-        0
-  | .event _ => 0
-  | .predicate _ => 0
-  | .past φ => 1 + depth φ
-  | .atEnd φ => 1 + depth φ
-  | .diamond _ φ => 1 + depth φ
-  | .seq => 0
+/-- Quorum-intersection check for the `♢` clause of `Sat`.
 
-/-- Axiom: depth is uniform across body applications (parametricity).
-    Note: This is only true so long as body is parametrically polymorphic in v;
-          which it is for all reasonable formulas. We can get rid of this axiom by,
-          for example, using de Bruijin indices, but we have to make some compromise
-          like this for the convenience of HOAS. -/
-private axiom depth_uniform [Nonempty S.Value] (body : S.Value → Formula S) (v₁ v₂ : S.Value) :
-  depth (body v₁) = depth (body v₂)
-
-/-- Depth of forall body is bounded (follows from depth_uniform). -/
-private theorem depth_forall_body (body : S.Value → Formula S) (v : S.Value) :
-  depth (body v) < depth (.forall body) := by
-  open Classical in
-  simp only [depth]
-  by_cases h : Nonempty S.Value
-  · simp only [h, ↓reduceDIte]
-    rw [depth_uniform body v (choice h)]
-    omega
-  · -- If S.Value is empty, there's no v to consider, contradiction
-    exact absurd ⟨v⟩ h
+`Sat.check M Q ls acc` holds when every choice of one quorum per learner in
+`ls` leaves a participant in the accumulated intersection `acc ∩ O₁ ∩ ⋯ ∩ Oₙ`
+satisfying `Q`. The recursion is on the learner list only; the satisfaction
+predicate `Q` is abstract, which keeps `Sat` itself structurally recursive. -/
+def Sat.check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
+  | [], acc => ∃ p' ∈ acc, Q p'
+  | ℓ :: ls, acc =>
+      ∀ O ∈ (M.learner ℓ).quorums,
+        Sat.check M Q ls (acc ∩ O)
 
 /-- Satisfaction relation `p \dx H ⊨[M]φ`. -/
 def Sat (M : Model S P)
@@ -87,22 +61,9 @@ def Sat (M : Model S P)
           Sat M (t.place) (World.event t) (World.time t) φ
   | .atEnd φ => Sat M p † M.history.val φ
   | .diamond learners φ =>
-      let rec check : List S.Value → Set P → Prop
-        | [], acc => ∃ p' ∈ acc, Sat M p' † H φ
-        | ℓ :: ls, acc =>
-            ∀ O ∈ (M.learner ℓ).quorums,
-              check ls (acc ∩ O)
-      termination_by learners _ => (depth φ, 1, learners.length)
-      check learners Set.univ
+      Sat.check M (fun p' => Sat M p' † H φ) learners Set.univ
   | .seq =>
       isSequential (Event := S.EventType) p H
-termination_by φ => (depth φ, 0, 0)
-decreasing_by
-  all_goals simp_wf
-  all_goals (try decreasing_trivial)
-  have := depth_forall_body body v
-  apply Prod.Lex.left
-  exact this
 
 notation:65 "⟪" w "⟫" " ⊨[" M "]" φ =>
   Sat M (place w) (event w) (time w) φ
@@ -200,18 +161,18 @@ theorem exists_intro
     (not (M := M) (w := w) (φ := body v)).1 hnot hv
   exact hneg
 
-/-- Simp lemma: Sat.check for empty list. -/
+/-- Simp lemma: `Sat.check` for the empty learner list. -/
 @[simp] theorem Sat_check_nil (M : Model S P)
-    (H : PreHistory P (S.EventType)) (φ : Formula S) (acc : Set P) :
-    Sat.check M H φ [] acc ↔ ∃ p' ∈ acc, ⟪⟨p', †, H⟩⟫ ⊨[M]φ := by
+    (Q : P → Prop) (acc : Set P) :
+    Sat.check M Q [] acc ↔ ∃ p' ∈ acc, Q p' := by
   simp [Sat.check]
 
 /-- Simp lemma: `Sat.check` for the inductive step. -/
 @[simp] theorem Sat_check_cons (M : Model S P)
-    (H : PreHistory P (S.EventType)) (φ : Formula S)
+    (Q : P → Prop)
     (v : S.Value) (vs : List S.Value) (acc : Set P) :
-    Sat.check M H φ (v :: vs) acc ↔
-      ∀ O ∈ (M.learner v).quorums, Sat.check M H φ vs (acc ∩ O) := by
+    Sat.check M Q (v :: vs) acc ↔
+      ∀ O ∈ (M.learner v).quorums, Sat.check M Q vs (acc ∩ O) := by
   simp [Sat.check]
 
 /-- Diamonds over the empty learner list are witnessed by some participant.
@@ -605,9 +566,9 @@ theorem diamondPast
   · rintro ⟨v, hv⟩ h
     exact h v hv
 
-theorem check_of_imp {ts : List S.Value} {acc : Set P} {φ ψ : Formula S}
-    (h : ∀ q, (⟪⟨q, †, H⟩⟫ ⊨[M]φ) → (⟪⟨q, †, H⟩⟫ ⊨[M]ψ)) :
-    Sat.check M H φ ts acc → Sat.check M H ψ ts acc := by
+theorem check_of_imp {ts : List S.Value} {acc : Set P} {Q Q' : P → Prop}
+    (h : ∀ q, Q q → Q' q) :
+    Sat.check M Q ts acc → Sat.check M Q' ts acc := by
   classical
   induction ts generalizing acc with
   | nil =>
@@ -621,6 +582,12 @@ theorem check_of_imp {ts : List S.Value} {acc : Set P} {φ ψ : Formula S}
       intro O hO
       exact ih (hCheck O hO)
 
+theorem check_congr {ts : List S.Value} {acc : Set P} {Q Q' : P → Prop}
+    (h : ∀ q, Q q ↔ Q' q) :
+    Sat.check M Q ts acc ↔ Sat.check M Q' ts acc :=
+  ⟨check_of_imp (M := M) fun q => (h q).1,
+   check_of_imp (M := M) fun q => (h q).2⟩
+
 theorem diamond_of_imp
     (ts : List S.Value) {φ ψ : Formula S}
     (h : ∀ q, (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) → (⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ)) :
@@ -628,7 +595,7 @@ theorem diamond_of_imp
   classical
   intro hSat
   simp [Sat] at hSat ⊢
-  exact check_of_imp (M := M) (H := w.time) (ts := ts) (acc := Set.univ) h hSat
+  exact check_of_imp (M := M) (ts := ts) (acc := Set.univ) h hSat
 
 theorem diamond_congr
     (ts : List S.Value) {φ ψ : Formula S}

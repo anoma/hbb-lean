@@ -83,7 +83,8 @@ theorem seq_monotone_of_subset
     ⟪w'⟫ ⊨[M]Formula.seq := by
   classical
   have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
-    simpa [Sat, hwTime] using hSeq
+    rw [hwTime]
+    exact (Sat.seq (M := M) (w := w)).1 hSeq
   have hMem : w' ∈ Hw.val := by
     simpa [World.accessible, hwTime] using hAcc.1
   have hBefore : w'.time ≺− Hw.val :=
@@ -99,7 +100,7 @@ theorem seq_monotone_of_subset
     refine fun {t₁ t₂} ht₁ ht₂ hp₁ hp₂ => ?_
     have hp₁' : World.place t₁ = w.place := hp₁.trans hAcc.2
     have hp₂' : World.place t₂ = w.place := hp₂.trans hAcc.2
-    exact hSeqTime ht₁ ht₂ hp₁' hp₂'
+    exact hSeqTime t₁ t₂ ht₁ ht₂ hp₁' hp₂'
   exact (Sat.seq (M := M) (w := w')).2 hSeqTime'
 
 /-- Sequentiality implies `⇓ᶠ`-sequentiality. -/
@@ -110,7 +111,8 @@ theorem seq_monotone_allItp
     ⟪w⟫ ⊨[M]⇓ᶠ Formula.seq := by
   classical
   have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
-    simpa [Sat, hwTime] using hSeq
+    rw [hwTime]
+    exact (Sat.seq (M := M) (w := w)).1 hSeq
   refine Sat.not_intro (M := M) (φ := ↓ᶠ (¬ᶠ Formula.seq)) ?_
   intro hPast
   obtain ⟨t, ht_mem, ht_place, ht_notSeq⟩ :=
@@ -129,7 +131,7 @@ theorem seq_monotone_allItp
     refine fun {t₁ t₂} ht₁ ht₂ hp₁ hp₂ => ?_
     have hp₁' : World.place t₁ = w.place := hp₁.trans ht_place
     have hp₂' : World.place t₂ = w.place := hp₂.trans ht_place
-    exact hSeq_t_time ht₁ ht₂ hp₁' hp₂'
+    exact hSeq_t_time t₁ t₂ ht₁ ht₂ hp₁' hp₂'
   have hSeq_t : ⟪t⟫ ⊨[M]Formula.seq :=
     (Sat.seq (M := M) (w := t)).2 hSeq_t_place
   exact (Sat.not_elim (M := M) (w := t) (φ := Formula.seq)) ht_notSeq hSeq_t
@@ -195,7 +197,7 @@ theorem seq_iff_linear_accessible
       simpa [World.accessible] using hw₂.1
     have hw₁_place : World.place w₁ = w.place := hw₁.2
     have hw₂_place : World.place w₂ = w.place := hw₂.2
-    exact hSeq' hw₁_mem hw₂_mem hw₁_place hw₂_place
+    exact hSeq' w₁ w₂ hw₁_mem hw₂_mem hw₁_place hw₂_place
   · intro h
     have hSeq :
         isSequential (P := P) (Event := Signature.EventType S)
@@ -261,7 +263,7 @@ theorem seq_preHistory_of_happensBefore
   have ht₂_H : t₂ ∈ H.val := hSubset _ ht₂
   have ht₁_time : t₁ ∈ w.time := by simpa [hTime.symm] using ht₁_H
   have ht₂_time : t₂ ∈ w.time := by simpa [hTime.symm] using ht₂_H
-  exact hSeq_time ht₁_time ht₂_time hp₁ hp₂
+  exact hSeq_time t₁ t₂ ht₁_time ht₂_time hp₁ hp₂
 
 /-- Sequentiality linearly orders any two prefixes for the same participant. -/
 theorem seq_compare_prefixes
@@ -275,7 +277,7 @@ theorem seq_compare_prefixes
     simpa [Sat] using hSeq
   have ht₁_time : t₁ ∈ w.time := by simpa [hTime.symm] using ht₁
   have ht₂_time : t₂ ∈ w.time := by simpa [hTime.symm] using ht₂
-  have hCompare := hSeq_time ht₁_time ht₂_time hp₁ hp₂
+  have hCompare := hSeq_time t₁ t₂ ht₁_time ht₂_time hp₁ hp₂
   cases hCompare with
   | inl hIn =>
       have hBeforeEq : t₁.time ⪯ t₂.time :=
@@ -306,7 +308,7 @@ theorem seq_compare_historyAt
   obtain ⟨ht'_mem, ht'_place⟩ := ht'
   have ht_mem_time : t ∈ w.time := by simpa [hTime.symm] using ht_mem
   have ht'_mem_time : t' ∈ w.time := by simpa [hTime.symm] using ht'_mem
-  exact hSeq_time ht_mem_time ht'_mem_time ht_place ht'_place
+  exact hSeq_time t t' ht_mem_time ht'_mem_time ht_place ht'_place
 
 /-- Sequential participants totally order their local event times. -/
 theorem seq_compare_event_times
@@ -320,7 +322,7 @@ theorem seq_compare_event_times
     simpa [Sat] using hSeq
   have ht₁_time : t₁ ∈ w.time := by simpa [hTime.symm] using ht₁
   have ht₂_time : t₂ ∈ w.time := by simpa [hTime.symm] using ht₂
-  have hCompare := hSeq_time ht₁_time ht₂_time hp₁ hp₂
+  have hCompare := hSeq_time t₁ t₂ ht₁_time ht₂_time hp₁ hp₂
   cases hCompare with
   | inl hAcc =>
       exact Or.inl (PreHistory.happensBeforeEq_of_accessible
@@ -374,7 +376,7 @@ theorem seq_down_of_seq
     intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
     have hp₁' : t₁.place = w.place := hp₁.trans ht_place
     have hp₂' : t₂.place = w.place := hp₂.trans ht_place
-    exact hSeq_time ht₁ ht₂ hp₁' hp₂'
+    exact hSeq_time t₁ t₂ ht₁ ht₂ hp₁' hp₂'
   have hSeq_t : ⟪t⟫ ⊨[M]Formula.seq :=
     (Sat.seq (M := M) (w := t)).2 hSeq_time'
   exact
@@ -579,7 +581,7 @@ theorem seq_two_quorums_events
   have hp₁ : t₁.place = w.place := ht₁_place
   have hp₂ : t₂.place = w.place := ht₂_place
   have hOrder :=
-    hSeqTime ht₁_mem ht₂_mem hp₁ hp₂
+    hSeqTime t₁ t₂ ht₁_mem ht₂_mem hp₁ hp₂
   obtain ⟨hEvt₁_eq, hEvt₁_mem⟩ :=
     (Sat.ofEvent (M := M) (w := t₁) (E := evt)).1 ht₁_event
   obtain ⟨hEvt₂_eq, hEvt₂_mem⟩ :=

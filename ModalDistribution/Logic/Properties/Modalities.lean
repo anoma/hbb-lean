@@ -75,61 +75,6 @@ theorem hasQuorumWitness.congr
     (ls : List S.Value) : Prop :=
   ∀ F : QuorumFamily M ls, QuorumFamily.intersectionNonempty F
 
-theorem diamondCheck_of_imp
-    (M : Model S P)
-    (ls : List S.Value)
-    (φ ψ : Formula S) (acc : Set P)
-    (h : ∀ p,
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) →
-          ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ) :
-    Sat.check M M.history.val φ ls acc →
-      Sat.check M M.history.val ψ ls acc := by
-  classical
-  induction ls generalizing acc with
-  | nil =>
-      intro hCheck
-      obtain ⟨p, hpAcc, hpSat⟩ :=
-        (Sat.Sat_check_nil (M := M)
-          (H := M.history.val) (φ := φ) (acc := acc)).1 hCheck
-      exact
-        (Sat.Sat_check_nil (M := M)
-          (H := M.history.val) (φ := ψ) (acc := acc)).2
-          ⟨p, hpAcc, h p hpSat⟩
-  | cons l ls ih =>
-      intro hCheck
-      have hCons :=
-        (Sat.Sat_check_cons (M := M)
-          (H := M.history.val) (φ := φ)
-          (v := l) (vs := ls) (acc := acc)).1 hCheck
-      refine
-        (Sat.Sat_check_cons (M := M)
-          (H := M.history.val) (φ := ψ)
-          (v := l) (vs := ls) (acc := acc)).2 ?_
-      intro O hO
-      exact ih (acc := acc ∩ O) (hCons O hO)
-
-theorem diamondCheck_congr
-    (M : Model S P)
-    (ls : List S.Value)
-    (φ ψ : Formula S) (acc : Set P)
-    (h : ∀ p,
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) ↔
-         (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ)) :
-    Sat.check M M.history.val φ ls acc ↔
-      Sat.check M M.history.val ψ ls acc := by
-  classical
-  constructor
-  · intro hCheck
-    exact
-      diamondCheck_of_imp (M := M)
-        (ls := ls) (φ := φ) (ψ := ψ) (acc := acc)
-        (h := fun p => (h p).1) hCheck
-  · intro hCheck
-    exact
-      diamondCheck_of_imp (M := M)
-        (ls := ls) (φ := ψ) (ψ := φ) (acc := acc)
-        (h := fun p => (h p).2) hCheck
-
 def quorumWitnessAcc
     (M : Model S P)
     (ls : List S.Value)
@@ -142,7 +87,7 @@ theorem diamondCheck_iff_quorumWitnessAcc
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S)
     (acc : Set P) :
-    Sat.check M M.history.val φ ls acc ↔
+    Sat.check M (fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) ls acc ↔
       quorumWitnessAcc M ls φ acc := by
   classical
   induction ls generalizing acc with
@@ -151,7 +96,7 @@ theorem diamondCheck_iff_quorumWitnessAcc
       · intro h F
         obtain ⟨p, hpacc, hpSat⟩ :=
           (Sat.Sat_check_nil (M := M)
-            (H := M.history.val) (φ := φ) (acc := acc)).1 h
+            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) (acc := acc)).1 h
         refine ⟨p, hpacc, ?_, hpSat⟩
         exact fun i => i.elim0
       · intro h
@@ -159,14 +104,14 @@ theorem diamondCheck_iff_quorumWitnessAcc
           h (QuorumFamily.nil (M := M))
         exact
           (Sat.Sat_check_nil (M := M)
-            (H := M.history.val) (φ := φ) (acc := acc)).2
+            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) (acc := acc)).2
             ⟨p, hpacc, hpSat⟩
   | cons l ls ih =>
       constructor
       · intro h F
         have hCons :=
           (Sat.Sat_check_cons (M := M)
-            (H := M.history.val) (φ := φ)
+            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ)
             (v := l) (vs := ls) (acc := acc)).1 h
         have hTail :=
           hCons (QuorumFamily.head (F := F))
@@ -183,7 +128,7 @@ theorem diamondCheck_iff_quorumWitnessAcc
       · intro h
         refine
           (Sat.Sat_check_cons (M := M)
-            (H := M.history.val) (φ := φ)
+            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ)
             (v := l) (vs := ls) (acc := acc)).2 ?_
         intro O hO
         have hWitnessTail :
@@ -203,7 +148,7 @@ theorem sat_diamond_iff_diamondCheck
     (ls : List S.Value) (φ : Formula S)
     (w : World P (Signature.EventType S)) :
     (⟪w⟫ ⊨[M] ♢ᶠ[ls] φ) ↔
-      Sat.check M w.time φ ls Set.univ := by
+      Sat.check M (fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) ls Set.univ := by
   classical
   simp [Sat]
 
@@ -225,21 +170,21 @@ theorem sat_diamond_three_intersection
       (w := w)).1 hDiamond
   have hCons₁ :=
     (Sat.Sat_check_cons (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (v := l₁) (vs := [l₂, l₃]) (acc := Set.univ)).1 hCheck
   have hCons₂ :=
     (Sat.Sat_check_cons (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (v := l₂) (vs := [l₃]) (acc := Set.univ ∩ O₁)).1
       (hCons₁ O₁ hO₁)
   have hNil :=
     (Sat.Sat_check_cons (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (v := l₃) (vs := []) (acc := (Set.univ ∩ O₁) ∩ O₂)).1
       (hCons₂ O₂ hO₂)
   obtain ⟨p, hpMem, _⟩ :=
     (Sat.Sat_check_nil (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (acc := ((Set.univ ∩ O₁) ∩ O₂) ∩ O₃)).1 (hNil O₃ hO₃)
   have hpInter : p ∈ (Set.univ ∩ O₁) ∩ O₂ := hpMem.1
   have hpO₃ : p ∈ O₃ := by
@@ -267,26 +212,26 @@ theorem sat_diamond_three_intersection
         (ls := [l]) (φ := φ) (w := w)).1 h
     have hCons :=
       (Sat.Sat_check_cons (M := M)
-        (H := w.time) (φ := φ)
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
         (v := l) (vs := []) (acc := Set.univ)).1 hCheck
     have hNil := hCons O hO
     obtain ⟨q, hqAcc, hSat⟩ :=
       (Sat.Sat_check_nil (M := M)
-        (H := w.time) (φ := φ) (acc := Set.univ ∩ O)).1 hNil
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) (acc := Set.univ ∩ O)).1 hNil
     obtain ⟨_, hqO⟩ := hqAcc
     refine ⟨q, hqO, ?_⟩
     simpa using hSat
   · intro h
-    have hCons : Sat.check M w.time φ [l] Set.univ :=
+    have hCons : Sat.check M (fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) [l] Set.univ :=
       (Sat.Sat_check_cons (M := M)
-        (H := w.time) (φ := φ)
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
         (v := l) (vs := []) (acc := Set.univ)).2
         (by
           intro O hO
           obtain ⟨q, hqO, hSat⟩ := h O hO
           refine
             (Sat.Sat_check_nil (M := M)
-              (H := w.time) (φ := φ) (acc := Set.univ ∩ O)).2
+              (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) (acc := Set.univ ∩ O)).2
               ⟨q, ?_, hSat⟩
           exact ⟨Set.mem_univ _, hqO⟩)
     exact
@@ -310,17 +255,17 @@ theorem sat_diamond_three_intersection
         (ls := [l, l']) (φ := φ) (w := w)).1 h
     have hCons :=
       (Sat.Sat_check_cons (M := M)
-        (H := w.time) (φ := φ)
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
         (v := l) (vs := [l']) (acc := Set.univ)).1 hCheck
     have hCons' :=
       (Sat.Sat_check_cons (M := M)
-        (H := w.time) (φ := φ)
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
         (v := l') (vs := []) (acc := Set.univ ∩ O)).1
         (hCons O hO)
     have hNil := hCons' O' hO'
     obtain ⟨q, hmem, hSat⟩ :=
       (Sat.Sat_check_nil (M := M)
-        (H := w.time) (φ := φ)
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
         (acc := (Set.univ ∩ O) ∩ O')).1 hNil
     have hmem' : q ∈ O ∩ O' := by
       simpa [Set.inter_assoc, Set.inter_left_comm, Set.inter_univ]
@@ -329,15 +274,15 @@ theorem sat_diamond_three_intersection
     simpa using hSat
   · intro h
     have hCons :
-        Sat.check M w.time φ [l, l'] Set.univ :=
+        Sat.check M (fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) [l, l'] Set.univ :=
       (Sat.Sat_check_cons (M := M)
-        (H := w.time) (φ := φ)
+        (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
         (v := l) (vs := [l']) (acc := Set.univ)).2
         (by
           intro O hO
           refine
             (Sat.Sat_check_cons (M := M)
-              (H := w.time) (φ := φ)
+              (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
               (v := l') (vs := []) (acc := Set.univ ∩ O)).2
               (by
                 intro O' hO'
@@ -347,7 +292,7 @@ theorem sat_diamond_three_intersection
                     using hq
                 exact
                   (Sat.Sat_check_nil (M := M)
-                    (H := w.time) (φ := φ)
+                    (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]φ)
                     (acc := (Set.univ ∩ O) ∩ O')).2
                     ⟨q, hq', hSat⟩))
     exact
@@ -1067,7 +1012,7 @@ theorem hasQuorumWitness.seq_to_past
   have hSeqGlobal :
       isSequential (P := P) (Event := Signature.EventType S) p
         M.history.val := by
-    simpa [Sat] using hpSeq
+    exact (Sat.seq (M := M) (w := ⟨p, †, M.history.val⟩)).1 hpSeq
   have hSeqLocal :
       isSequential (P := P) (Event := Signature.EventType S) p (World.time t) :=
     sequentiality_of_predecessor (p := p) (H := M.history)
@@ -1090,7 +1035,7 @@ theorem hasQuorumWitness.seq_to_past
       calc
         t₂.place = t.place := hplace₂''
         _ = p := hpPlace'
-    have hLocal := hSeqLocal ht₁ ht₂ hplace₁' hplace₂'
+    have hLocal := hSeqLocal t₁ t₂ ht₁ ht₂ hplace₁' hplace₂'
     simpa using hLocal
   have hSeqWorld :
       ⟪t⟫ ⊨[M] Formula.seq :=
@@ -1610,8 +1555,8 @@ theorem sat_check_top_congr
     (ls : List (Signature.Value S))
     {t₁ t₂ : PreHistory P (Signature.EventType S)}
     {acc : Set P} :
-    Sat.check M t₁ ⊤ᶠ ls acc ↔
-      Sat.check M t₂ ⊤ᶠ ls acc := by
+    Sat.check M (fun q => ⟪⟨q, †, t₁⟩⟫ ⊨[M]⊤ᶠ) ls acc ↔
+      Sat.check M (fun q => ⟪⟨q, †, t₂⟩⟫ ⊨[M]⊤ᶠ) ls acc := by
   classical
   induction ls generalizing acc with
   | nil =>
@@ -1619,19 +1564,19 @@ theorem sat_check_top_congr
       · intro h
         obtain ⟨p, hpAcc, _⟩ :=
           (Sat.Sat_check_nil (M := M)
-            (H := t₁) (φ := ⊤ᶠ) (acc := acc)).1 h
+            (Q := fun q => ⟪⟨q, †, t₁⟩⟫ ⊨[M]⊤ᶠ) (acc := acc)).1 h
         refine
           (Sat.Sat_check_nil (M := M)
-            (H := t₂) (φ := ⊤ᶠ) (acc := acc)).2 ?_
+            (Q := fun q => ⟪⟨q, †, t₂⟩⟫ ⊨[M]⊤ᶠ) (acc := acc)).2 ?_
         refine ⟨p, hpAcc, ?_⟩
         simp [Formula.top, Sat]
       · intro h
         obtain ⟨p, hpAcc, _⟩ :=
           (Sat.Sat_check_nil (M := M)
-            (H := t₂) (φ := ⊤ᶠ) (acc := acc)).1 h
+            (Q := fun q => ⟪⟨q, †, t₂⟩⟫ ⊨[M]⊤ᶠ) (acc := acc)).1 h
         refine
           (Sat.Sat_check_nil (M := M)
-            (H := t₁) (φ := ⊤ᶠ) (acc := acc)).2 ?_
+            (Q := fun q => ⟪⟨q, †, t₁⟩⟫ ⊨[M]⊤ᶠ) (acc := acc)).2 ?_
         refine ⟨p, hpAcc, ?_⟩
         simp [Formula.top, Sat]
   | cons l ls ih =>
@@ -1639,11 +1584,11 @@ theorem sat_check_top_congr
       · intro hCheck
         have hCons :=
           (Sat.Sat_check_cons (M := M)
-            (H := t₁) (φ := ⊤ᶠ)
+            (Q := fun q => ⟪⟨q, †, t₁⟩⟫ ⊨[M]⊤ᶠ)
             (v := l) (vs := ls) (acc := acc)).1 hCheck
         refine
           (Sat.Sat_check_cons (M := M)
-            (H := t₂) (φ := ⊤ᶠ)
+            (Q := fun q => ⟪⟨q, †, t₂⟩⟫ ⊨[M]⊤ᶠ)
             (v := l) (vs := ls) (acc := acc)).2 ?_
         intro O hO
         have hTail := hCons O hO
@@ -1652,11 +1597,11 @@ theorem sat_check_top_congr
       · intro hCheck
         have hCons :=
           (Sat.Sat_check_cons (M := M)
-            (H := t₂) (φ := ⊤ᶠ)
+            (Q := fun q => ⟪⟨q, †, t₂⟩⟫ ⊨[M]⊤ᶠ)
             (v := l) (vs := ls) (acc := acc)).1 hCheck
         refine
           (Sat.Sat_check_cons (M := M)
-            (H := t₁) (φ := ⊤ᶠ)
+            (Q := fun q => ⟪⟨q, †, t₁⟩⟫ ⊨[M]⊤ᶠ)
             (v := l) (vs := ls) (acc := acc)).2 ?_
         intro O hO
         have hTail := hCons O hO
@@ -1729,16 +1674,16 @@ theorem sat_diamond_two_intersection
       (w := w)).1 hDiamond
   have hCons₁ :=
     (Sat.Sat_check_cons (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (v := l₁) (vs := [l₂]) (acc := Set.univ)).1 hCheck
   have hNil :=
     (Sat.Sat_check_cons (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (v := l₂) (vs := []) (acc := Set.univ ∩ O₁)).1
       (hCons₁ O₁ hO₁)
   obtain ⟨p, hpMem, _⟩ :=
     (Sat.Sat_check_nil (M := M)
-      (H := w.time) (φ := ⊤ᶠ)
+      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
       (acc := (Set.univ ∩ O₁) ∩ O₂)).1 (hNil O₂ hO₂)
   have hpO₂ : p ∈ O₂ := by
     simpa [Set.inter_assoc, Set.inter_left_comm, Set.inter_univ]

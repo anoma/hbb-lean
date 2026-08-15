@@ -304,7 +304,7 @@ theorem safe_seq_guard_monotone
   have hSeq_restrict :
       isSequential (P := P) (Event := Signature.EventType S) q w'.time := by
     intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-    exact hSeq_global (hSubset_subset _ ht₁) (hSubset_subset _ ht₂) hp₁ hp₂
+    exact hSeq_global t₁ t₂ (hSubset_subset _ ht₁) (hSubset_subset _ ht₂) hp₁ hp₂
   have hSeq_local' :
       ⟪⟨q, †, w'.time⟩⟫ ⊨[M] Formula.seq :=
     (Sat.seq (M := M) (w := ⟨q, †, w'.time⟩)).2 hSeq_restrict
