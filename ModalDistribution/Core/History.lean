@@ -289,3 +289,131 @@ theorem sequentiality_of_predecessor {p : P} {H : History P Event}
   exact hseq t₁ t₂ ht₁' ht₂' hp₁ hp₂
 
 end History
+
+/-! ## Element-transitivity (paper Definition 2.3.11 and Lemma 2.3.12) -/
+
+/-- A prehistory is element-transitive when `≺−` is transitive into it. This is
+an alternative, strictly weaker notion than `isTransitive`. -/
+def isElementTransitive (h : PreHistory P Event) : Prop :=
+  ∀ h'' h' : PreHistory P Event, h'' ≺− h' → h' ≺− h → h'' ≺− h
+
+/-- Transitive prehistories are element-transitive. -/
+theorem isTransitive.isElementTransitive {h : PreHistory P Event}
+    (ht : isTransitive h) : isElementTransitive h := by
+  intro h'' h' h''h' h'h
+  obtain ⟨p, x, hmem⟩ := h''h'
+  exact ⟨p, x, ht h' h'h _ hmem⟩
+
+/-- Every history structure is element-transitive. -/
+theorem History.isElementTransitive (H : History P Event) :
+    isElementTransitive H.val :=
+  (History.transitive H).isElementTransitive
+
+/-- The reverse implication fails: an element-transitive prehistory need not be
+transitive. The witness is the paper's `H₂ = {(p, †, H₁), (q, †, ∅)}` with
+`H₁ = {(p, †, ∅)}`. -/
+theorem exists_elementTransitive_not_transitive :
+    ∃ h : PreHistory Bool Empty,
+      isElementTransitive h ∧ ¬ isTransitive h := by
+  classical
+  set H₁ : PreHistory Bool Empty :=
+    PreHistory.mk [(true, MaybeEvent.none, PreHistory.empty)] with hH₁
+  set H₂ : PreHistory Bool Empty :=
+    PreHistory.mk
+      [ (true, MaybeEvent.none, H₁)
+      , (false, MaybeEvent.none, PreHistory.empty) ] with hH₂
+  refine ⟨H₂, ?_, ?_⟩
+  · intro h'' h' h''h' h'h
+    obtain ⟨p, x, hmem'⟩ := h'h
+    have hmemL :
+        (p, x, h') ∈
+          [ ((true : Bool), (MaybeEvent.none : MaybeEvent Empty), H₁)
+          , (false, MaybeEvent.none, PreHistory.empty) ] := hmem'
+    have hcases : h' = H₁ ∨ h' = PreHistory.empty := by
+      rcases List.mem_cons.1 hmemL with heq | htail
+      · exact Or.inl (congrArg (fun t => t.2.2) heq)
+      · rcases List.mem_cons.1 htail with heq | hnil
+        · exact Or.inr (congrArg (fun t => t.2.2) heq)
+        · cases hnil
+    obtain ⟨q, y, hmem''⟩ := h''h'
+    rcases hcases with rfl | rfl
+    · have hmemL' :
+          (q, y, h'') ∈
+            [ ((true : Bool), (MaybeEvent.none : MaybeEvent Empty),
+                PreHistory.empty) ] := hmem''
+      have h''eq : h'' = PreHistory.empty := by
+        rcases List.mem_cons.1 hmemL' with heq | hnil
+        · exact congrArg (fun t => t.2.2) heq
+        · cases hnil
+      subst h''eq
+      exact ⟨false, MaybeEvent.none,
+        List.Mem.tail _ (List.Mem.head _)⟩
+    · cases hmem''
+  · intro ht
+    have hH₁_mem : H₁ ≺− H₂ :=
+      ⟨true, MaybeEvent.none, List.Mem.head _⟩
+    have hsub := ht H₁ hH₁_mem
+    have hmem : ((true : Bool), (MaybeEvent.none : MaybeEvent Empty),
+        PreHistory.empty) ∈ H₁ :=
+      List.Mem.head _
+    have hbad :
+        ((true : Bool), (MaybeEvent.none : MaybeEvent Empty),
+          PreHistory.empty) ∈
+          [ ((true : Bool), (MaybeEvent.none : MaybeEvent Empty), H₁)
+          , (false, MaybeEvent.none, PreHistory.empty) ] :=
+      hsub _ hmem
+    rcases List.mem_cons.1 hbad with heq | htail
+    · have hstruct : PreHistory.empty = H₁ :=
+        congrArg (fun t => t.2.2) heq
+      rw [hH₁] at hstruct
+      simp [PreHistory.empty] at hstruct
+    · rcases List.mem_cons.1 htail with heq | hnil
+      · have : (true : Bool) = false := congrArg (fun t => t.1) heq
+        cases this
+      · cases hnil
+
+/-! ## Accessibility on the worlds of a history
+(paper Lemma 3.4.4 and the transitivity half of Proposition 3.4.5) -/
+
+/-- If `w` is a world of the model (its time weakly precedes the end of time)
+and `w' ≪ w`, then the time of `w'` strictly precedes the end of time. -/
+theorem accessible_happensBefore_history
+    {H : History P Event} {w w' : World P Event}
+    (hW : World.time w ⪯ H.val)
+    (hAcc : w' ≪ w) :
+    World.time w' ≺− H.val := by
+  have hstep : World.time w' ≺− World.time w :=
+    PreHistory.happensBefore_of_accessible (P := P) (Event := Event) hAcc
+  rcases (PreHistory.happensBeforeEq_iff
+      (P := P) (Event := Event) (World.time w) H.val).1 hW with hlt | heq
+  · exact History.isElementTransitive H _ _ hstep hlt
+  · rw [heq] at hstep
+    exact hstep
+
+/-- Accessibility is transitive on the worlds of a history. Together with
+`PreHistory.accessible_irrefl` this is the paper's Proposition 3.4.5. -/
+theorem accessible_trans
+    {H : History P Event} {w w' w'' : World P Event}
+    (hW : World.time w ⪯ H.val)
+    (h₂ : w'' ≪ w') (h₁ : w' ≪ w) :
+    w'' ≪ w := by
+  have hbefore : World.time w' ≺− World.time w :=
+    PreHistory.happensBefore_of_accessible (P := P) (Event := Event) h₁
+  have htrans : isTransitive (World.time w) := by
+    rcases (PreHistory.happensBeforeEq_iff
+        (P := P) (Event := Event) (World.time w) H.val).1 hW with hlt | heq
+    · exact (History.predecessor_data (H := H) hlt).1
+    · rw [heq]
+      exact History.transitive H
+  have hsub : World.time w' ⊆ World.time w := htrans _ hbefore
+  have hmem : w'' ∈ World.time w' := by
+    simpa [World.accessible] using h₂
+  have hmem' : w'' ∈ World.time w := hsub _ hmem
+  simpa [World.accessible] using hmem'
+
+/-- A whole time is sequential when all of its event-tuples are linearly
+ordered by accessibility, regardless of place. -/
+def isSequentialAll (h : PreHistory P Event) : Prop :=
+  ∀ t₁ t₂ : World P Event,
+    t₁ ∈ h → t₂ ∈ h →
+      (t₁ ≪ t₂ ∨ t₂ ≪ t₁ ∨ t₁ = t₂)

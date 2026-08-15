@@ -2,6 +2,7 @@ import ModalDistribution.Examples.ThyHBB2.Axioms
 import ModalDistribution.Examples.ThyHBB2.Agreement
 import ModalDistribution.Examples.ThyHBB2.Liveness_One
 import ModalDistribution.Examples.ThyHBB2.Liveness_Two
+import ModalDistribution.Examples.ThyHBB2.Correctness
 
 /-!
 # Theory `ThyHBB2`

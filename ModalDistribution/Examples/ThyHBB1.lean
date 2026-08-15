@@ -4,6 +4,7 @@ import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Examples.ThyHBB1.Agreement
 import ModalDistribution.Examples.ThyHBB1.Liveness_One
 import ModalDistribution.Examples.ThyHBB1.Liveness_Two
+import ModalDistribution.Examples.ThyHBB1.Correctness
 
 /-!
 # Theory `ThyHBB1`

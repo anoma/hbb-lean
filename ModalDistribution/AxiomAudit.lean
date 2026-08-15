@@ -46,3 +46,15 @@ If any custom axiom ever enters the proof of one of these theorems, the
 /-- info: 'ModalDistribution.Examples.ThyHBB3.livenessTwoThyHBB3' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms ModalDistribution.Examples.ThyHBB3.livenessTwoThyHBB3
+
+/-- info: 'ModalDistribution.Examples.ThyHBB1.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB1.correctness
+
+/-- info: 'ModalDistribution.Examples.ThyHBB2.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB2.correctness
+
+/-- info: 'ModalDistribution.Examples.ThyHBB3.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB3.correctness

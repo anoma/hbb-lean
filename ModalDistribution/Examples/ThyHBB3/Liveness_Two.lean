@@ -97,29 +97,10 @@ forces a live delivery for `l₂`. -/
   intro hDeliverDiamond
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLiveHere
-  -- Quorum intersections supplied by the correlation hypothesis.  We extract
-  -- the history witness from the delivery diamond.
-  have hHistoryNonempty :
-      ∃ t : World P (Signature.EventType S), t ∈ M.history.val := by
-    -- Reuse the delivery witness supplied by the initial diamond.
-    have hDiamondNil :
-        ⟪wTop⟫ ⊨[M]
-          ♢ᶠ[[]](↓ᶠ (ofEvent ⟨deliverSymb, [l₁, v]⟩)) :=
-      by simpa [Formula.diamondPast, wTop] using hDeliverDiamond
-    obtain ⟨qDeliver, hPastDeliver⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₁, v]⟩))).1
-        hDiamondNil
-    obtain ⟨tDeliver, ht_mem, _, _⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qDeliver, †, wTop.time⟩)
-        (φ := ofEvent ⟨deliverSymb, [l₁, v]⟩)).1
-        hPastDeliver
-    exact ⟨tDeliver, by simpa [wTop, World.time] using ht_mem⟩
+  -- Quorum intersections supplied by the correlation hypothesis.
   have hIntersectGlobal :
       ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ :=
-    correlationEveryoneImpliesIntersection
+    correlationImpliesQuorumIntersection
       (M := M)
       (liveSymb := liveSymb)
       (proposeSymb := proposeSymb)
@@ -127,7 +108,7 @@ forces a live delivery for `l₂`. -/
       (voteSymb := voteSymb)
       (deliverSymb := deliverSymb)
       (correlationSymb := correlationSymb)
-      hTheory hHistoryNonempty hCorrelation
+      hTheory hCorrelation
   have hQuorumIntersect :
       ⟪wTop⟫ ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
     -- Exhibit a concrete delivery event.

@@ -1495,146 +1495,81 @@ theorem live_echo_eventually_vote
   -- Prove values agree and simplify
   exact agree_on_echo_and_vote hTheory hSubset_history hSeq hEchoLocal hVote₂
 
-/-- if someone believes `l₁` correlates
-with `l₂`, then their quorums intersect. -/
+/-- If someone believes `l₁` correlates with `l₂`, then their quorums
+intersect. This is the paper's Lemma 8.4.4(1), proved from the `(≐seq)`
+axiom at the believing participant. -/
 theorem correlationImpliesPairwiseQuorumIntersection
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ : Signature.Value S}
-    (_hSomeone : ⊨[M]♢ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
+    (hSomeone : ⊨[M]♢ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
   classical
-  -- The threeTwined axiom guarantees 3-learner quorum intersection.
-  -- Since any triple [l₁, l₂, l₃] has intersecting quorums,
-  -- the pair [l₁, l₂] (obtained by dropping l₃) must also intersect.
-
+  have hSeqAx :
+      AllWorldValid M (correlationSeqAxiom correlationSymb) := by
+    apply hTheory
+    simp [theory]
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  obtain ⟨q, hq⟩ :=
+    (Sat.diamondEmpty (M := M) (w := wTop)
+      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1
+      (by simpa [wTop] using hSomeone p)
+  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
+  have hAxAt : ⟪wq⟫ ⊨[M] correlationSeqAxiom correlationSymb :=
+    hSeqAx (by simp [wq, World.time])
+  have hImpLearner :=
+    Sat.forall_elim (M := M) (w := wq)
+      (body := fun learner =>
+        ∀ᶠ fun correlated =>
+          ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
+            ♢ᶠ[[learner, correlated]] Formula.seq)
+      (v := l₁)
+      (by simpa [correlationSeqAxiom] using hAxAt)
+  have hImpCorr :=
+    Sat.forall_elim (M := M) (w := wq)
+      (body := fun correlated =>
+        ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
+          ♢ᶠ[[l₁, correlated]] Formula.seq)
+      (v := l₂) hImpLearner
+  have hSeqDiamond : ⟪wq⟫ ⊨[M] ♢ᶠ[[l₁, l₂]] Formula.seq :=
+    Sat.imp_elim (M := M) (w := wq)
+      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)
+      (ψ := ♢ᶠ[[l₁, l₂]] Formula.seq)
+      hImpCorr (by simpa [wq, wTop] using hq)
+  have hTopDiamond : ⟪wq⟫ ⊨[M] ♢ᶠ[[l₁, l₂]] ⊤ᶠ :=
+    Sat.diamond_of_imp (M := M) (w := wq)
+      (ts := [l₁, l₂])
+      (h := fun r _ => Sat.top (M := M) (w := ⟨r, †, wq.time⟩))
+      hSeqDiamond
+  simpa [wq, wTop] using hTopDiamond
 
-  -- To use `sat_diamond_top_iff_hasQuorumNonempty`, we need to show
-  -- `hasQuorumNonempty (M := M) [l₁, l₂]`.
-
-  -- Strategy: Use threeTwinedAxiom with any third learner to get 3-quorum intersection,
-  -- then show this implies 2-quorum intersection.
-
-  have hNonempty : hasQuorumNonempty (M := M) [l₁, l₂] := by
-    -- Pick any third learner (we use l₁ itself).
-    intro F
-    -- F is a quorum family for [l₁, l₂], we extend it to a triple family
-    -- by adding any quorum from l₁.
-    have hSemi₁ : (M.learner l₁).quorums.Nonempty :=
-      (M.learner l₁).nonempty
-    obtain ⟨O₁, hO₁⟩ := hSemi₁
-    -- Build a triple quorum family [l₁, l₁, l₂] by prepending O₁ to F.
-    let F' := QuorumFamily.cons (l := l₁) (ls' := [l₁, l₂]) O₁ hO₁ F
-    -- Use the threeTwined axiom with the history nonemptiness we just established.
-    have hTripleNonempty :=
-      threeTwined_hasQuorumNonempty
-        (M := M) (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-        hTheory hHistory (l₁ := l₁) (l₂ := l₁) (l₃ := l₂)
-    -- Apply to our extended family F'.
-    have hIntersect := hTripleNonempty F'
-    obtain ⟨pWitness, hpAll⟩ := hIntersect
-    -- The witness must be in both quorums from F (the tail of F').
-    exact ⟨pWitness, fun i => by
-      have := hpAll (Fin.succ i)
-      simpa [F', QuorumFamily.cons] using this⟩
-
-  exact (sat_diamond_top_iff_hasQuorumNonempty (M := M)
-    (w := wTop) (ls := [l₁, l₂])).2 hNonempty
-
-/-- Correlation implies quorum intersection
-
-The three-twined axiom from ThyHBB3 guarantees that any pair of learners has
-intersecting quorums, by exploiting the three-way intersection property. This
-establishes the quorum intersection needed for agreement properties.
-
-See also: `correlationEveryoneImpliesIntersection`,
-`correlationImpliesPairwiseQuorumIntersection`. -/
+/-- Universal correlation implies quorum intersection. This is the paper's
+Lemma 8.4.4(2), derived from part 1 by weakening `□` to `♢`. -/
 theorem correlationImpliesQuorumIntersection
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
-    {l₁ l₂ : Signature.Value S} :
-    ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
-  classical
-  -- The threeTwined axiom guarantees 3-learner quorum intersection.
-  -- Since any triple [l₁, l₂, l₃] has intersecting quorums,
-  -- the pair [l₁, l₂] (obtained by dropping l₃) must also intersect.
-
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-
-  -- To use `sat_diamond_top_iff_hasQuorumNonempty`, we need to show
-  -- `hasQuorumNonempty (M := M) [l₁, l₂]`.
-
-  -- Strategy: Use threeTwinedAxiom with any third learner to get 3-quorum intersection,
-  -- then show this implies 2-quorum intersection.
-
-  have hNonempty : hasQuorumNonempty (M := M) [l₁, l₂] := by
-    -- Pick any third learner (we use l₁ itself).
-    intro F
-    -- F is a quorum family for [l₁, l₂], we extend it to a triple family
-    -- by adding any quorum from l₁.
-    have hSemi₁ : (M.learner l₁).quorums.Nonempty :=
-      (M.learner l₁).nonempty
-    obtain ⟨O₁, hO₁⟩ := hSemi₁
-    -- Build a triple quorum family [l₁, l₁, l₂] by prepending O₁ to F.
-    let F' := QuorumFamily.cons (l := l₁) (ls' := [l₁, l₂]) O₁ hO₁ F
-    -- Use the threeTwined axiom with the history nonemptiness we just established.
-    have hTripleNonempty :=
-      threeTwined_hasQuorumNonempty
-        (M := M) (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-        hTheory hHistory (l₁ := l₁) (l₂ := l₁) (l₃ := l₂)
-    -- Apply to our extended family F'.
-    have hIntersect := hTripleNonempty F'
-    obtain ⟨pWitness, hpAll⟩ := hIntersect
-    -- The witness must be in both quorums from F (the tail of F').
-    exact ⟨pWitness, fun i => by
-      have := hpAll (Fin.succ i)
-      simpa [F', QuorumFamily.cons] using this⟩
-
-  exact (sat_diamond_top_iff_hasQuorumNonempty (M := M)
-    (w := wTop) (ls := [l₁, l₂])).2 hNonempty
-
-/-- Universal correlation implies intersection
-
-Universal correlation (□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) also guarantees
-quorum intersection for learners l₁ and l₂. The universal box assumption is
-actually stronger than needed - quorum intersection follows from the three-twined
-axiom alone.
-
-See also: `correlationImpliesQuorumIntersection`, `correlationImpliesPairwiseQuorumIntersection`. -/
-theorem correlationEveryoneImpliesIntersection
-    (hTheory : M ⊨ᵀ
-      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ : Signature.Value S}
     (hEveryone : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
-  -- The universal correlation assumption is not needed for the proof.
-  -- Quorum intersection follows directly from threeTwinedAxiom via
-  -- correlationImpliesQuorumIntersection, which doesn't use the correlation predicate.'
-  have hSomeone : ⊨[M]♢ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
+  classical
+  have hSomeone :
+      ⊨[M]♢ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
     intro p
-    -- hEveryone p gives us: ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ[]...
-    have hBox := hEveryone p
-    -- □ᶠ[] means the predicate holds for all participants
-    have hAll := (Sat.boxEmpty (M := M)
-    (w := ⟨p, †, M.history.val⟩)
-    (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1 hBox
-    -- Pick any participant (use p itself) to witness the diamond
-    refine (Sat.diamondEmpty (M := M)
-    (w := ⟨p, †, M.history.val⟩)
-    (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).2 ?_
-    exact ⟨p, hAll p⟩
-    -- Apply the "someone" version
-  exact correlationImpliesPairwiseQuorumIntersection hTheory hHistory hSomeone
+    have hAll :=
+      (Sat.boxEmpty (M := M)
+        (w := ⟨p, †, M.history.val⟩)
+        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1
+        (hEveryone p)
+    exact
+      (Sat.diamondEmpty (M := M)
+        (w := ⟨p, †, M.history.val⟩)
+        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).2
+        ⟨p, hAll p⟩
+  exact
+    correlationImpliesPairwiseQuorumIntersection
+      (M := M) hTheory hSomeone
+
 
 end ThyHBB3
 end Examples
