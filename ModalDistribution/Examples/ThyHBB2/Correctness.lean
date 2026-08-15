@@ -54,12 +54,12 @@ theorem correctness
            predicate0 liveSymb ⇒ᶠ
            ↕ᶠ(ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) :=
   ⟨fun hSeq =>
-      agreementThyHBB2 (M := M) (hTheory := hTheory) (hSeq := hSeq),
+      agreement (M := M) (hTheory := hTheory) (hSeq := hSeq),
    fun hLiveQuorum hUnique =>
-      livenessOneThyHBB2 (M := M) (hTheory := hTheory)
+      livenessOne (M := M) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
    fun hIntersect hLive =>
-      livenessTwoThyHBB2 (M := M) (hTheory := hTheory)
+      livenessTwo (M := M) (hTheory := hTheory)
         (hIntersect := hIntersect) (hLive := hLive)⟩
 
 end ThyHBB2

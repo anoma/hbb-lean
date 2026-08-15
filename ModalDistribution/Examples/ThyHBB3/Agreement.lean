@@ -41,8 +41,8 @@ Correlation between l₁ and l₂ forces any deliveries for those learners
 to agree on the value. This uses the correlation predicate to establish quorum
 intersection, which is the key innovation of HBB3.
 
-See also: `agreementThyHBB1`, `agreementThyHBB2`, `agreementFromDeliveriesThyHBB3`. -/
-theorem agreementThyHBB3
+See also: `agreement`, `agreement`, `agreement_of_deliveries`. -/
+theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
@@ -302,7 +302,7 @@ theorem agreementThyHBB3
 
 /-- Paper: Proposition 8.3.1, hypothesis form. If deliveries for learners
 `l₁` and `l₂` both occur, their values coincide. -/
-theorem agreementThyHBB3_of_deliveries
+theorem agreement_of_deliveries
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
@@ -314,7 +314,7 @@ theorem agreementThyHBB3_of_deliveries
   exact
     EndValid.imp_elim (M := M)
       (EndValid.imp_elim (M := M)
-        (agreementThyHBB3 (M := M)
+        (agreement (M := M)
       (hTheory := hTheory)
       (l₁ := l₁) (l₂ := l₂)
       (v₁ := v₁) (v₂ := v₂)

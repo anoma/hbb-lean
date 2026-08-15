@@ -42,7 +42,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 /-- Paper: Proposition 7.2.3 (Liveness 1). If learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `(l,l)`. -/
-theorem livenessOneThyHBB2
+theorem livenessOne
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -287,7 +287,7 @@ theorem livenessOneThyHBB2
 /-- Paper: Proposition 7.2.3, first corollary. When the guarded proposal
 diamond holds, every member of learner `l`'s quorum knows (in the past) that the
 value was delivered. -/
-theorem livenessOneAtPastDownThyHBB2
+theorem livenessOne_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -303,7 +303,7 @@ theorem livenessOneAtPastDownThyHBB2
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOneThyHBB2 (M := M)
+      livenessOne (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
@@ -312,7 +312,7 @@ theorem livenessOneAtPastDownThyHBB2
         (hUnique := hUnique))
 /-- Paper: Proposition 7.2.3, second corollary. The guarded proposal diamond
 ensures the delivery diamond for learner `l`. -/
-theorem livenessOneAtPastThyHBB2
+theorem livenessOne_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -328,7 +328,7 @@ theorem livenessOneAtPastThyHBB2
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOneThyHBB2 (M := M)
+      livenessOne (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)

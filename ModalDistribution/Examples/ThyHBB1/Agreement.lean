@@ -14,7 +14,7 @@ This file contains the main agreement theorem for the ThyHBB1 broadcast protocol
 
 ## Main Result
 
-- **`agreementThyHBB1`**
+- **`agreement`**
   The agreement property states that if two different values are delivered at different learners,
   then sequentiality must be violated. More precisely, if:
   - Two deliver events occur for values v₁ and v₂ at learners l₁ and l₂
@@ -68,8 +68,8 @@ broadcast protocol: all processes that deliver a value must deliver the same val
 The proof proceeds by contradiction, deriving a contradiction from the assumption
 that two different values v₁ ≠ v₂ are delivered under sequentiality.
 
-See also: `agreementFromDeliveriesThyHBB1`, agreement properties for ThyHBB2 and ThyHBB3. -/
-theorem agreementThyHBB1
+See also: `agreement_of_deliveries`, agreement properties for ThyHBB2 and ThyHBB3. -/
+theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
@@ -404,8 +404,8 @@ Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of
 the delivered values must coincide. This factors out the core reasoning used in
 the main agreement theorem.
 
-See also: `agreementThyHBB1`. -/
-theorem agreementFromDeliveriesThyHBB1
+See also: `agreement`. -/
+theorem agreement_of_deliveries
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
@@ -418,7 +418,7 @@ theorem agreementFromDeliveriesThyHBB1
   exact
     EndValid.imp_elim (M := M)
       (EndValid.imp_elim (M := M)
-        (agreementThyHBB1 (M := M)
+        (agreement (M := M)
           (hTheory := hTheory) (l₁ := l₁) (l₂ := l₂)
           (l₁' := l₁') (l₂' := l₂') (v₁ := v₁) (v₂ := v₂)
           (hSeq := hSeq))

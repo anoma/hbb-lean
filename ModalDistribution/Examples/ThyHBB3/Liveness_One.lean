@@ -43,7 +43,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- Paper: Proposition 8.5.1 (Liveness 1). If learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `l`. -/
-  theorem livenessOneThyHBB3
+  theorem livenessOne
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
@@ -476,7 +476,7 @@ the proposal will eventually deliver it for `l`. -/
 /-- Paper: Proposition 8.5.1, first corollary. When the guarded proposal
 statement holds, every member of learner `l`'s quorum knows (in the past) that
 `l` delivered the value. -/
-theorem livenessOneAtPastDownThyHBB3
+theorem livenessOne_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
@@ -491,7 +491,7 @@ theorem livenessOneAtPastDownThyHBB3
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOneThyHBB3 (M := M)
+      livenessOne (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
@@ -499,7 +499,7 @@ theorem livenessOneAtPastDownThyHBB3
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique))
 /-- Paper: Proposition 8.5.1, second corollary. The guarded proposal
 statement guarantees the delivery diamond for learner `l`. -/
-theorem livenessOneAtPastThyHBB3
+theorem livenessOne_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
@@ -514,7 +514,7 @@ theorem livenessOneAtPastThyHBB3
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOneThyHBB3 (M := M)
+      livenessOne (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)

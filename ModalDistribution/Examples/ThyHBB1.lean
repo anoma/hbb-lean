@@ -22,9 +22,9 @@ The implementation has been modularized for better organization and maintainabil
 
 ## Main Results
 
-- **Agreement** (`agreementThyHBB1`): Two different values implies sequentiality violation
-- **Liveness 1** (`livenessOneThyHBB1`): Under uniqueness, live proposals are eventually delivered
-- **Liveness 2** (`livenessTwoThyHBB1`): Deliveries propagate across intersecting learner quorums
+- **Agreement** (`agreement`): Two different values implies sequentiality violation
+- **Liveness 1** (`livenessOne`): Under uniqueness, live proposals are eventually delivered
+- **Liveness 2** (`livenessTwo`): Deliveries propagate across intersecting learner quorums
 
 ## Theory Definition
 

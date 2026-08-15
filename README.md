@@ -41,7 +41,7 @@ ModalDistribution/
 │       └── [similar structure]
 ```
 
-See [PAPER_MAPPING.md](PAPER_MAPPING.md) for a detailed mapping between paper definitions/theorems and their Lean implementations.
+See [PAPER_MAPPING.md](PAPER_MAPPING.md) for a detailed mapping between paper definitions/theorems and their Lean implementations; the same mapping is embedded in the sources (every anchored declaration's doc comment begins with `Paper: <item>.`). One representational choice to be aware of: prehistories are list-backed, realising the paper's inductive-datatype presentation rather than the quotiented set-theoretic definition — see the note in PAPER_MAPPING.md.
 
 ## Installation
 

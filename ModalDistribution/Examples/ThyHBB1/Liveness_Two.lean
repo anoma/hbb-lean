@@ -12,7 +12,7 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This file contains the two liveness two theorem for the ThyHBB1 broadcast protocol:
 
-- **Liveness 2** (`livenessTwoThyHBB1`): If a value is delivered to one learner and certain
+- **Liveness 2** (`livenessTwo`): If a value is delivered to one learner and certain
   liveness/intersection conditions hold, it will eventually be delivered to another learner.
   Liveness property 2: deliveries propagate across intersecting learner quorums.
 -/
@@ -46,7 +46,7 @@ If a value is delivered to learner l₁' and:
 - The safe condition holds for learner l
 - All of learner l₂'s quorum members are live
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
-theorem livenessTwoThyHBB1
+theorem livenessTwo
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -686,7 +686,7 @@ theorem livenessTwoThyHBB1
 /-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
-theorem livenessTwoAtPastDownThyHBB1
+theorem livenessTwo_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -701,7 +701,7 @@ theorem livenessTwoAtPastDownThyHBB1
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwoThyHBB1 (M := M)
+      livenessTwo (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)
@@ -711,7 +711,7 @@ theorem livenessTwoAtPastDownThyHBB1
         (hLive := hLive))
 /-- Paper: Proposition 6.4.5, second corollary. Corollary: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
-theorem livenessTwoAtPastThyHBB1
+theorem livenessTwo_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -726,7 +726,7 @@ theorem livenessTwoAtPastThyHBB1
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwoThyHBB1 (M := M)
+      livenessTwo (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)

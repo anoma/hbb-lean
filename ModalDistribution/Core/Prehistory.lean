@@ -41,7 +41,14 @@ notation:max "†" => MaybeEvent.none
 -- The paper's requirement that prehistories are finite (⊆fin) is automatically
 -- satisfied because: (1) inductive types in Lean are well-founded by construction,
 -- preventing infinite recursion, and (2) Lists have finite length.
-/-- Paper: Definition 2.2.4 (Prehistories). -/
+/-- Paper: Definition 2.2.4 (Prehistories).
+
+Representation note: this is list-backed, so it realises the paper's
+inductive-datatype presentation (its Section 2.1) rather than the quotiented
+set-theoretic definition — distinct terms (reorderings, duplicates) can denote
+the same intended prehistory. All results are stated through membership, never
+through equality of prehistories, so the redundancy is harmless, as the paper
+itself notes for the datatype view. -/
 inductive PreHistory (P : Type u) (Event : Type v) where
   | mk : List (P × MaybeEvent Event × PreHistory P Event) → PreHistory P Event
 

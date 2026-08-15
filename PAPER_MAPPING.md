@@ -6,7 +6,9 @@ every anchored declaration's doc comment begins with `Paper: <item>.`, so
 `grep -rn "Paper: Lemma 4.2.2" ModalDistribution` finds an item directly.
 
 Items are listed in paper order; theory axioms are listed at the position of
-the figure that defines them.
+the figure that defines them. Declarations inside a theory's namespace are
+written without the `ThyHBB<n>.` prefix; e.g. Proposition 6.3.1 is
+`ThyHBB1.agreement`.
 
 ## Not formalized
 
@@ -16,6 +18,15 @@ the figure that defines them.
   and discussion, no formal content.
 - Definitions 1.1.1 and 1.1.2: informal introductory definitions.
 - The paper's illustrative Examples (2.2.5, 2.3.8-2.3.10, 3.3.5, 3.3.6, 5.1.1).
+
+## Representation note
+
+`PreHistory` is backed by lists rather than finite sets, so it realises the
+paper's inductive-datatype presentation (Section 2.1) instead of the
+quotiented set-theoretic Definition 2.2.4: distinct terms can denote the same
+intended prehistory. This is benign here because every result is stated
+through membership, never through equality of prehistories — exactly the
+"little harm will come of it" reading the paper offers for the datatype view.
 
 
 ## Section 2: History Structures
@@ -148,22 +159,22 @@ the figure that defines them.
 - **Figure 7, rule (Vote!)** — `voteForwardAxiom` ([ModalDistribution/Examples/ThyHBB1/Axioms.lean](ModalDistribution/Examples/ThyHBB1/Axioms.lean))
 - **Definition 6.1.2 (theory ThyHBB1)** — `theory` ([ModalDistribution/Examples/ThyHBB1/Axioms.lean](ModalDistribution/Examples/ThyHBB1/Axioms.lean))
 - **Theorem 6.1.6 / Figure 8** — `correctness` ([ModalDistribution/Examples/ThyHBB1/Correctness.lean](ModalDistribution/Examples/ThyHBB1/Correctness.lean))
-- **Proposition 6.3.1 (Agreement)** — `agreementThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
-- **Proposition 6.3.1, hypothesis form** — `agreementFromDeliveriesThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
+- **Proposition 6.3.1 (Agreement)** — `agreement` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
+- **Proposition 6.3.1, hypothesis form** — `agreement_of_deliveries` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
 - **Lemma 6.4.1(1)** — `safe_monotone` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.1(2)** — `safe_allPast` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.2(1)** — `boxPast_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.2(2)** — `boxPast_live_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.3** — `live_eventually_consequent` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.4** — `box_sometime_iff_boxPast` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
-- **Proposition 6.4.5 (Liveness 2)** — `livenessTwoThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
-- **Proposition 6.4.5, first corollary** — `livenessTwoAtPastDownThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
-- **Proposition 6.4.5, second corollary** — `livenessTwoAtPastThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
+- **Proposition 6.4.5 (Liveness 2)** — `livenessTwo` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
+- **Proposition 6.4.5, first corollary** — `livenessTwo_boxPast` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
+- **Proposition 6.4.5, second corollary** — `livenessTwo_diamondPast` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
 - **Lemma 6.5.1** — `uniquePropose_eventually_echo` ([ModalDistribution/Examples/ThyHBB1/Uniqueness.lean](ModalDistribution/Examples/ThyHBB1/Uniqueness.lean))
 - **Lemma 6.5.2** — `atMostOnePropose_safe` ([ModalDistribution/Examples/ThyHBB1/Uniqueness.lean](ModalDistribution/Examples/ThyHBB1/Uniqueness.lean))
-- **Proposition 6.5.3 (Liveness 1)** — `livenessOneThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Liveness_One.lean](ModalDistribution/Examples/ThyHBB1/Liveness_One.lean))
-- **Proposition 6.5.3, first corollary** — `livenessOneAtPastDownThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Liveness_One.lean](ModalDistribution/Examples/ThyHBB1/Liveness_One.lean))
-- **Proposition 6.5.3, second corollary** — `livenessOneAtPastThyHBB1` ([ModalDistribution/Examples/ThyHBB1/Liveness_One.lean](ModalDistribution/Examples/ThyHBB1/Liveness_One.lean))
+- **Proposition 6.5.3 (Liveness 1)** — `livenessOne` ([ModalDistribution/Examples/ThyHBB1/Liveness_One.lean](ModalDistribution/Examples/ThyHBB1/Liveness_One.lean))
+- **Proposition 6.5.3, first corollary** — `livenessOne_boxPast` ([ModalDistribution/Examples/ThyHBB1/Liveness_One.lean](ModalDistribution/Examples/ThyHBB1/Liveness_One.lean))
+- **Proposition 6.5.3, second corollary** — `livenessOne_diamondPast` ([ModalDistribution/Examples/ThyHBB1/Liveness_One.lean](ModalDistribution/Examples/ThyHBB1/Liveness_One.lean))
 
 ## Section 7: Theory ThyHBB2
 
@@ -171,14 +182,14 @@ the figure that defines them.
 - **Figure 9, rule (Vote!)** — `voteForwardAxiom` ([ModalDistribution/Examples/ThyHBB2/Axioms.lean](ModalDistribution/Examples/ThyHBB2/Axioms.lean))
 - **Definition 7.1.1 (theory ThyHBB2)** — `theory` ([ModalDistribution/Examples/ThyHBB2/Axioms.lean](ModalDistribution/Examples/ThyHBB2/Axioms.lean))
 - **Theorem 7.1.3 / Figure 10** — `correctness` ([ModalDistribution/Examples/ThyHBB2/Correctness.lean](ModalDistribution/Examples/ThyHBB2/Correctness.lean))
-- **Proposition 7.2.1 (Agreement)** — `agreementThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
-- **Proposition 7.2.1, hypothesis form** — `agreementThyHBB2_of_deliveries` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
-- **Proposition 7.2.2 (Liveness 2)** — `livenessTwoThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
-- **Proposition 7.2.2, first corollary** — `livenessTwoAtPastDownThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
-- **Proposition 7.2.2, second corollary** — `livenessTwoAtPastThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
-- **Proposition 7.2.3 (Liveness 1)** — `livenessOneThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Liveness_One.lean](ModalDistribution/Examples/ThyHBB2/Liveness_One.lean))
-- **Proposition 7.2.3, first corollary** — `livenessOneAtPastDownThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Liveness_One.lean](ModalDistribution/Examples/ThyHBB2/Liveness_One.lean))
-- **Proposition 7.2.3, second corollary** — `livenessOneAtPastThyHBB2` ([ModalDistribution/Examples/ThyHBB2/Liveness_One.lean](ModalDistribution/Examples/ThyHBB2/Liveness_One.lean))
+- **Proposition 7.2.1 (Agreement)** — `agreement` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
+- **Proposition 7.2.1, hypothesis form** — `agreement_of_deliveries` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
+- **Proposition 7.2.2 (Liveness 2)** — `livenessTwo` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
+- **Proposition 7.2.2, first corollary** — `livenessTwo_boxPast` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
+- **Proposition 7.2.2, second corollary** — `livenessTwo_diamondPast` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
+- **Proposition 7.2.3 (Liveness 1)** — `livenessOne` ([ModalDistribution/Examples/ThyHBB2/Liveness_One.lean](ModalDistribution/Examples/ThyHBB2/Liveness_One.lean))
+- **Proposition 7.2.3, first corollary** — `livenessOne_boxPast` ([ModalDistribution/Examples/ThyHBB2/Liveness_One.lean](ModalDistribution/Examples/ThyHBB2/Liveness_One.lean))
+- **Proposition 7.2.3, second corollary** — `livenessOne_diamondPast` ([ModalDistribution/Examples/ThyHBB2/Liveness_One.lean](ModalDistribution/Examples/ThyHBB2/Liveness_One.lean))
 
 ## Section 8: Theory ThyHBB3
 
@@ -195,8 +206,8 @@ the figure that defines them.
 - **Figure 11, rule (Deliver!)** — `deliverForwardAxiom` ([ModalDistribution/Examples/ThyHBB3/Axioms.lean](ModalDistribution/Examples/ThyHBB3/Axioms.lean))
 - **Definition 8.2.1 (theory ThyHBB3)** — `theory` ([ModalDistribution/Examples/ThyHBB3/Axioms.lean](ModalDistribution/Examples/ThyHBB3/Axioms.lean))
 - **Theorem 8.2.3 / Figure 12** — `correctness` ([ModalDistribution/Examples/ThyHBB3/Correctness.lean](ModalDistribution/Examples/ThyHBB3/Correctness.lean))
-- **Proposition 8.3.1 (Agreement)** — `agreementThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
-- **Proposition 8.3.1, hypothesis form** — `agreementThyHBB3_of_deliveries` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
+- **Proposition 8.3.1 (Agreement)** — `agreement` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
+- **Proposition 8.3.1, hypothesis form** — `agreement_of_deliveries` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
 - **Lemma 8.4.1** — `threeTwined_boxes_intersect` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.2(1)** — `vote_implies_echo_quorum_local` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.2(2)** — `vote_implies_echo_quorum_end` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
@@ -206,9 +217,9 @@ the figure that defines them.
 - **Lemma 8.4.3(4)** — `live_echo_eventually_vote` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.4(1)** — `correlationImpliesPairwiseQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.4(2)** — `correlationImpliesQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-- **Proposition 8.4.5 (Liveness 2)** — `livenessTwoThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
-- **Proposition 8.4.5, first corollary** — `livenessTwoAtPastDownThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
-- **Proposition 8.4.5, second corollary** — `livenessTwoAtPastThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
-- **Proposition 8.5.1 (Liveness 1)** — `livenessOneThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
-- **Proposition 8.5.1, first corollary** — `livenessOneAtPastDownThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
-- **Proposition 8.5.1, second corollary** — `livenessOneAtPastThyHBB3` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
+- **Proposition 8.4.5 (Liveness 2)** — `livenessTwo` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
+- **Proposition 8.4.5, first corollary** — `livenessTwo_boxPast` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
+- **Proposition 8.4.5, second corollary** — `livenessTwo_diamondPast` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
+- **Proposition 8.5.1 (Liveness 1)** — `livenessOne` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
+- **Proposition 8.5.1, first corollary** — `livenessOne_boxPast` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
+- **Proposition 8.5.1, second corollary** — `livenessOne_diamondPast` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))

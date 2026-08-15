@@ -12,7 +12,7 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This file contains the liveness one theorem for the ThyHBB1 broadcast protocol:
 
-- **Liveness 1** (`livenessOneThyHBB1`): Under uniqueness of proposals and a live quorum,
+- **Liveness 1** (`livenessOne`): Under uniqueness of proposals and a live quorum,
   if a live participant knows a proposal, it will eventually be delivered.
   Liveness property 1: under uniqueness, live proposals are eventually delivered.
 -/
@@ -46,8 +46,8 @@ Under uniqueness of proposals and a live quorum, if a live participant knows
 a proposal for value v, then v will eventually be delivered. This establishes
 that proposals from live participants will eventually propagate to delivery.
 
-See also: `livenessTwoThyHBB1`, `livenessOneAtPastDownThyHBB1`. -/
-theorem livenessOneThyHBB1
+See also: `livenessTwo`, `livenessOne_boxPast`. -/
+theorem livenessOne
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -455,7 +455,7 @@ theorem livenessOneThyHBB1
 /-- Paper: Proposition 6.5.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
-theorem livenessOneAtPastDownThyHBB1
+theorem livenessOne_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -471,7 +471,7 @@ theorem livenessOneAtPastDownThyHBB1
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOneThyHBB1 (M := M)
+      livenessOne (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
@@ -480,7 +480,7 @@ theorem livenessOneAtPastDownThyHBB1
         (hUnique := hUnique))
 /-- Paper: Proposition 6.5.3, second corollary. Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
-theorem livenessOneAtPastThyHBB1
+theorem livenessOne_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -496,7 +496,7 @@ theorem livenessOneAtPastThyHBB1
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOneThyHBB1 (M := M)
+      livenessOne (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)

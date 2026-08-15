@@ -40,7 +40,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 /-- Paper: Proposition 7.2.2 (Liveness 2). If reporting learners `l₁'` and `l₂'`
 have intersecting quorums and learner `l₂'` is live, then any delivery for
 `(l₁', \thel)` propagates to `(l₂', \thel)`. -/
-theorem livenessTwoThyHBB2
+theorem livenessTwo
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -240,7 +240,7 @@ theorem livenessTwoThyHBB2
 /-- Paper: Proposition 7.2.2, first corollary. A delivery for `(l₁', ℓ)`
 forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)` was
 delivered. -/
-theorem livenessTwoAtPastDownThyHBB2
+theorem livenessTwo_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -254,7 +254,7 @@ theorem livenessTwoAtPastDownThyHBB2
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwoThyHBB2 (M := M)
+      livenessTwo (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb)
@@ -264,7 +264,7 @@ theorem livenessTwoAtPastDownThyHBB2
         (hLive := hLive))
 /-- Paper: Proposition 7.2.2, second corollary. A delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
-theorem livenessTwoAtPastThyHBB2
+theorem livenessTwo_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -278,7 +278,7 @@ theorem livenessTwoAtPastThyHBB2
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwoThyHBB2 (M := M)
+      livenessTwo (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb)

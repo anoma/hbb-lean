@@ -43,8 +43,8 @@ Sequential quorum intersections between l₁ and l₂ force any deliveries for
 (l₁', l₁) and (l₂', l₂) to agree on the value. This is the agreement property
 for the simplified HBB2 protocol without the safe predicate.
 
-See also: `agreementThyHBB1`, `agreementThyHBB3`. -/
-theorem agreementThyHBB2
+See also: `agreement`, `agreement`. -/
+theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
@@ -193,7 +193,7 @@ theorem agreementThyHBB2
 
 /-- Paper: Proposition 7.2.1, hypothesis form. When both deliveries for
 `(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
-theorem agreementThyHBB2_of_deliveries
+theorem agreement_of_deliveries
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
@@ -206,7 +206,7 @@ theorem agreementThyHBB2_of_deliveries
   exact
     EndValid.imp_elim (M := M)
       (EndValid.imp_elim (M := M)
-        (agreementThyHBB2 (M := M)
+        (agreement (M := M)
       (hTheory := hTheory)
       (l₁ := l₁) (l₂ := l₂)
       (l₁' := l₁') (l₂' := l₂')

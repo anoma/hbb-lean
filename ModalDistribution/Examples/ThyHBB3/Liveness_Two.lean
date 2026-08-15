@@ -41,7 +41,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- Paper: Proposition 8.4.5 (Liveness 2). If learners `l₁` and `l₂` are always
 correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
-  theorem livenessTwoThyHBB3
+  theorem livenessTwo
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -638,7 +638,7 @@ forces a live delivery for `l₂`. -/
 /-- Paper: Proposition 8.4.5, first corollary. A delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
 the same value. -/
-theorem livenessTwoAtPastDownThyHBB3
+theorem livenessTwo_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -651,7 +651,7 @@ theorem livenessTwoAtPastDownThyHBB3
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessTwoThyHBB3 (M := M)
+      livenessTwo (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
@@ -661,7 +661,7 @@ theorem livenessTwoAtPastDownThyHBB3
         (hLiveQuorum := hLiveQuorum))
 /-- Paper: Proposition 8.4.5, second corollary. A delivery for `l₁`
 produces a delivery for `l₂` somewhere in the past. -/
-theorem livenessTwoAtPastThyHBB3
+theorem livenessTwo_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -674,7 +674,7 @@ theorem livenessTwoAtPastThyHBB3
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessTwoThyHBB3 (M := M)
+      livenessTwo (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
