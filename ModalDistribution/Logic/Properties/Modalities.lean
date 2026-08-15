@@ -58,17 +58,16 @@ theorem hasQuorumWitness.of_imp
 def quorumWitnessAcc
     (M : Model S P)
     (ls : List S.Value)
-    (φ : Formula S) (acc : Set P) : Prop :=
+    (Q : P → Prop) (acc : Set P) : Prop :=
   ∀ F : QuorumFamily M ls,
-    ∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] φ
+    ∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧ Q p
 
 theorem diamondCheck_iff_quorumWitnessAcc
     (M : Model S P)
-    (ls : List S.Value) (φ : Formula S)
+    (ls : List S.Value) (Q : P → Prop)
     (acc : Set P) :
-    Sat.check M (fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) ls acc ↔
-      quorumWitnessAcc M ls φ acc := by
+    Sat.check M Q ls acc ↔
+      quorumWitnessAcc M ls Q acc := by
   classical
   induction ls generalizing acc with
   | nil =>
@@ -76,7 +75,7 @@ theorem diamondCheck_iff_quorumWitnessAcc
       · intro h F
         obtain ⟨p, hpacc, hpSat⟩ :=
           (Sat.Sat_check_nil (M := M)
-            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) (acc := acc)).1 h
+            (Q := Q) (acc := acc)).1 h
         refine ⟨p, hpacc, ?_, hpSat⟩
         exact fun i => i.elim0
       · intro h
@@ -84,14 +83,14 @@ theorem diamondCheck_iff_quorumWitnessAcc
           h (QuorumFamily.nil (M := M))
         exact
           (Sat.Sat_check_nil (M := M)
-            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) (acc := acc)).2
+            (Q := Q) (acc := acc)).2
             ⟨p, hpacc, hpSat⟩
   | cons l ls ih =>
       constructor
       · intro h F
         have hCons :=
           (Sat.Sat_check_cons (M := M)
-            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ)
+            (Q := Q)
             (v := l) (vs := ls) (acc := acc)).1 h
         have hTail :=
           hCons (QuorumFamily.head (F := F))
@@ -103,22 +102,22 @@ theorem diamondCheck_iff_quorumWitnessAcc
           (QuorumFamily.exists_forall_choose_cons_inter
             (M := M) (l := l) (ls' := ls) (F := F)
             (acc := acc)
-            (R := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] φ)).mpr
+            (R := Q)).mpr
             ⟨p, hpAccHead, hpTail, hpSat⟩
       · intro h
         refine
           (Sat.Sat_check_cons (M := M)
-            (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ)
+            (Q := Q)
             (v := l) (vs := ls) (acc := acc)).2 ?_
         intro O hO
         have hWitnessTail :
-            quorumWitnessAcc M ls φ (acc ∩ O) := by
+            quorumWitnessAcc M ls Q (acc ∩ O) := by
           intro Ftail
           obtain ⟨p, hpAcc, hpO, hpTail, hpSat⟩ :=
             (QuorumFamily.exists_forall_choose_cons_cons
               (M := M) (ls' := ls) (F := Ftail)
               (acc := acc) (O := O)
-              (R := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] φ)).1
+              (R := Q)).1
               (h (QuorumFamily.cons (M := M) (l := l) O hO Ftail))
           refine ⟨p, ⟨hpAcc, hpO⟩, hpTail, hpSat⟩
         exact (ih (acc := acc ∩ O)).2 hWitnessTail
@@ -513,7 +512,8 @@ theorem sat_diamondPast_nil_event_subset
 theorem quorumWitnessAcc_univ
     (M : Model S P)
     (ls : List S.Value) (φ : Formula S) :
-    quorumWitnessAcc M ls φ Set.univ ↔
+    quorumWitnessAcc M ls
+        (fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ) Set.univ ↔
       hasQuorumWitness (M := M) ls φ := by
   classical
   constructor
@@ -719,7 +719,9 @@ theorem nWayQuorumIntersectionWitness
         (ls := ls) (φ := φ) _).1 hSat
     have hWitnessAcc :=
       (diamondCheck_iff_quorumWitnessAcc (M := M)
-        (ls := ls) (φ := φ) (acc := Set.univ)).1 hCheck
+        (ls := ls)
+        (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ)
+        (acc := Set.univ)).1 hCheck
     exact
       (quorumWitnessAcc_univ (M := M)
         (ls := ls) (φ := φ)).1 hWitnessAcc
@@ -729,7 +731,9 @@ theorem nWayQuorumIntersectionWitness
         (ls := ls) (φ := φ)).2 hWitness
     have hCheck :=
       (diamondCheck_iff_quorumWitnessAcc (M := M)
-        (ls := ls) (φ := φ) (acc := Set.univ)).2 hWitnessAcc
+        (ls := ls)
+        (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]φ)
+        (acc := Set.univ)).2 hWitnessAcc
     intro p
     exact
       (sat_diamond_iff_diamondCheck (M := M)
@@ -1269,7 +1273,9 @@ theorem sat_diamond_top_iff_hasQuorumNonempty
         (acc := Set.univ)).1 hCheck_time
     have hWitness :=
       (diamondCheck_iff_quorumWitnessAcc (M := M)
-        (ls := ls) (φ := ⊤ᶠ) (acc := Set.univ)).1
+        (ls := ls)
+        (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M](⊤ᶠ : Formula S))
+        (acc := Set.univ)).1
         hCheck_hist
     have hWitness' :=
       (quorumWitnessAcc_univ (M := M)
@@ -1286,7 +1292,9 @@ theorem sat_diamond_top_iff_hasQuorumNonempty
         (ls := ls) (φ := ⊤ᶠ)).2 hWitness
     have hCheck_hist :=
       (diamondCheck_iff_quorumWitnessAcc (M := M)
-        (ls := ls) (φ := ⊤ᶠ) (acc := Set.univ)).2
+        (ls := ls)
+        (Q := fun q => ⟪⟨q, †, M.history.val⟩⟫ ⊨[M](⊤ᶠ : Formula S))
+        (acc := Set.univ)).2
         hWitnessAcc
     have hCheck_time :=
       (sat_check_top_congr (M := M)
@@ -1412,6 +1420,45 @@ theorem endValid_diamondPast_of_imp_sometime
     singletonBoxImpliesDiamond (M := M) (w := wTop)
       (l := l) (φ := D) hBoxPast
   simpa [wTop] using hDiamond
+
+
+/-- Characterisation of the `♢↓` modality: `♢↓[ls]φ` holds at `w` exactly when
+every choice of one quorum per learner admits an accessible world whose place
+lies in the intersection and which satisfies `φ`. -/
+theorem sat_diamondPast_iff_quorum_witness
+    (M : Model S P)
+    (w : World P (Signature.EventType S))
+    (ls : List S.Value) (φ : Formula S) :
+    (⟪w⟫ ⊨[M]♢ᶠ↓[ls]φ) ↔
+      ∀ F : QuorumFamily M ls,
+        ∃ w' : World P (Signature.EventType S),
+          w' ≪ w ∧ (∀ i, w'.place ∈ F.choose i) ∧ ⟪w'⟫ ⊨[M]φ := by
+  classical
+  have hUnfold :
+      (⟪w⟫ ⊨[M]♢ᶠ↓[ls]φ) ↔
+        Sat.check M (fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M](↓ᶠ φ)) ls Set.univ := by
+    simpa [Formula.diamondPast] using
+      sat_diamond_iff_diamondCheck (M := M)
+        (ls := ls) (φ := ↓ᶠ φ) (w := w)
+  rw [hUnfold,
+    diamondCheck_iff_quorumWitnessAcc (M := M)
+      (ls := ls) (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M](↓ᶠ φ))
+      (acc := Set.univ)]
+  constructor
+  · intro h F
+    obtain ⟨p, _, hpAll, hpPast⟩ := h F
+    obtain ⟨t, ht_mem, ht_place, ht_sat⟩ :=
+      (Sat.past (M := M) (w := ⟨p, †, w.time⟩) (φ := φ)).1 hpPast
+    refine ⟨t, ?_, ?_, ht_sat⟩
+    · simpa [World.accessible] using ht_mem
+    · intro i
+      exact ht_place.symm ▸ hpAll i
+  · intro h F
+    obtain ⟨w', hAcc, hAll, hSat⟩ := h F
+    refine ⟨w'.place, by simp, hAll, ?_⟩
+    exact
+      (Sat.past (M := M) (w := ⟨w'.place, †, w.time⟩) (φ := φ)).2
+        ⟨w', by simpa [World.accessible] using hAcc, rfl, hSat⟩
 
 end DiamondSection
 

@@ -413,6 +413,35 @@ theorem sometime
   rcases w with ⟨p, evt, H⟩
   simp [Formula.sometime, Sat]
 
+/-- Satisfaction of `⇕` (everytime): the body holds at every event-tuple of the
+model at the current place. -/
+theorem everytime
+    (M : Model S P)
+    (w : World P S.EventType)
+    (φ : Formula S) :
+    (⟪w⟫ ⊨[M]Formula.everytime φ) ↔
+      ∀ t ∈ M.history.val, t.place = w.place → ⟪t⟫ ⊨[M]φ := by
+  classical
+  constructor
+  · intro h t ht hp
+    refine Classical.byContradiction fun hContra => ?_
+    have hNotBody : ⟪t⟫ ⊨[M]¬ᶠ φ :=
+      (not (M := M) (w := t) (φ := φ)).2 hContra
+    have hSome : ⟪w⟫ ⊨[M]Formula.sometime (¬ᶠ φ) :=
+      (sometime (M := M) (w := w) (φ := ¬ᶠ φ)).2 ⟨t, ht, hp, hNotBody⟩
+    exact
+      (not (M := M) (w := w) (φ := Formula.sometime (¬ᶠ φ))).1
+        (by simpa [Formula.everytime] using h) hSome
+  · intro h
+    have hNoSome : ¬ (⟪w⟫ ⊨[M]Formula.sometime (¬ᶠ φ)) := by
+      intro hSome
+      obtain ⟨t, ht, hp, hNot⟩ :=
+        (sometime (M := M) (w := w) (φ := ¬ᶠ φ)).1 hSome
+      exact (not (M := M) (w := t) (φ := φ)).1 hNot (h t ht hp)
+    have := (not (M := M) (w := w)
+      (φ := Formula.sometime (¬ᶠ φ))).2 hNoSome
+    simpa [Formula.everytime] using this
+
 /-- Conjunction satisfaction unfolds to both conjuncts. -/
 @[simp] theorem and
     (M : Model S P)
