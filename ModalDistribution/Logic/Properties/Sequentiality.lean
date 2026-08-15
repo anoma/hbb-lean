@@ -217,41 +217,6 @@ theorem seq_localView_of_seq
   subst hTime
   simpa [World.place, World.time, Sat] using hSeq
 
-/-- Lift satisfaction of the left disjunct to the disjunction. -/
-theorem sat_or_of_left
-    {φ ψ : Formula S}
-    (hφ : ⟪w⟫ ⊨[M]φ) :
-    ⟪w⟫ ⊨[M] (φ ∨ᶠ ψ) := by
-  classical
-  have hDisj : (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := Or.inl hφ
-  exact (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).2 hDisj
-
-/-- Lift satisfaction of the right disjunct to the disjunction. -/
-theorem sat_or_of_right
-    {φ ψ : Formula S}
-    (hψ : ⟪w⟫ ⊨[M]ψ) :
-    ⟪w⟫ ⊨[M] (φ ∨ᶠ ψ) := by
-  classical
-  have hDisj : (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := Or.inr hψ
-  exact (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).2 hDisj
-
-/-- Resolve a satisfied disjunction into propositional alternatives. -/
-theorem sat_or_cases
-    {φ ψ : Formula S}
-    (h : ⟪w⟫ ⊨[M](φ ∨ᶠ ψ)) :
-    (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := by
-  classical
-  simpa using (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).1 h
-
-/-- Extract the right conjunct from a satisfied conjunction. -/
-theorem sat_and_right
-    {φ ψ : Formula S}
-    (h : ⟪w⟫ ⊨[M](φ ∧ᶠ ψ)) :
-    ⟪w⟫ ⊨[M] ψ := by
-  classical
-  have := (Sat.and (M := M) (w := w) (φ := φ) (ψ := ψ)).1 h
-  exact this.2
-
 /-- Satisfaction of the empty past diamond depends only on the underlying timeline,
 not the distinguished participant. -/
 theorem sat_diamondPast_empty_participant_iff

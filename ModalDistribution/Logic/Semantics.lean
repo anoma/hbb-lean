@@ -715,5 +715,49 @@ theorem active_iff_past_top
       (Sat.past (M := M) (w := ⟨p, †, M.history.val⟩) (φ := ⊤ᶠ)).1 hPast
     exact ⟨t, htMem, htPlace⟩
 
+
+/-! ### Case analysis helpers for `∨ᶠ` and `∧ᶠ` -/
+
+section CaseAnalysis
+
+variable {M : Model S P} {w : World P S.EventType}
+
+/-- Lift satisfaction of the left disjunct to the disjunction. -/
+theorem sat_or_of_left
+    {φ ψ : Formula S}
+    (hφ : ⟪w⟫ ⊨[M]φ) :
+    ⟪w⟫ ⊨[M] (φ ∨ᶠ ψ) := by
+  classical
+  have hDisj : (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := Or.inl hφ
+  exact (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).2 hDisj
+
+/-- Lift satisfaction of the right disjunct to the disjunction. -/
+theorem sat_or_of_right
+    {φ ψ : Formula S}
+    (hψ : ⟪w⟫ ⊨[M]ψ) :
+    ⟪w⟫ ⊨[M] (φ ∨ᶠ ψ) := by
+  classical
+  have hDisj : (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := Or.inr hψ
+  exact (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).2 hDisj
+
+/-- Resolve a satisfied disjunction into propositional alternatives. -/
+theorem sat_or_cases
+    {φ ψ : Formula S}
+    (h : ⟪w⟫ ⊨[M](φ ∨ᶠ ψ)) :
+    (⟪w⟫ ⊨[M] φ) ∨ (⟪w⟫ ⊨[M] ψ) := by
+  classical
+  simpa using (Sat.or (M := M) (w := w) (φ := φ) (ψ := ψ)).1 h
+
+/-- Extract the right conjunct from a satisfied conjunction. -/
+theorem sat_and_right
+    {φ ψ : Formula S}
+    (h : ⟪w⟫ ⊨[M](φ ∧ᶠ ψ)) :
+    ⟪w⟫ ⊨[M] ψ := by
+  classical
+  have := (Sat.and (M := M) (w := w) (φ := φ) (ψ := ψ)).1 h
+  exact this.2
+
+end CaseAnalysis
+
 end Logic
 end ModalDistribution

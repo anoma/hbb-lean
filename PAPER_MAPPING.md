@@ -96,7 +96,7 @@ through membership, never through equality of prehistories — exactly the
 - **Figure 4 sugar (□⇓)** — `boxAllPast` ([ModalDistribution/Logic/Syntax.lean](ModalDistribution/Logic/Syntax.lean))
 - **Lemma 3.6.4(1)** — `sometime` ([ModalDistribution/Logic/Semantics.lean](ModalDistribution/Logic/Semantics.lean))
 - **Lemma 3.6.4(2)** — `everytime` ([ModalDistribution/Logic/Semantics.lean](ModalDistribution/Logic/Semantics.lean))
-- **Lemma 3.6.4(3)** — `sat_diamondPast_iff_quorum_witness` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- **Lemma 3.6.4(3)** — `sat_diamondPast_iff_quorum_witness` ([ModalDistribution/Logic/Properties/Satisfaction.lean](ModalDistribution/Logic/Properties/Satisfaction.lean))
 
 ## Section 4: The Modalities
 

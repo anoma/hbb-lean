@@ -1,4 +1,5 @@
 import ModalDistribution.Logic.Properties.Quorums
+import ModalDistribution.Logic.Properties.Satisfaction
 import ModalDistribution.Logic.Properties.Modalities
 import ModalDistribution.Logic.Properties.Sequentiality
 
