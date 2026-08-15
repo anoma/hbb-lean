@@ -8,7 +8,13 @@ thyHBB3_done=false
 
 # Run lake build with verbose output and monitor for protocol completion
 # Filter out trace lines to keep output clean
+BUILD_EXIT=1
 while IFS= read -r line; do
+    # Recover lake's exit status (emitted as the final marker line below)
+    if [[ "$line" == LAKE_EXIT:* ]]; then
+        BUILD_EXIT=${line#LAKE_EXIT:}
+        continue
+    fi
     # Skip trace lines
     if [[ "$line" == trace:* ]]; then
         continue
@@ -65,6 +71,6 @@ while IFS= read -r line; do
         echo "╚════════════════════════════════════════════════════════════╝"
         echo ""
     fi
-done < <(lake build --verbose 2>&1)
+done < <(lake build --verbose 2>&1; echo "LAKE_EXIT:$?")
 
 exit $BUILD_EXIT

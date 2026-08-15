@@ -124,73 +124,6 @@ theorem uniquePropose_equal_values
     · exact hDiamond₂
   simpa [Sat] using hEq
 
-/-- Helper: specialise the existence implication at a concrete event. -/
-theorem uniquePropose_eventually_echo_core_exists_at_event
-    (value : S.Value)
-    (hExists :
-      □W⊨[M](predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-          ∃ᶠ (fun witness =>
-            ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
-    {t : World P (Signature.EventType S)}
-    (ht : t ∈ M.history.val) :
-    ⟪⟨t.place, t.event,
-        History.predecessorHistory (H := M.history)
-          (happensBefore_of_mem (P := P)
-            (Event := Signature.EventType S) ht)⟩⟫ ⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-        ∃ᶠ (fun witness =>
-          ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) := by
-  classical
-  have hLocal :=
-    AllWorldValid_predecessor
-      (M := M)
-      (φ :=
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-          ∃ᶠ fun witness =>
-            ↕ᶠ (ofEvent ⟨echoSymb, [witness]⟩))
-      (hEvent := hExists)
-      (hMem := ht)
-  simpa [History.predecessorHistory, happensBefore_of_mem,
-    World.place, World.event, World.time] using hLocal
-
-/-- Helper: specialise the equality implication at a concrete event. -/
-theorem uniquePropose_eventually_echo_core_eq_at_event
-    (value : S.Value)
-    (hEq :
-      □W⊨[M](predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-          ∀ᶠ (fun v =>
-            (↕ᶠ(ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
-            (v ≃ᶠ value)))
-    {t : World P (Signature.EventType S)}
-    (ht : t ∈ M.history.val) :
-    ⟪⟨t.place, t.event,
-        History.predecessorHistory (H := M.history)
-          (happensBefore_of_mem (P := P)
-            (Event := Signature.EventType S) ht)⟩⟫ ⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-        ∀ᶠ (fun v =>
-          (↕ᶠ(ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
-          (v ≃ᶠ value)) := by
-  classical
-  have hLocal :=
-    AllWorldValid_predecessor
-      (M := M)
-      (φ :=
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-          ∀ᶠ fun v =>
-            (↕ᶠ (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
-              (v ≃ᶠ value))
-      (hEvent := hEq)
-      (hMem := ht)
-  simpa [History.predecessorHistory, happensBefore_of_mem,
-    World.place, World.event, World.time] using hLocal
-
 /-- Helper: extract a concrete witness from a modal existential at a fixed world. -/
 theorem uniquePropose_exists_witness_at_world
     {w : World P (Signature.EventType S)}
@@ -355,46 +288,6 @@ theorem uniquePropose_eventually_echo_core
       (value := value)
       (hExists := hExists_loc)
       (hEq := hEq_loc)
-
-/-- Helper: a unique proposal at the global history restricts to predecessors. -/
-theorem uniquePropose_guard_at_predecessor
-    {t : World P (Signature.EventType S)}
-    (ht : t ∈ M.history.val)
-    (hUnique : ⊨[M]∃!ᶠ v ↦
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
-    ⟪⟨t.place, t.event,
-        History.predecessorHistory (H := M.history)
-          (happensBefore_of_mem (P := P)
-            (Event := Signature.EventType S) ht)⟩⟫ ⊨[M]
-      ∃≤ᶠ1 v ↦
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) := by
-  classical
-  let wTop : World P (Signature.EventType S) :=
-    ⟨t.place, †, M.history.val⟩
-  have hUnique_global :
-      ⟪wTop⟫ ⊨[M]∃!ᶠ v ↦
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    hUnique _
-  have hGuard_global :
-      ⟪wTop⟫ ⊨[M]
-        ∃≤ᶠ1 v ↦
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    uniquePropose_guard_at_history (M := M) (w := wTop) hUnique_global
-  let h_before :=
-    happensBefore_of_mem (P := P)
-      (Event := Signature.EventType S) ht
-  let Hloc := History.predecessorHistory (H := M.history) h_before
-  let wPred : World P (Signature.EventType S) :=
-    ⟨t.place, t.event, Hloc⟩
-  have hSubset_pre : Hloc.val ⊆trn M.history.val := by
-    have hBefore : Hloc.val ≺− M.history.val := by
-      simpa [Hloc, History.predecessorHistory] using h_before
-    exact History.happensBefore_implies_transitiveSubset Hloc M.history hBefore
-  have hSubset : wPred.time ⊆trn wTop.time := by
-    simpa [wPred, wTop] using hSubset_pre
-  have hGuard_pred :=
-    uniquePropose_monotone (M := M) (w := wTop) (w' := wPred) hSubset hGuard_global
-  simpa [wPred, wTop] using hGuard_pred
 
 /-- Auxiliary: the antecedent ensures echoes exist for some witness value. -/
 theorem uniquePropose_exists_witness_echo
@@ -710,75 +603,6 @@ theorem echoNonEquiv_diamond
     (Sat.eq (M := M) (w := wNow)
       (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
   simpa [Sat] using hEq
-
-theorem uniquePropose_guard_specialise_value
-    {w : World P (Signature.EventType S)}
-    (value : S.Value)
-    (hGuard :
-      ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
-    ⟪w⟫ ⊨[M]
-      ∀ᶠ (fun altValue =>
-        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
-          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
-            (value ≃ᶠ altValue)) := by
-  classical
-  dsimp [Formula.existsAtMostOne] at hGuard
-  have hForValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun v =>
-        ∀ᶠ fun altValue =>
-          (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
-            (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
-              (v ≃ᶠ altValue))
-      (v := value) hGuard
-  exact hForValue
-
-/-- Main result: a sequential quorum guard suffices to ensure safety. -/
-theorem seq_guard_implies_safe
-    {w : World P (Signature.EventType S)}
-    (l : Signature.Value S)
-    (hSeqGuard :
-      ⟪w⟫ ⊨[M]∀ᶠ (fun l' => ♢ᶠ[[l, l']]Formula.seq)) :
-    ⟪w⟫ ⊨[M] safeFormula proposeSymb l := by
-  classical
-  unfold safeFormula
-  have h :=
-    (Sat.or (M := M) (w := w)
-      (φ := ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
-      (ψ := ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq))).2
-      (Or.inr hSeqGuard)
-  simpa using h
-
-/-- Main result: safety holds precisely when uniqueness or the sequential
-guard is satisfied. -/
-theorem safe_implies_unique_or_seq_guard
-    {w : World P (Signature.EventType S)}
-    (l : Signature.Value S)
-    (hSafe : ⟪w⟫ ⊨[M]safeFormula proposeSymb l) :
-    ⟪w⟫ ⊨[M]
-      (∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
-        ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq) := by
-  classical
-  unfold safeFormula at hSafe
-  have hOr :=
-    (Sat.imp (M := M) (w := w)
-      (φ := (∃≤ᶠ1 v ↦
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
-          (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))
-      (ψ := (∃≤ᶠ1 v ↦
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
-          (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))).1
-      (Sat.imp_intro (M := M) (w := w)
-        (φ := (∃≤ᶠ1 v ↦
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
-            (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))
-        (ψ := (∃≤ᶠ1 v ↦
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
-            (∀ᶠ fun l' => ♢ᶠ[[l, l']] Formula.seq))
-        (by intro h; exact h))
-      hSafe
-  exact hOr
 
 theorem uniquePropose_guard_implies_eq
     {w : World P (Signature.EventType S)}

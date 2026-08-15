@@ -1060,48 +1060,6 @@ theorem votes_eventually_agree
       (hEcho₁ := hEcho₁)
       (hEcho₂ := hEcho₂)
 
-theorem sat_and_assoc_left
-    {φ ψ χ : Formula S}
-    {w : World P (Signature.EventType S)} :
-    (⟪w⟫ ⊨[M] (φ ∧ᶠ ψ) ∧ᶠ χ) ↔
-      (⟪w⟫ ⊨[M] φ ∧ᶠ (ψ ∧ᶠ χ)) := by
-  constructor
-  · intro h
-    have hSplit :=
-      (Sat.and (M := M) (w := w)
-        (φ := φ ∧ᶠ ψ)
-        (ψ := χ)).1 h
-    have hφψ :=
-      (Sat.and (M := M) (w := w)
-        (φ := φ)
-        (ψ := ψ)).1 hSplit.1
-    have hψχ :=
-      (Sat.and (M := M) (w := w)
-        (φ := ψ)
-        (ψ := χ)).2 ⟨hφψ.2, hSplit.2⟩
-    exact
-      (Sat.and (M := M) (w := w)
-        (φ := φ)
-        (ψ := ψ ∧ᶠ χ)).2 ⟨hφψ.1, hψχ⟩
-  · intro h
-    have hSplit :=
-      (Sat.and (M := M) (w := w)
-        (φ := φ)
-        (ψ := ψ ∧ᶠ χ)).1 h
-    have hψχ :=
-      (Sat.and (M := M) (w := w)
-        (φ := ψ)
-        (ψ := χ)).1 hSplit.2
-    have hφψ :=
-      (Sat.and (M := M) (w := w)
-        (φ := φ)
-        (ψ := ψ)).2 ⟨hSplit.1, hψχ.1⟩
-    exact
-      (Sat.and (M := M) (w := w)
-        (φ := φ ∧ᶠ ψ)
-        (ψ := χ)).2 ⟨hφψ, hψχ.2⟩
-
-/-- Symmetric correlations also persist through the past. -/
 theorem always_corr_symm
     (hTheory : M ⊨ᵀ
       ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)

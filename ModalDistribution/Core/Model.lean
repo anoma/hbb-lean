@@ -76,29 +76,5 @@ namespace Model
 variable {S : Signature} {P : Type u₅} [Nonempty P]
 variable (M : Model S P)
 
-/-- Every learner interpretation is nonempty. -/
-theorem learner_nonempty (v : Signature.Value S) :
-    ∃ O : Set P, O ∈ (M.learner v).quorums := by
-  simpa using (M.learner v).nonempty
-
-/-- Learner interpretations are up-closed under supersets. -/
-theorem learner_upwardClosed (v : Signature.Value S) :
-    ∀ {O O' : Set P},
-      O ∈ (M.learner v).quorums →
-      O ⊆ O' →
-      O' ∈ (M.learner v).quorums := by
-  intro O O' hO hsubset
-  exact (M.learner v).upwardClosed hO hsubset
-
-/-- Learner interpretations contain pairwise-intersecting quorums. -/
-theorem learner_pairwiseInter (v : Signature.Value S) :
-    ∀ {O O' : Set P},
-      O ∈ (M.learner v).quorums →
-      O' ∈ (M.learner v).quorums →
-      O ≬ O' := by
-  intro O O' hO hO'
-  exact (M.learner v).pairwiseInter hO hO'
-
 end Model
-
 end ModalDistribution

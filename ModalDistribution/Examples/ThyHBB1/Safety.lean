@@ -311,19 +311,6 @@ theorem safe_seq_guard_monotone
   have _ := hPlace'
   exact ⟨q, hqInter, hSeq_local'⟩
 
-/-- Monotonicity of the sequential guard instantiated with a constant learner. -/
-theorem safe_seq_guard_monotone_const
-    (l : Signature.Value S)
-    (hSubset : w'.time ⊆trn w.time)
-    (hPlace : w'.place = w.place)
-    (hSeqGuard : ⟪w⟫ ⊨[M]∀ᶠ (fun l' => ♢ᶠ[[l, l']]Formula.seq)) :
-    ⟪w'⟫ ⊨[M]∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq) := by
-  simpa using
-    safe_seq_guard_monotone (M := M)
-      (w := w) (w' := w') (l := l)
-      (hSubset := hSubset) (hPlace := hPlace)
-      (hSeqGuard := hSeqGuard)
-
 /-- Monotonicity of the `Safe` axiom body with respect to transitive subsets. -/
 theorem safe_axiom_body_monotone
     (l : Signature.Value S)

@@ -264,11 +264,6 @@ scoped notation "□ᶠ[]" φ => Formula.boxEmpty φ
 @[simp] def predicate0 (sym : S.PredSymb) : Formula S :=
   .predicate ⟨sym, []⟩
 
-/-- Convenience for nullary events. -/
-@[simp] def event0 (sym : S.EventSymb) : Formula S :=
-  .event ⟨sym, []⟩
-
-/-- Promote an event from the signature to a formula. -/
 def ofEvent (E : Signature.EventType S) : Formula S :=
   .event ⟨E.sym, E.args⟩
 

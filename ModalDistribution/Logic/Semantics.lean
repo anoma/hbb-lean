@@ -78,11 +78,6 @@ variable {H : PreHistory P (S.EventType)}
 
 open Set
 
-/-- Satisfaction of `⊥` is never witnessed. -/
-@[simp] theorem bot (M : Model S P) (w : World P S.EventType) :
-    (⟪w⟫ ⊨[M]⊥ᶠ) ↔ False := by
-  simp [Sat]
-
 /-- Satisfaction of a negated formula coincides with refuting any witness of the body. -/
 @[simp] theorem not (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
     (⟪w⟫ ⊨[M]¬ᶠ φ) ↔ ¬(⟪w⟫ ⊨[M]φ) := by
@@ -102,16 +97,6 @@ theorem not_intro (M : Model S P) {w : World P S.EventType} {φ : Formula S}
   classical
   exact (not (M := M) (w := w) (φ := φ)).2 h
 
-/-- The negation of truth is never satisfiable. -/
-theorem not_top (M : Model S P) (w : World P S.EventType) :
-    (⟪w⟫ ⊨[M]¬ᶠ ⊤ᶠ) ↔ False := by
-  simp [Formula.not, Formula.top, Sat]
-
-/-- The negation of `⊥` always holds. -/
-theorem not_bot (M : Model S P) (w : World P S.EventType) :
-    ⟪w⟫ ⊨[M]¬ᶠ ⊥ᶠ := by
-  simp [Formula.not, Sat]
-
 /-- A universally quantified formula can be specialised to any value (HOAS version). -/
 theorem forall_elim
     (M : Model S P) (w : World P S.EventType)
@@ -121,17 +106,6 @@ theorem forall_elim
     ⟪w⟫ ⊨[M]body v := by
   simp [Sat] at h
   exact h v
-
-/--
-Version of `Sat.forall_elim` with implicit parameters, useful for chaining.
--/
-theorem forall_elim'
-    {M : Model S P} {w : World P S.EventType}
-    {body : S.Value → Formula S}
-    (v : Signature.Value S)
-    (h : ⟪w⟫ ⊨[M].forall body) :
-    ⟪w⟫ ⊨[M] (body v) :=
-  forall_elim (M := M) (w := w) (body := body) (v := v) h
 
 /-- To show a universal formula holds, show the body holds for every value (HOAS version). -/
 theorem forall_intro
@@ -235,36 +209,6 @@ theorem boxEmpty
       (Sat.not (M := M) (w := ⟨p, evt, H⟩)
         (φ := ♢ᶠ[] (¬ᶠ φ))).2 hImp
     simpa [Formula.boxEmpty, Formula.box] using hNotDiamond
-
-/-- Events witnessed at a history automatically satisfy sometime. -/
-theorem event_sometime
-    (M : Model S P)
-    (p : P)
-    (H : PreHistory P (S.EventType))
-    (E : S.EventType)
-    (hEvent : ⟪⟨p, MaybeEvent.some E, H⟩⟫ ⊨[M]Formula.ofEvent E) :
-    ⟪⟨p, MaybeEvent.some E, H⟩⟫ ⊨[M]↕ᶠ (Formula.ofEvent E) := by
-  classical
-  have hMem : (p, MaybeEvent.some E, H) ∈ M.history.val := by
-    simpa [Formula.ofEvent, Sat] using hEvent
-  have hPast :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↓ᶠ (Formula.ofEvent E) := by
-    have :
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↓ᶠ (Formula.ofEvent E)) ↔
-          ∃ t ∈ M.history.val, t.place = p ∧
-            Sat M (t.place) (World.event t) (World.time t)
-              (Formula.ofEvent E) := by
-      simp [Sat]
-    refine this.mpr ?_
-    refine ⟨⟨p, MaybeEvent.some E, H⟩, hMem, rfl, ?_⟩
-    simpa [Formula.ofEvent, Sat] using hEvent
-  simpa [Formula.sometime, Sat] using hPast
-
-/-- The truth constant is satisfied if and only if `True`. -/
-@[simp] theorem top_iff (M : Model S P) (w : World P S.EventType) :
-    (⟪w⟫ ⊨[M]⊤ᶠ) ↔ True := by
-  classical
-  simp [Formula.top, Sat]
 
 /-- Satisfaction of implication agrees with pointwise entailment. -/
 @[simp] theorem imp
@@ -427,29 +371,6 @@ theorem iff_mpr
     (⟪w⟫ ⊨[M]v₁ ≃ᶠ v₂) ↔ v₁ = v₂ := by
   simp [Sat]
 
-/-- Equality atoms witness reflexivity. -/
-theorem eq_refl (M : Model S P) (w : World P S.EventType) (v : S.Value) :
-    ⟪w⟫ ⊨[M](v ≃ᶠ v) := by
-  simp [Sat]
-
-/-- Event clauses are witnessed by membership in the ambient history. -/
-theorem event_of_mem
-    (M : Model S P)
-    (w : World P S.EventType)
-    (evt : EventAtom S)
-    (hmem : (place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w) ∈ M.history.val) :
-    ⟪⟨place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w⟩⟫ ⊨[M]Formula.event evt := by
-  simpa [Sat]
-
-/-- Event atoms reduce to membership in the enclosing history. -/
-@[simp] theorem event
-    (M : Model S P)
-    (w : World P S.EventType)
-    (evt : EventAtom S) :
-    (⟪⟨place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w⟩⟫ ⊨[M]Formula.event evt) ↔
-      (place w, MaybeEvent.some ⟨evt.sym, evt.args⟩, time w) ∈ M.history.val := by
-  simp [Sat]
-
 /-! ### Simp lemmas for derived connectives -/
 
 /-- ofEvent satisfaction unfolds to event membership. -/
@@ -492,26 +413,6 @@ theorem sometime
   rcases w with ⟨p, evt, H⟩
   simp [Formula.sometime, Sat]
 
-/-- Box with past guard unfolds. -/
-theorem boxPast
-    (M : Model S P)
-    (w : World P S.EventType)
-    (ls : List S.Value)
-    (φ : Formula S) :
-    (⟪w⟫ ⊨[M]Formula.boxPast ls φ) ↔
-      (⟪w⟫ ⊨[M]Formula.box ls (↓ᶠ φ)) := by
-  simp [Formula.boxPast]
-
-/-- Diamond with past guard unfolds. -/
-theorem diamondPast
-    (M : Model S P)
-    (w : World P S.EventType)
-    (ls : List S.Value)
-    (φ : Formula S) :
-    (⟪w⟫ ⊨[M]Formula.diamondPast ls φ) ↔
-      (⟪w⟫ ⊨[M]♢ᶠ[ls] (↓ᶠ φ)) := by
-  simp [Formula.diamondPast]
-
 /-- Conjunction satisfaction unfolds to both conjuncts. -/
 @[simp] theorem and
     (M : Model S P)
@@ -542,30 +443,6 @@ theorem diamondPast
     · exact absurd hφ hn
     · exact hψ
 
-/-- Universal quantification unfolds to satisfaction for all values. -/
-@[simp] theorem forall_sat
-    (M : Model S P)
-    (w : World P S.EventType)
-    (body : S.Value → Formula S) :
-    (⟪w⟫ ⊨[M].forall body) ↔
-      (∀ v, ⟪w⟫ ⊨[M]body v) := by
-  simp [Sat]
-
-/-- Existential quantification satisfaction unfolds to witness existence. -/
-@[simp] theorem exists_sat
-    (M : Model S P)
-    (w : World P S.EventType)
-    (body : S.Value → Formula S) :
-    (⟪w⟫ ⊨[M].exists_ body) ↔
-      (∃ v, ⟪w⟫ ⊨[M]body v) := by
-  simp only [Formula.exists_, not, forall_sat]
-  constructor
-  · intro h
-    refine Classical.byContradiction fun hne => ?_
-    exact h fun v hv => hne ⟨v, hv⟩
-  · rintro ⟨v, hv⟩ h
-    exact h v hv
-
 theorem check_of_imp {ts : List S.Value} {acc : Set P} {Q Q' : P → Prop}
     (h : ∀ q, Q q → Q' q) :
     Sat.check M Q ts acc → Sat.check M Q' ts acc := by
@@ -581,12 +458,6 @@ theorem check_of_imp {ts : List S.Value} {acc : Set P} {Q Q' : P → Prop}
       simp only [Sat.check] at hCheck ⊢
       intro O hO
       exact ih (hCheck O hO)
-
-theorem check_congr {ts : List S.Value} {acc : Set P} {Q Q' : P → Prop}
-    (h : ∀ q, Q q ↔ Q' q) :
-    Sat.check M Q ts acc ↔ Sat.check M Q' ts acc :=
-  ⟨check_of_imp (M := M) fun q => (h q).1,
-   check_of_imp (M := M) fun q => (h q).2⟩
 
 theorem diamond_of_imp
     (ts : List S.Value) {φ ψ : Formula S}
@@ -655,32 +526,6 @@ theorem not_congr
     exact not_of_imp (M := M) (w := w)
       (φ := φ) (ψ := ψ) (h := fun hφ => (h.mp hφ)) hNot
 
-theorem atEnd_of_imp
-    {φ ψ : Formula S}
-    (h : (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]φ) →
-        (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]ψ)) :
-    (⟪w⟫ ⊨[M]⤒ᶠ φ) →
-      (⟪w⟫ ⊨[M]⤒ᶠ ψ) := by
-  classical
-  intro hEnd
-  simpa [Formula.atEnd, Sat] using
-    h (by simpa [Formula.atEnd, Sat] using hEnd)
-
-theorem atEnd_congr
-    {φ ψ : Formula S}
-    (h : (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]φ) ↔
-        (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]ψ)) :
-    (⟪w⟫ ⊨[M]⤒ᶠ φ) ↔
-      (⟪w⟫ ⊨[M]⤒ᶠ ψ) := by
-  classical
-  constructor
-  · intro hEnd
-    exact atEnd_of_imp (M := M) (w := w)
-      (φ := φ) (ψ := ψ) (h := fun hφ => (h.mp hφ)) hEnd
-  · intro hEnd
-    exact atEnd_of_imp (M := M) (w := w)
-      (φ := ψ) (ψ := φ) (h := fun hψ => (h.mpr hψ)) hEnd
-
 theorem past_of_imp
     {φ ψ : Formula S}
     (h : ∀ (t : World P S.EventType), t ∈ w.time → t.place = w.place →
@@ -736,136 +581,6 @@ theorem past_congr
       (h := fun t ht hp hψ => hImp ht hp hψ) hPast'
     simpa using hRes
 
-theorem sometime_of_imp
-    {φ ψ : Formula S}
-    (h : ∀ {t : World P S.EventType},
-        t ∈ M.history.val → t.place = w.place →
-        (⟪t⟫ ⊨[M]φ) → ⟪t⟫ ⊨[M]ψ) :
-    (⟪w⟫ ⊨[M]↕ᶠ φ) → (⟪w⟫ ⊨[M]↕ᶠ ψ) := by
-  classical
-  intro hSome
-  have hPast :
-      (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]↓ᶠ φ) →
-      (⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]↓ᶠ ψ) := by
-    intro hPastφ
-    have hImp : ∀ (t : World P S.EventType),
-        t ∈ M.history.val → t.place = w.place →
-        (⟪t⟫ ⊨[M]φ) → ⟪t⟫ ⊨[M]ψ := by
-      intro t ht hp hφ
-      exact h (t := t) ht hp hφ
-    have := past_of_imp (M := M) (w := ⟨w.place, †, M.history.val⟩)
-      (φ := φ) (ψ := ψ)
-      (h := fun t ht hp hφ => hImp t ht hp hφ) hPastφ
-    simpa using this
-  have hAtEnd :=
-    atEnd_of_imp (M := M) (w := w)
-      (φ := Formula.past φ) (ψ := Formula.past ψ)
-      (h := fun hPastφ =>
-        hPast (by simpa [Formula.past, Sat] using hPastφ))
-      (by simpa [Formula.sometime] using hSome)
-  simpa [Formula.sometime] using hAtEnd
-
-theorem sometime_congr
-    {φ ψ : Formula S}
-    (h : ∀ {t : World P S.EventType},
-        t ∈ M.history.val → t.place = w.place →
-        ((⟪t⟫ ⊨[M]φ) ↔ (⟪t⟫ ⊨[M]ψ))) :
-    (⟪w⟫ ⊨[M]↕ᶠ φ) ↔ (⟪w⟫ ⊨[M]↕ᶠ ψ) := by
-  classical
-  constructor
-  · intro hSome
-    exact sometime_of_imp (M := M) (w := w)
-      (φ := φ) (ψ := ψ)
-      (h := fun {t} ht hp => (h ht hp).1) hSome
-  · intro hSome
-    exact sometime_of_imp (M := M) (w := w)
-      (φ := ψ) (ψ := φ)
-      (h := fun {t} ht hp => (h ht hp).2) hSome
-
-theorem eventuallyPast_of_imp
-    {φ ψ : Formula S}
-    (h : ∀ {t : World P S.EventType},
-        t ∈ w.time → t.place = w.place →
-        (⟪t⟫ ⊨[M]φ) → ⟪t⟫ ⊨[M]ψ) :
-    (⟪w⟫ ⊨[M]⇓ᶠ φ) → (⟪w⟫ ⊨[M]⇓ᶠ ψ) := by
-  classical
-  have hNot : ∀ {t : World P S.EventType},
-      t ∈ w.time → t.place = w.place →
-      (⟪t⟫ ⊨[M]¬ᶠ ψ) →
-        ⟪t⟫ ⊨[M]¬ᶠ φ := by
-    intro t ht hp hψ
-    exact not_of_imp (M := M) (w := t)
-      (φ := φ) (ψ := ψ) (h := h ht hp) hψ
-  have hPast :=
-    past_of_imp (M := M) (w := w)
-      (φ := ¬ᶠ ψ) (ψ := ¬ᶠ φ)
-      (h := fun {t} ht hp => hNot ht hp)
-  have hNotPast := not_of_imp (M := M) (w := w)
-      (φ := ↓ᶠ (¬ᶠ ψ)) (ψ := ↓ᶠ (¬ᶠ φ)) hPast
-  intro hEv
-  simpa [Formula.eventuallyPast]
-    using hNotPast
-      (by simpa [Formula.eventuallyPast] using hEv)
-
-theorem eventuallyPast_congr
-    {φ ψ : Formula S}
-    (h : ∀ {t : World P S.EventType},
-        t ∈ w.time → t.place = w.place →
-        ((⟪t⟫ ⊨[M]φ) ↔ (⟪t⟫ ⊨[M]ψ))) :
-    (⟪w⟫ ⊨[M]⇓ᶠ φ) ↔ (⟪w⟫ ⊨[M]⇓ᶠ ψ) := by
-  classical
-  constructor
-  · intro hEv
-    exact eventuallyPast_of_imp (M := M) (w := w)
-      (φ := φ) (ψ := ψ)
-      (h := fun {t} ht hp => (h ht hp).1) hEv
-  · intro hEv
-    exact eventuallyPast_of_imp (M := M) (w := w)
-      (φ := ψ) (ψ := φ)
-      (h := fun {t} ht hp => (h ht hp).2) hEv
-
-theorem alwaysPast_of_imp
-    {φ ψ : Formula S}
-    (h : ∀ {t : World P S.EventType},
-        t.place = w.place →
-        (⟪t⟫ ⊨[M]φ) → ⟪t⟫ ⊨[M]ψ) :
-    (⟪w⟫ ⊨[M]⇕ᶠ φ) → (⟪w⟫ ⊨[M]⇕ᶠ ψ) := by
-  classical
-  have hNot : ∀ {t : World P S.EventType},
-      t ∈ M.history.val → t.place = w.place →
-      (⟪t⟫ ⊨[M]¬ᶠ ψ) →
-        ⟪t⟫ ⊨[M]¬ᶠ φ := by
-    intro t ht hp hψ
-    exact not_of_imp (M := M) (w := t)
-      (φ := φ) (ψ := ψ)
-      (h := fun hφ => h (by simpa [hp]) hφ) hψ
-  have hSome := sometime_of_imp (M := M) (w := w)
-      (φ := ¬ᶠ ψ) (ψ := ¬ᶠ φ)
-      (h := fun {t} ht hp => hNot ht hp)
-  have hNotSome := not_of_imp (M := M) (w := w)
-      (φ := ↕ᶠ (¬ᶠ ψ)) (ψ := ↕ᶠ (¬ᶠ φ)) hSome
-  intro hAlways
-  simpa [Formula.alwaysPast]
-    using hNotSome
-      (by simpa [Formula.alwaysPast] using hAlways)
-
-theorem alwaysPast_congr
-    {φ ψ : Formula S}
-    (h : ∀ {t : World P S.EventType},
-        t.place = w.place →
-        ((⟪t⟫ ⊨[M]φ) ↔ (⟪t⟫ ⊨[M]ψ))) :
-    (⟪w⟫ ⊨[M]⇕ᶠ φ) ↔ (⟪w⟫ ⊨[M]⇕ᶠ ψ) := by
-  classical
-  constructor
-  · intro hAlways
-    exact alwaysPast_of_imp (M := M) (w := w)
-      (φ := φ) (ψ := ψ)
-      (h := fun {t} hp hφ => (h hp).1 hφ) hAlways
-  · intro hAlways
-    exact alwaysPast_of_imp (M := M) (w := w)
-      (φ := ψ) (ψ := φ)
-      (h := fun {t} hp hψ => (h hp).2 hψ) hAlways
-
 theorem past_not_not_iff
     {φ : Formula S} :
     (⟪w⟫ ⊨[M] ↓ᶠ (¬ᶠ (¬ᶠ φ))) ↔ (⟪w⟫ ⊨[M] ↓ᶠ φ) := by
@@ -874,16 +589,6 @@ theorem past_not_not_iff
     (φ := ¬ᶠ (¬ᶠ φ)) (ψ := φ)
     (fun {t} ht hp =>
       not_not_iff (M := M) (w := t) (φ := φ))
-
-theorem eventuallyPast_not_iff
-    {φ : Formula S} :
-    (⟪w⟫ ⊨[M] ⇓ᶠ (¬ᶠ φ)) ↔ (⟪w⟫ ⊨[M] ¬ᶠ (↓ᶠ φ)) := by
-  classical
-  have hPast := past_not_not_iff (M := M) (w := w) (φ := φ)
-  have hNot := not_congr (M := M) (w := w)
-      (φ := ↓ᶠ (¬ᶠ (¬ᶠ φ))) (ψ := ↓ᶠ φ) hPast
-  simpa [Formula.eventuallyPast, Formula.not]
-    using hNot
 
 theorem box_of_imp
     (ts : List S.Value) {φ ψ : Formula S}
@@ -914,155 +619,6 @@ theorem box_of_imp
   exact (Sat.not (M := M) (w := ⟨p, evt, H⟩)
       (φ := ♢ᶠ[ts] (¬ᶠ ψ))).2 hNoDiamondψ
 
-theorem box_congr
-    (ts : List S.Value) {φ ψ : Formula S}
-    (h : ∀ q, (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) ↔ (⟪⟨q, †, w.time⟩⟫ ⊨[M]ψ)) :
-    (⟪w⟫ ⊨[M]□ᶠ[ts] φ) ↔ (⟪w⟫ ⊨[M]□ᶠ[ts] ψ) := by
-  classical
-  constructor
-  · intro hBox
-    exact box_of_imp (M := M) (w := w)
-      (ts := ts) (φ := φ) (ψ := ψ)
-      (h := fun q => (h q).1) hBox
-  · intro hBox
-    exact box_of_imp (M := M) (w := w)
-      (ts := ts) (φ := ψ) (ψ := φ)
-      (h := fun q => (h q).2) hBox
-
-theorem diamond_eventuallyPast_not_iff
-    (ts : List S.Value) (φ : Formula S) :
-    (⟪w⟫ ⊨[M] ♢ᶠ[ts] (⇓ᶠ (¬ᶠ φ))) ↔
-      (⟪w⟫ ⊨[M] ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ))) := by
-  classical
-  refine diamond_congr (M := M) (w := w) (ts := ts)
-    (φ := ⇓ᶠ (¬ᶠ φ)) (ψ := ¬ᶠ (↓ᶠ φ)) ?_
-  intro q
-  have := eventuallyPast_not_iff (M := M) (w := ⟨q, †, w.time⟩) (φ := φ)
-  simpa [Formula.eventuallyPast, Formula.not]
-    using this
-
-theorem boxPast_not_diamondPast_not
-    (ts : List S.Value) (φ : Formula S) :
-    (⟪w⟫ ⊨[M] □ᶠ↓[ts] φ) ↔
-      (⟪w⟫ ⊨[M] ¬ᶠ (♢ᶠ⇓[ts] (¬ᶠ φ))) := by
-  classical
-  constructor
-  · intro hBox
-    have hNoDiamondPast : ¬ (⟪w⟫ ⊨[M] ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ))) :=
-      (Sat.not (M := M) (w := w)
-        (φ := ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ)))).1
-        (by simpa [Formula.boxPast, Formula.box, Formula.not] using hBox)
-    have hNoDiamondEv : ¬ (⟪w⟫ ⊨[M] ♢ᶠ[ts] (⇓ᶠ (¬ᶠ φ))) :=
-      by
-        intro hDiamEv
-        have hDiamPast :=
-          (diamond_eventuallyPast_not_iff (M := M) (w := w)
-            (ts := ts) (φ := φ)).1 hDiamEv
-        exact hNoDiamondPast hDiamPast
-    exact (Sat.not (M := M) (w := w)
-      (φ := ♢ᶠ[ts] (⇓ᶠ (¬ᶠ φ)))).2 hNoDiamondEv
-  · intro hNotDiamond
-    have hNoDiamondEv : ¬ (⟪w⟫ ⊨[M] ♢ᶠ[ts] (⇓ᶠ (¬ᶠ φ))) :=
-      (Sat.not (M := M) (w := w)
-        (φ := ♢ᶠ[ts] (⇓ᶠ (¬ᶠ φ)))).1 hNotDiamond
-    have hNoDiamondPast : ¬ (⟪w⟫ ⊨[M] ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ))) :=
-      by
-        intro hDiamPast
-        have hDiamEv :=
-          (diamond_eventuallyPast_not_iff (M := M) (w := w)
-            (ts := ts) (φ := φ)).2 hDiamPast
-        exact hNoDiamondEv hDiamEv
-    exact (Sat.not (M := M) (w := w)
-      (φ := ♢ᶠ[ts] (¬ᶠ (↓ᶠ φ)))).2 hNoDiamondPast
-
-theorem boxEventually_not_diamondPast_not
-    (ts : List S.Value) (φ : Formula S) :
-    (⟪w⟫ ⊨[M] □ᶠ⇓[ts] φ) ↔
-      (⟪w⟫ ⊨[M] ¬ᶠ (♢ᶠ↓[ts] (¬ᶠ φ))) := by
-  classical
-  have hDiamond :
-      (⟪w⟫ ⊨[M] ♢ᶠ[ts] (¬ᶠ (⇓ᶠ φ))) ↔
-        (⟪w⟫ ⊨[M] ♢ᶠ↓[ts] (¬ᶠ φ)) := by
-    refine diamond_congr (M := M) (w := w) (ts := ts) ?_
-    intro q
-    have :=
-      (Sat.not_not_iff (M := M) (w := ⟨q, †, w.time⟩)
-        (φ := ↓ᶠ (¬ᶠ φ)))
-    simpa [Formula.eventuallyPast, Formula.not, Formula.diamondPast]
-      using this
-  have := Sat.not_congr (M := M) (w := w)
-      (φ := ♢ᶠ[ts] (¬ᶠ (⇓ᶠ φ)))
-      (ψ := ♢ᶠ↓[ts] (¬ᶠ φ)) hDiamond
-  simpa [Formula.boxEventually, Formula.box, Formula.diamondPast,
-    Formula.not] using this
-
-theorem diamondPast_not_boxEventually_not
-    (ts : List S.Value) (φ : Formula S) :
-    (⟪w⟫ ⊨[M] ♢ᶠ↓[ts] φ) ↔
-      (⟪w⟫ ⊨[M] ¬ᶠ (□ᶠ⇓[ts] (¬ᶠ φ))) := by
-  classical
-  have hBox :=
-    boxEventually_not_diamondPast_not (M := M) (w := w)
-      (ts := ts) (φ := ¬ᶠ φ)
-  have hNot :=
-    Sat.not_congr (M := M) (w := w)
-      (φ := □ᶠ⇓[ts] (¬ᶠ φ))
-      (ψ := ¬ᶠ (♢ᶠ↓[ts] (¬ᶠ (¬ᶠ φ))))
-      hBox
-  have hNot' :
-      (⟪w⟫ ⊨[M] ¬ᶠ (□ᶠ⇓[ts] (¬ᶠ φ))) ↔
-        (⟪w⟫ ⊨[M] ♢ᶠ↓[ts] (¬ᶠ (¬ᶠ φ))) := by
-    exact hNot.trans
-      (Sat.not_not_iff (M := M) (w := w)
-        (φ := ♢ᶠ↓[ts] (¬ᶠ (¬ᶠ φ))))
-  have hDiamond :
-      (⟪w⟫ ⊨[M] ♢ᶠ↓[ts] (¬ᶠ (¬ᶠ φ))) ↔
-        (⟪w⟫ ⊨[M] ♢ᶠ↓[ts] φ) := by
-    refine diamond_congr (M := M) (w := w) (ts := ts) ?_
-    intro q
-    have := past_congr (M := M)
-      (w := ⟨q, †, w.time⟩)
-      (φ := ¬ᶠ (¬ᶠ φ)) (ψ := φ)
-      (h := fun {t} ht hp =>
-        Sat.not_not_iff (M := M) (w := t) (φ := φ))
-    simpa [Formula.diamondPast]
-      using this
-  exact (hDiamond.symm).trans hNot'.symm
-
-theorem diamondEventually_not_boxPast_not
-    (ts : List S.Value) (φ : Formula S) :
-    (⟪w⟫ ⊨[M] ♢ᶠ⇓[ts] φ) ↔
-      (⟪w⟫ ⊨[M] ¬ᶠ (□ᶠ↓[ts] (¬ᶠ φ))) := by
-  classical
-  have hBox :=
-    boxPast_not_diamondPast_not (M := M) (w := w)
-      (ts := ts) (φ := ¬ᶠ φ)
-  have hNot :=
-    Sat.not_congr (M := M) (w := w)
-      (φ := □ᶠ↓[ts] (¬ᶠ φ))
-      (ψ := ¬ᶠ (♢ᶠ⇓[ts] (¬ᶠ (¬ᶠ φ))))
-      hBox
-  have hNot' :
-      (⟪w⟫ ⊨[M] ¬ᶠ (□ᶠ↓[ts] (¬ᶠ φ))) ↔
-        (⟪w⟫ ⊨[M] ♢ᶠ⇓[ts] (¬ᶠ (¬ᶠ φ))) := by
-    exact hNot.trans
-      (Sat.not_not_iff (M := M) (w := w)
-        (φ := ♢ᶠ⇓[ts] (¬ᶠ (¬ᶠ φ))))
-  have hDiamond :
-      (⟪w⟫ ⊨[M] ♢ᶠ⇓[ts] (¬ᶠ (¬ᶠ φ))) ↔
-        (⟪w⟫ ⊨[M] ♢ᶠ⇓[ts] φ) := by
-    refine diamond_congr (M := M) (w := w) (ts := ts) ?_
-    intro q
-    have :=
-      eventuallyPast_congr (M := M)
-        (w := ⟨q, †, w.time⟩)
-        (φ := ¬ᶠ (¬ᶠ φ)) (ψ := φ)
-        (h := fun {t} ht hp =>
-          Sat.not_not_iff (M := M) (w := t) (φ := φ))
-    simpa [Formula.diamondEventually]
-      using this
-  exact (hDiamond.symm).trans hNot'.symm
-
 end Sat
 
 /-- End-of-time validity. -/
@@ -1074,14 +630,6 @@ end Sat
 notation:55 "⊨[" M "]" φ =>
   EndValid M φ
 
-/-- End-of-time validity implies satisfaction for all participants. -/
-theorem EndValid.exists
-    (M : Model S P) (φ : Formula S) :
-    (⊨[M]φ) →
-      ∀ p, ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ := by
-  intro h
-  exact h
-
 theorem EndValid.of_imp
     (M : Model S P) {φ ψ : Formula S}
     (h : ∀ p, (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) →
@@ -1090,20 +638,6 @@ theorem EndValid.of_imp
   classical
   intro hφ p
   exact h p (hφ p)
-
-theorem EndValid.congr
-    (M : Model S P) {φ ψ : Formula S}
-    (h : ∀ p, (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) ↔
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ)) :
-    (⊨[M]φ) ↔ (⊨[M]ψ) := by
-  classical
-  constructor
-  · intro hφ
-    exact EndValid.of_imp (M := M)
-      (φ := φ) (ψ := ψ) (h := fun p => (h p).1) hφ
-  · intro hψ
-    exact EndValid.of_imp (M := M)
-      (φ := ψ) (ψ := φ) (h := fun p => (h p).2) hψ
 
 /-- Event-driven validity. -/
 @[simp] def AllWorldValid
@@ -1145,44 +679,6 @@ notation:55 "□W⊨[" M "]" φ =>
     (H : History P (S.EventType))
     (p : P) : Prop :=
   ∃ t : World P (S.EventType), t ∈ H.val ∧ t.place = p
-
-theorem isActive_of_mem_history
-    (M : ModalDistribution.Model S P)
-    {p : P}
-    {evt : MaybeEvent S.EventType}
-    {H' : PreHistory P (S.EventType)}
-    (hMem : (p, evt, H') ∈ M.history.val) :
-    IsActive (H := M.history) p := by
-  refine ⟨⟨p, evt, H'⟩, hMem, rfl⟩
-
-theorem history_ne_empty_of_isActive
-    (M : ModalDistribution.Model S P)
-    {p : P}
-    (h : IsActive (H := M.history) p) :
-    M.history.val ≠ PreHistory.empty := by
-  classical
-  intro hEmpty
-  rcases h with ⟨t, ht, _⟩
-  have : False := by
-    simp [PreHistory.empty, hEmpty] at ht
-  exact this
-
-theorem exists_active_of_history_ne_empty
-    (M : ModalDistribution.Model S P)
-    (hne : M.history.val ≠ PreHistory.empty) :
-    ∃ p : P,
-      IsActive (H := M.history) p := by
-  classical
-  cases hHistory : M.history.val with
-  | mk l =>
-      cases l with
-      | nil =>
-          have : M.history.val = PreHistory.empty := by
-            simp [hHistory, PreHistory.empty]
-          exact (hne this).elim
-      | cons t tl =>
-          refine ⟨World.place t, ?_⟩
-          exact ⟨t, by simp [hHistory], rfl⟩
 
 /-- Active participants characterization. -/
 theorem active_iff_past_top

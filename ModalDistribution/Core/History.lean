@@ -82,9 +82,6 @@ namespace History
 /-- Coerce a history to its underlying prehistory. -/
 instance : Coe (History P Event) (PreHistory P Event) := ⟨History.val⟩
 
-/-- Extract the underlying prehistory from a history -/
-def toPreHistory (h : History P Event) : PreHistory P Event := h.val
-
 /-- Extensionality for histories: equality follows from equality of underlying
     prehistories. -/
 @[ext] theorem ext {h₁ h₂ : History P Event}
@@ -127,15 +124,6 @@ theorem predecessorHistory_subset {H : History P Event}
     (predecessorHistory (H := H) h_before).val ⊆ H.val := by
   exact History.subset_of_happensBefore (H := H) h_before
 
-/-- If `H` is a history and `h' ≺− H`, then `h'` is also a history. -/
-theorem history_characterization (h : History P Event) :
-  isTransitive h.val ∧
-    ∀ {h' : PreHistory P Event}, h' ≺− h.val → ∃ H' : History P Event, H'.val = h' := by
-  constructor
-  · exact History.transitive h
-  · intro h' h_before
-    exact ⟨predecessorHistory (H := h) h_before, rfl⟩
-
 end History
 
 section HistoryAt
@@ -147,10 +135,6 @@ namespace History
 /-- History at p for history structures. -/
 def historyAt (H : History P Event) (p : P) : Set (World P Event) :=
   PreHistory.historyAt (P := P) (Event := Event) H.val p
-
-@[simp] theorem mem_historyAt {H : History P Event} {p : P} {t : World P Event} :
-    t ∈ historyAt (P := P) (Event := Event) H p ↔
-      t ∈ H.val ∧ World.place t = p := Iff.rfl
 
 end History
 
@@ -182,12 +166,6 @@ theorem transitiveSubset_subset {h₁ h₂ : PreHistory P Event}
     (h : h₁ ⊆trn h₂) : h₁ ⊆ h₂ := by
   exact h.1
 
-/-- Transitive subsets carry hereditary transitivity along the inclusion. -/
-theorem transitiveSubset_hereditarily {h₁ h₂ : PreHistory P Event}
-    (h : h₁ ⊆trn h₂) :
-    isHereditarilyTransitive h₁ := by
-  exact h.2
-
 /-- A hereditarily transitive substructure yields a transitive-subset inclusion. -/
 theorem transitiveSubset_of_subset
     {h₁ h₂ : PreHistory P Event}
@@ -195,13 +173,6 @@ theorem transitiveSubset_of_subset
     (hhered : isHereditarilyTransitive (P := P) (Event := Event) h₁) :
     h₁ ⊆trn h₂ := by
   exact ⟨hsubset, hhered⟩
-
-/-- Mutual transitive-subset inclusions yield equivalent membership predicates. -/
-theorem transitiveSubset_antisymm {h₁ h₂ : PreHistory P Event} :
-    h₁ ⊆trn h₂ → h₂ ⊆trn h₁ → ∀ t, t ∈ h₁ ↔ t ∈ h₂ := by
-  intro h₁₂ h₂₁ t
-  refine PreHistory.subset_antisymm (P := P) (Event := Event)
-    h₁₂.1 h₂₁.1 t
 
 /-- Strict happens-before forces the predecessor history to sit inside the
     transitive-subset relation. -/
@@ -213,26 +184,6 @@ theorem happensBefore_implies_transitiveSubset (h1 h2 : History P Event) :
     exact History.subset_of_happensBefore (H := h2) h_before
   · -- isHereditarilyTransitive h1.val
     exact History.hereditarilyTransitive h1
-
-/-- Non-strict happens-before collapses to the same transitive-subset
-inclusion. -/
-theorem happensBeforeEq_implies_transitiveSubset (h1 h2 : History P Event) :
-  h1.val ⪯ h2.val → h1.val ⊆trn h2.val := by
-  intro h_before_eq
-  -- Use the characterization: h1.val ⪯ h2.val ↔ h1.val ≺− h2.val ∨ h1.val = h2.val
-  rw [PreHistory.happensBeforeEq_iff] at h_before_eq
-  cases h_before_eq with
-  | inl h_before =>
-    -- Case: h1.val ≺− h2.val
-    exact happensBefore_implies_transitiveSubset h1 h2 h_before
-  | inr h_eq =>
-    -- Case: h1.val = h2.val
-    rw [h_eq]
-    constructor
-    · -- h2.val ⊆ h2.val
-      exact PreHistory.subset_refl h2.val
-    · -- isHereditarilyTransitive h2.val
-      exact History.hereditarilyTransitive h2
 
 /-- A globally initial event-tuple. -/
 def isInitialTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
@@ -279,37 +230,6 @@ theorem happensBefore_trans_in_history (H : History P Event) :
   -- Therefore h1 ≺− h3 by definition
   exact ⟨p, e, h1_in_h3⟩
 
-/-- Corollary: For histories, ⪯ transitivity within the history -/
-theorem happensBeforeEq_trans_in_history (H : History P Event) :
-  ∀ h1 h2 h3 : PreHistory P Event,
-    h1 ⪯ h2 → h2 ⪯ h3 → h3 ⪯ H.val → h1 ⪯ h3 := by
-  intro h1 h2 h3 h12 h23 h3_le_H
-  -- Use the characterization: ⪯ means ≺− ∨ =
-  rw [PreHistory.happensBeforeEq_iff] at h12 h23 ⊢
-  cases h12 with
-  | inl h12_before =>
-    cases h23 with
-    | inl h23_before =>
-      -- Case: h1 ≺− h2 and h2 ≺− h3
-      left
-      exact happensBefore_trans_in_history H h1 h2 h3 h12_before h23_before h3_le_H
-    | inr h23_eq =>
-      -- Case: h1 ≺− h2 and h2 = h3
-      left
-      rw [←h23_eq]
-      exact h12_before
-  | inr h12_eq =>
-    cases h23 with
-    | inl h23_before =>
-      -- Case: h1 = h2 and h2 ≺− h3
-      left
-      rw [h12_eq]
-      exact h23_before
-    | inr h23_eq =>
-      -- Case: h1 = h2 and h2 = h3
-      right
-      rw [h12_eq, h23_eq]
-
 /-- Simple corollary: Transitivity for three histories -/
 theorem happensBefore_trans (h1 h2 h3 : History P Event) :
   h1.val ≺− h2.val → h2.val ≺− h3.val → h1.val ≺− h3.val := by
@@ -317,49 +237,6 @@ theorem happensBefore_trans (h1 h2 h3 : History P Event) :
   -- Apply the general theorem with H = h3, using h3.val ⪯ h3.val (which is reflexive)
   exact happensBefore_trans_in_history h3 h1.val h2.val h3.val h12 h23
     (PreHistory.happensBeforeEq_refl h3.val)
-
-/-- Transitivity of ⪯ for histories -/
-theorem happensBeforeEq_trans (h1 h2 h3 : History P Event) :
-  h1.val ⪯ h2.val →
-  h2.val ⪯ h3.val →
-  h1.val ⪯ h3.val := by
-  intro h12 h23
-  -- Apply the general theorem with H = h3, using h3.val ⪯ h3.val (which is reflexive)
-  exact happensBeforeEq_trans_in_history h3 h1.val h2.val h3.val h12 h23
-    (PreHistory.happensBeforeEq_refl h3.val)
-
-/-- Antisymmetry of ⪯ for histories -/
-theorem happensBeforeEq_antisymm (h1 h2 : History P Event) :
-  h1.val ⪯ h2.val → h2.val ⪯ h1.val → h1 = h2 := by
-  intro h12 h21
-  -- Use the characterization: ⪯ means ≺− ∨ =
-  rw [PreHistory.happensBeforeEq_iff] at h12 h21
-  cases h12 with
-  | inl h12_before =>
-    cases h21 with
-    | inl h21_before =>
-      -- Case: h1.val ≺− h2.val and h2.val ≺− h1.val
-      -- This contradicts well-foundedness of ≺−
-      have h12_trans : h1.val ≺− h1.val :=
-        happensBefore_trans h1 h2 h1 h12_before h21_before
-      -- But ≺− is irreflexive
-      exact absurd h12_trans (PreHistory.happensBefore_irrefl h1.val)
-    | inr h21_eq =>
-      -- Case: h1.val ≺− h2.val and h2.val = h1.val
-      rw [h21_eq] at h12_before
-      -- This gives h1.val ≺− h1.val, contradicting irreflexivity
-      exact absurd h12_before (PreHistory.happensBefore_irrefl h1.val)
-  | inr h12_eq =>
-    cases h21 with
-    | inl h21_before =>
-      -- Case: h1.val = h2.val and h2.val ≺− h1.val
-      rw [←h12_eq] at h21_before
-      -- This gives h1.val ≺− h1.val, contradicting irreflexivity
-      exact absurd h21_before (PreHistory.happensBefore_irrefl h1.val)
-    | inr h21_eq =>
-      -- Case: h1.val = h2.val and h2.val = h1.val
-      -- Both are equal, so h1 = h2
-      exact History.ext h12_eq
 
 /-- Order relation for the happens-before relation on histories.  Reflexivity,
 transitivity and antisymmetry are `PreHistory.happensBeforeEq_refl`,
@@ -371,107 +248,12 @@ instance : LE (History P Event) where
 instance : LT (History P Event) where
   lt h1 h2 := h1 ≤ h2 ∧ ¬ h2 ≤ h1
 
-/-- Strict happens-before implies the corresponding order relation. -/
-theorem le_of_happensBefore {h₁ h₂ : History P Event} :
-    h₁.val ≺− h₂.val → h₁ ≤ h₂ :=
-  by
-    intro hbefore
-    exact Or.inl hbefore
-
-/-- Strict happens-before yields a strict inequality of histories. -/
-theorem lt_of_happensBefore {h₁ h₂ : History P Event} :
-    h₁.val ≺− h₂.val → h₁ < h₂ :=
-  by
-    intro hbefore
-    refine ⟨le_of_happensBefore (P := P) (Event := Event) hbefore, ?_⟩
-    intro h₂₁
-    have hcases :=
-      (PreHistory.happensBeforeEq_iff (P := P) (Event := Event)
-        h₂.val h₁.val).1 h₂₁
-    cases hcases with
-    | inl h₂before =>
-        have : False :=
-          Nat.lt_asymm
-            (PreHistory.height_lt_of_happensBefore (P := P) (Event := Event) hbefore)
-            (PreHistory.height_lt_of_happensBefore (P := P) (Event := Event) h₂before)
-        cases this
-    | inr h_eq =>
-        have : h₁.val ≺− h₁.val := by simpa [h_eq] using hbefore
-        exact (PreHistory.happensBefore_irrefl (P := P) (Event := Event) h₁.val) this
-
-/-- Comparable histories that bound each other coincide. -/
-theorem eq_of_le_of_le_history {h₁ h₂ : History P Event} :
-    h₁ ≤ h₂ → h₂ ≤ h₁ → h₁ = h₂ :=
-  by
-    intro h₁₂ h₂₁
-    exact happensBeforeEq_antisymm h₁ h₂ h₁₂ h₂₁
-
-/-- Predecessor histories sit strictly below the ambient history. -/
-theorem predecessorHistory_lt {H : History P Event}
-    {h' : PreHistory P Event}
-    (h_before : h' ≺− H.val) :
-    History.predecessorHistory (H := H) h_before < H :=
-  lt_of_happensBefore (P := P) (Event := Event) h_before
-
-/-- Local views inherit the ambient subset relation. -/
-theorem localView_subset_history (H : History P Event)
-    (h' : PreHistory P Event) (hsub : h' ⊆trn H.val) :
-    (History.mk h' hsub.2).val ⊆ H.val :=
-  hsub.1
-
-/-- Predecessors of a history are contained in the ambient history. -/
-theorem happensBefore_subset {H : History P Event} {h' : PreHistory P Event} :
-    (h' ≺− H.val) → h' ⊆ H.val := by
-  intro h_before
-  exact (History.transitive H) h' h_before
-
-/-- Order-theoretic monotonicity for histories: `h₁ ≤ h₂` yields `h₁.val ⊆ h₂.val`. -/
-theorem subset_of_le {h₁ h₂ : History P Event} :
-    (h₁ ≤ h₂) → h₁.val ⊆ h₂.val := by
-  intro h_le
-  have h := (PreHistory.happensBeforeEq_iff (h₁.val) (h₂.val)).mp h_le
-  cases h with
-  | inl h_before =>
-      exact (History.transitive h₂) h₁.val h_before
-  | inr h_eq =>
-      intro t ht
-      simpa [h_eq] using ht
-
 /-- The transitive-subset relation is reflexive on histories. -/
 theorem transitiveSubset_refl (H : History P Event) :
     H.val ⊆trn H.val := by
   constructor
   · exact PreHistory.subset_refl H.val
   · exact History.hereditarilyTransitive H
-
-/-- The transitive-subset relation composes transitively. -/
-theorem transitiveSubset_trans {h₁ h₂ h₃ : PreHistory P Event} :
-    (h₁ ⊆trn h₂) → (h₂ ⊆trn h₃) → h₁ ⊆trn h₃ := by
-  intro h₁₂ h₂₃
-  rcases h₁₂ with ⟨h₁₂_subset, h₁₂_trn⟩
-  rcases h₂₃ with ⟨h₂₃_subset, _⟩
-  constructor
-  · exact PreHistory.subset_trans h₁ h₂ h₃ h₁₂_subset h₂₃_subset
-  · exact h₁₂_trn
-
-/-- Sequentiality expressed using the `historyAt` projection. -/
-theorem isSequential_iff_historyAt (p : P) (h : PreHistory P Event) :
-    isSequential (P := P) (Event := Event) p h ↔
-      ∀ {t t' : World P Event},
-        t ∈ PreHistory.historyAt (P := P) (Event := Event) h p →
-        t' ∈ PreHistory.historyAt (P := P) (Event := Event) h p →
-          (t ≪ t' ∨ t' ≪ t ∨ t = t') := by
-  constructor
-  · intro hSeq t t' ht ht'
-    obtain ⟨ht_mem, ht_place⟩ := ht
-    obtain ⟨ht'_mem, ht'_place⟩ := ht'
-    exact hSeq t t' ht_mem ht'_mem ht_place ht'_place
-  · intro hSeq t₁ t₂ ht₁ ht₂ hp₁ hp₂
-    have ht₁_history :
-        t₁ ∈ PreHistory.historyAt (P := P) (Event := Event) h p := ⟨ht₁, hp₁⟩
-    have ht₂_history :
-        t₂ ∈ PreHistory.historyAt (P := P) (Event := Event) h p := ⟨ht₂, hp₂⟩
-    exact hSeq ht₁_history ht₂_history
 
 /-! ## Helper lemmas for sequentiality preservation -/
 

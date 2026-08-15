@@ -51,24 +51,6 @@ theorem hasQuorumWitness.of_imp
   obtain ⟨p, hpAll, hpSat⟩ := hWitness F
   exact ⟨p, hpAll, h p hpSat⟩
 
-theorem hasQuorumWitness.congr
-    (M : Model S P)
-    (ls : List S.Value) {φ ψ : Formula S}
-    (h : ∀ p,
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) ↔
-          (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ)) :
-    hasQuorumWitness (M := M) ls φ ↔
-      hasQuorumWitness (M := M) ls ψ := by
-  constructor
-  · intro hWitness
-    exact hasQuorumWitness.of_imp (M := M)
-      (ls := ls) (φ := φ) (ψ := ψ)
-      (h := fun p => (h p).1) hWitness
-  · intro hWitness
-    exact hasQuorumWitness.of_imp (M := M)
-      (ls := ls) (φ := ψ) (ψ := φ)
-      (h := fun p => (h p).2) hWitness
-
 /-- Nonempty intersection property. -/
 @[simp] def hasQuorumNonempty
     (M : Model S P)
@@ -384,48 +366,6 @@ theorem exists_history_mem_of_end_boxPast
       (φ := φ)).1 hPast
   exact ⟨t, by simpa using ht_mem⟩
 
-/-- Lift a local sometime fact to the end-of-time perspective. -/
-theorem lift_sometime_to_end
-    (M : Model S P)
-    {t : World P (Signature.EventType S)} {φ : Formula S}
-    (hSome : ⟪t⟫ ⊨[M]↕ᶠφ) :
-    ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]↕ᶠφ := by
-  classical
-  simpa [Formula.sometime, Formula.atEnd, Sat, World.place, World.event, World.time]
-    using hSome
-
-/-- Always-past facts depend only on the active participant, not on the local
-time slice. -/
-theorem lift_alwaysPast_of_same_place
-    (M : Model S P)
-    {w t : World P (Signature.EventType S)} {φ : Formula S}
-    (hPlace : t.place = w.place)
-    (hAlways : ⟪w⟫ ⊨[M]⇕ᶠφ) :
-    ⟪t⟫ ⊨[M]⇕ᶠφ := by
-  classical
-  have hAlways' :
-      Sat M w.place w.event w.time (⤒ᶠ (↓ᶠ (¬ᶠ φ))) → False := by
-    simpa [Formula.alwaysPast, Formula.sometime, Formula.atEnd, Formula.not, Sat]
-      using hAlways
-  have hGoal :
-      Sat M t.place t.event t.time (⤒ᶠ (↓ᶠ (¬ᶠ φ))) → False := by
-    intro hSome
-    have hPast :
-        Sat M t.place † M.history.val (↓ᶠ (¬ᶠ φ)) :=
-      by simpa [Formula.atEnd, Sat] using hSome
-    have hPast_w :
-        Sat M w.place † M.history.val (↓ᶠ (¬ᶠ φ)) :=
-      hPlace ▸ hPast
-    have hSome_w :
-        Sat M w.place w.event w.time (⤒ᶠ (↓ᶠ (¬ᶠ φ))) :=
-      by simpa [Formula.atEnd, Sat] using hPast_w
-    exact hAlways' hSome_w
-  have hNot :=
-    Sat.not_intro (M := M) (w := t)
-      (φ := ⤒ᶠ (↓ᶠ (¬ᶠ φ))) hGoal
-  simpa [Formula.alwaysPast, Formula.sometime, Formula.atEnd, Formula.not, Sat]
-    using hNot
-
 /-- If a world lies in the global history, an always-past fact at that world
 forces the underlying proposition to hold immediately. -/
 theorem alwaysPast_now_of_mem
@@ -450,31 +390,6 @@ theorem alwaysPast_now_of_mem
         (φ := ¬ᶠ φ)).2
       ⟨w, hMem, rfl, hNot⟩
   exact hNoSome' hSome
-
-/-- A local empty past diamond witnessed at end-of-time yields end-of-time
-validity for the same statement. -/
-theorem end_valid_diamondPast_nil_of_end
-    (M : Model S P)
-    {p : P} {φ : Formula S}
-    (hDiamond : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]φ) :
-    ⊨[M]♢ᶠ↓[[]]φ := by
-  classical
-  have hDiamond' :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ[[]](↓ᶠ φ) :=
-    by simpa [Formula.diamondPast]
-      using hDiamond
-  obtain ⟨q, hPast⟩ :=
-    (Sat.diamond_nil (M := M)
-      (w := ⟨p, †, M.history.val⟩)
-      (φ := ↓ᶠ φ)).1 hDiamond'
-  refine fun p' => ?_
-  have hDiamond_p' :
-      ⟪⟨p', †, M.history.val⟩⟫ ⊨[M]♢ᶠ[[]](↓ᶠ φ) :=
-    (Sat.diamond_nil (M := M)
-      (w := ⟨p', †, M.history.val⟩)
-      (φ := ↓ᶠ φ)).2 ⟨q, hPast⟩
-  simpa [Formula.diamondPast]
-    using hDiamond_p'
 
 /-- Helper lemma for transporting empty diamonds from the local view. -/
 theorem sat_diamondEmpty_of_local
@@ -530,34 +445,6 @@ theorem sat_past_of_subset
       (w := ⟨q, †, H'⟩) (φ := φ)).2
       ⟨t, ht', hp, hφ⟩
 
-/-- Lift singleton-quorum diamonds along a pointwise transfer principle. -/
-theorem sat_diamond_singleton_transfer
-    (M : Model S P)
-    (w w' : World P (Signature.EventType S))
-    (l : Signature.Value S) (φ : Formula S)
-    (hTransfer : ∀ q,
-        (⟪⟨q, †, w.time⟩⟫ ⊨[M]φ) →
-          (⟪⟨q, †, w'.time⟩⟫ ⊨[M]φ)) :
-    (⟪w⟫ ⊨[M] ♢ᶠ[[l]] φ) →
-      (⟪w'⟫ ⊨[M] ♢ᶠ[[l]] φ) := by
-  classical
-  intro hDiamond
-  rcases w with ⟨p, evt, H⟩
-  rcases w' with ⟨p', evt', H'⟩
-  have hWitness :=
-    (sat_diamond_singleton_iff (M := M)
-      (w := ⟨p, evt, H⟩) (l := l) (φ := φ)).1 hDiamond
-  have hWitness' :
-      ∀ O ∈ (M.learner l).quorums,
-        ∃ q ∈ O,
-          ⟪⟨q, †, H'⟩⟫ ⊨[M] φ := by
-    intro O hO
-    rcases hWitness O hO with ⟨q, hqO, hqSat⟩
-    exact ⟨q, hqO, hTransfer q hqSat⟩
-  exact
-    (sat_diamond_singleton_iff (M := M)
-      (w := ⟨p', evt', H'⟩) (l := l) (φ := φ)).2 hWitness'
-
 /-- Transfer singleton-quorum boxes along a pointwise implication. -/
 theorem sat_box_singleton_transfer
     (M : Model S P)
@@ -582,31 +469,6 @@ theorem sat_box_singleton_transfer
   intro q hqO
   have hφ := hAll q hqO
   exact hTransfer q hφ
-
-/-- Singleton learner diamonds do not depend on the distinguished participant. -/
-theorem sat_diamond_singleton_participant_iff
-    (M : Model S P)
-    (w : World P (Signature.EventType S))
-    (p q : P) (l : Signature.Value S) (φ : Formula S) :
-    (⟪⟨p, w.event, w.time⟩⟫ ⊨[M] ♢ᶠ[[l]] φ) ↔
-      (⟪⟨q, w.event, w.time⟩⟫ ⊨[M] ♢ᶠ[[l]] φ) := by
-  classical
-  rcases w with ⟨_, evt, H⟩
-  constructor
-  · intro hDiamond
-    have hWitness :=
-      (sat_diamond_singleton_iff (M := M)
-        (w := ⟨p, evt, H⟩) (l := l) (φ := φ)).1 hDiamond
-    exact
-      (sat_diamond_singleton_iff (M := M)
-        (w := ⟨q, evt, H⟩) (l := l) (φ := φ)).2 hWitness
-  · intro hDiamond
-    have hWitness :=
-      (sat_diamond_singleton_iff (M := M)
-        (w := ⟨q, evt, H⟩) (l := l) (φ := φ)).1 hDiamond
-    exact
-      (sat_diamond_singleton_iff (M := M)
-        (w := ⟨p, evt, H⟩) (l := l) (φ := φ)).2 hWitness
 
 /-- Transport empty-guard past diamonds of event formulas along transitive subsets. -/
 theorem sat_diamondPast_nil_event_subset
@@ -648,157 +510,7 @@ theorem sat_diamondPast_nil_event_subset
       (φ := ↓ᶠ (Formula.event ⟨symb, args⟩))).2
       ⟨q, hPast'⟩
 
-/-- If an event occurs at some point in the history, then the corresponding
-end-of-time world satisfies the empty-guard past diamond for that event. -/
-theorem diamondPast_nil_of_event_at_history
-    (M : Model S P)
-    {t : World P (Signature.EventType S)}
-    (htMem : t ∈ M.history.val)
-    {E : Signature.EventType S}
-    (hEvent : ⟪t⟫ ⊨[M]Formula.ofEvent E) :
-    ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
-      ♢ᶠ↓[[]](Formula.ofEvent E) := by
-  classical
-  -- Package the concrete event as a past witness at end-of-time.
-  have hPast :
-      ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
-        ↓ᶠ (Formula.ofEvent E) :=
-    (Sat.past (M := M)
-      (w := ⟨t.place, †, M.history.val⟩)
-      (φ := Formula.ofEvent E)).2
-      ⟨t, htMem, rfl, hEvent⟩
-  -- Upgrade the past fact to the empty-guard diamond.
-  exact
-    (Sat.diamond_nil (M := M)
-      (w := ⟨t.place, †, M.history.val⟩)
-      (φ := ↓ᶠ (Formula.ofEvent E))).2
-      ⟨t.place, hPast⟩
-
-theorem diamond_valid_eventuallyPast_not_iff
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] ♢ᶠ[ls]
-        (Formula.eventuallyPast (¬ᶠ φ))) ↔
-      (⊨[M] ♢ᶠ[ls]
-        (¬ᶠ (Formula.past φ))) := by
-  classical
-  exact
-    Logic.EndValid.congr (M := M)
-      (φ := ♢ᶠ[ls]
-        (Formula.eventuallyPast (¬ᶠ φ)))
-      (ψ := ♢ᶠ[ls]
-        (¬ᶠ (Formula.past φ)))
-      (fun p =>
-        Sat.diamond_eventuallyPast_not_iff
-          (M := M)
-          (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ))
-
-theorem valid_not_not_iff
-    (M : Model S P) (φ : Formula S) :
-    (⊨[M] ¬ᶠ (¬ᶠ φ)) ↔ (⊨[M]φ) := by
-  classical
-  unfold EndValid
-  constructor
-  · intro h p
-    have hSat := h p
-    exact
-      (Sat.not_not_iff (M := M)
-        (w := ⟨p, †, M.history.val⟩) (φ := φ)).1 hSat
-  · intro h p
-    have hSat := h p
-    exact
-      (Sat.not_not_iff (M := M)
-        (w := ⟨p, †, M.history.val⟩) (φ := φ)).2 hSat
-
-theorem valid_not_box_iff_diamond_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] ¬ᶠ (□ᶠ[ls] φ)) ↔
-      (⊨[M] ♢ᶠ[ls] (¬ᶠ φ)) := by
-  classical
-  unfold EndValid
-  constructor
-  · intro h p
-    have hSat := h p
-    exact
-      (Sat.not_not_iff (M := M)
-        (w := ⟨p, †, M.history.val⟩)
-        (φ := ♢ᶠ[ls] (¬ᶠ φ))).1
-        (by
-          simpa [Formula.box]
-            using hSat)
-  · intro h p
-    have hSat := h p
-    exact
-      (Sat.not_not_iff (M := M)
-        (w := ⟨p, †, M.history.val⟩)
-        (φ := ♢ᶠ[ls] (¬ᶠ φ))).2 hSat
-
 /-! ### De Morgan dualities between derived modalities -/
-
-/-- `♢` and `□` are De Morgan duals. -/
-theorem diamond_valid_iff_not_box_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] ♢ᶠ[ls] φ) ↔
-      (⊨[M] ¬ᶠ (□ᶠ[ls] (¬ᶠ φ))) :=
-  by
-    classical
-    have hDiamondEquiv :
-        (⊨[M] ♢ᶠ[ls] φ) ↔
-          (⊨[M] ♢ᶠ[ls] (¬ᶠ (¬ᶠ φ))) :=
-      Logic.EndValid.congr (M := M)
-        (φ := ♢ᶠ[ls] φ)
-        (ψ := ♢ᶠ[ls] (¬ᶠ (¬ᶠ φ)))
-        (fun p =>
-          Sat.diamond_congr (M := M)
-            (w := ⟨p, †, M.history.val⟩)
-            (ts := ls)
-            (φ := φ) (ψ := ¬ᶠ (¬ᶠ φ))
-            (h := fun q =>
-              (Sat.not_not_iff (M := M)
-                (w := ⟨q, †, M.history.val⟩)
-                (φ := φ)).symm))
-    have hNotBox :=
-      (valid_not_box_iff_diamond_not (M := M)
-        (ls := ls) (φ := ¬ᶠ φ)).symm
-    exact hDiamondEquiv.trans hNotBox
-
-/-- `□` and `♢` are De Morgan duals. -/
-theorem box_valid_iff_not_diamond_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] □ᶠ[ls] φ) ↔
-      (⊨[M] ¬ᶠ (♢ᶠ[ls] (¬ᶠ φ))) := by
-  classical
-  have h :=
-    (diamond_valid_iff_not_box_not (M := M)
-      (ls := ls) (φ := ¬ᶠ φ)).symm
-  simp [Formula.not, Formula.box]
-
-/-- `♢ᶠ↓` is the De Morgan dual of `□ᶠ⇓`. -/
-theorem diamondPast_valid_iff_not_boxEventually_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] ♢ᶠ↓[ls] φ) ↔
-      (⊨[M] ¬ᶠ (□ᶠ⇓[ls] (¬ᶠ φ))) :=
-  by
-    classical
-    have hEquiv :
-        ∀ p,
-          (⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ↓[ls] φ) ↔
-            (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-              ¬ᶠ (□ᶠ⇓[ls] (¬ᶠ φ))) := by
-      intro p
-      simpa using
-        Sat.diamondPast_not_boxEventually_not
-          (M := M) (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ)
-    exact
-    Logic.EndValid.congr (M := M)
-        (φ := ♢ᶠ↓[ls] φ)
-        (ψ := ¬ᶠ (□ᶠ⇓[ls] (¬ᶠ φ))) hEquiv
 
 theorem quorumWitnessAcc_univ
     (M : Model S P)
@@ -831,75 +543,6 @@ theorem hasQuorumWitness_top_iff_nonempty
     simpa [Formula.top]
       using Sat.top (M := M)
         (w := ⟨p, †, M.history.val⟩)
-
-/-- `□ᶠ⇓` is the De Morgan dual of `♢ᶠ↓`. -/
-theorem boxEventually_valid_iff_not_diamondPast_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] □ᶠ⇓[ls] φ) ↔
-      (⊨[M] ¬ᶠ (♢ᶠ↓[ls] (¬ᶠ φ))) :=
-  by
-    classical
-    unfold EndValid
-    constructor
-    · intro h p
-      have hSat := h p
-      exact
-        (Sat.boxEventually_not_diamondPast_not
-          (M := M) (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ)).1 hSat
-    · intro h p
-      have hSat := h p
-      exact
-        (Sat.boxEventually_not_diamondPast_not
-          (M := M) (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ)).2 hSat
-
-/-- `♢ᶠ⇓` and `□ᶠ↓` are De Morgan duals. -/
-theorem diamondEventually_valid_iff_not_boxPast_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] ♢ᶠ⇓[ls] φ) ↔
-      (⊨[M] ¬ᶠ (□ᶠ↓[ls] (¬ᶠ φ))) :=
-  by
-    classical
-    have hEquiv :
-        ∀ p,
-          (⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ⇓[ls] φ) ↔
-            (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-              ¬ᶠ (□ᶠ↓[ls] (¬ᶠ φ))) := by
-      intro p
-      simpa using
-        Sat.diamondEventually_not_boxPast_not
-          (M := M) (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ)
-    exact
-    Logic.EndValid.congr (M := M)
-        (φ := ♢ᶠ⇓[ls] φ)
-        (ψ := ¬ᶠ (□ᶠ↓[ls] (¬ᶠ φ))) hEquiv
-
-/-- `□ᶠ↓` and `♢ᶠ⇓` are De Morgan duals. -/
-theorem boxPast_valid_iff_not_diamondEventually_not
-    (M : Model S P)
-    (ls : List S.Value) (φ : Formula S) :
-    (⊨[M] □ᶠ↓[ls] φ) ↔
-      (⊨[M] ¬ᶠ (♢ᶠ⇓[ls] (¬ᶠ φ))) :=
-  by
-    classical
-    unfold EndValid
-    constructor
-    · intro h p
-      have hSat := h p
-      exact
-        (Sat.boxPast_not_diamondPast_not
-          (M := M) (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ)).1 hSat
-    · intro h p
-      have hSat := h p
-      exact
-        (Sat.boxPast_not_diamondPast_not
-          (M := M) (w := ⟨p, †, M.history.val⟩)
-          (ts := ls) (φ := φ)).2 hSat
 
 theorem AllWorldValid_predecessor
     (M : Model S P) {φ : Formula S}
@@ -1656,41 +1299,6 @@ theorem sat_diamond_top_iff_hasQuorumNonempty
       (sat_diamond_iff_diamondCheck (M := M)
         (ls := ls) (φ := ⊤ᶠ)
         (w := w)).2 hCheck_time
-
-/-- Extract a double intersection witness from `♢ᶠ[[l₁,l₂]] ⊤ᶠ`. -/
-theorem sat_diamond_two_intersection
-    (M : Model S P)
-    (w : World P (Signature.EventType S))
-    {l₁ l₂ : Signature.Value S}
-    {O₁ O₂ : Set P}
-    (hDiamond : ⟪w⟫ ⊨[M]♢ᶠ[[l₁, l₂]]⊤ᶠ)
-    (hO₁ : O₁ ∈ (M.learner l₁).quorums)
-    (hO₂ : O₂ ∈ (M.learner l₂).quorums) :
-    ∃ p, p ∈ O₁ ∧ p ∈ O₂ := by
-  classical
-  have hCheck :=
-    (sat_diamond_iff_diamondCheck (M := M)
-      (ls := [l₁, l₂]) (φ := ⊤ᶠ)
-      (w := w)).1 hDiamond
-  have hCons₁ :=
-    (Sat.Sat_check_cons (M := M)
-      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
-      (v := l₁) (vs := [l₂]) (acc := Set.univ)).1 hCheck
-  have hNil :=
-    (Sat.Sat_check_cons (M := M)
-      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
-      (v := l₂) (vs := []) (acc := Set.univ ∩ O₁)).1
-      (hCons₁ O₁ hO₁)
-  obtain ⟨p, hpMem, _⟩ :=
-    (Sat.Sat_check_nil (M := M)
-      (Q := fun q => ⟪⟨q, †, w.time⟩⟫ ⊨[M]⊤ᶠ)
-      (acc := (Set.univ ∩ O₁) ∩ O₂)).1 (hNil O₂ hO₂)
-  have hpO₂ : p ∈ O₂ := by
-    simpa [Set.inter_assoc, Set.inter_left_comm, Set.inter_univ]
-      using hpMem.2
-  have hpO₁ : p ∈ O₁ := by
-    simpa [Set.inter_univ] using hpMem.1.2
-  exact ⟨p, hpO₁, hpO₂⟩
 
 end DiamondSection
 

@@ -680,54 +680,6 @@ theorem vote_live_to_echo_diamond
   simpa [Formula.diamondPast, wTop]
     using hDiamond'
 
-/-- Lift a local `live ∧ φ` diamond to a `l₂'`-guarded box using `ThyLive`. -/
-theorem live_echo_box_from_diamond
-    (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₂' learner : Signature.Value S}
-    {value : Signature.Value S}
-    {p : P}
-    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb)
-    (hDiamond :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩))) :
-    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[l₂']]
-        (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)) := by
-  classical
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-    intro ax hAx
-    exact hTheory (Or.inl hAx)
-  obtain ⟨qWitness, hPastWitness⟩ :=
-    (Sat.diamond_nil (M := M)
-      (w := wTop)
-      (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)))).1
-      (by simpa [Formula.diamondPast] using hDiamond)
-  have hDiamondGlobal :
-      ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)) := by
-    intro q
-    refine (Sat.diamond_nil (M := M)
-      (w := ⟨q, †, M.history.val⟩)
-      (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)))).2
-      ⟨qWitness, ?_⟩
-    simpa [wTop]
-      using hPastWitness
-  have hBoxGlobal :=
-    live_eventually_knows_quorum (M := M)
-      (liveSymb := liveSymb)
-      (l := l₂') (l₁ := learner)
-      (evt := ⟨echoSymb, [value]⟩)
-      (hTheory := hThyLive)
-      (hLive := hLive)
-      (hQuorum := hDiamondGlobal)
-  have hBoxLocal := hBoxGlobal p
-  simpa [wTop]
-    using hBoxLocal
-
-/-- Turn a live guarded echo box into a live guarded vote box via `Vote!`. -/
 theorem live_vote_box_from_echo
     (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₂' learner : Signature.Value S} {value : Signature.Value S} {p : P}

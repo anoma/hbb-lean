@@ -643,31 +643,6 @@ theorem promote_live_atddot
       (hTheory := hTheory)
       (hQuorum := hQuorum) (q := q) hPastLiveφ
 
-/-- Specialisation of the knowledge axiom: live participants eventually know past events. -/
-theorem live_knows_eventually
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    {p : P}
-    (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
-    (hEvent : ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ Formula.ofEvent evt)) :
-    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ↓[[]] (Formula.ofEvent evt) := by
-  classical
-  have hSometime :=
-    knowledgeDiamond_sometime_at_end (M := M)
-      (hTheory := hTheory)
-      (hLive := hLive) (hEvent := hEvent p)
-  have hSometime' :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ↕ᶠ (♢ᶠ[]↓ᶠ (Formula.ofEvent evt)) := by
-    simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-      using hSometime
-  have hDiamondPast :=
-    sometime_past_end (M := M)
-      (w := ⟨p, †, M.history.val⟩)
-      (hSat := hSometime')
-  simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-    using hDiamondPast
-
-/-- A live participant eventually reaches a past state where the event is known. -/
 theorem live_knows_eventually_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {p : P}
