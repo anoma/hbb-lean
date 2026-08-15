@@ -263,7 +263,251 @@ section Instantiations
 
 variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
-variable {voteSymb deliverSymb : Signature.EventSymb S}
+variable {echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+variable {correlationSymb : Signature.PredSymb S}
+variable {w : World P (Signature.EventType S)}
+
+/-- Instantiate `(Vote?)` at a world: a vote is justified by an echo quorum
+or by a correlated prior vote. -/
+theorem voteBackward_elim
+    (hAx : □W⊨[M] voteBackwardAxiom echoSymb voteSymb correlationSymb)
+    (hW : w.time ⪯ M.history.val)
+    {learner value : S.Value}
+    (hVote : ⟪w⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩) :
+    ⟪w⟫ ⊨[M]
+      ((□ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ∨ᶠ
+        ∃ᶠ fun correlated =>
+          ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩)) := by
+  classical
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner' =>
+        ∀ᶠ fun value' =>
+          ofEvent ⟨voteSymb, [learner', value']⟩ ⇒ᶠ
+            ((□ᶠ↓[[learner']] (ofEvent ⟨echoSymb, [value']⟩)) ∨ᶠ
+              ∃ᶠ fun correlated =>
+                ofPredicate ⟨correlationSymb, [correlated, learner']⟩ ∧ᶠ
+                  ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value']⟩)))
+      (v := learner)
+      (by simpa [voteBackwardAxiom] using hAx hW)
+  have hValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun value' =>
+        ofEvent ⟨voteSymb, [learner, value']⟩ ⇒ᶠ
+          ((□ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value']⟩)) ∨ᶠ
+            ∃ᶠ fun correlated =>
+              ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
+                ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value']⟩)))
+      (v := value) hLearner
+  exact
+    (Sat.imp (M := M) (w := w)
+      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
+      (ψ := (□ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ∨ᶠ
+        ∃ᶠ fun correlated =>
+          ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩))).1
+      hValue hVote
+
+/-- Instantiate `(Deliver?)` at a world: a delivery forces a vote quorum. -/
+theorem deliverBackward_elim
+    (hAx : □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb)
+    (hW : w.time ⪯ M.history.val)
+    {learner value : S.Value}
+    (hDeliver : ⟪w⟫ ⊨[M]ofEvent ⟨deliverSymb, [learner, value]⟩) :
+    ⟪w⟫ ⊨[M]□ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩) := by
+  classical
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner' =>
+        ∀ᶠ fun value' =>
+          ofEvent ⟨deliverSymb, [learner', value']⟩ ⇒ᶠ
+            □ᶠ↓[[learner']] (ofEvent ⟨voteSymb, [learner', value']⟩))
+      (v := learner)
+      (by simpa [deliverBackwardAxiom] using hAx hW)
+  have hValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun value' =>
+        ofEvent ⟨deliverSymb, [learner, value']⟩ ⇒ᶠ
+          □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value']⟩))
+      (v := value) hLearner
+  exact
+    (Sat.imp (M := M) (w := w)
+      (φ := ofEvent ⟨deliverSymb, [learner, value]⟩)
+      (ψ := □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩))).1
+      hValue hDeliver
+
+/-- Instantiate `(VoteNE)` at a world: correlated votes agree on the value. -/
+theorem voteNonEquiv_elim
+    (hAx : □W⊨[M] voteNonEquivAxiom voteSymb correlationSymb)
+    (hW : w.time ⪯ M.history.val)
+    {learner value correlated altValue : S.Value}
+    (hVote : ⟪w⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩)
+    (hPastVote : ⟪w⟫ ⊨[M]↓ᶠ (ofEvent ⟨voteSymb, [correlated, altValue]⟩))
+    (hCorr : ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [learner, correlated]⟩) :
+    ⟪w⟫ ⊨[M](value ≃ᶠ altValue) := by
+  classical
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner' =>
+        ∀ᶠ fun value' => ∀ᶠ fun correlated' => ∀ᶠ fun altValue' =>
+          ofEvent ⟨voteSymb, [learner', value']⟩ ⇒ᶠ
+            (↓ᶠ (ofEvent ⟨voteSymb, [correlated', altValue']⟩)) ⇒ᶠ
+              (ofPredicate ⟨correlationSymb, [learner', correlated']⟩ ⇒ᶠ
+                (value' ≃ᶠ altValue')))
+      (v := learner)
+      (by simpa [voteNonEquivAxiom] using hAx hW)
+  have hValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun value' =>
+        ∀ᶠ fun correlated' => ∀ᶠ fun altValue' =>
+          ofEvent ⟨voteSymb, [learner, value']⟩ ⇒ᶠ
+            (↓ᶠ (ofEvent ⟨voteSymb, [correlated', altValue']⟩)) ⇒ᶠ
+              (ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
+                (value' ≃ᶠ altValue')))
+      (v := value) hLearner
+  have hCorrelated :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun correlated' =>
+        ∀ᶠ fun altValue' =>
+          ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
+            (↓ᶠ (ofEvent ⟨voteSymb, [correlated', altValue']⟩)) ⇒ᶠ
+              (ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
+                (value ≃ᶠ altValue')))
+      (v := correlated) hValue
+  have hAlt :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun altValue' =>
+        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
+          (↓ᶠ (ofEvent ⟨voteSymb, [correlated, altValue']⟩)) ⇒ᶠ
+            (ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
+              (value ≃ᶠ altValue')))
+      (v := altValue) hCorrelated
+  exact
+    Sat.imp_elim (M := M) (w := w)
+      (φ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
+      (ψ := value ≃ᶠ altValue)
+      (Sat.imp_elim (M := M) (w := w)
+        (φ := ↓ᶠ (ofEvent ⟨voteSymb, [correlated, altValue]⟩))
+        (ψ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
+          (value ≃ᶠ altValue))
+        (Sat.imp_elim (M := M) (w := w)
+          (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
+          (ψ := (↓ᶠ (ofEvent ⟨voteSymb, [correlated, altValue]⟩)) ⇒ᶠ
+            (ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
+              (value ≃ᶠ altValue)))
+          hAlt hVote)
+        hPastVote)
+      hCorr
+
+/-- Instantiate `(3twined)` at a world: any three quorums intersect. -/
+theorem threeTwined_elim
+    (hAx : □W⊨[M] (threeTwinedAxiom : Formula S))
+    (hW : w.time ⪯ M.history.val)
+    {l₁ l₂ l₃ : S.Value} :
+    ⟪w⟫ ⊨[M]♢ᶠ[[l₁, l₂, l₃]] ⊤ᶠ := by
+  classical
+  have hFirst :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner₁ =>
+        ∀ᶠ fun learner₂ => ∀ᶠ fun learner₃ =>
+          ♢ᶠ[[learner₁, learner₂, learner₃]] ⊤ᶠ)
+      (v := l₁)
+      (by simpa [threeTwinedAxiom] using hAx hW)
+  have hSecond :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner₂ =>
+        ∀ᶠ fun learner₃ => ♢ᶠ[[l₁, learner₂, learner₃]] ⊤ᶠ)
+      (v := l₂) hFirst
+  exact
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner₃ => ♢ᶠ[[l₁, l₂, learner₃]] ⊤ᶠ)
+      (v := l₃) hSecond
+
+/-- Instantiate `(≐seq)` at a world: correlated learners have a sequential
+quorum intersection. -/
+theorem correlationSeq_elim
+    (hAx : □W⊨[M] correlationSeqAxiom correlationSymb)
+    (hW : w.time ⪯ M.history.val)
+    {learner correlated : S.Value}
+    (hCorr : ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [learner, correlated]⟩) :
+    ⟪w⟫ ⊨[M]♢ᶠ[[learner, correlated]] Formula.seq := by
+  classical
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner' =>
+        ∀ᶠ fun correlated' =>
+          ofPredicate ⟨correlationSymb, [learner', correlated']⟩ ⇒ᶠ
+            ♢ᶠ[[learner', correlated']] Formula.seq)
+      (v := learner)
+      (by simpa [correlationSeqAxiom] using hAx hW)
+  have hCorrelated :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun correlated' =>
+        ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
+          ♢ᶠ[[learner, correlated']] Formula.seq)
+      (v := correlated) hLearner
+  exact
+    (Sat.imp (M := M) (w := w)
+      (φ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
+      (ψ := ♢ᶠ[[learner, correlated]] Formula.seq)).1
+      hCorrelated hCorr
+
+/-- Instantiate `(≐⇓)` at a world: correlation persists through the past. -/
+theorem correlationMonotone_elim
+    (hAx : □W⊨[M] correlationMonotoneAxiom correlationSymb)
+    (hW : w.time ⪯ M.history.val)
+    {learner correlated : S.Value}
+    (hCorr : ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [learner, correlated]⟩) :
+    ⟪w⟫ ⊨[M]⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩) := by
+  classical
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner' =>
+        ∀ᶠ fun correlated' =>
+          ofPredicate ⟨correlationSymb, [learner', correlated']⟩ ⇒ᶠ
+            ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner', correlated']⟩))
+      (v := learner)
+      (by simpa [correlationMonotoneAxiom] using hAx hW)
+  have hCorrelated :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun correlated' =>
+        ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
+          ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated']⟩))
+      (v := correlated) hLearner
+  exact
+    (Sat.imp (M := M) (w := w)
+      (φ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
+      (ψ := ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩))).1
+      hCorrelated hCorr
+
+/-- Instantiate `(≐symm)` at a world: correlation is symmetric. -/
+theorem correlationSymm_elim
+    (hAx : □W⊨[M] correlationSymmAxiom correlationSymb)
+    (hW : w.time ⪯ M.history.val)
+    {learner correlated : S.Value}
+    (hCorr : ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [learner, correlated]⟩) :
+    ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [correlated, learner]⟩ := by
+  classical
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner' =>
+        ∀ᶠ fun correlated' =>
+          ofPredicate ⟨correlationSymb, [learner', correlated']⟩ ⇒ᶠ
+            ofPredicate ⟨correlationSymb, [correlated', learner']⟩)
+      (v := learner)
+      (by simpa [correlationSymmAxiom] using hAx hW)
+  have hCorrelated :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun correlated' =>
+        ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
+          ofPredicate ⟨correlationSymb, [correlated', learner]⟩)
+      (v := correlated) hLearner
+  exact
+    (Sat.imp (M := M) (w := w)
+      (φ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
+      (ψ := ofPredicate ⟨correlationSymb, [correlated, learner]⟩)).1
+      hCorrelated hCorr
 
 /-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
 eventually yields a delivery. This is the form consumed by Lemma 6.4.3. -/

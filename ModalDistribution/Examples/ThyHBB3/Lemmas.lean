@@ -127,67 +127,24 @@ theorem threeTwined_hasQuorumNonempty
     hasQuorumNonempty (M := M) [l₁, l₂, l₃] := by
   classical
   obtain ⟨t, ht⟩ := hHistory
-  have hThreeTwinedEvent :
-      AllWorldValid M (threeTwinedAxiom (S := S)) := by
-    apply hTheory
-    simp [theory]
-  have hThreeTwinedLocal :
-      ⟪t⟫ ⊨[M] threeTwinedAxiom (S := S) :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := threeTwinedAxiom (S := S))
-      hThreeTwinedEvent ht
-  have hDiamond :
-      ⟪t⟫ ⊨[M] ♢ᶠ[[l₁, l₂, l₃]] ⊤ᶠ := by
-    have hForall₁ :=
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun learner₁ =>
-          ∀ᶠ fun learner₂ =>
-            ∀ᶠ fun learner₃ =>
-              ♢ᶠ[[learner₁, learner₂, learner₃]] ⊤ᶠ)
-        (v := l₁)
-        hThreeTwinedLocal
-    have hForall₂ :=
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun learner₂ =>
-          ∀ᶠ fun learner₃ =>
-            ♢ᶠ[[l₁, learner₂, learner₃]] ⊤ᶠ)
-        (v := l₂) hForall₁
-    exact
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun learner₃ =>
-          ♢ᶠ[[l₁, l₂, learner₃]] ⊤ᶠ)
-        (v := l₃) hForall₂
   exact
     (sat_diamond_top_iff_hasQuorumNonempty (M := M)
-        (w := t) (ls := [l₁, l₂, l₃])).1 hDiamond
+        (w := t) (ls := [l₁, l₂, l₃])).1
+      (threeTwined_elim (M := M)
+        (theory_threeTwined (M := M) hTheory)
+        (M.time_le_of_mem ht))
 
-omit [Nonempty P] in
--- Auxiliary lemmas about zero height (not available yet, kept for future use).
-theorem prehistory_height_le_zero_false
-    (h : PreHistory P (Signature.EventType S))
-    (hLe : PreHistory.height h ≤ 0) : False := by
-  classical
-  cases h with
-  | mk l =>
-      have hPos :
-          0 < PreHistory.height (PreHistory.mk l) :=
-        by simp [PreHistory.height]
-      exact (Nat.not_lt.mpr hLe) hPos
-
-/-- Inductive step for the height-based argument in
-`vote_implies_echo_quorum_local`.  Assuming the result for all worlds strictly
-smaller than `w`, we obtain the required echo quorum for `w`. -/
-theorem vote_implies_echo_quorum_height_step
+/-- Inductive step for `vote_implies_echo_quorum_local`.  Assuming the result
+for all worlds strictly before `w`, we obtain the required echo quorum for
+`w`. -/
+theorem vote_implies_echo_quorum_step
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
-    {n : Nat}
-    (hHeight : PreHistory.height w.time = n.succ)
     (IH : ∀ {w' : World P (Signature.EventType S)},
+        w'.time ≺− w.time →
         w' ∈ M.history.val →
-        PreHistory.height w'.time ≤ n →
         ∀ {learner value : Signature.Value S},
           (⟪w'⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩) →
             ∃ source : Signature.Value S,
@@ -197,58 +154,17 @@ theorem vote_implies_echo_quorum_height_step
     ∃ source : Signature.Value S,
       ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
-  -- Instantiate `Vote?` (the theory assumptions) from the theory assumptions.
-  have hVoteAx :
-      AllWorldValid M
-        (voteBackwardAxiom echoSymb voteSymb correlationSymb) := by
-    apply hTheory
-    simp [theory]
-  have hVoteLocal :
-      ⟪w⟫ ⊨[M]
-        ∀ᶠ fun learner' =>
-          ∀ᶠ fun value' =>
-            ofEvent ⟨voteSymb, [learner', value']⟩ ⇒ᶠ
-              ((□ᶠ↓[[learner']](ofEvent ⟨echoSymb, [value']⟩)) ∨ᶠ
-                ∃ᶠ fun correlated =>
-                  ofPredicate ⟨correlationSymb, [correlated, learner']⟩ ∧ᶠ
-                    ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value']⟩)) := by
-    have h :=
-      AllWorldValid.of_mem_history
-        (M := M)
-        (φ := voteBackwardAxiom echoSymb voteSymb correlationSymb)
-        hVoteAx hMem
-    simpa [voteBackwardAxiom] using h
-  -- Specialise the axiom to the concrete learner and value.
-  have hImpLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner' =>
-        ∀ᶠ fun value' =>
-          ofEvent ⟨voteSymb, [learner', value']⟩ ⇒ᶠ
-            ((□ᶠ↓[[learner']](ofEvent ⟨echoSymb, [value']⟩)) ∨ᶠ
-              ∃ᶠ fun correlated =>
-                ofPredicate ⟨correlationSymb, [correlated, learner']⟩ ∧ᶠ
-                  ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value']⟩)))
-      (v := learner) hVoteLocal
-  have hImpValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value' =>
-        ofEvent ⟨voteSymb, [learner, value']⟩ ⇒ᶠ
-            ((□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value']⟩)) ∨ᶠ
-            ∃ᶠ fun correlated =>
-              ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
-                ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value']⟩)))
-      (v := value) hImpLearner
+  -- Instantiate `(Vote?)` at `w`.
+  have hDisj :=
+    voteBackward_elim (M := M)
+      (theory_voteBackward (M := M) hTheory)
+      (M.time_le_of_mem hMem)
+      (learner := learner) (value := value) hVote
   let φLeft := □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)
   let ψRight :=
     ∃ᶠ fun correlated =>
       ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
         ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩)
-  have hImpValue' := hImpValue
-  have hDisj :=
-    (Sat.imp (M := M) (w := w)
-        (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
-        (ψ := φLeft ∨ᶠ ψRight)).1
-      hImpValue' hVote
   -- Record that the past of `w` embeds into the global history.
   have hBefore_history :
       w.time ≺− M.history.val :=
@@ -313,79 +229,10 @@ theorem vote_implies_echo_quorum_height_step
           tVote.time ≺− w.time :=
         History.happensBefore_of_mem
           (P := P) (Event := Signature.EventType S) ht_mem
-      have hHeight_lt_aux :
-          PreHistory.height tVote.time <
-            PreHistory.height w.time :=
-        PreHistory.height_lt_of_happensBefore
-          (P := P) (Event := Signature.EventType S) hBefore_vote
-      have hBound' : PreHistory.height tVote.time ≤ n := by
-        have hLt := hHeight_lt_aux
-        rw [hHeight] at hLt
-        exact Nat.lt_succ_iff.mp hLt
       -- Apply the induction hypothesis to the earlier vote witness.
-      obtain ⟨source, hSource⟩ :=
-        IH (w' := tVote) ht_mem_history hBound'
+      exact
+        IH (w' := tVote) hBefore_vote ht_mem_history
           (learner := correlated) (value := value) hVote_at
-      exact ⟨source, hSource⟩
-
-/-- Strong induction on `PreHistory.height` used to establish
-`vote_implies_echo_quorum_local`.  This lemma packages the base case and the
-inductive step so they can be reused when we eventually provide the full proof. -/
-theorem vote_implies_echo_quorum_height_induction
-    (hTheory : M ⊨ᵀ
-      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    {w : World P (Signature.EventType S)}
-    (hMem : w ∈ M.history.val)
-    {n : Nat}
-    (hBound : PreHistory.height w.time ≤ n)
-    {learner value : Signature.Value S}
-    (hVote : ⟪w⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩) :
-    ∃ source : Signature.Value S,
-      ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
-  classical
-  have hMain : ∀ n,
-      ∀ {w : World P (Signature.EventType S)}
-        (hMem : w ∈ M.history.val)
-        (hBound : PreHistory.height w.time ≤ n)
-        {learner value : Signature.Value S},
-        (⟪w⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩) →
-          ∃ source : Signature.Value S,
-            ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
-    intro n
-    induction n with
-    | zero =>
-        intro w hMem hBound learner value hVote
-        have hFalse :=
-          prehistory_height_le_zero_false
-            (P := P) (h := w.time) hBound
-        cases hFalse
-    | succ n ih =>
-        intro w hMem hBound learner value hVote
-        by_cases hLe : PreHistory.height w.time ≤ n
-        · exact ih (w := w) hMem hLe (learner := learner) (value := value) hVote
-        · have hLt : n < PreHistory.height w.time := Nat.lt_of_not_ge hLe
-          have hEq : PreHistory.height w.time = Nat.succ n :=
-            Nat.le_antisymm hBound (Nat.succ_le_of_lt hLt)
-          have hIH :
-              ∀ {w' : World P (Signature.EventType S)}
-                (hMem' : w' ∈ M.history.val)
-                (hBound' : PreHistory.height w'.time ≤ n)
-                {learner value : Signature.Value S},
-                (⟪w'⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩) →
-                  ∃ source : Signature.Value S,
-            ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) :=
-            by
-              intro w' hMem' hBound' learner' value' hVote'
-              exact
-                ih (w := w') hMem' hBound'
-                  (learner := learner') (value := value') hVote'
-          exact
-            vote_implies_echo_quorum_height_step
-              (M := M) (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-              (echoSymb := echoSymb) (voteSymb := voteSymb)
-              (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-              hTheory hMem hEq hIH hVote
-  exact hMain n (w := w) hMem hBound (learner := learner) (value := value) hVote
 
 /-- Paper: Lemma 8.4.2(1). a realised vote yields an
 `Echo` quorum for the same value. -/
@@ -399,14 +246,32 @@ theorem vote_implies_echo_quorum_local
     ∃ source : Signature.Value S,
       ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
-  have hBound : PreHistory.height t.time ≤ PreHistory.height t.time := Nat.le_refl _
-  exact
-    vote_implies_echo_quorum_height_induction
-      (M := M) (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-      hTheory hMem (n := PreHistory.height t.time)
-      hBound (learner := learner) (value := value) hVote
+  -- The paper's "simple inductive argument on time(w)": well-founded
+  -- induction along `≺−`.
+  have hMain :
+      ∀ h : PreHistory P (Signature.EventType S),
+        ∀ {w : World P (Signature.EventType S)},
+          w.time = h → w ∈ M.history.val →
+          ∀ {learner value : Signature.Value S},
+            (⟪w⟫ ⊨[M]ofEvent ⟨voteSymb, [learner, value]⟩) →
+              ∃ source : Signature.Value S,
+                ⊨[M]□ᶠ↓[[source]](ofEvent ⟨echoSymb, [value]⟩) := by
+    intro h
+    induction h using
+      (PreHistory.happensBefore_wellFounded
+        (P := P) (Event := Signature.EventType S)).induction with
+    | _ h IH =>
+      intro w hw hMem learner value hVote
+      refine
+        vote_implies_echo_quorum_step
+          (M := M) (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+          (echoSymb := echoSymb) (voteSymb := voteSymb)
+          (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
+          hTheory hMem ?_ hVote
+      intro w' hBefore hMem' learner' value' hVote'
+      exact
+        IH w'.time (hw ▸ hBefore) rfl hMem' hVote'
+  exact hMain t.time rfl hMem hVote
 
 /-- Paper: Lemma 8.4.2(2). votes witnessed in the past
 produce a global echo quorum. -/
@@ -461,14 +326,10 @@ theorem deliver_to_vote_box_end
       □ᶠ↓[[learner]](ofEvent ⟨voteSymb, [learner, value]⟩) := by
   classical
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hDeliverTop := hDeliver
-  have hDeliverAx : AllWorldValid M (deliverBackwardAxiom voteSymb deliverSymb) := by
-    apply hTheory
-    simp [theory]
   have hDiamondNil :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ[[]](↓ᶠ (ofEvent ⟨deliverSymb, [learner, value]⟩)) :=
-    by simpa [Formula.diamondPast, wTop] using hDeliverTop
+    by simpa [Formula.diamondPast, wTop] using hDeliver
   obtain ⟨qDeliver, hPastDeliver⟩ :=
     (Sat.diamond_nil (M := M)
       (w := wTop)
@@ -481,32 +342,13 @@ theorem deliver_to_vote_box_end
       hPastDeliver
   have ht_mem_history : tDeliver ∈ M.history.val :=
     by simpa [wTop, World.time] using ht_mem
-  have hLocal :
-      ⟪tDeliver⟫ ⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := deliverBackwardAxiom voteSymb deliverSymb)
-      hDeliverAx ht_mem_history
-  have hForLearner :=
-    Sat.forall_elim (M := M) (w := tDeliver)
-      (body := fun learner' =>
-        ∀ᶠ fun value' =>
-          ofEvent ⟨deliverSymb, [learner', value']⟩ ⇒ᶠ
-            □ᶠ↓[[learner']](ofEvent ⟨voteSymb, [learner', value']⟩))
-      (v := learner) hLocal
-  have hForValue :=
-    Sat.forall_elim (M := M) (w := tDeliver)
-      (body := fun value' =>
-        ofEvent ⟨deliverSymb, [learner, value']⟩ ⇒ᶠ
-          □ᶠ↓[[learner]](ofEvent ⟨voteSymb, [learner, value']⟩))
-      (v := value) hForLearner
   have hBox_at_event :
       ⟪tDeliver⟫ ⊨[M]
         □ᶠ↓[[learner]](ofEvent ⟨voteSymb, [learner, value]⟩) :=
-    (Sat.imp (M := M) (w := tDeliver)
-      (φ := ofEvent ⟨deliverSymb, [learner, value]⟩)
-      (ψ := □ᶠ↓[[learner]](ofEvent ⟨voteSymb, [learner, value]⟩))).1
-      hForValue hDeliver_at
+    deliverBackward_elim (M := M)
+      (theory_deliverBackward (M := M) hTheory)
+      (M.time_le_of_mem ht_mem_history)
+      hDeliver_at
   have hBefore_history : tDeliver.time ≺− M.history.val :=
     History.happensBefore_of_mem
       (P := P) (Event := Signature.EventType S) ht_mem_history
@@ -535,70 +377,11 @@ theorem voteNonEquiv_local
       ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [learner, correlated]⟩) :
     valNow = valPast := by
   classical
-  have hVoteNE_local :
-      ⟪w⟫ ⊨[M] voteNonEquivAxiom voteSymb correlationSymb :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := voteNonEquivAxiom voteSymb correlationSymb)
-      hVoteNE hMem
-  have hForLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner' =>
-        ∀ᶠ fun value =>
-          ∀ᶠ fun correlated' =>
-            ∀ᶠ fun altValue =>
-              ofEvent ⟨voteSymb, [learner', value]⟩ ⇒ᶠ
-                (↓ᶠ (ofEvent ⟨voteSymb, [correlated', altValue]⟩)) ⇒ᶠ
-                  (ofPredicate ⟨correlationSymb, [learner', correlated']⟩ ⇒ᶠ
-                    (value ≃ᶠ altValue)))
-      (v := learner) hVoteNE_local
-  have hForValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        ∀ᶠ fun correlated' =>
-          ∀ᶠ fun altValue =>
-            ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-              (↓ᶠ (ofEvent ⟨voteSymb, [correlated', altValue]⟩)) ⇒ᶠ
-                (ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
-                  (value ≃ᶠ altValue)))
-      (v := valNow) hForLearner
-  have hForCorr :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun correlated' =>
-        ∀ᶠ fun altValue =>
-          ofEvent ⟨voteSymb, [learner, valNow]⟩ ⇒ᶠ
-            (↓ᶠ (ofEvent ⟨voteSymb, [correlated', altValue]⟩)) ⇒ᶠ
-              (ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
-                (valNow ≃ᶠ altValue)))
-      (v := correlated) hForValue
-  have hForAlt :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun altValue =>
-        ofEvent ⟨voteSymb, [learner, valNow]⟩ ⇒ᶠ
-          (↓ᶠ (ofEvent ⟨voteSymb, [correlated, altValue]⟩)) ⇒ᶠ
-            (ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-              (valNow ≃ᶠ altValue)))
-      (v := valPast) hForCorr
-  have hImp :=
-    (Sat.imp (M := M) (w := w)
-      (φ := ofEvent ⟨voteSymb, [learner, valNow]⟩)
-      (ψ :=
-        (↓ᶠ (ofEvent ⟨voteSymb, [correlated, valPast]⟩)) ⇒ᶠ
-          (ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-            (valNow ≃ᶠ valPast)))).1
-      hForAlt hVote_now
-  have hImp' :=
-    (Sat.imp (M := M) (w := w)
-      (φ := ↓ᶠ (ofEvent ⟨voteSymb, [correlated, valPast]⟩))
-      (ψ :=
-        ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-          (valNow ≃ᶠ valPast))).1
-      hImp hVote_past
   have hEqFormula :=
-    (Sat.imp (M := M) (w := w)
-      (φ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
-      (ψ := valNow ≃ᶠ valPast)).1
-      hImp' hCorr
+    voteNonEquiv_elim (M := M)
+      (hAx := hVoteNE)
+      (M.time_le_of_mem hMem)
+      hVote_now hVote_past hCorr
   have hEq :=
     (Sat.eq (M := M) (w := w)
       (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
@@ -760,9 +543,8 @@ theorem echo_quorums_agree
         (hEvt'_local := hEcho₂_local)
         (hDistinct := hEventNe)
     -- `EchoNE` turns the collision diamond into equality.
-    have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) := by
-      apply hTheory
-      simp [theory]
+    have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
+      theory_echoNonEquiv (M := M) hTheory
     have hSubset : wEcho.time ⊆trn M.history.val := by
       simpa [wEcho, wTop]
         using History.transitiveSubset_refl (H := M.history)
@@ -842,78 +624,16 @@ theorem always_corr_symm
       (⟪w⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)) := by
   classical
   intro hAlways
-  -- Symmetry axiom available at every world.
-  have hSymmAx : AllWorldValid M (correlationSymmAxiom correlationSymb) := by
-    apply hTheory
-    simp [theory]
-  have hNoOrig :
-      ¬ (⟪w⟫ ⊨[M]
-          ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))) := by
-    have hAlwaysNot :
-        ⟪w⟫ ⊨[M]
-          ¬ᶠ (↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))) := by
-      simpa [Formula.everytime] using hAlways
-    exact
-      (Sat.not (M := M) (w := w)
-        (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)))).1
-        hAlwaysNot
-  have hGoal :
-      (⟪w⟫ ⊨[M]
-          ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩))) → False := by
-    intro hSomeSwapped
-    let hSwapEquiv :=
-      Sat.sometime (M := M) (w := w)
-        (φ := ¬ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩))
-    rcases hSwapEquiv.mp hSomeSwapped with
-      ⟨t, ht_mem, ht_place, hNotSwapped⟩
-    -- Instantiate the symmetry axiom at the witnessing world.
-    have hSymmLocal :
-        ⟪t⟫ ⊨[M] correlationSymmAxiom correlationSymb :=
-      AllWorldValid.of_mem_history
-        (M := M)
-        (φ := correlationSymmAxiom correlationSymb)
-        hSymmAx ht_mem
-    have hImpLearner :=
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun learner =>
-          ∀ᶠ fun correlated =>
-            ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-              ofPredicate ⟨correlationSymb, [correlated, learner]⟩)
-        (v := l₁) hSymmLocal
-    have hImpCorrelated :=
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun correlated =>
-          ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
-            ofPredicate ⟨correlationSymb, [correlated, l₁]⟩)
-        (v := l₂) hImpLearner
-    have hNotOrig :
-        ⟪t⟫ ⊨[M] ¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
-      refine
-        Sat.not_intro (M := M) (w := t)
-          (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) ?_
-      intro hCorr
-      let hImpRelation :=
-        Sat.imp (M := M) (w := t)
-          (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)
-          (ψ := ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)
-      have hCorr' := (hImpRelation.mp hImpCorrelated) hCorr
-      exact
-        (Sat.not_elim (M := M) (w := t)
-          (φ := ofPredicate ⟨correlationSymb, [l₂, l₁]⟩))
-          hNotSwapped hCorr'
-    let hOrigEquiv :=
-      Sat.sometime (M := M) (w := w)
-        (φ := ¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
-    have hSomeOrig :
-        ⟪w⟫ ⊨[M]
-          ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :=
-      hOrigEquiv.mpr ⟨t, ht_mem, ht_place, hNotOrig⟩
-    exact hNoOrig hSomeOrig
-  have hNotSwapped :=
-    Sat.not_intro (M := M) (w := w)
-      (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)))
-      hGoal
-  simpa [Formula.everytime] using hNotSwapped
+  refine
+    (Sat.everytime (M := M) (w := w)
+      (φ := ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)).2 ?_
+  intro t ht hp
+  exact
+    correlationSymm_elim (M := M)
+      (theory_correlationSymm (M := M) hTheory)
+      (M.time_le_of_mem ht)
+      ((Sat.everytime (M := M) (w := w)
+        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1 hAlways t ht hp)
 
 /-- End-of-time correlation together with the persistence axiom yields
 correlation throughout each participant’s history. -/
@@ -924,72 +644,30 @@ theorem correlation_global_allPast
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
   classical
-  have hEventually :
-      AllWorldValid M (correlationMonotoneAxiom correlationSymb) := by
-    apply hTheory
-    simp [theory]
   intro t ht_le
-  set p := t.place
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  refine
+    (Sat.everytime (M := M) (w := t)
+      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).2 ?_
+  intro s hs hp
+  -- Correlation holds at the end of time at `s.place`…
   have hCorrTop :
-      ⟪wTop⟫ ⊨[M] ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ := by
-    simpa [wTop] using
-      (EndValid.boxEmpty_guard (M := M)
-        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) p
-  have hEventuallyTop :
-      ⟪wTop⟫ ⊨[M] correlationMonotoneAxiom correlationSymb :=
-    hEventually (by simp [wTop, World.time])
-  have hImpLearner :
-      ⟪wTop⟫ ⊨[M]
-        ∀ᶠ fun correlated =>
-          ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
-            ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, correlated]⟩) :=
-    Sat.forall_elim (M := M) (w := wTop)
-      (body := fun learner =>
-        ∀ᶠ fun correlated =>
-          ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-            ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩))
-      (v := l₁) hEventuallyTop
-  have hImpCorrelated :
-      ⟪wTop⟫ ⊨[M]
-        ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ ⇒ᶠ
-          ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
-    Sat.forall_elim (M := M) (w := wTop)
-      (body := fun correlated =>
-        ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
-          ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, correlated]⟩))
-      (v := l₂) hImpLearner
-  have hNoPast :
-      ⟪wTop⟫ ⊨[M] ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
-    (Sat.imp (M := M) (w := wTop)
-        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)
-        (ψ := ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))).1
-      hImpCorrelated hCorrTop
-  have hNoPast' :
-      ⟪wTop⟫ ⊨[M]
-        ¬ᶠ (↓ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))) := by
-    simpa [Formula.allPast]
-      using hNoPast
-  refine Sat.not_intro (M := M) (w := t) ?_
-  intro hSome
-  obtain ⟨s, hs_mem, hs_place, hNotCorr⟩ :=
-    (Sat.sometime (M := M) (w := t)
-        (φ := ¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))).1
-      hSome
-  have hPastWitness :
-      ⟪wTop⟫ ⊨[M]
-        ↓ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :=
-    (Sat.past (M := M)
-        (w := wTop)
-        (φ := ¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))).2
-      ⟨s,
-        by simpa [wTop, World.time] using hs_mem,
-        by simpa [wTop, World.place] using hs_place,
-        hNotCorr⟩
+      ⟪⟨s.place, †, M.history.val⟩⟫ ⊨[M]
+        ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ :=
+    (EndValid.boxEmpty_guard (M := M)
+      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) s.place
+  -- …so, by `(≐⇓)`, it holds throughout that participant's past.
+  have hAllPast :
+      ⟪⟨s.place, †, M.history.val⟩⟫ ⊨[M]
+        ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
+    correlationMonotone_elim (M := M)
+      (theory_correlationMonotone (M := M) hTheory)
+      (by simp [World.time])
+      hCorrTop
   exact
-    (Sat.not_elim (M := M) (w := wTop)
-      (φ := ↓ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))))
-      hNoPast' hPastWitness
+    (Sat.allPast (M := M)
+      (w := ⟨s.place, †, M.history.val⟩)
+      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1
+      hAllPast s (by simpa [World.time] using hs) rfl
 
 /-- Correlated learners admit a sequential intersection witness. -/
 theorem correlation_seq_diamond
@@ -999,44 +677,13 @@ theorem correlation_seq_diamond
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq := by
   classical
-  have hSeqAx :
-      AllWorldValid M (correlationSeqAxiom correlationSymb) := by
-    apply hTheory
-    simp [theory]
   intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hSeqLocal :
-      ⟪wTop⟫ ⊨[M] correlationSeqAxiom correlationSymb :=
-    hSeqAx (by simp [wTop, World.time])
-  have hImpLearner :
-      ⟪wTop⟫ ⊨[M]
-        ∀ᶠ fun correlated =>
-          ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
-            ♢ᶠ[[l₁, correlated]] Formula.seq :=
-    Sat.forall_elim (M := M) (w := wTop)
-      (body := fun learner =>
-        ∀ᶠ fun correlated =>
-          ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-            ♢ᶠ[[learner, correlated]] Formula.seq)
-      (v := l₁) hSeqLocal
-  have hImpCorrelated :
-      ⟪wTop⟫ ⊨[M]
-        ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ ⇒ᶠ
-          ♢ᶠ[[l₁, l₂]] Formula.seq :=
-    Sat.forall_elim (M := M) (w := wTop)
-      (body := fun correlated =>
-        ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
-          ♢ᶠ[[l₁, correlated]] Formula.seq)
-      (v := l₂) hImpLearner
-  have hCorrTop :
-      ⟪wTop⟫ ⊨[M] ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ :=
-    (EndValid.boxEmpty_guard (M := M)
-      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) p
   exact
-    (Sat.imp (M := M) (w := wTop)
-        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)
-        (ψ := ♢ᶠ[[l₁, l₂]] Formula.seq)).1
-      hImpCorrelated hCorrTop
+    correlationSeq_elim (M := M)
+      (theory_correlationSeq (M := M) hTheory)
+      (by simp [World.time])
+      ((EndValid.boxEmpty_guard (M := M)
+        (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) p)
 
 /-- Helper: Split antecedent `(live ∧ corr) ∧ ◊vote` into components -/
 theorem split_live_corr_vote_antecedent
@@ -1307,9 +954,8 @@ theorem correlated_vote_eventually
   classical
   have hVoteCorrAx :
       AllWorldValid M
-        (voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) := by
-    apply hTheory
-    simp [theory]
+        (voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) :=
+    theory_voteForwardCorrelated (M := M) hTheory
   intro t ht
   have hVoteCorrLocal := hVoteCorrAx ht
   refine
@@ -1433,9 +1079,8 @@ theorem live_echo_eventually_vote
           □ᶠ↓[[l]](ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
         ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
   classical
-  have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) := by
-    apply hTheory
-    simp [theory]
+  have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) :=
+    theory_voteForward (M := M) hTheory
   intro t htMem
   have hVoteLocal := hVoteAx htMem
   refine
@@ -1474,10 +1119,6 @@ theorem correlationImpliesPairwiseQuorumIntersection
     (hSomeone : ⊨[M]♢ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
   classical
-  have hSeqAx :
-      AllWorldValid M (correlationSeqAxiom correlationSymb) := by
-    apply hTheory
-    simp [theory]
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   obtain ⟨q, hq⟩ :=
@@ -1485,27 +1126,11 @@ theorem correlationImpliesPairwiseQuorumIntersection
       (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1
       (by simpa [wTop] using hSomeone p)
   set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
-  have hAxAt : ⟪wq⟫ ⊨[M] correlationSeqAxiom correlationSymb :=
-    hSeqAx (by simp [wq, World.time])
-  have hImpLearner :=
-    Sat.forall_elim (M := M) (w := wq)
-      (body := fun learner =>
-        ∀ᶠ fun correlated =>
-          ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
-            ♢ᶠ[[learner, correlated]] Formula.seq)
-      (v := l₁)
-      (by simpa [correlationSeqAxiom] using hAxAt)
-  have hImpCorr :=
-    Sat.forall_elim (M := M) (w := wq)
-      (body := fun correlated =>
-        ofPredicate ⟨correlationSymb, [l₁, correlated]⟩ ⇒ᶠ
-          ♢ᶠ[[l₁, correlated]] Formula.seq)
-      (v := l₂) hImpLearner
   have hSeqDiamond : ⟪wq⟫ ⊨[M] ♢ᶠ[[l₁, l₂]] Formula.seq :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)
-      (ψ := ♢ᶠ[[l₁, l₂]] Formula.seq)
-      hImpCorr (by simpa [wq, wTop] using hq)
+    correlationSeq_elim (M := M)
+      (theory_correlationSeq (M := M) hTheory)
+      (by simp [wq, World.time])
+      (by simpa [wq, wTop] using hq)
   have hTopDiamond : ⟪wq⟫ ⊨[M] ♢ᶠ[[l₁, l₂]] ⊤ᶠ :=
     Sat.diamond_of_imp (M := M) (w := wq)
       (ts := [l₁, l₂])

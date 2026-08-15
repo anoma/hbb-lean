@@ -722,21 +722,23 @@ theorem EndValid.imp_elim
     t.time ⪯ M.history.val →
       ⟪t⟫ ⊨[M]φ
 
+/-- A world in the history sits non-strictly before the end of time. -/
+theorem _root_.ModalDistribution.Model.time_le_of_mem
+    (M : Model S P) {t : World P S.EventType}
+    (ht : t ∈ M.history.val) :
+    t.time ⪯ M.history.val :=
+  PreHistory.happensBeforeEq_of_mem
+    (P := P) (Event := Signature.EventType S)
+    (hmem := by
+      simpa [World.place, World.event, World.time] using ht)
+
 theorem AllWorldValid.of_mem_history
     (M : Model S P) {φ : Formula S}
     (h : AllWorldValid M φ)
     {t : World P S.EventType}
     (ht : t ∈ M.history.val) :
     ⟪t⟫ ⊨[M]φ :=
-  by
-    classical
-    have hBefore :
-        t.time ⪯ M.history.val :=
-      PreHistory.happensBeforeEq_of_mem
-        (P := P) (Event := Signature.EventType S)
-        (hmem := by
-          simpa [World.place, World.event, World.time] using ht)
-    exact h hBefore
+  h (M.time_le_of_mem ht)
 
 /-- Instantiate an event-driven validity at an end-of-time world. -/
 theorem AllWorldValid.at_end
