@@ -41,7 +41,7 @@ intersection, which is the key innovation of HBB3.
 See also: `agreementThyHBB1`, `agreementThyHBB2`, `agreementFromDeliveriesThyHBB3`. -/
 theorem agreementThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     ⊨[M]
@@ -55,7 +55,7 @@ theorem agreementThyHBB3
   have hVoteNE :
       AllWorldValid M (voteNonEquivAxiom voteSymb correlationSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   -- Correlation supplies sequential intersections and persistence.
   have hSeqGlobal :
       ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq :=
@@ -301,7 +301,7 @@ theorem agreementThyHBB3
 `l₁` and `l₂` both occur, their values coincide. -/
 theorem agreementThyHBB3_of_deliveries
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
     (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v₁]⟩))

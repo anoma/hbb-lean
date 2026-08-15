@@ -33,6 +33,7 @@ These lemmas serve as building blocks for the main agreement and liveness theore
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -57,7 +58,7 @@ variable {w w' : World P (Signature.EventType S)}
 /-/ Deliveries force vote quorums at end of time (`Deliver?`). -/
 private theorem deliver_box_witness
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
     {p : P}
     (hDeliver :
@@ -71,7 +72,7 @@ private theorem deliver_box_witness
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hDeliverAx : AllWorldValid M (deliverBackwardAxiom voteSymb deliverSymb) := by
     apply hTheory
-    simp [ThyHBB1]
+    simp [theory]
   have hDiamond_nil :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ[[]]
@@ -165,7 +166,7 @@ private theorem lift_vote_box_to_end
 
 theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
     {p : P}
     (hDeliver :
@@ -782,5 +783,6 @@ theorem atd_sometime_iff_atddot
 
 end Results
 
+end ThyHBB1
 end Examples
 end ModalDistribution

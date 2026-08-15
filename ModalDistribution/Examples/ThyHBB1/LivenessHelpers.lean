@@ -12,6 +12,7 @@ Liveness~2 proofs, keeping the main theorems focused on the high-level flow.
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -168,5 +169,6 @@ theorem deliver_from_vote_box
 
 end
 
+end ThyHBB1
 end Examples
 end ModalDistribution

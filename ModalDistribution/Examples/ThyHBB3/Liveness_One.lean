@@ -42,7 +42,7 @@ there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `l`. -/
   theorem livenessOneThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
     (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :
@@ -55,7 +55,7 @@ the proposal will eventually deliver it for `l`. -/
   have hLiveSeqAx :
       AllWorldValid M (liveSeqAxiom liveSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   have hLiveSequentialGlobal :
       ⊨[M]□ᶠ[[l]] Formula.seq := by
     intro p
@@ -150,7 +150,7 @@ the proposal will eventually deliver it for `l`. -/
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨echoSymb, [v]⟩) :=
-    atddot_live_of_eventual_quorum
+    ThyHBB1.atddot_live_of_eventual_quorum
       (M := M)
       (liveSymb := liveSymb)
       (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -373,7 +373,7 @@ the proposal will eventually deliver it for `l`. -/
     have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
-      simp [ThyHBB3, ThyHBB3.theory]
+      simp [theory]
     -- Pull the sometime guard on the vote quorum back into the history.
     have hPastVotes :
         ⟪wTop⟫ ⊨[M]
@@ -472,7 +472,7 @@ statement holds, every member of learner `l`'s quorum knows (in the past) that
 `l` delivered the value. -/
 theorem livenessOneAtPastDownThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
     (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :
@@ -555,7 +555,7 @@ theorem livenessOneAtPastDownThyHBB3
 statement guarantees the delivery diamond for learner `l`. -/
 theorem livenessOneAtPastThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S} {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
     (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :

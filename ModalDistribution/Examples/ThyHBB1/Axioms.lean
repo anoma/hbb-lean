@@ -19,6 +19,7 @@ These mirror Figure (HBB1) from the paper and extend ThyLive with protocol-speci
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -124,7 +125,7 @@ variable
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
 /-- The collection of axioms forming the theory `ThyHBB1`. -/
-@[simp] def ThyHBB1 : Theory S :=
+@[simp] def theory : Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
       ax = echoBackwardAxiom proposeSymb echoSymb ∨
@@ -148,7 +149,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 `safeFormula` at every world, by axiom `Safe`. -/
 theorem safe_iff_safeFormula
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (w : World P (Signature.EventType S))
     (hW : w.time ⪯ M.history.val) (l : S.Value) :
     (⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) ↔
@@ -156,7 +157,7 @@ theorem safe_iff_safeFormula
   classical
   have hAx : AllWorldValid M (safeAxiom safeSymb proposeSymb) := by
     apply hTheory
-    simp [ThyHBB1]
+    simp [theory]
   have hInst := Sat.forall_elim (M := M) (w := w)
     (body := fun learner =>
       ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
@@ -166,5 +167,6 @@ theorem safe_iff_safeFormula
 
 end SafePredicate
 
+end ThyHBB1
 end Examples
 end ModalDistribution

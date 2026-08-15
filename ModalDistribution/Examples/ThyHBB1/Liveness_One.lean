@@ -18,6 +18,7 @@ This file contains the liveness one theorem for the ThyHBB1 broadcast protocol:
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -45,7 +46,7 @@ that proposals from live participants will eventually propagate to delivery.
 See also: `livenessTwoThyHBB1`, `livenessOneAtPastDownThyHBB1`. -/
 theorem livenessOneThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
@@ -241,7 +242,7 @@ theorem livenessOneThyHBB1
       AllWorldValid M
         (voteForwardAxiom liveSymb safeSymb echoSymb voteSymb) := by
     apply hTheory
-    simp [ThyHBB1]
+    simp [theory]
 
   have hImpVotes :
       □W⊨[M]
@@ -422,7 +423,7 @@ theorem livenessOneThyHBB1
     have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
-      simp [ThyHBB1]
+      simp [theory]
     exact
       deliver_from_vote_box
         (M := M)
@@ -447,7 +448,7 @@ observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
 theorem livenessOneAtPastDownThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
@@ -533,7 +534,7 @@ theorem livenessOneAtPastDownThyHBB1
 proposal diamond guarantees the delivery diamond for learner `l`. -/
 theorem livenessOneAtPastThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
@@ -570,5 +571,6 @@ theorem livenessOneAtPastThyHBB1
   simpa [wTop, φAnte, deliverEvt] using hDiamond
 
 end Liveness_One
+end ThyHBB1
 end Examples
 end ModalDistribution

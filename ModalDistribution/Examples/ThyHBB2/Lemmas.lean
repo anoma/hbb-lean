@@ -260,7 +260,7 @@ theorem box_witness
 echoes backing it. -/
 theorem to_echo_box_end
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {learner value : Signature.Value S}
     {p : P}
     (hVote :
@@ -269,7 +269,7 @@ theorem to_echo_box_end
   classical
   have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) := by
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   obtain ⟨tVote, ht_mem, hSubset, hBox⟩ :=
     Vote.box_witness (M := M)
       (echoSymb := echoSymb) (voteSymb := voteSymb)
@@ -293,7 +293,7 @@ namespace Unique
 theorem exists_witness_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M](predicate0 liveSymb ∧ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
         ∃ᶠ(fun witness =>
@@ -302,7 +302,7 @@ theorem exists_witness_echo
   have hEchoAx : AllWorldValid M
       (echoForwardAxiom liveSymb proposeSymb echoSymb) := by
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   intro t ht
   have hLocal : ⟪t⟫ ⊨[M]
       echoForwardAxiom liveSymb proposeSymb echoSymb :=
@@ -323,7 +323,7 @@ theorem exists_witness_echo
 theorem witness_eq_value
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M](predicate0 liveSymb ∧ᶠ
@@ -335,7 +335,7 @@ theorem witness_eq_value
   have hEchoBackAx : AllWorldValid M
       (echoBackwardAxiom proposeSymb echoSymb) := by
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   intro t ht
   set wPred : World P (Signature.EventType S) := t with hwPred_def
   set wTop : World P (Signature.EventType S) :=
@@ -350,7 +350,7 @@ theorem witness_eq_value
   have hGuard_global :
       ⟪wTop⟫ ⊨[M]∃≤ᶠ1 v ↦
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    uniquePropose_guard_at_history
+    ThyHBB1.uniquePropose_guard_at_history
       (M := M) (proposeSymb := proposeSymb)
       (w := wTop) (hUnique := hUnique_global)
   refine
@@ -379,11 +379,11 @@ theorem witness_eq_value
       (ψ := witness ≃ᶠ value) ?_
   intro hEcho
   obtain ⟨wEcho, hEcho_mem, _, hEcho_event⟩ :=
-    sometime_echo_event_exists (M := M) (w := wPred)
+    ThyHBB1.sometime_echo_event_exists (M := M) (w := wPred)
       (value := witness) hEcho
   have hDiamond_witness_wEcho :
       ⟪wEcho⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩) :=
-    echo_backward_diamond_from_sometime
+    ThyHBB1.echo_backward_diamond_from_sometime
       (M := M) (w := wEcho) (value := witness)
       (hEchoBack := hEchoBack) hEcho_event
   have hSubset_pred :
@@ -427,7 +427,7 @@ theorem witness_eq_value
           hDiamond_witness_wEcho)
   have hEq_global :
       ⟪wTop⟫ ⊨[M] witness ≃ᶠ value :=
-    uniquePropose_guard_implies_eq
+    ThyHBB1.uniquePropose_guard_implies_eq
       (M := M) (proposeSymb := proposeSymb)
       (w := wTop) (value := value)
       (witness := witness)
@@ -443,7 +443,7 @@ value. -/
 theorem eventually_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M](predicate0 liveSymb ∧ᶠ
@@ -476,7 +476,7 @@ theorem eventually_echo
       (hUnique := hUnique)
   intro t ht
   exact
-    (uniquePropose_eventually_echo_core
+    (ThyHBB1.uniquePropose_eventually_echo_core
       (M := M)
       (liveSymb := liveSymb)
       (proposeSymb := proposeSymb)
@@ -490,7 +490,7 @@ end Unique
 /-- Quorum intersections transport a vote witnessed at `l₁'` to some live
 member of the `l₂'` quorum. -/
 theorem live_vote_transfer
-    (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' learner : Signature.Value S}
     {value : Signature.Value S}
     {p : P}
@@ -589,7 +589,7 @@ theorem live_vote_transfer
 /-- Refine a `live ∧ vote` diamond (at end of time) by exposing the supporting
 echo quorum via `Vote?`. -/
 theorem vote_live_to_echo_diamond
-    (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {learner value : Signature.Value S}
     {p : P}
     (hVote :
@@ -601,7 +601,7 @@ theorem vote_live_to_echo_diamond
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) := by
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   obtain ⟨qVote, hPastConj⟩ :=
     (Sat.diamond_nil (M := M)
       (w := wTop)
@@ -681,7 +681,7 @@ theorem vote_live_to_echo_diamond
     using hDiamond'
 
 theorem live_vote_box_from_echo
-    (hTheory : M ⊨ᵀ ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₂' learner : Signature.Value S} {value : Signature.Value S} {p : P}
     (hEchoBox :
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[l₂']](predicate0 liveSymb ∧ᶠ
@@ -692,7 +692,7 @@ theorem live_vote_box_from_echo
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) := by
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
     intro ax hAx
     exact hTheory (Or.inl hAx)
@@ -840,7 +840,7 @@ theorem diamondPast_nil_strip_left
 vote quorum witnessed at `reporting`. -/
 theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
     {p : P}
     (hDeliver :
@@ -849,7 +849,7 @@ theorem deliver_to_vote_box_end
   classical
   have hDeliverAx : AllWorldValid M (deliverBackwardAxiom voteSymb deliverSymb) := by
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   obtain ⟨tDeliver, ht_mem, hSubset, hBox⟩ :=
     Deliver.box_witness (M := M)
       (voteSymb := voteSymb) (deliverSymb := deliverSymb)

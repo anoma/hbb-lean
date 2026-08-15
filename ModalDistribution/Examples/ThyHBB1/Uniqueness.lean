@@ -44,6 +44,7 @@ The file is organized into several categories:
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -293,7 +294,7 @@ theorem uniquePropose_eventually_echo_core
 theorem uniquePropose_exists_witness_echo
     (value : S.Value)
     (hHBB1 :
-      M ⊨ᵀ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+      M ⊨ᵀ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M]
       (predicate0 liveSymb ∧ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
@@ -302,8 +303,8 @@ theorem uniquePropose_exists_witness_echo
   classical
   have hEchoMem :
       echoForwardAxiom liveSymb proposeSymb echoSymb
-        ∈ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
-    simp [ThyHBB1]
+        ∈ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
+    simp [theory]
   have hEcho :
       □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb :=
     hHBB1 (ax := echoForwardAxiom liveSymb proposeSymb echoSymb) hEchoMem
@@ -652,7 +653,7 @@ theorem uniquePropose_guard_implies_eq
 theorem uniquePropose_witness_eq_value
     (value : S.Value)
     (hHBB1 :
-      M ⊨ᵀ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      M ⊨ᵀ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
@@ -669,8 +670,8 @@ theorem uniquePropose_witness_eq_value
     ⟨t.place, †, M.history.val⟩ with hwTop_def
   have hEchoMem :
       echoBackwardAxiom proposeSymb echoSymb
-        ∈ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
-    simp [ThyHBB1]
+        ∈ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
+    simp [theory]
   have hEchoBack :
       □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
     hHBB1 (ax := echoBackwardAxiom proposeSymb echoSymb) hEchoMem
@@ -774,7 +775,7 @@ theorem uniquePropose_witness_eq_value
 theorem uniquePropose_eventually_echo
     (value : S.Value)
     (hHBB1 :
-      M ⊨ᵀ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      M ⊨ᵀ theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
@@ -834,5 +835,6 @@ theorem atMostOnePropose_safe
 
 end Results
 
+end ThyHBB1
 end Examples
 end ModalDistribution

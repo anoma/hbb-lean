@@ -41,7 +41,7 @@ there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `(l,l)`. -/
 theorem livenessOneThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
@@ -127,7 +127,7 @@ theorem livenessOneThyHBB2
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨echoSymb, [v]⟩) :=
-    atddot_live_of_eventual_quorum
+    ThyHBB1.atddot_live_of_eventual_quorum
       (M := M)
       (liveSymb := liveSymb)
       (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -240,12 +240,12 @@ theorem livenessOneThyHBB2
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-    -- Step 6: combine Step 5 with `Deliver!` via `deliver_from_vote_box`.
+    -- Step 6: combine Step 5 with `Deliver!` via `ThyHBB1.deliver_from_vote_box`.
     classical
     have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
-      simp [ThyHBB2]
+      simp [theory]
     have hVotesSometime :
         ⟪wTop⟫ ⊨[M]
           ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)) :=
@@ -254,7 +254,7 @@ theorem livenessOneThyHBB2
         (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))).1
         hLiveKnowsVotes hLiveHere
     exact
-      deliver_from_vote_box (M := M)
+      ThyHBB1.deliver_from_vote_box (M := M)
         (liveSymb := liveSymb) (voteSymb := voteSymb) (deliverSymb := deliverSymb)
         (reporting := l) (learner := l) (value := v)
         (hThyLive := hThyLive)
@@ -283,7 +283,7 @@ diamond holds, every member of learner `l`'s quorum knows (in the past) that the
 value was delivered. -/
 theorem livenessOneAtPastDownThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
@@ -368,7 +368,7 @@ theorem livenessOneAtPastDownThyHBB2
 ensures the delivery diamond for learner `l`. -/
 theorem livenessOneAtPastThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)

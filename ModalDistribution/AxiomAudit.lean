@@ -11,17 +11,17 @@ If any custom axiom ever enters the proof of one of these theorems, the
 `#guard_msgs` below fail and the build breaks.
 -/
 
-/-- info: 'ModalDistribution.Examples.agreementThyHBB1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.ThyHBB1.agreementThyHBB1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.agreementThyHBB1
+#print axioms ModalDistribution.Examples.ThyHBB1.agreementThyHBB1
 
-/-- info: 'ModalDistribution.Examples.livenessOneThyHBB1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.ThyHBB1.livenessOneThyHBB1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.livenessOneThyHBB1
+#print axioms ModalDistribution.Examples.ThyHBB1.livenessOneThyHBB1
 
-/-- info: 'ModalDistribution.Examples.livenessTwoThyHBB1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.ThyHBB1.livenessTwoThyHBB1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.livenessTwoThyHBB1
+#print axioms ModalDistribution.Examples.ThyHBB1.livenessTwoThyHBB1
 
 /-- info: 'ModalDistribution.Examples.ThyHBB2.agreementThyHBB2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

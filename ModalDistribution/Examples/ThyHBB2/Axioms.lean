@@ -128,15 +128,5 @@ end Theory
 
 end ThyHBB2
 
-open ThyHBB2
-
-/-- Theory ThyHBB2 .
-It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in Backward rule axiom. -/
-@[simp] def ThyHBB2
-    {S : Signature}
-    (liveSymb : Signature.PredSymb S)
-    (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S) : Logic.Theory S :=
-  ThyHBB2.theory liveSymb proposeSymb echoSymb voteSymb deliverSymb
-
 end Examples
 end ModalDistribution

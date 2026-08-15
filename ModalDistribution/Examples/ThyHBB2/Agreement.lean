@@ -43,7 +43,7 @@ for the simplified HBB2 protocol without the safe predicate.
 See also: `agreementThyHBB1`, `agreementThyHBB3`. -/
 theorem agreementThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq) :
@@ -153,7 +153,7 @@ theorem agreementThyHBB2
   have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) := by
     -- Reuse the axiom `EchoNE` from the `ThyHBB2` theory.
     apply hTheory
-    simp [ThyHBB2]
+    simp [theory]
   have hEquality :
       ⟪wTop⟫ ⊨[M] v₁ ≃ᶠ v₂ := by
     -- Combining the ordered echoes with `EchoNE` forces the values to coincide.
@@ -170,7 +170,7 @@ theorem agreementThyHBB2
           hEchoCollision with
     | inl hLeft =>
         have hEq :=
-          echoNonEquiv_diamond (M := M)
+          ThyHBB1.echoNonEquiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)
@@ -179,7 +179,7 @@ theorem agreementThyHBB2
         simpa [Sat] using hEq
     | inr hRight =>
         have hEq :=
-          echoNonEquiv_diamond (M := M)
+          ThyHBB1.echoNonEquiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)
@@ -192,7 +192,7 @@ theorem agreementThyHBB2
 `(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
 theorem agreementThyHBB2_of_deliveries
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq)

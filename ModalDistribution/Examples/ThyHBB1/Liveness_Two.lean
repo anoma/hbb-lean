@@ -18,6 +18,7 @@ This file contains the two liveness two theorem for the ThyHBB1 broadcast protoc
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -44,7 +45,7 @@ If a value is delivered to learner l₁' and:
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
 theorem livenessTwoThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
@@ -223,7 +224,7 @@ theorem livenessTwoThyHBB1
     have hVoteAx : AllWorldValid M
         (voteBackwardAxiom safeSymb echoSymb voteSymb) := by
       apply hTheory
-      simp [ThyHBB1]
+      simp [theory]
     obtain ⟨qVote, hPastConj⟩ :=
       (Sat.Sat_diamond_nil (M := M)
         (w := wTop)
@@ -490,7 +491,7 @@ theorem livenessTwoThyHBB1
     have hVoteForwardAx : AllWorldValid M
         (voteForwardAxiom liveSymb safeSymb echoSymb voteSymb) := by
       apply hTheory
-      simp [ThyHBB1]
+      simp [theory]
     have hImpVotes : AllWorldValid M
         ((predicate0 liveSymb ∧ᶠ φVote) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
@@ -664,7 +665,7 @@ theorem livenessTwoThyHBB1
     have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
-      simp [ThyHBB1]
+      simp [theory]
     exact
       deliver_from_vote_box
         (M := M)
@@ -684,7 +685,7 @@ forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
 theorem livenessTwoAtPastDownThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
@@ -767,7 +768,7 @@ theorem livenessTwoAtPastDownThyHBB1
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
 theorem livenessTwoAtPastThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
@@ -803,5 +804,6 @@ theorem livenessTwoAtPastThyHBB1
   simpa [wTop] using hDiamond
 
 end Liveness_Two
+end ThyHBB1
 end Examples
 end ModalDistribution

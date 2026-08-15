@@ -211,15 +211,5 @@ end Theory
 
 end ThyHBB3
 
-open ThyHBB3
-
-/-- Theory ThyHBB3  as a reusable alias. -/
-@[simp] def ThyHBB3
-    {S : Signature}
-    (liveSymb : Signature.PredSymb S)
-    (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
-    (correlationSymb : Signature.PredSymb S) : Logic.Theory S :=
-  ThyHBB3.theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb
-
 end Examples
 end ModalDistribution

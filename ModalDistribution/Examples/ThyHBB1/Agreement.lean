@@ -39,6 +39,7 @@ The proof is extracted from the main ThyHBB1 file to improve modularity and main
 
 namespace ModalDistribution
 namespace Examples
+namespace ThyHBB1
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -67,7 +68,7 @@ that two different values v₁ ≠ v₂ are delivered under sequentiality.
 See also: `agreementFromDeliveriesThyHBB1`, agreement properties for ThyHBB2 and ThyHBB3. -/
 theorem agreementThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq) :
@@ -134,14 +135,14 @@ theorem agreementThyHBB1
   have hVoteAx : AllWorldValid M
       (voteBackwardAxiom safeSymb echoSymb voteSymb) := by
     apply hTheory
-    simp [ThyHBB1]
+    simp [theory]
 
   have hEchoBack :
       □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
-    hTheory (by simp [ThyHBB1])
+    hTheory (by simp [theory])
 
   have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-    hTheory (by simp [ThyHBB1])
+    hTheory (by simp [theory])
 
   have derive_contradiction :
       ∀ {la lb : Signature.Value S} {va vb : Signature.Value S},
@@ -403,7 +404,7 @@ the main agreement theorem.
 See also: `agreementThyHBB1`. -/
 theorem agreementFromDeliveriesThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq)
@@ -447,5 +448,6 @@ theorem agreementFromDeliveriesThyHBB1
       (ψ := v₁ ≃ᶠ v₂) hImp' hDeliver₂Top
   simpa [wTop] using hEq
 
+end ThyHBB1
 end Examples
 end ModalDistribution

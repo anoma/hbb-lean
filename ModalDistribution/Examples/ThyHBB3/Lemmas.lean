@@ -47,7 +47,7 @@ namespace Unique
 theorem exists_witness_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M]
       (predicate0 liveSymb ∧ᶠ
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
@@ -57,7 +57,7 @@ theorem exists_witness_echo
   have hEchoForward : AllWorldValid M
       (echoForwardAxiom liveSymb proposeSymb echoSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   intro t ht
   have hLocal :
       ⟪t⟫ ⊨[M]
@@ -79,7 +79,7 @@ theorem exists_witness_echo
 theorem witness_eq_value
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
@@ -92,7 +92,7 @@ theorem witness_eq_value
   have hEchoBackward : AllWorldValid M
       (echoBackwardAxiom proposeSymb echoSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   intro t ht
   set wPred : World P (Signature.EventType S) := t with hwPredDef
   set wTop : World P (Signature.EventType S) :=
@@ -105,7 +105,7 @@ theorem witness_eq_value
       ⟪wTop⟫ ⊨[M]
         ∃≤ᶠ1 v ↦
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    uniquePropose_guard_at_history
+    ThyHBB1.uniquePropose_guard_at_history
       (M := M) (proposeSymb := proposeSymb)
       (w := wTop) (hUnique := hUniqueGlobal)
   refine
@@ -137,12 +137,12 @@ theorem witness_eq_value
       (ψ := witness ≃ᶠ value) ?_
   intro hEcho
   obtain ⟨wEcho, hEcho_mem, _, hEchoEvent⟩ :=
-    sometime_echo_event_exists (M := M)
+    ThyHBB1.sometime_echo_event_exists (M := M)
       (w := wPred) (value := witness) hEcho
   have hDiamondWitnessLocal :
       ⟪wEcho⟫ ⊨[M]
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [witness]⟩) :=
-    echo_backward_diamond_from_sometime
+    ThyHBB1.echo_backward_diamond_from_sometime
       (M := M) (w := wEcho) (value := witness)
       (hEchoBack := hEchoBackward) hEchoEvent
   have hSubsetPred :
@@ -178,7 +178,7 @@ theorem witness_eq_value
   have hEqGlobal :
       ⟪wTop⟫ ⊨[M]
         witness ≃ᶠ value :=
-    uniquePropose_guard_implies_eq
+    ThyHBB1.uniquePropose_guard_implies_eq
       (M := M) (proposeSymb := proposeSymb)
       (w := wTop) (value := value) (witness := witness)
       (hGuard := hGuardGlobal)
@@ -190,14 +190,14 @@ theorem witness_eq_value
 theorem eventually_echo
     (value : Signature.Value S)
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
       (predicate0 liveSymb ∧ᶠ
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
       ↕ᶠ (ofEvent ⟨echoSymb, [value]⟩) := by
-  refine uniquePropose_eventually_echo_core
+  refine ThyHBB1.uniquePropose_eventually_echo_core
       (M := M) (liveSymb := liveSymb)
       (proposeSymb := proposeSymb) (echoSymb := echoSymb)
       (value := value) ?_ ?_
@@ -287,7 +287,7 @@ theorem threeTwined_phi
 /-- The `threeTwined` axiom forces triple learner quorums to intersect. -/
 theorem threeTwined_hasQuorumNonempty
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ l₃ : Signature.Value S} :
     hasQuorumNonempty (M := M) [l₁, l₂, l₃] := by
@@ -296,7 +296,7 @@ theorem threeTwined_hasQuorumNonempty
   have hThreeTwinedEvent :
       AllWorldValid M (threeTwinedAxiom (S := S)) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   have hThreeTwinedLocal :
       ⟪t⟫ ⊨[M] threeTwinedAxiom (S := S) :=
     AllWorldValid.of_mem_history
@@ -407,7 +407,7 @@ theorem prehistory_height_le_zero_false
 smaller than `w`, we obtain the required echo quorum for `w`. -/
 theorem vote_implies_echo_quorum_height_step
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
     {n : Nat}
@@ -429,7 +429,7 @@ theorem vote_implies_echo_quorum_height_step
       AllWorldValid M
         (voteBackwardAxiom echoSymb voteSymb correlationSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   have hVoteLocal :
       ⟪w⟫ ⊨[M]
         ∀ᶠ fun learner' =>
@@ -560,7 +560,7 @@ theorem vote_implies_echo_quorum_height_step
 inductive step so they can be reused when we eventually provide the full proof. -/
 theorem vote_implies_echo_quorum_height_induction
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
     {n : Nat}
@@ -618,7 +618,7 @@ theorem vote_implies_echo_quorum_height_induction
 `Echo` quorum for the same value. -/
 theorem vote_implies_echo_quorum_local
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
     {learner value : Signature.Value S}
     (hMem : t ∈ M.history.val)
@@ -639,7 +639,7 @@ theorem vote_implies_echo_quorum_local
 produce a global echo quorum. -/
 theorem vote_implies_echo_quorum_end
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {learner value : Signature.Value S}
     (hVote : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [learner, value]⟩)) :
     ∃ source : Signature.Value S,
@@ -679,7 +679,7 @@ theorem vote_implies_echo_quorum_end
 /-- Deliveries witnessed at end of time yield the backing vote quorum. -/
 theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {learner value : Signature.Value S}
     {p : P}
     (hDeliver :
@@ -691,7 +691,7 @@ theorem deliver_to_vote_box_end
   have hDeliverTop := hDeliver
   have hDeliverAx : AllWorldValid M (deliverBackwardAxiom voteSymb deliverSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   have hDiamondNil :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ[[]](↓ᶠ (ofEvent ⟨deliverSymb, [learner, value]⟩)) :=
@@ -835,7 +835,7 @@ theorem voteNonEquiv_local
 broadcast value. -/
 theorem echo_quorums_agree
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l l₁ l₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]□ᶠ[[l]]Formula.seq)
@@ -989,7 +989,7 @@ theorem echo_quorums_agree
     -- `EchoNE` turns the collision diamond into equality.
     have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) := by
       apply hTheory
-      simp [ThyHBB3, ThyHBB3.theory]
+      simp [theory]
     have hSubset : wEcho.time ⊆trn M.history.val := by
       simpa [wEcho, wTop]
         using History.transitiveSubset_refl (H := M.history)
@@ -1005,7 +1005,7 @@ theorem echo_quorums_agree
             hEchoCollision_local with
       | inl hLeft =>
           exact
-            echoNonEquiv_diamond (M := M)
+            ThyHBB1.echoNonEquiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -1015,7 +1015,7 @@ theorem echo_quorums_agree
               hLeft
       | inr hRight =>
           have hEq :=
-            echoNonEquiv_diamond (M := M)
+            ThyHBB1.echoNonEquiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -1030,7 +1030,7 @@ theorem echo_quorums_agree
 value once sequentiality holds. -/
 theorem votes_eventually_agree
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l l₁ l₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]□ᶠ[[l]]Formula.seq)
@@ -1062,7 +1062,7 @@ theorem votes_eventually_agree
 
 theorem always_corr_symm
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {w : World P (Signature.EventType S)}
     {l₁ l₂ : Signature.Value S} :
     (⟪w⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) →
@@ -1072,7 +1072,7 @@ theorem always_corr_symm
   -- Symmetry axiom available at every world.
   have hSymmAx : AllWorldValid M (mntaSymmAxiom correlationSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   have hNoOrig :
       ¬ (⟪w⟫ ⊨[M]
           ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))) := by
@@ -1146,7 +1146,7 @@ theorem always_corr_symm
 correlation throughout each participant’s history. -/
 theorem correlation_global_allPast
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
@@ -1154,7 +1154,7 @@ theorem correlation_global_allPast
   have hEventually :
       AllWorldValid M (mntaEventuallyAxiom correlationSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   intro t ht_le
   set p := t.place
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
@@ -1221,7 +1221,7 @@ theorem correlation_global_allPast
 /-- Correlated learners admit a sequential intersection witness. -/
 theorem correlation_seq_diamond
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
     ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq := by
@@ -1229,7 +1229,7 @@ theorem correlation_seq_diamond
   have hSeqAx :
       AllWorldValid M (mntaSeqAxiom correlationSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hSeqLocal :
@@ -1411,7 +1411,7 @@ theorem vote_exists_to_global_diamond
 and rebuilds the antecedent with swapped learners. -/
 theorem split_and_swap_correlation
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
     {l₁ l₂ : Signature.Value S}
     {v : Signature.Value S}
@@ -1485,7 +1485,7 @@ theorem apply_vote_corr_and_extract_witness
 the values are equal. -/
 theorem agree_on_correlated_votes
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
     (ht : t.time ⪯ M.history.val)
     {l : Signature.Value S}
@@ -1521,7 +1521,7 @@ theorem agree_on_correlated_votes
 forces eventual votes for the correlated learner. -/
 theorem correlated_vote_eventually
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S}
     {l₁ l₂ : Signature.Value S}
     {v : Signature.Value S}
@@ -1536,7 +1536,7 @@ theorem correlated_vote_eventually
       AllWorldValid M
         (voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   intro t ht
   have hVoteCorrLocal := hVoteCorrAx ht
   refine
@@ -1602,7 +1602,7 @@ theorem apply_vote_forward_and_extract_witness
 and returns simplified result. -/
 theorem agree_on_echo_and_vote
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {t : World P (Signature.EventType S)}
     (hSubset : t.time ⊆ M.history.val)
     {l : Signature.Value S}
@@ -1651,7 +1651,7 @@ theorem agree_on_echo_and_vote
 votes for the same learner. -/
 theorem live_echo_eventually_vote
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
     (hSeq : ⊨[M]□ᶠ[[l]]Formula.seq) :
@@ -1662,7 +1662,7 @@ theorem live_echo_eventually_vote
   classical
   have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   intro t htMem
   have hVoteLocal := hVoteAx htMem
   refine
@@ -1695,7 +1695,7 @@ theorem live_echo_eventually_vote
 with `l₂`, then their quorums intersect. -/
 theorem correlationImpliesPairwiseQuorumIntersection
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ : Signature.Value S}
     (_hSomeone : ⊨[M]♢ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
@@ -1752,7 +1752,7 @@ See also: `correlationEveryoneImpliesIntersection`,
 `correlationImpliesPairwiseQuorumIntersection`. -/
 theorem correlationImpliesQuorumIntersection
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ : Signature.Value S} :
     ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ := by
@@ -1808,7 +1808,7 @@ axiom alone.
 See also: `correlationImpliesQuorumIntersection`, `correlationImpliesPairwiseQuorumIntersection`. -/
 theorem correlationEveryoneImpliesIntersection
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ : Signature.Value S}
     (hEveryone : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :

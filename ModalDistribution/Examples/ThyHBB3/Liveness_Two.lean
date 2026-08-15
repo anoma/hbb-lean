@@ -40,7 +40,7 @@ correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
   theorem livenessTwoThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
     (hLiveQuorum : ⊨[M]□ᶠ[[l₂]]predicate0 liveSymb) :
@@ -52,7 +52,7 @@ forces a live delivery for `l₂`. -/
   have hLiveSeqAx :
       AllWorldValid M (liveSeqAxiom liveSymb) := by
     apply hTheory
-    simp [ThyHBB3, ThyHBB3.theory]
+    simp [theory]
   have hLiveSequentialGlobal :
       ⊨[M]□ᶠ[[l₂]] Formula.seq := by
     intro p
@@ -530,7 +530,7 @@ forces a live delivery for `l₂`. -/
     have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
-      simp [ThyHBB3, ThyHBB3.theory]
+      simp [theory]
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
     -- Apply the intermediate implication to obtain a vote quorum in the past.
@@ -656,7 +656,7 @@ forces every member of `l₂`'s quorum to know (in the past) that `l₂` deliver
 the same value. -/
 theorem livenessTwoAtPastDownThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
     (hLiveQuorum : ⊨[M]□ᶠ[[l₂]]predicate0 liveSymb) :
@@ -738,7 +738,7 @@ theorem livenessTwoAtPastDownThyHBB3
 produces a delivery for `l₂` somewhere in the past. -/
 theorem livenessTwoAtPastThyHBB3
     (hTheory : M ⊨ᵀ
-      ThyHBB3 liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
     (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
     (hLiveQuorum : ⊨[M]□ᶠ[[l₂]]predicate0 liveSymb) :

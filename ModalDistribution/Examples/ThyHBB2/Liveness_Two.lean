@@ -39,7 +39,7 @@ have intersecting quorums and learner `l₂'` is live, then any delivery for
 `(l₁', \thel)` propagates to `(l₂', \thel)`. -/
 theorem livenessTwoThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
@@ -202,7 +202,7 @@ theorem livenessTwoThyHBB2
     have hDeliverAx : AllWorldValid M
         (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
       apply hTheory
-      simp [ThyHBB2]
+      simp [theory]
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
     have hVotesTop :
@@ -213,7 +213,7 @@ theorem livenessTwoThyHBB2
         (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
         hLiveKnowsVotes hLiveTop
     exact
-      deliver_from_vote_box (M := M)
+      ThyHBB1.deliver_from_vote_box (M := M)
         (liveSymb := liveSymb)
         (voteSymb := voteSymb)
         (deliverSymb := deliverSymb)
@@ -239,7 +239,7 @@ forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)
 delivered. -/
 theorem livenessTwoAtPastDownThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
@@ -323,7 +323,7 @@ theorem livenessTwoAtPastDownThyHBB2
 eventually yields a delivery for `(l₂', ℓ)`. -/
 theorem livenessTwoAtPastThyHBB2
     (hTheory : M ⊨ᵀ
-      ThyHBB2 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
