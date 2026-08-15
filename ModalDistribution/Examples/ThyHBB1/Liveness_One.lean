@@ -170,7 +170,7 @@ theorem livenessOneThyHBB1
   have hSafeGlobal : ⊨[M] φSafe := by
     intro q
     have hImp :=
-      atMostOnePropose_safe
+      atMostOnePropose_safeFormula
         (M := M) (proposeSymb := proposeSymb)
         (l := l) q
     exact
@@ -225,7 +225,7 @@ theorem livenessOneThyHBB1
         PreHistory.happensBeforeEq_of_accessible
           (P := P) (Event := Signature.EventType S) hAcc.1
       have hSafe_t : ⟪t⟫ ⊨[M] φSafe :=
-        safe_monotone_subset
+        safeFormula_monotone_subset
           (M := M)
           (w := wTop) (w' := t)
           (l := l)
@@ -288,7 +288,7 @@ theorem livenessOneThyHBB1
       simpa [World.time]
         using History.transitiveSubset_refl (H := M.history)
     have hSafeLocal : ⟪t⟫ ⊨[M] φSafe :=
-      safe_monotone_subset
+      safeFormula_monotone_subset
         (M := M)
         (w := ⟨t.place, †, M.history.val⟩)
         (w' := t)
@@ -315,7 +315,7 @@ theorem livenessOneThyHBB1
             simpa [World.place]
               using hs_place⟩
       have hSafe_s : ⟪s⟫ ⊨[M] φSafe :=
-        safe_monotone_subset
+        safeFormula_monotone_subset
           (M := M)
           (w := ⟨t.place, †, M.history.val⟩)
           (w' := s)

@@ -526,7 +526,7 @@ theorem livenessTwoThyHBB1
         ⟨by intro s hs; simpa [wt, World.time] using hs, M.history.hered⟩
       have hSafeLocal :
           ⟪t⟫ ⊨[M] safeFormula proposeSymb l :=
-        safe_monotone_subset
+        safeFormula_monotone_subset
           (M := M)
           (w := wt)
           (w' := t)
@@ -554,7 +554,7 @@ theorem livenessTwoThyHBB1
                 using hs_place⟩
         have hSafe_s :
             ⟪s⟫ ⊨[M] safeFormula proposeSymb l :=
-          safe_monotone_subset
+          safeFormula_monotone_subset
             (M := M)
             (w := wt)
             (w' := s)

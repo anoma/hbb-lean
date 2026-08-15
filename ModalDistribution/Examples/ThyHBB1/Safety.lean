@@ -18,8 +18,8 @@ The lemmas are organized into several categories:
   - `uniquePropose_monotone`: Uniqueness of proposals is preserved in smaller histories
   - `safe_seq_guard_monotone`: Sequential guard monotonicity
   - `safe_axiom_body_monotone`: Safety axiom body monotonicity
-  - `safe_monotone_subset`: Safety persists when restricting to smaller histories
-  - `safe_allPast`: Safety implies it always held in the past
+  - `safeFormula_monotone_subset`: Safety persists when restricting to smaller histories
+  - `safeFormula_allPast`: Safety implies it always held in the past
 
 - **Quorum and liveness lemmas**: Lifting properties through quorums
   - `boxPast_of_eventual_quorum`: Quorum knowledge with global implication lifts to future quorum
@@ -236,7 +236,7 @@ theorem safe_axiom_body_monotone
   exact hSeqGuard'
 
 /-- Safety persists along same-place accessibility. -/
-theorem safe_monotone_subset
+theorem safeFormula_monotone_subset
     (l : Signature.Value S)
     (hSubset : w.time ⊆trn M.history.val)
     (hBefore : w'.time ⪯ w.time)
@@ -278,7 +278,7 @@ theorem safe_monotone_subset
       (hBody := hSafe)
 
 /-- Safety implies it always held in the past. -/
-theorem safe_allPast
+theorem safeFormula_allPast
     (l : Signature.Value S)
     (hwMem : w ∈ M.history.val)
     (hSafe : ⟪w⟫ ⊨[M]safeFormula proposeSymb l) :
@@ -304,7 +304,7 @@ theorem safe_allPast
       using hIncl
   have hSafe_t :
       ⟪t⟫ ⊨[M] safeFormula proposeSymb l :=
-    safe_monotone_subset (M := M)
+    safeFormula_monotone_subset (M := M)
       (w := w) (w' := t) (l := l)
       (hSubset := hSubsetTime)
       (hBefore :=
@@ -656,7 +656,75 @@ theorem box_sometime_iff_boxPast
         (φ := Formula.past φ)).2 hPast
     exact hSome
 
+/-- Safety of a learner is monotone along in-place accessibility: if `safe(l)`
+holds at a world of the model, it holds at every same-place predecessor. -/
+theorem safe_monotone
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (l : Signature.Value S)
+    {w w' : World P (Signature.EventType S)}
+    (hW : w.time ⪯ M.history.val)
+    (hAcc : w' ≪⁻ w)
+    (hSafe : ⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) :
+    ⟪w'⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩ := by
+  classical
+  have hW' : w'.time ⪯ M.history.val := by
+    rcases (PreHistory.happensBeforeEq_iff
+        (P := P) (Event := Signature.EventType S) w.time M.history.val).1 hW with hlt | heq
+    · exact (PreHistory.happensBeforeEq_iff
+        (P := P) (Event := Signature.EventType S) _ _).2
+        (Or.inl (accessible_happensBefore_history (H := M.history)
+          (hW := hW) (hAcc := hAcc.1)))
+    · exact (PreHistory.happensBeforeEq_iff
+        (P := P) (Event := Signature.EventType S) _ _).2
+        (Or.inl (by
+          rw [← heq]
+          exact PreHistory.happensBefore_of_accessible
+            (P := P) (Event := Signature.EventType S) hAcc.1))
+  have hSafeF :=
+    (safe_iff_safeFormula (M := M) (hTheory := hTheory) (w := w) hW l).1 hSafe
+  have hSafeF' :=
+    safeFormula_monotone_subset (M := M) l
+      (hSubset := time_subset_trn_history (M := M) (t := w) hW)
+      (hBefore := PreHistory.happensBeforeEq_of_accessible
+        (P := P) (Event := Signature.EventType S) hAcc.1)
+      (hPlace := hAcc.2)
+      hSafeF
+  exact (safe_iff_safeFormula (M := M) (hTheory := hTheory) (w := w') hW' l).2 hSafeF'
+
+/-- Safety of a learner at an event-tuple of the model implies it held at every
+past event at the same place. -/
+theorem safe_allPast
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (l : Signature.Value S)
+    {w : World P (Signature.EventType S)}
+    (hwMem : w ∈ M.history.val)
+    (hSafe : ⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) :
+    ⟪w⟫ ⊨[M]⇓ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
+  classical
+  have hW : w.time ⪯ M.history.val :=
+    PreHistory.happensBeforeEq_of_mem
+      (P := P) (Event := Signature.EventType S)
+      (hmem := by
+        simpa [World.place, World.event, World.time] using hwMem)
+  refine Sat.not_intro (M := M) (w := w)
+    (φ := ↓ᶠ (¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))) ?_
+  intro hPast
+  obtain ⟨t, ht_mem, ht_place, hNot⟩ :=
+    (Sat.past (M := M) (w := w)
+      (φ := ¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))).1 hPast
+  have hAcc : t ≪⁻ w :=
+    ⟨by simpa [World.accessible] using ht_mem, ht_place⟩
+  have hSafe_t :=
+    safe_monotone (M := M) (hTheory := hTheory) (l := l)
+      (hW := hW) (hAcc := hAcc) hSafe
+  exact
+    Sat.not_elim (M := M) (w := t)
+      (φ := ofPredicate ⟨safeSymb, [l]⟩) hNot hSafe_t
+
 end Results
+
 
 end ThyHBB1
 end Examples

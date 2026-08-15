@@ -40,7 +40,7 @@ The file is organized into several categories:
   - `echoNonEquiv_diamond`: Echo non-equivalence constraint
 
 - **Safety lemmas**:
-  - `atMostOnePropose_safe`: Uniqueness implies safety
+  - `atMostOnePropose_safeFormula`: Uniqueness implies safety
 -/
 
 namespace ModalDistribution
@@ -797,7 +797,7 @@ theorem uniquePropose_eventually_echo
             ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
 
 /-- at most one proposal implies every learner is safe. -/
-theorem atMostOnePropose_safe
+theorem atMostOnePropose_safeFormula
     (l : Signature.Value S) :
     ⊨[M](∃≤ᶠ1 v ↦
         (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
@@ -819,6 +819,56 @@ theorem atMostOnePropose_safe
       (Or.inl hUniqueCond)
   simpa [uniqueCond, seqGuard, safeFormula]
     using hOr
+
+/-- If at most one value is proposed, then every learner is everywhere and
+always safe. -/
+theorem atMostOnePropose_safe
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (l : Signature.Value S) :
+    ⊨[M](∃≤ᶠ1 v ↦
+        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
+        ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
+  classical
+  intro p
+  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  refine Sat.imp_intro (M := M) (w := wTop) ?_
+  intro hUnique
+  refine Sat.not_intro (M := M) (w := wTop)
+    (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))) ?_
+  intro hSome
+  obtain ⟨s, hs_mem, hs_place, hNot⟩ :=
+    (Sat.sometime (M := M) (w := wTop)
+      (φ := ¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))).1 hSome
+  have hs_mem' : s ∈ M.history.val := by
+    simpa [wTop, World.time] using hs_mem
+  have hs_le : s.time ⪯ M.history.val :=
+    PreHistory.happensBeforeEq_of_mem
+      (P := P) (Event := Signature.EventType S)
+      (hmem := by
+        simpa [World.place, World.event, World.time] using hs_mem')
+  have hUnique_s :
+      ⟪s⟫ ⊨[M]∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
+    uniquePropose_monotone (M := M)
+      (w := wTop) (w' := s)
+      (hSubset := by
+        simpa [wTop, World.time] using
+          time_subset_trn_history (M := M) (t := s) hs_le)
+      (hUnique := by simpa [wTop] using hUnique)
+  have hSafeF_s : ⟪s⟫ ⊨[M] safeFormula proposeSymb l := by
+    have hOr :=
+      (Sat.or (M := M) (w := s)
+        (φ := ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+        (ψ := ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq))).2
+        (Or.inl hUnique_s)
+    simpa [safeFormula] using hOr
+  have hSafe_s : ⟪s⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩ :=
+    (safe_iff_safeFormula (M := M) (hTheory := hTheory)
+      (w := s) hs_le l).2 hSafeF_s
+  exact
+    Sat.not_elim (M := M) (w := s)
+      (φ := ofPredicate ⟨safeSymb, [l]⟩) hNot hSafe_s
 
 end Results
 

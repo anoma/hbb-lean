@@ -282,7 +282,7 @@ forces a live delivery for `l₂`. -/
       live_eventually_knows (M := M)
         (liveSymb := liveSymb)
         (l := l₂)
-        (evt := ⟨voteSymb, [l₁, v]⟩)
+        (φ := ofEvent ⟨voteSymb, [l₁, v]⟩)
         (hTheory := hThyLive)
         (hLive := hLiveQuorum)
         (hEvent := hEventGlobal)
