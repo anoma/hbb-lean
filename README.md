@@ -29,7 +29,6 @@ ModalDistribution/
 │   ├── AxiomSystem.lean
 │   └── Properties/    # Modality properties, sequentiality, quorums
 ├── Examples/          # Includes the three broadcast algorithms and their proofs
-│   ├── HistoryStructures.lean  # Common history structure definitions
 │   ├── ThyLive.lean            # Liveness (Section 5.2)
 │   ├── ThyHBB1/                # Section 6
 │   │   ├── Axioms.lean

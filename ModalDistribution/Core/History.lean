@@ -136,22 +136,6 @@ theorem history_characterization (h : History P Event) :
   · intro h' h_before
     exact ⟨predecessorHistory (H := h) h_before, rfl⟩
 
-/-- The empty prehistory forms a history (no predecessors). -/
-def emptyHistory (P : Type u) (Event : Type v) : History P Event :=
-{
-  val := PreHistory.empty,
-  hered := by
-    classical
-    refine (isHereditarilyTransitive_unfold (P := P) (Event := Event) PreHistory.empty).mpr ?_
-    constructor
-    · intro h' hbefore
-      rcases hbefore with ⟨p, e, mem⟩
-      simp [PreHistory.empty, PreHistory.mem_mk] at mem
-    · intro h' hbefore
-      rcases hbefore with ⟨p, e, mem⟩
-      simp [PreHistory.empty, PreHistory.mem_mk] at mem
-}
-
 end History
 
 section HistoryAt
