@@ -128,6 +128,166 @@ theorem safe_iff_safeFormula
 
 end SafePredicate
 
+
+section Projections
+
+variable {P : Type} [Nonempty P] {M : Model S P}
+variable {liveSymb safeSymb : Signature.PredSymb S}
+variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+/-- A model of `ThyHBB1` is a model of `ThyLive`. -/
+theorem theory_thyLive
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) : M ⊨ᵀ ThyLive liveSymb :=
+  fun _ hAx => hTheory (Or.inl hAx)
+
+theorem theory_echoBackward
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_voteBackward
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] voteBackwardAxiom safeSymb echoSymb voteSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_deliverBackward
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_echoNonEquiv
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] echoNonEquivAxiom echoSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_safe
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] safeAxiom safeSymb proposeSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_echoForward
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] echoForwardAxiom liveSymb proposeSymb echoSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_voteForward
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] voteForwardAxiom liveSymb safeSymb echoSymb voteSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_deliverForward
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
+  hTheory (by simp [theory])
+
+end Projections
+
+section Instantiations
+
+variable {P : Type} [Nonempty P] {M : Model S P}
+variable {liveSymb safeSymb : Signature.PredSymb S}
+variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+
+/-- Instantiate `Vote?` at a world of the model: a vote yields safety of the
+learner and a quorum of past echoes. -/
+theorem voteBackward_elim
+    (hAx : □W⊨[M] voteBackwardAxiom safeSymb echoSymb voteSymb)
+    {w : World P (Signature.EventType S)}
+    (hMem : w ∈ M.history.val)
+    {learner value : S.Value}
+    (hVote : ⟪w⟫ ⊨[M] ofEvent ⟨voteSymb, [learner, value]⟩) :
+    (⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [learner]⟩) ∧
+      (⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) := by
+  classical
+  have hLocal :
+      ⟪w⟫ ⊨[M] voteBackwardAxiom safeSymb echoSymb voteSymb :=
+    AllWorldValid.of_mem_history (M := M) hAx hMem
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner => ∀ᶠ (fun value =>
+        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
+          (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
+            □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
+      (v := learner)
+      (by simpa [voteBackwardAxiom] using hLocal)
+  have hValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun value =>
+        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
+          (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
+            □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
+      (v := value) hLearner
+  have hConj :=
+    Sat.imp_elim (M := M) (w := w)
+      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
+      (ψ := ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))
+      hValue hVote
+  exact
+    (Sat.and (M := M) (w := w)
+      (φ := ofPredicate ⟨safeSymb, [learner]⟩)
+      (ψ := □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))).1 hConj
+
+/-- Instantiate `Vote!` at a world of the model: everywhere-safety, liveness,
+and a quorum of past echoes yield an eventual vote. -/
+theorem voteForward_elim
+    (hAx : □W⊨[M] voteForwardAxiom liveSymb safeSymb echoSymb voteSymb)
+    {w : World P (Signature.EventType S)}
+    (hW : w.time ⪯ M.history.val)
+    {learner value : S.Value}
+    (hSafeAlways : ⟪w⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩))
+    (hLive : ⟪w⟫ ⊨[M] predicate0 liveSymb)
+    (hEchoBox : ⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) :
+    ⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩) := by
+  classical
+  have hLocal :
+      ⟪w⟫ ⊨[M] voteForwardAxiom liveSymb safeSymb echoSymb voteSymb :=
+    hAx hW
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun learner => ∀ᶠ (fun value =>
+        (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
+          ((predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+            ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))))
+      (v := learner)
+      (by simpa [voteForwardAxiom] using hLocal)
+  have hValue :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun value =>
+        (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
+          ((predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+            ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩)))
+      (v := value) hLearner
+  have hGuarded :=
+    Sat.imp_elim (M := M) (w := w)
+      (φ := ⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩))
+      (ψ := (predicate0 liveSymb ∧ᶠ
+          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+        ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
+      hValue hSafeAlways
+  exact
+    Sat.imp_elim (M := M) (w := w)
+      (φ := predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))
+      (ψ := ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
+      hGuarded
+      ((Sat.and (M := M) (w := w)
+        (φ := predicate0 liveSymb)
+        (ψ := □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))).2
+        ⟨hLive, hEchoBox⟩)
+
+end Instantiations
+
 end ThyHBB1
 end Examples
 end ModalDistribution

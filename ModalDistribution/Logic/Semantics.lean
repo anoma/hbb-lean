@@ -442,6 +442,67 @@ theorem everytime
       (φ := Formula.sometime (¬ᶠ φ))).2 hNoSome
     simpa [Formula.everytime] using this
 
+/-- Satisfaction of `⇓` (at every past event): the body holds at every
+event-tuple of the current time at the current place. -/
+theorem allPast
+    (M : Model S P)
+    (w : World P S.EventType)
+    (φ : Formula S) :
+    (⟪w⟫ ⊨[M]Formula.allPast φ) ↔
+      ∀ t ∈ w.time, t.place = w.place → ⟪t⟫ ⊨[M]φ := by
+  classical
+  constructor
+  · intro h t ht hp
+    refine Classical.byContradiction fun hContra => ?_
+    have hNotBody : ⟪t⟫ ⊨[M]¬ᶠ φ :=
+      (not (M := M) (w := t) (φ := φ)).2 hContra
+    have hPast : ⟪w⟫ ⊨[M]↓ᶠ (¬ᶠ φ) :=
+      (past (M := M) (w := w) (φ := ¬ᶠ φ)).2 ⟨t, ht, hp, hNotBody⟩
+    exact
+      (not (M := M) (w := w) (φ := ↓ᶠ (¬ᶠ φ))).1
+        (by simpa [Formula.allPast] using h) hPast
+  · intro h
+    have hNoPast : ¬ (⟪w⟫ ⊨[M]↓ᶠ (¬ᶠ φ)) := by
+      intro hPast
+      obtain ⟨t, ht, hp, hNot⟩ :=
+        (past (M := M) (w := w) (φ := ¬ᶠ φ)).1 hPast
+      exact (not (M := M) (w := t) (φ := φ)).1 hNot (h t ht hp)
+    have hNeg := (not (M := M) (w := w)
+      (φ := ↓ᶠ (¬ᶠ φ))).2 hNoPast
+    simpa [Formula.allPast] using hNeg
+
+/-- Eliminate the existential quantifier encoded by `∃ᶠ` at the satisfaction level. -/
+@[simp] theorem exists_iff
+    (w : World P S.EventType)
+    (body : Signature.Value S → Formula S) :
+    (⟪w⟫ ⊨[M]∃ᶠ fun v => body v) ↔
+      ∃ v, ⟪w⟫ ⊨[M]body v := by
+  classical
+  constructor
+  · intro hExists
+    -- Suppose no witness exists, derive a contradiction with the existential.
+    refine Classical.byContradiction fun hNoWitness => ?_
+    have hNone : ∀ v, ¬ (⟪w⟫ ⊨[M]body v) := fun v hv => hNoWitness ⟨v, hv⟩
+    have hForall :
+        ⟪w⟫ ⊨[M]∀ᶠ fun v => ¬ᶠ (body v) :=
+      forall_intro (M := M) (w := w)
+        (body := fun v => ¬ᶠ (body v))
+        (fun v =>
+          not_intro (M := M) (w := w)
+            (φ := body v) (hNone v))
+    have hContr :=
+      (not (M := M) (w := w)
+        (φ := ∀ᶠ fun v => ¬ᶠ (body v))).1
+        (by simpa [Formula.exists_] using hExists)
+      hForall
+    exact hContr
+  · intro hWitness
+    simpa [Formula.exists_]
+      using
+        exists_intro (M := M) (w := w)
+          (body := fun v => body v) hWitness
+
+
 /-- Conjunction satisfaction unfolds to both conjuncts. -/
 @[simp] theorem and
     (M : Model S P)

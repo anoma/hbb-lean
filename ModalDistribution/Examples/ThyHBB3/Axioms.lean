@@ -173,6 +173,92 @@ It extends `ThyLive` with the `ThyHBB3`-specific axioms in -/
 
 end Theory
 
+
+section Projections
+
+variable {P : Type} [Nonempty P] {M : Model S P}
+variable {liveSymb : Signature.PredSymb S}
+variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+variable {correlationSymb : Signature.PredSymb S}
+
+/-- A model of `ThyHBB3` is a model of `ThyLive`. -/
+theorem theory_thyLive
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    M ⊨ᵀ ThyLive liveSymb :=
+  fun _ hAx => hTheory (Or.inl hAx)
+
+theorem theory_echoBackward
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_voteBackward
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] voteBackwardAxiom echoSymb voteSymb correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_deliverBackward
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_echoNonEquiv
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] echoNonEquivAxiom echoSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_voteNonEquiv
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] voteNonEquivAxiom voteSymb correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_threeTwined
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] (threeTwinedAxiom : Formula S) :=
+  hTheory (by simp [theory])
+
+theorem theory_correlationSeq
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] correlationSeqAxiom correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_correlationMonotone
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] correlationMonotoneAxiom correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_correlationSymm
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] correlationSymmAxiom correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_correlationTrans
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] correlationTransAxiom correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_echoForward
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] echoForwardAxiom liveSymb proposeSymb echoSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_voteForward
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_voteForwardCorrelated
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb :=
+  hTheory (by simp [theory])
+
+theorem theory_deliverForward
+    (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
+  hTheory (by simp [theory])
+
+end Projections
+
 end ThyHBB3
 
 end Examples

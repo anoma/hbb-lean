@@ -162,37 +162,6 @@ theorem threeTwined_hasQuorumNonempty
     (sat_diamond_top_iff_hasQuorumNonempty (M := M)
         (w := t) (ls := [l₁, l₂, l₃])).1 hDiamond
 
-/-- Eliminate the existential quantifier encoded by `∃ᶠ` at the satisfaction level. -/
-@[simp] theorem sat_exists_iff
-    (w : World P (Signature.EventType S))
-    (body : Signature.Value S → Formula S) :
-    (⟪w⟫ ⊨[M]∃ᶠ fun v => body v) ↔
-      ∃ v, ⟪w⟫ ⊨[M]body v := by
-  classical
-  constructor
-  · intro hExists
-    -- Suppose no witness exists, derive a contradiction with the existential.
-    refine Classical.byContradiction fun hNoWitness => ?_
-    have hNone : ∀ v, ¬ (⟪w⟫ ⊨[M]body v) := fun v hv => hNoWitness ⟨v, hv⟩
-    have hForall :
-        ⟪w⟫ ⊨[M]∀ᶠ fun v => ¬ᶠ (body v) :=
-      Sat.forall_intro (M := M) (w := w)
-        (body := fun v => ¬ᶠ (body v))
-        (fun v =>
-          Sat.not_intro (M := M) (w := w)
-            (φ := body v) (hNone v))
-    have hContr :=
-      (Sat.not (M := M) (w := w)
-        (φ := ∀ᶠ fun v => ¬ᶠ (body v))).1
-        (by simpa [Formula.exists_] using hExists)
-      hForall
-    exact hContr
-  · intro hWitness
-    simpa [Formula.exists_]
-      using
-        Sat.exists_intro (M := M) (w := w)
-          (body := fun v => body v) hWitness
-
 omit [Nonempty P] in
 -- Auxiliary lemmas about zero height (not available yet, kept for future use).
 theorem prehistory_height_le_zero_false
@@ -312,7 +281,7 @@ theorem vote_implies_echo_quorum_height_step
                 ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩) :=
         by simpa [ψRight] using hExists
       have hWitness :=
-        (sat_exists_iff (M := M) (w := w)
+        (Sat.exists_iff (M := M) (w := w)
             (body := fun correlated =>
               ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
                 ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩))).1
@@ -1280,7 +1249,7 @@ theorem apply_vote_corr_and_extract_witness
   have hVoteExists := hVoteImp hVoteAnte
   -- Extract witness value
   exact
-    (sat_exists_iff (M := M) (w := t)
+    (Sat.exists_iff (M := M) (w := t)
         (body := fun witnessed =>
           ↕ᶠ (ofEvent ⟨voteSymb, [l₂, witnessed]⟩))).1
       hVoteExists
@@ -1397,7 +1366,7 @@ theorem apply_vote_forward_and_extract_witness
   have hVoteExists := hVoteImp hVoteAnte'
   -- Extract witness value
   exact
-    (sat_exists_iff (M := M) (w := t)
+    (Sat.exists_iff (M := M) (w := t)
         (body := fun witnessed =>
           ↕ᶠ (ofEvent ⟨voteSymb, [l, witnessed]⟩))).1
       hVoteExists

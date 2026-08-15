@@ -79,6 +79,35 @@ section Axioms
 
 end Axioms
 
+section Projections
+
+variable {P : Type} [Nonempty P] {M : Model S P} {liveSymb : Signature.PredSymb S}
+
+/-- Project validity of `(LiveAlways)` out of a model of `ThyLive`. -/
+theorem thyLive_liveAlways (hTheory : M ⊨ᵀ ThyLive liveSymb) :
+    □W⊨[M] liveAlwaysAxiom (S := S) liveSymb :=
+  hTheory (Or.inl rfl)
+
+/-- Project validity of `(LiveSeq)` out of a model of `ThyLive`. -/
+theorem thyLive_liveSeq (hTheory : M ⊨ᵀ ThyLive liveSymb) :
+    □W⊨[M] liveSeqAxiom (S := S) liveSymb :=
+  hTheory (Or.inr (Or.inl rfl))
+
+/-- Project validity of a `(Knowledge♢↓)` instance out of a model of `ThyLive`. -/
+theorem thyLive_knowledgeDiamond (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (ls : List (Signature.Value S)) (φ : Formula S) :
+    □W⊨[M] knowledgeDiamondAxiom (S := S) liveSymb ls φ :=
+  hTheory (Or.inr (Or.inr (Or.inl ⟨ls, φ, rfl⟩)))
+
+/-- Project validity of a `(Knowledge□↓)` instance out of a model of `ThyLive`. -/
+theorem thyLive_knowledgeBox (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (ls : List (Signature.Value S)) (φ : Formula S) :
+    □W⊨[M] knowledgeBoxAxiom (S := S) liveSymb ls φ :=
+  hTheory (Or.inr (Or.inr (Or.inr ⟨ls, φ, rfl⟩)))
+
+end Projections
+
+
 section Results
 
 variable (P : Type) [Nonempty P]

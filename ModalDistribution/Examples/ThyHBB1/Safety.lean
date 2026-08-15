@@ -723,6 +723,46 @@ theorem safe_allPast
     Sat.not_elim (M := M) (w := t)
       (φ := ofPredicate ⟨safeSymb, [l]⟩) hNot hSafe_t
 
+
+/-- The instantiated `Vote!` implication used by the liveness proofs: when a
+learner is safe at the end of time, any live participant holding an echo
+quorum eventually votes. Safety persists to every relevant past world by
+`safe_monotone`. -/
+theorem voteForward_imp
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l v : Signature.Value S}
+    (hSafe : ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) :
+    □W⊨[M]((predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
+      ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
+  classical
+  intro t ht
+  refine Sat.imp_intro (M := M) (w := t) ?_
+  intro hConj
+  have hSplit :=
+    (Sat.and (M := M) (w := t)
+      (φ := predicate0 liveSymb)
+      (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).1 hConj
+  have hSafeAlways :
+      ⟪t⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
+    refine (Sat.everytime (M := M) (w := t)
+      (φ := ofPredicate ⟨safeSymb, [l]⟩)).2 ?_
+    intro s hs _
+    exact
+      safe_monotone (M := M) (hTheory := hTheory) (l := l)
+        (w := ⟨s.place, †, M.history.val⟩)
+        (hW := PreHistory.happensBeforeEq_refl _)
+        (hAcc := ⟨by simpa [World.accessible] using hs, rfl⟩)
+        (by simpa using hSafe s.place)
+  exact
+    voteForward_elim (M := M)
+      (hAx := theory_voteForward (M := M) hTheory)
+      (hW := ht)
+      (hSafeAlways := hSafeAlways)
+      (hLive := hSplit.1)
+      (hEchoBox := hSplit.2)
+
 end Results
 
 
