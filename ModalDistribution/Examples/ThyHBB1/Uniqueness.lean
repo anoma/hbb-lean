@@ -61,7 +61,7 @@ section Results
 
 variable {P : Type} [Nonempty P]
 variable {M : Model S P}
-variable {liveSymb : Signature.PredSymb S}
+variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {w w' t : World P (Signature.EventType S)}
 
@@ -400,7 +400,7 @@ theorem uniquePropose_guard_at_predecessor
 theorem uniquePropose_exists_witness_echo
     (value : S.Value)
     (hHBB1 :
-      M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
+      M ⊨ᵀ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M]
       (predicate0 liveSymb ∧ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
@@ -409,7 +409,7 @@ theorem uniquePropose_exists_witness_echo
   classical
   have hEchoMem :
       echoForwardAxiom liveSymb proposeSymb echoSymb
-        ∈ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb := by
+        ∈ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
     simp [ThyHBB1]
   have hEcho :
       □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb :=
@@ -828,7 +828,7 @@ theorem uniquePropose_guard_implies_eq
 theorem uniquePropose_witness_eq_value
     (value : S.Value)
     (hHBB1 :
-      M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      M ⊨ᵀ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
@@ -845,7 +845,7 @@ theorem uniquePropose_witness_eq_value
     ⟨t.place, †, M.history.val⟩ with hwTop_def
   have hEchoMem :
       echoBackwardAxiom proposeSymb echoSymb
-        ∈ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb := by
+        ∈ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb := by
     simp [ThyHBB1]
   have hEchoBack :
       □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
@@ -950,7 +950,7 @@ theorem uniquePropose_witness_eq_value
 theorem uniquePropose_eventually_echo
     (value : S.Value)
     (hHBB1 :
-      M ⊨ᵀ ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      M ⊨ᵀ ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]

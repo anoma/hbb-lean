@@ -27,7 +27,7 @@ section
 
 variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P}
-variable {liveSymb : Signature.PredSymb S}
+variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {voteSymb deliverSymb : Signature.EventSymb S}
 variable {reporting learner : Signature.Value S}
 variable {value : Signature.Value S}

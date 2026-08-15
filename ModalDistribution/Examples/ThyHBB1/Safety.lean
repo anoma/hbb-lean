@@ -50,14 +50,14 @@ section Results
 
 variable {P : Type} [Nonempty P]
 variable {M : Model S P}
-variable {liveSymb : Signature.PredSymb S}
+variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {w w' : World P (Signature.EventType S)}
 
 /-/ Deliveries force vote quorums at end of time (`Deliver?`). -/
 private theorem deliver_box_witness
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
     {p : P}
     (hDeliver :
@@ -165,7 +165,7 @@ private theorem lift_vote_box_to_end
 
 theorem deliver_to_vote_box_end
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {reporting learner value : Signature.Value S}
     {p : P}
     (hDeliver :

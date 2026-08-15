@@ -38,19 +38,29 @@ section BackwardAxioms
     ofEvent ⟨echoSymb, [v]⟩ ⇒ᶠ
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
 
-/-- Definition of the `safe` predicate as used in the paper. -/
+/-- The right-hand side of axiom `Safe`: either at most one value has been
+proposed, or the learner has sequential quorum intersections with every
+learner. -/
 @[simp] def safeFormula
     (proposeSymb : Signature.EventSymb S)
     (learner : S.Value) : Formula S :=
   ((∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
       ∀ᶠ (fun l' => ♢ᶠ[[learner, l']] Formula.seq))
 
+/-- Axiom `Safe`: the `safe` predicate is characterised by `safeFormula`. -/
+@[simp] def safeAxiom
+    (safeSymb : Signature.PredSymb S)
+    (proposeSymb : Signature.EventSymb S) : Formula S :=
+  ∀ᶠ (fun learner =>
+    ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
+
 /-- Backward rule `Vote?`: voting requires safety and prior echoes. -/
 @[simp] def voteBackwardAxiom
-    (proposeSymb echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
+    (safeSymb : Signature.PredSymb S)
+    (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
     ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-      (safeFormula proposeSymb learner ∧ᶠ
+      (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
         □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
 
 /-- Backward rule `Deliver?`: deliveries require past votes. -/
@@ -88,10 +98,10 @@ section ForwardAxioms
 
 /-- Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
 @[simp] def voteForwardAxiom
-    (liveSymb : Signature.PredSymb S)
-    (proposeSymb echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
+    (liveSymb safeSymb : Signature.PredSymb S)
+    (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
-    (⇕ᶠ (safeFormula proposeSymb learner)) ⇒ᶠ
+    (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
       ((predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))))
@@ -110,7 +120,7 @@ end ForwardAxioms
 section Theory
 
 variable
-    (liveSymb : Signature.PredSymb S)
+    (liveSymb safeSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
 /-- The collection of axioms forming the theory `ThyHBB1`. -/
@@ -118,14 +128,43 @@ variable
   { ax |
       ax ∈ ThyLive liveSymb ∨
       ax = echoBackwardAxiom proposeSymb echoSymb ∨
-      ax = voteBackwardAxiom proposeSymb echoSymb voteSymb ∨
+      ax = voteBackwardAxiom safeSymb echoSymb voteSymb ∨
       ax = deliverBackwardAxiom voteSymb deliverSymb ∨
       ax = echoNonEquivAxiom echoSymb ∨
+      ax = safeAxiom safeSymb proposeSymb ∨
       ax = echoForwardAxiom liveSymb proposeSymb echoSymb ∨
-      ax = voteForwardAxiom liveSymb proposeSymb echoSymb voteSymb ∨
+      ax = voteForwardAxiom liveSymb safeSymb echoSymb voteSymb ∨
       ax = deliverForwardAxiom liveSymb voteSymb deliverSymb }
 
 end Theory
+
+section SafePredicate
+
+variable {P : Type} [Nonempty P] {M : Model S P}
+variable {liveSymb safeSymb : Signature.PredSymb S}
+variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+
+/-- In any model of `ThyHBB1`, the `safe` predicate coincides with
+`safeFormula` at every world, by axiom `Safe`. -/
+theorem safe_iff_safeFormula
+    (hTheory : M ⊨ᵀ
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (w : World P (Signature.EventType S))
+    (hW : w.time ⪯ M.history.val) (l : S.Value) :
+    (⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) ↔
+      (⟪w⟫ ⊨[M] safeFormula proposeSymb l) := by
+  classical
+  have hAx : AllWorldValid M (safeAxiom safeSymb proposeSymb) := by
+    apply hTheory
+    simp [ThyHBB1]
+  have hInst := Sat.forall_elim (M := M) (w := w)
+    (body := fun learner =>
+      ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
+    (v := l) (hAx hW)
+  exact ⟨Sat.iff_mp (M := M) (w := w) hInst,
+    Sat.iff_mpr (M := M) (w := w) hInst⟩
+
+end SafePredicate
 
 end Examples
 end ModalDistribution

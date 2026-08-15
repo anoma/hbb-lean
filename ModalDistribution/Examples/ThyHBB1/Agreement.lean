@@ -52,7 +52,7 @@ set_option autoImplicit false
 variable {S : Signature}
 variable {P : Type} [Nonempty P]
 variable {M : Model S P}
-variable {liveSymb : Signature.PredSymb S}
+variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
 /-- Agreement property for ThyHBB1.
@@ -67,7 +67,7 @@ that two different values v₁ ≠ v₂ are delivered under sequentiality.
 See also: `agreementFromDeliveriesThyHBB1`, agreement properties for ThyHBB2 and ThyHBB3. -/
 theorem agreementThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq) :
@@ -132,7 +132,7 @@ theorem agreementThyHBB1
         (hDistinct := hDistinct)
 
   have hVoteAx : AllWorldValid M
-      (voteBackwardAxiom proposeSymb echoSymb voteSymb) := by
+      (voteBackwardAxiom safeSymb echoSymb voteSymb) := by
     apply hTheory
     simp [ThyHBB1]
 
@@ -204,33 +204,40 @@ theorem agreementThyHBB1
         (body := fun learner =>
           ∀ᶠ fun value =>
             ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-              (safeFormula proposeSymb learner ∧ᶠ
+              (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
                 □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
         (v := la)
         (h :=
           AllWorldValid.of_mem_history
             (M := M)
-            (φ := voteBackwardAxiom proposeSymb echoSymb voteSymb)
+            (φ := voteBackwardAxiom safeSymb echoSymb voteSymb)
             hVoteAx hNow_mem_history)
     have hVoteImp_now_value :=
       Sat.forall_elim (M := M) (w := wNow)
         (body := fun value =>
           ofEvent ⟨voteSymb, [la, value]⟩ ⇒ᶠ
-            (safeFormula proposeSymb la ∧ᶠ
+            (ofPredicate ⟨safeSymb, [la]⟩ ∧ᶠ
               □ᶠ↓[[la]] (ofEvent ⟨echoSymb, [value]⟩)))
         (v := va) hVoteImp_now
     have hSafeEcho_now :=
       (Sat.imp (M := M) (w := wNow)
         (φ := ofEvent ⟨voteSymb, [la, va]⟩)
-        (ψ := (safeFormula proposeSymb la) ∧ᶠ
+        (ψ := (ofPredicate ⟨safeSymb, [la]⟩) ∧ᶠ
           □ᶠ↓[[la]] (ofEvent ⟨echoSymb, [va]⟩))).1
         hVoteImp_now_value hVote_now
     have hSafeEcho_now_split :=
       (Sat.and (M := M) (w := wNow)
-        (φ := safeFormula proposeSymb la)
+        (φ := ofPredicate ⟨safeSymb, [la]⟩)
         (ψ := □ᶠ↓[[la]] (ofEvent ⟨echoSymb, [va]⟩))).1
         hSafeEcho_now
-    have hSafe_la := hSafeEcho_now_split.1
+    have hNow_le : wNow.time ⪯ M.history.val :=
+      PreHistory.happensBeforeEq_of_mem
+        (P := P) (Event := Signature.EventType S)
+        (hmem := by
+          simpa [World.place, World.event, World.time] using hNow_mem_history)
+    have hSafe_la :=
+      (safe_iff_safeFormula (M := M) (hTheory := hTheory)
+        (w := wNow) hNow_le la).1 hSafeEcho_now_split.1
     have hEcho_la_box := hSafeEcho_now_split.2
 
     obtain ⟨wPast, hPast_mem, hPast_place, hVotePast⟩ :=
@@ -245,30 +252,30 @@ theorem agreementThyHBB1
         (body := fun learner =>
           ∀ᶠ fun value =>
             ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-              (safeFormula proposeSymb learner ∧ᶠ
+              (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
                 □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
         (v := lb)
         (h :=
           AllWorldValid.of_mem_history
             (M := M)
-            (φ := voteBackwardAxiom proposeSymb echoSymb voteSymb)
+            (φ := voteBackwardAxiom safeSymb echoSymb voteSymb)
             hVoteAx hPast_mem_history)
     have hVoteImp_past_value :=
       Sat.forall_elim (M := M) (w := wPast)
         (body := fun value =>
           ofEvent ⟨voteSymb, [lb, value]⟩ ⇒ᶠ
-            (safeFormula proposeSymb lb ∧ᶠ
+            (ofPredicate ⟨safeSymb, [lb]⟩ ∧ᶠ
               □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [value]⟩)))
         (v := vb) hVoteImp_past
     have hSafeEcho_past :=
       (Sat.imp (M := M) (w := wPast)
         (φ := ofEvent ⟨voteSymb, [lb, vb]⟩)
-        (ψ := (safeFormula proposeSymb lb) ∧ᶠ
+        (ψ := (ofPredicate ⟨safeSymb, [lb]⟩) ∧ᶠ
           □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩))).1
         hVoteImp_past_value hVotePast
     have hSafeEcho_past_split :=
       (Sat.and (M := M) (w := wPast)
-        (φ := safeFormula proposeSymb lb)
+        (φ := ofPredicate ⟨safeSymb, [lb]⟩)
         (ψ := □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩))).1
         hSafeEcho_past
     have hEcho_lb_local := hSafeEcho_past_split.2
@@ -396,7 +403,7 @@ the main agreement theorem.
 See also: `agreementThyHBB1`. -/
 theorem agreementFromDeliveriesThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁ l₂ l₁' l₂' : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq)

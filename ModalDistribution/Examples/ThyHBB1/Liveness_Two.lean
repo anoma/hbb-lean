@@ -33,7 +33,7 @@ section Liveness_Two
 
 variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P}
-variable {liveSymb : Signature.PredSymb S}
+variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
 /-- Liveness property 2 specialised to `ThyHBB1`.
@@ -44,16 +44,20 @@ If a value is delivered to learner l₁' and:
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
 theorem livenessTwoThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
-    (hSafe : ⊨[M]safeFormula proposeSymb l)
+    (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
     (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
          predicate0 liveSymb ⇒ᶠ
          ↕ᶠ(ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
   classical
+  have hSafe : ⊨[M]safeFormula proposeSymb l := fun q =>
+    (safe_iff_safeFormula (M := M) (hTheory := hTheory)
+      (w := ⟨q, †, M.history.val⟩)
+      (PreHistory.happensBeforeEq_refl _) l).1 (hSafe q)
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hSafeTop : ⟪wTop⟫ ⊨[M] safeFormula proposeSymb l := by
@@ -217,7 +221,7 @@ theorem livenessTwoThyHBB1
             □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
     classical
     have hVoteAx : AllWorldValid M
-        (voteBackwardAxiom proposeSymb echoSymb voteSymb) := by
+        (voteBackwardAxiom safeSymb echoSymb voteSymb) := by
       apply hTheory
       simp [ThyHBB1]
     obtain ⟨qVote, hPastConj⟩ :=
@@ -253,37 +257,34 @@ theorem livenessTwoThyHBB1
         (body := fun learner =>
           ∀ᶠ fun value =>
             ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-              (safeFormula proposeSymb learner ∧ᶠ
+              (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
                 □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
         (v := l)
         (h :=
           AllWorldValid.of_mem_history
             (M := M)
-            (φ := voteBackwardAxiom proposeSymb echoSymb voteSymb)
+            (φ := voteBackwardAxiom safeSymb echoSymb voteSymb)
             hVoteAx ht_mem_history)
     have hVoteImp_value :=
       Sat.forall_elim (M := M) (w := tVote)
         (body := fun value =>
           ofEvent ⟨voteSymb, [l, value]⟩ ⇒ᶠ
-            (safeFormula proposeSymb l ∧ᶠ
+            (ofPredicate ⟨safeSymb, [l]⟩ ∧ᶠ
               □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [value]⟩)))
         (v := v) hVoteImp
     have hSafeEcho :=
       (Sat.imp (M := M)
         (w := tVote)
         (φ := ofEvent ⟨voteSymb, [l, v]⟩)
-        (ψ := safeFormula proposeSymb l ∧ᶠ
+        (ψ := ofPredicate ⟨safeSymb, [l]⟩ ∧ᶠ
           □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).1
         hVoteImp_value hVoteEvent
     have hSafeEchoSplit :=
       (Sat.and (M := M)
         (w := tVote)
-        (φ := safeFormula proposeSymb l)
+        (φ := ofPredicate ⟨safeSymb, [l]⟩)
         (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).1
         hSafeEcho
-    have hSafeLocal :
-        ⟪tVote⟫ ⊨[M] safeFormula proposeSymb l :=
-      hSafeEchoSplit.1
     have hEchoBox :
         ⟪tVote⟫ ⊨[M] □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩) :=
       hSafeEchoSplit.2
@@ -487,7 +488,7 @@ theorem livenessTwoThyHBB1
             ofEvent ⟨voteSymb, [l, v]⟩) := by
     classical
     have hVoteForwardAx : AllWorldValid M
-        (voteForwardAxiom liveSymb proposeSymb echoSymb voteSymb) := by
+        (voteForwardAxiom liveSymb safeSymb echoSymb voteSymb) := by
       apply hTheory
       simp [ThyHBB1]
     have hImpVotes : AllWorldValid M
@@ -499,7 +500,7 @@ theorem livenessTwoThyHBB1
         Sat.forall_elim (M := M) (w := t)
           (body := fun learner =>
             ∀ᶠ (fun value =>
-              (⇕ᶠ (safeFormula proposeSymb learner)) ⇒ᶠ
+              (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
                 ((predicate0 liveSymb ∧ᶠ
                     □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
                   ↕ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩))))
@@ -507,7 +508,7 @@ theorem livenessTwoThyHBB1
       have hValue :=
         Sat.forall_elim (M := M) (w := t)
           (body := fun value =>
-            (⇕ᶠ (safeFormula proposeSymb l)) ⇒ᶠ
+            (⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩)) ⇒ᶠ
               ((predicate0 liveSymb ∧ᶠ
                   □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
                 ↕ᶠ (ofEvent ⟨voteSymb, [l, value]⟩)))
@@ -532,14 +533,14 @@ theorem livenessTwoThyHBB1
           (hPlace := rfl)
           (hSafe := hSafeTopWorld)
       have hSafeAlways :
-          ⟪t⟫ ⊨[M] ⇕ᶠ (safeFormula proposeSymb l) := by
+          ⟪t⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
         refine
           Sat.not_intro (M := M) (w := t)
-            (φ := ↕ᶠ (¬ᶠ (safeFormula proposeSymb l))) ?_
+            (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))) ?_
         intro hSome
         obtain ⟨s, hs_mem, hs_place, hNotSafe⟩ :=
           (Sat.sometime (M := M) (w := t)
-            (φ := ¬ᶠ (safeFormula proposeSymb l))).1 hSome
+            (φ := ¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))).1 hSome
         have hAcc_s : s ≪⁻ wt :=
           ⟨by
               simpa [wt, World.time]
@@ -563,13 +564,22 @@ theorem livenessTwoThyHBB1
                     hAcc_s.1)
             (hPlace := by simpa [World.place] using hAcc_s.2)
             (hSafe := hSafeTopWorld)
+        have hs_le : s.time ⪯ M.history.val :=
+          PreHistory.happensBeforeEq_of_mem
+            (P := P) (Event := Signature.EventType S)
+            (hmem := by
+              simpa [World.place, World.event, World.time] using hs_mem)
+        have hSafePred_s :
+            ⟪s⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩ :=
+          (safe_iff_safeFormula (M := M) (hTheory := hTheory)
+            (w := s) hs_le l).2 hSafe_s
         exact
           (Sat.not_elim (M := M) (w := s)
-            (φ := safeFormula proposeSymb l))
-            hNotSafe hSafe_s
+            (φ := ofPredicate ⟨safeSymb, [l]⟩))
+            hNotSafe hSafePred_s
       have hGuard :=
         (Sat.imp (M := M) (w := t)
-          (φ := ⇕ᶠ (safeFormula proposeSymb l))
+          (φ := ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩))
           (ψ := (predicate0 liveSymb ∧ᶠ
               □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
             ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))).1
@@ -674,11 +684,11 @@ forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
 theorem livenessTwoAtPastDownThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
-    (hSafe : ⊨[M]safeFormula proposeSymb l)
+    (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
     (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
          □ᶠ↓[[l₂']] (ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
@@ -757,11 +767,11 @@ theorem livenessTwoAtPastDownThyHBB1
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
 theorem livenessTwoAtPastThyHBB1
     (hTheory : M ⊨ᵀ
-      ThyHBB1 liveSymb proposeSymb echoSymb voteSymb deliverSymb)
+      ThyHBB1 liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
     {v : Signature.Value S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
-    (hSafe : ⊨[M]safeFormula proposeSymb l)
+    (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
     (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
          ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
