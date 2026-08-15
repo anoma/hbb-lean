@@ -3,7 +3,6 @@ import ModalDistribution.Examples.ThyHBB1.Agreement
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyHBB1.Axioms
-import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Properties.Modalities
 
@@ -233,16 +232,11 @@ theorem livenessOne
         (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))).1
         step6 hLiveTop
     exact
-      deliver_from_vote_box
-        (M := M)
-        (liveSymb := liveSymb)
-        (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb)
-        (reporting := l) (learner := l) (value := v)
-        (hThyLive := hThyLiveTheory)
-        (hDeliverAx := theory_deliverForward (M := M) hTheory)
-        (hLiveTop := hLiveTop)
-        (hVotesTop := hVotesTop)
+      live_sometime_consequent_at (M := M)
+        (hLiveTheory := hThyLiveTheory)
+        (hImp := HBB.deliverForward_imp (M := M)
+          (theory_deliverForward (M := M) hTheory))
+        hLiveTop hVotesTop
 
   -- Final application of the implication at participant `p`.
   exact

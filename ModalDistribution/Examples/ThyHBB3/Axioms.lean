@@ -259,6 +259,44 @@ theorem theory_deliverForward
 
 end Projections
 
+section Instantiations
+
+variable {P : Type} [Nonempty P] {M : Model S P}
+variable {liveSymb : Signature.PredSymb S}
+variable {voteSymb deliverSymb : Signature.EventSymb S}
+
+/-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
+eventually yields a delivery. This is the form consumed by Lemma 6.4.3. -/
+theorem deliverForward_imp
+    (hAx : □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb)
+    {learner value : S.Value} :
+    □W⊨[M]((predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩)) ⇒ᶠ
+      ↕ᶠ (ofEvent ⟨deliverSymb, [learner, value]⟩)) := by
+  classical
+  intro t ht
+  have hLocal :
+      ⟪t⟫ ⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
+    hAx ht
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := t)
+      (body := fun learner' =>
+        ∀ᶠ fun value' =>
+          (predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[learner']] (ofEvent ⟨voteSymb, [learner', value']⟩)) ⇒ᶠ
+            ↕ᶠ (ofEvent ⟨deliverSymb, [learner', value']⟩))
+      (v := learner)
+      (by simpa [deliverForwardAxiom] using hLocal)
+  exact
+    Sat.forall_elim (M := M) (w := t)
+      (body := fun value' =>
+        (predicate0 liveSymb ∧ᶠ
+            □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value']⟩)) ⇒ᶠ
+          ↕ᶠ (ofEvent ⟨deliverSymb, [learner, value']⟩))
+      (v := value) hLearner
+
+end Instantiations
+
 end ThyHBB3
 
 end Examples

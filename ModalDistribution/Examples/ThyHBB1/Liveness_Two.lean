@@ -3,7 +3,6 @@ import ModalDistribution.Examples.ThyHBB1.Agreement
 import ModalDistribution.Examples.ThyHBB1.Uniqueness
 import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyHBB1.Axioms
-import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Properties.Modalities
 
@@ -212,16 +211,11 @@ theorem livenessTwo
       (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩)))
       hKnowVotes hLivep
   exact
-    deliver_from_vote_box
-      (M := M)
-      (liveSymb := liveSymb)
-      (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb)
-      (reporting := l₂') (learner := l) (value := v)
-      (hThyLive := hThyLiveTheory)
-      (hDeliverAx := theory_deliverForward (M := M) hTheory)
-      (hLiveTop := hLivep)
-      (hVotesTop := hVotesTop)
+    live_sometime_consequent_at (M := M)
+      (hLiveTheory := hThyLiveTheory)
+      (hImp := HBB.deliverForward_imp (M := M)
+        (theory_deliverForward (M := M) hTheory))
+      hLivep hVotesTop
 
 /-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was

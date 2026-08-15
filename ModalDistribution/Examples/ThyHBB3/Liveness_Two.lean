@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB3.Axioms
 import ModalDistribution.Examples.ThyHBB3.Lemmas
-import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
+import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
@@ -510,109 +510,18 @@ forces a live delivery for `l₂`. -/
       ⟪wTop⟫ ⊨[M]
         (predicate0 liveSymb ⇒ᶠ
           ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩)) := by
-    classical
-    have hDeliverAx : AllWorldValid M
-        (deliverForwardAxiom liveSymb voteSymb deliverSymb) := by
-      apply hTheory
-      simp [theory]
     refine Sat.imp_intro (M := M) (w := wTop) ?_
     intro hLiveTop
-    -- Apply the intermediate implication to obtain a vote quorum in the past.
-    have hVotesTop :
-        ⟪wTop⟫ ⊨[M]
-          ↕ᶠ (□ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)))).1
-        hVotesEventuallyBox hLiveTop
-    -- Pull the sometime witness into the concrete history.
-    have hPastVotes :
-        ⟪wTop⟫ ⊨[M]
-          ↓ᶠ (□ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      (Sat.atEnd (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (□ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)))).1
-        (by
-          simpa [Formula.sometime]
-            using hVotesTop)
-    obtain ⟨t, ht_mem, ht_place, hVoteLocal⟩ :=
-      (Sat.past (M := M)
-        (w := wTop)
-        (φ := □ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩))).1
-        hPastVotes
-    -- Transport the liveness hypothesis to the witnessing world.
-    have hLiveEnd :
-        ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M] predicate0 liveSymb := by
-      cases ht_place
-      simpa [wTop, World.place, World.time] using hLiveTop
-    have hLiveLocal :
-        ⟪t⟫ ⊨[M] predicate0 liveSymb :=
-      (alwaysLiveEquivForward (M := M)
-        (liveSymb := liveSymb)
-        (hTheory := hThyLive)
-        (t := t)
-        (ht := ht_mem)).mpr
-        (by
-          simpa [World.place, World.time]
-            using hLiveEnd)
-    -- Instantiate `Deliver!` at the witnessed history point.
-    have hForward :=
-      AllWorldValid.of_mem_history
-        (M := M)
-        (φ := deliverForwardAxiom liveSymb voteSymb deliverSymb)
-        hDeliverAx ht_mem
-    have hLearner :=
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun learner' =>
-          ∀ᶠ fun value' =>
-            (predicate0 liveSymb ∧ᶠ
-                □ᶠ↓[[learner']] (ofEvent ⟨voteSymb, [learner', value']⟩)) ⇒ᶠ
-              ↕ᶠ (ofEvent ⟨deliverSymb, [learner', value']⟩))
-        (v := l₂) hForward
-    have hValue :=
-      Sat.forall_elim (M := M) (w := t)
-        (body := fun value' =>
-          (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, value']⟩)) ⇒ᶠ
-            ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, value']⟩))
-        (v := v) hLearner
-    have hDeliverGuard :
-        ⟪t⟫ ⊨[M]
-          (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      (Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩))).2
-        ⟨hLiveLocal, hVoteLocal⟩
-    have hDeliverLocal :
-        ⟪t⟫ ⊨[M]
-          ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) :=
-      (Sat.imp (M := M) (w := t)
-        (φ := predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩))
-        (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩))).1
-        hValue hDeliverGuard
-    -- Push the deliver event back to the top of the history.
-    have hPastDeliverEnd :
-        ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
-          ↓ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) :=
-      (Sat.atEnd (M := M)
-        (w := t)
-        (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩))).1
-        (by
-          simpa [Formula.sometime]
-            using hDeliverLocal)
-    have hPastDeliverTop :
-        ⟪wTop⟫ ⊨[M]
-          ↓ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) := by
-      cases ht_place
-      simpa [wTop, World.place, World.time]
-        using hPastDeliverEnd
     exact
-      (Sat.atEnd (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩))).2
-        hPastDeliverTop
+      ThyHBB1.live_sometime_consequent_at (M := M)
+        (hLiveTheory := hThyLive)
+        (hImp := deliverForward_imp (M := M)
+          (theory_deliverForward (M := M) hTheory))
+        hLiveTop
+        ((Sat.imp (M := M) (w := wTop)
+          (φ := predicate0 liveSymb)
+          (ψ := ↕ᶠ (□ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)))).1
+          hVotesEventuallyBox hLiveTop)
 
   -- Apply the live guard to obtain eventual `l₂` votes.
   have hVotesEventually :

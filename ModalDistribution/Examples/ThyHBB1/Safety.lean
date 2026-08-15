@@ -503,30 +503,20 @@ theorem boxPast_live_of_eventual_quorum
   simpa [wₚ]
     using hPastLiveψ
 
-/-- Paper: Lemma 6.4.3. Composing eventual consequences at the end of
-time. -/
-theorem live_eventually_consequent
+/-- The per-place core of Lemma 6.4.3: at a live end-of-time world, an
+eventual `φ` combines with the implication `(live ∧ φ) ⇒ ↕ψ` to give an
+eventual `ψ`. -/
+theorem live_sometime_consequent_at
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
-    (φ ψ : Formula S)
-    (hLive : ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠφ))
-    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
-    ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠψ) := by
+    {φ ψ : Formula S} {p : P}
+    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ))
+    (hLive_p : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]predicate0 liveSymb)
+    (hSometimeφ : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↕ᶠφ) :
+    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↕ᶠψ := by
   classical
-  refine fun p => ?_
   let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hLiveImp := hLive p
   have hImp_event : AllWorldValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
-  refine
-    (Sat.imp (M := M)
-      (w := wₚ)
-      (φ := predicate0 liveSymb) (ψ := ↕ᶠ ψ)).2 ?_
-  intro hLive_p
-  have hSometimeφ :
-      ⟪wₚ⟫ ⊨[M] ↕ᶠ φ :=
-    (Sat.imp (M := M)
-      (w := wₚ)
-      (φ := predicate0 liveSymb) (ψ := ↕ᶠ φ)).1
-      hLiveImp hLive_p
+  show ⟪wₚ⟫ ⊨[M] ↕ᶠ ψ
   have hPastφ :
       ⟪wₚ⟫ ⊨[M] Formula.past φ :=
     (Sat.atEnd (M := M)
@@ -589,6 +579,29 @@ theorem live_eventually_consequent
     (Sat.atEnd (M := M)
       (w := wₚ)
       (φ := Formula.past ψ)).2 hPastψ
+
+/-- Paper: Lemma 6.4.3. Composing eventual consequences at the end of
+time. -/
+theorem live_eventually_consequent
+    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (φ ψ : Formula S)
+    (hLive : ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠφ))
+    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
+    ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠψ) := by
+  intro p
+  refine
+    (Sat.imp (M := M)
+      (w := ⟨p, †, M.history.val⟩)
+      (φ := predicate0 liveSymb) (ψ := ↕ᶠ ψ)).2 ?_
+  intro hLive_p
+  exact
+    live_sometime_consequent_at (M := M)
+      (hLiveTheory := hLiveTheory) (hImp := hImp)
+      hLive_p
+      ((Sat.imp (M := M)
+        (w := ⟨p, †, M.history.val⟩)
+        (φ := predicate0 liveSymb) (ψ := ↕ᶠ φ)).1
+        (hLive p) hLive_p)
 
 /-- Paper: Lemma 6.4.4. `\atd{l}` of `\sometime φ` coincides
 with `\atddot{l} φ`. -/

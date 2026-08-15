@@ -169,6 +169,45 @@ theorem deliver_to_vote_box_end
       (t := tDeliver)
       (hSubset := hSubset) (hBox := hBox) p
 
+
+/-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
+eventually yields a delivery. This is the form consumed by Lemma 6.4.3. -/
+theorem deliverForward_imp
+    (hAx : AllWorldValid M (deliverForwardAxiom liveSymb voteSymb deliverSymb))
+    {reporting learner value : S.Value} :
+    □W⊨[M]((predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩)) ⇒ᶠ
+      ↕ᶠ (ofEvent ⟨deliverSymb, [reporting, learner, value]⟩)) := by
+  classical
+  intro t ht
+  have hLocal :
+      ⟪t⟫ ⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
+    hAx ht
+  have hReporting :=
+    Sat.forall_elim (M := M) (w := t)
+      (body := fun reporting' =>
+        ∀ᶠ (fun learner' => ∀ᶠ (fun value' =>
+          (predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[reporting']] (ofEvent ⟨voteSymb, [learner', value']⟩)) ⇒ᶠ
+            ↕ᶠ (ofEvent ⟨deliverSymb, [reporting', learner', value']⟩))))
+      (v := reporting)
+      (by simpa [deliverForwardAxiom] using hLocal)
+  have hLearner :=
+    Sat.forall_elim (M := M) (w := t)
+      (body := fun learner' =>
+        ∀ᶠ (fun value' =>
+          (predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner', value']⟩)) ⇒ᶠ
+            ↕ᶠ (ofEvent ⟨deliverSymb, [reporting, learner', value']⟩)))
+      (v := learner) hReporting
+  exact
+    Sat.forall_elim (M := M) (w := t)
+      (body := fun value' =>
+        (predicate0 liveSymb ∧ᶠ
+            □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value']⟩)) ⇒ᶠ
+          ↕ᶠ (ofEvent ⟨deliverSymb, [reporting, learner, value']⟩))
+      (v := value) hLearner
+
 end Lemmas
 
 end HBB

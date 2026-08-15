@@ -2,7 +2,7 @@ import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB2.Axioms
 import ModalDistribution.Examples.ThyHBB2.Lemmas
 import ModalDistribution.Examples.ThyLive
-import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
+import ModalDistribution.Examples.ThyHBB1.Safety
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Logic.Properties.Modalities
@@ -204,16 +204,10 @@ theorem livenessTwo
         (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
         hLiveKnowsVotes hLiveTop
     exact
-      ThyHBB1.deliver_from_vote_box (M := M)
-        (liveSymb := liveSymb)
-        (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb)
-        (reporting := l₂') (learner := ℓ) (value := v)
-        (hThyLive := hThyLive)
-        (hDeliverAx := hDeliverAx)
-        (p := p)
-        (hLiveTop := hLiveTop)
-        (hVotesTop := hVotesTop)
+      ThyHBB1.live_sometime_consequent_at (M := M)
+        (hLiveTheory := hThyLive)
+        (hImp := HBB.deliverForward_imp (M := M) hDeliverAx)
+        hLiveTop hVotesTop
   have hGoal :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by

@@ -2,7 +2,6 @@ import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyHBB2.Axioms
 import ModalDistribution.Examples.ThyHBB2.Lemmas
 import ModalDistribution.Examples.ThyHBB1.Safety
-import ModalDistribution.Examples.ThyHBB1.LivenessHelpers
 import ModalDistribution.Core.Semifilter
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
@@ -175,7 +174,7 @@ theorem livenessOne
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-    -- Step 6: combine Step 5 with `Deliver!` via `ThyHBB1.deliver_from_vote_box`.
+    -- Step 6: combine Step 5 with `Deliver!` via Lemma 6.4.3.
     classical
     have hVotesSometime :
         ⟪wTop⟫ ⊨[M]
@@ -185,14 +184,11 @@ theorem livenessOne
         (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))).1
         hLiveKnowsVotes hLiveHere
     exact
-      ThyHBB1.deliver_from_vote_box (M := M)
-        (liveSymb := liveSymb) (voteSymb := voteSymb) (deliverSymb := deliverSymb)
-        (reporting := l) (learner := l) (value := v)
-        (hThyLive := hThyLive)
-        (hDeliverAx := theory_deliverForward (M := M) hTheory)
-        (p := p)
-        (hLiveTop := hLiveHere)
-        (hVotesTop := hVotesSometime)
+      ThyHBB1.live_sometime_consequent_at (M := M)
+        (hLiveTheory := hThyLive)
+        (hImp := HBB.deliverForward_imp (M := M)
+          (theory_deliverForward (M := M) hTheory))
+        hLiveHere hVotesSometime
   simpa [wTop] using hDeliverEventually
 
 /-- Paper: Proposition 7.2.3, first corollary. When the guarded proposal
