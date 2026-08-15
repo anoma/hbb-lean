@@ -621,7 +621,7 @@ theorem livenessTwoThyHBB1
           (ψ := ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))).1
           hGuard hLiveAndBox
     exact
-      atddot_live_of_eventual_quorum
+      boxPast_live_of_eventual_quorum
         (M := M) (liveSymb := liveSymb)
         (φ := φVote)
         (ψ := ofEvent ⟨voteSymb, [l, v]⟩)

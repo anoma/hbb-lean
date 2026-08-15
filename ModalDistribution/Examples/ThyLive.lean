@@ -55,7 +55,7 @@ section Axioms
       ↕ᶠ (♢ᶠ↓[ls] φ))
 
 /-- Axiom-scheme `Knowledge₍⋄⇓₎`. -/
-@[simp] def knowledgeDiamondEventuallyAxiom
+@[simp] def knowledgeBoxAxiom
     (liveSymb : Signature.PredSymb S)
     (ls : List (Signature.Value S))
     (φ : Formula S) :
@@ -75,7 +75,7 @@ section Axioms
       (∃ ls ψ,
         φ = knowledgeDiamondAxiom (S := S) liveSymb ls ψ) ∨
       (∃ ls ψ,
-        φ = knowledgeDiamondEventuallyAxiom (S := S) liveSymb ls ψ) }
+        φ = knowledgeBoxAxiom (S := S) liveSymb ls ψ) }
 
 end Axioms
 
@@ -414,7 +414,7 @@ theorem live_eventually_knows_box
 
   -- The knowledge axiom instance we need.
   have hKnowMem :
-      knowledgeDiamondEventuallyAxiom (S := S)
+      knowledgeBoxAxiom (S := S)
         liveSymb [l] φ ∈ ThyLive liveSymb := by
     dsimp [ThyLive]
     refine Or.inr ?_
@@ -424,13 +424,13 @@ theorem live_eventually_knows_box
 
   have hKnowledge :
       AllWorldValid M
-        (knowledgeDiamondEventuallyAxiom (S := S)
+        (knowledgeBoxAxiom (S := S)
           liveSymb [l] φ) :=
     hTheory hKnowMem
 
   have hAx :=
     AllWorldValid.at_end (M := M)
-      (φ := knowledgeDiamondEventuallyAxiom (S := S)
+      (φ := knowledgeBoxAxiom (S := S)
         liveSymb [l] φ)
       hKnowledge p
 
@@ -460,7 +460,7 @@ theorem live_eventually_knows_box
       (ψ := ↕ᶠ (□ᶠ↓[[l]] φ))
       hImp hLiveTop
 
-private theorem promote_live_atddot_past
+private theorem live_boxPast_nests_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ))
     {q : P}
@@ -469,7 +469,7 @@ private theorem promote_live_atddot_past
     ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]Formula.past ((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ) := by
   classical
   have hKnowMem :
-      knowledgeDiamondEventuallyAxiom (S := S) liveSymb [l] φ ∈
+      knowledgeBoxAxiom (S := S) liveSymb [l] φ ∈
         ThyLive liveSymb := by
     dsimp [ThyLive]
     refine Or.inr ?_
@@ -478,7 +478,7 @@ private theorem promote_live_atddot_past
     exact ⟨[l], φ, rfl⟩
   have hKnowledge :
       AllWorldValid M
-        (knowledgeDiamondEventuallyAxiom (S := S)
+        (knowledgeBoxAxiom (S := S)
           liveSymb [l] φ) :=
     hTheory hKnowMem
   obtain ⟨t, ht_mem, ht_place, hLiveφ_t⟩ :=
@@ -519,7 +519,7 @@ private theorem promote_live_atddot_past
   have hKnow_t :=
     AllWorldValid.of_mem_history
       (M := M)
-      (φ := knowledgeDiamondEventuallyAxiom (S := S)
+      (φ := knowledgeBoxAxiom (S := S)
         liveSymb [l] φ)
       hKnowledge ht_mem_history
   have hLiveImp :
@@ -609,7 +609,7 @@ private theorem promote_live_atddot_past
 
 /-- Liveness quorum boxes promote to nested
 quorum boxes under `ThyLive`. -/
-theorem promote_live_atddot
+theorem live_boxPast_nests
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ) := by
@@ -638,7 +638,7 @@ theorem promote_live_atddot
         Formula.past ((Formula.predicate0 liveSymb) ∧ᶠ φ) := by
     simpa [wₚ] using hAll q hqO
   exact
-    promote_live_atddot_past (S := S) (P := P) (M := M)
+    live_boxPast_nests_past (S := S) (P := P) (M := M)
       (φ := φ) (l := l) (liveSymb := liveSymb)
       (hTheory := hTheory)
       (hQuorum := hQuorum) (q := q) hPastLiveφ

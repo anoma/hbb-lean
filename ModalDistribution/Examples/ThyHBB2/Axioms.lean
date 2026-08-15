@@ -6,16 +6,13 @@ import ModalDistribution.Logic.Properties
 /-!
 # ThyHBB2 Axioms
 
-This file records the axiom schemes for the `ThyHBB2` broadcast protocol theory.
-Theory ThyHBB2 axioms:
+This file records the axiom system of the theory `ThyHBB2` (Figure 9 of the
+paper): backward rules `Echo?`/`Vote?`/`Deliver?`, non-equivocation `EchoNE`,
+and forward rules `Echo!`/`Vote!`/`Deliver!`, over `ThyLive`.
 
-- **Backward rules**: `Echo?`, `Vote?`, and `Deliver?`
-- **Non-equivocation**: `EchoNE`
-- **Forward rules**: `Echo!`, `Vote!`, and `Deliver!`
-- **Theory assembly**: `ThyHBB2` extends `ThyLive` with these axioms
-
-Compared to `ThyHBB1`, the theory drops the `safe` predicate from `Vote?` and
- `Vote!`, reflecting the simplified protocol assumptions.
+Compared to `ThyHBB1`, the theory has no `safe` predicate: `Vote?` and `Vote!`
+are unguarded. The rules shared verbatim with the other theories come from
+`Examples.HBB`.
 -/
 
 namespace ModalDistribution
@@ -35,8 +32,7 @@ variable {S : Signature}
 
 section BackwardAxioms
 
-/-- Backward rule `Vote?`: votes require an `l`-quorum of echoes.
-Backward rule axiom. -/
+/-- Backward rule `Vote?`: votes require an `l`-quorum of echoes. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
@@ -51,8 +47,7 @@ end NonEquivocation
 
 section ForwardAxioms
 
-/-- Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote.
-Backward rule axiom. -/
+/-- Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -70,7 +65,7 @@ variable
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
 /-- Theory ThyHBB2 .
-It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in Backward rule axiom. -/
+It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨

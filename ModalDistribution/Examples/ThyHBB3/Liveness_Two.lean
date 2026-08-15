@@ -479,7 +479,7 @@ forces a live delivery for `l₂`. -/
     intro hLiveTop
     -- Instantiate the knowledge axiom for `[l₂]` vote quorums.
     have hKnowledgeMem :
-        knowledgeDiamondEventuallyAxiom (S := S)
+        knowledgeBoxAxiom (S := S)
           liveSymb [l₂]
           (ofEvent ⟨voteSymb, [l₂, v]⟩) ∈ ThyLive liveSymb := by
       dsimp [ThyLive]
@@ -489,7 +489,7 @@ forces a live delivery for `l₂`. -/
       exact ⟨[l₂], ofEvent ⟨voteSymb, [l₂, v]⟩, rfl⟩
     have hKnowledgeEvent :
         AllWorldValid M
-          (knowledgeDiamondEventuallyAxiom (S := S)
+          (knowledgeBoxAxiom (S := S)
             liveSymb [l₂]
             (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
       hThyLive hKnowledgeMem
@@ -514,7 +514,7 @@ forces a live delivery for `l₂`. -/
             ↕ᶠ (□ᶠ↓[[l₂]]
               (ofEvent ⟨voteSymb, [l₂, v]⟩)))
         (AllWorldValid.at_end (M := M)
-          (φ := knowledgeDiamondEventuallyAxiom (S := S)
+          (φ := knowledgeBoxAxiom (S := S)
             liveSymb [l₂] (ofEvent ⟨voteSymb, [l₂, v]⟩))
           hKnowledgeEvent p)
         hAtEnd

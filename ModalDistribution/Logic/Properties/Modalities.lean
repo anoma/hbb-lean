@@ -11,10 +11,8 @@ in the modal logic framework. It includes:
 
 - `hasQuorumWitness` definition and characterization lemmas
 - Diamond and box modality satisfaction lemmas (sat_diamond_*, sat_box_*)
-- De Morgan duality lemmas between ♢ and □ operators
 - AllWorldValid lemmas for reasoning about event satisfaction
 - Results for quorum families and diamond/box modalities
-- Counterexamples demonstrating limitations of certain implications
 - Lemmas about the interplay between temporal operators (↓, ↕) and quorum modalities
 -/
 
@@ -368,7 +366,7 @@ theorem exists_history_mem_of_end_boxPast
 
 /-- If a world lies in the global history, an always-past fact at that world
 forces the underlying proposition to hold immediately. -/
-theorem alwaysPast_now_of_mem
+theorem everytime_now_of_mem
     (M : Model S P)
     {w : World P (Signature.EventType S)} {φ : Formula S}
     (hMem : w ∈ M.history.val)
@@ -377,7 +375,7 @@ theorem alwaysPast_now_of_mem
   classical
   have hNoSome :
       ⟪w⟫ ⊨[M] ¬ᶠ (↕ᶠ (¬ᶠ φ)) :=
-    by simpa [Formula.alwaysPast] using hAlways
+    by simpa [Formula.everytime] using hAlways
   have hNoSome' :=
     (Sat.not (M := M) (w := w)
       (φ := ↕ᶠ (¬ᶠ φ))).1 hNoSome
@@ -821,12 +819,12 @@ theorem presentBoxImpliesPastBox
       (nWayQuorumIntersectionWitness (M := M)
         (ls := ls) (φ := φ)).symm
 
-theorem localSat_eventuallyPast_top_eq
+theorem localSat_allPast_top_eq
     (M : Model S P)
     (w : World P (Signature.EventType S)) :
     (⟪w⟫ ⊨[M] (⇓ᶠ ⊤ᶠ)) ↔ ⟪w⟫ ⊨[M] ⊤ᶠ := by
   classical
-  simp [Formula.eventuallyPast, Formula.not, Formula.top, Sat]
+  simp [Formula.allPast, Formula.not, Formula.top, Sat]
 
 /-- Past-guarded box at top world.
 
@@ -855,7 +853,7 @@ theorem pastBoxAtTopWorld
         (ts := ls)
         (φ := ⊤ᶠ) (ψ := ⇓ᶠ ⊤ᶠ)
         (h := fun q =>
-          (localSat_eventuallyPast_top_eq (M := M)
+          (localSat_allPast_top_eq (M := M)
             (w := ⟨q, †, M.history.val⟩)).symm))
 
 /-- Past box at top implies predecessor.
@@ -959,7 +957,7 @@ theorem singletonBoxImpliesDiamond
 The global version: if □ᶠ[[l]] φ holds globally, then ♢ᶠ[] φ holds globally.
 This lifts the local singleton box implication to the global level.
 
-See also: `singletonBoxImpliesDiamond`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
+See also: `singletonBoxImpliesDiamond`, `diamondPast_idem`. -/
 theorem globalSingletonBoxImpliesDiamond
     (M : Model S P)
     (l : Signature.Value S) (φ : Formula S) :
@@ -984,7 +982,7 @@ A singleton quorum box □ᶠ[[l]] φ at any world implies the empty diamond ♢
 at that world. This is a strengthening that works for arbitrary histories, not
 just the global top history.
 
-See also: `singletonBoxImpliesDiamond`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
+See also: `singletonBoxImpliesDiamond`, `diamondPast_idem`. -/
 theorem quorumBoxImpliesEmptyDiamond
     (M : Model S P)
     (H : History P (Signature.EventType S)) (p : P)
@@ -1058,7 +1056,7 @@ This shows that nested past operators collapse, simplifying reasoning about
 temporal formulas in distributed protocols.
 
 See also: `pastBoxCollapsesToPresentBox`, `pastDiamondBoxCollapsesToPresentBox`. -/
-theorem quorumBoxGlobalImpliesEmptyDiamond
+theorem diamondPast_idem
     (M : Model S P)
     (w : World P (Signature.EventType S)) (φ : Formula S)
     (hMem : w ∈ M.history.val) :
@@ -1135,7 +1133,7 @@ A past-guarded box ↓ᶠ (□ᶠ↓[[l]] φ) collapses to a present box □ᶠ�
 This idempotency property shows that nested temporal operators can be simplified,
 making proofs about temporal formulas more tractable.
 
-See also: `pastDiamondBoxCollapsesToPresentBox`, `quorumBoxGlobalImpliesEmptyDiamond`. -/
+See also: `pastDiamondBoxCollapsesToPresentBox`, `diamondPast_idem`. -/
 theorem pastBoxCollapsesToPresentBox
     (M : Model S P)
     (w : World P (Signature.EventType S))

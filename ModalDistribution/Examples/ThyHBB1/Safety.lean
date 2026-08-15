@@ -22,12 +22,12 @@ The lemmas are organized into several categories:
   - `safe_allPast`: Safety implies it always held in the past
 
 - **Quorum and liveness lemmas**: Lifting properties through quorums
-  - `atddot_of_eventual_quorum`: Quorum knowledge with global implication lifts to future quorum
-  - `atddot_live_of_eventual_quorum`: Previous result under ThyLive assumption
+  - `boxPast_of_eventual_quorum`: Quorum knowledge with global implication lifts to future quorum
+  - `boxPast_live_of_eventual_quorum`: Previous result under ThyLive assumption
   - `live_eventually_consequent`: Composing eventual consequences at end of time
 
 - **Modality equivalences**:
-  - `atd_sometime_iff_atddot`: Equivalence between box-sometime and boxPast modalities
+  - `box_sometime_iff_boxPast`: Equivalence between box-sometime and boxPast modalities
 
 These lemmas serve as building blocks for the main agreement and liveness theorems.
 -/
@@ -318,7 +318,7 @@ theorem safe_allPast
 
 /-- Quorum knowledge of `φ` and a
 global implication to `ψ` lift `φ` to a future quorum of `ψ`. -/
-theorem atddot_of_eventual_quorum
+theorem boxPast_of_eventual_quorum
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]φ)
@@ -380,7 +380,7 @@ theorem atddot_of_eventual_quorum
 
 /-- The previous result under the
 `ThyLive` assumption. -/
-theorem atddot_live_of_eventual_quorum
+theorem boxPast_live_of_eventual_quorum
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
     (φ ψ : Formula S)
     (l : Signature.Value S)
@@ -592,7 +592,7 @@ theorem live_eventually_consequent
 
 /-- `\atd{l}` of `\sometime φ` coincides
 with `\atddot{l} φ`. -/
-theorem atd_sometime_iff_atddot
+theorem box_sometime_iff_boxPast
     (φ : Formula S)
     (l : Signature.Value S) :
     (⊨[M]□ᶠ[[l]] ↕ᶠφ) ↔

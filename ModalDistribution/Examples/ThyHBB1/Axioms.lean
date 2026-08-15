@@ -6,16 +6,15 @@ import ModalDistribution.Logic.Properties
 /-!
 # ThyHBB1 Axioms
 
-This file defines the axiom schemes for the ThyHBB1 broadcast protocol theory.
-The axioms are organized into:
+This file defines the axiom system of the theory `ThyHBB1` (Figure 7 of the
+paper), organized into:
 
-- **Backward rules** (Echo?, Vote?, Deliver?): Causal requirements for events
-- **Safety formula**: Definition of the safe predicate
-- **Non-equivalence axiom** (EchoNE): Sequential participants echo at most one value
-- **Forward rules** (Echo!, Vote!, Deliver!): Liveness guarantees
-- **Theory assembly**: ThyHBB1 as a collection of axioms
+- **Backward rules** (`Echo?`, `Vote?`, `Deliver?`): causal requirements for events
+- **Other rules**: `ThyLive`, non-equivocation (`EchoNE`), and the `Safe` axiom
+  defining the `safe` predicate
+- **Forward rules** (`Echo!`, `Vote!`, `Deliver!`): liveness guarantees
 
-These mirror Figure (HBB1) from the paper and extend ThyLive with protocol-specific axioms.
+The rules shared verbatim with `ThyHBB2`/`ThyHBB3` come from `Examples.HBB`.
 -/
 
 namespace ModalDistribution

@@ -156,7 +156,7 @@ the proposal will eventually deliver it for `l`. -/
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨echoSymb, [v]⟩) :=
-    ThyHBB1.atddot_live_of_eventual_quorum
+    ThyHBB1.boxPast_live_of_eventual_quorum
       (M := M)
       (liveSymb := liveSymb)
       (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -187,7 +187,7 @@ the proposal will eventually deliver it for `l`. -/
           □ᶠ↓[[l]]
             (predicate0 liveSymb ∧ᶠ
               □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-      promote_live_atddot (M := M)
+      live_boxPast_nests (M := M)
         (liveSymb := liveSymb)
         (l := l)
         (φ := ofEvent ⟨echoSymb, [v]⟩)
@@ -324,7 +324,7 @@ the proposal will eventually deliver it for `l`. -/
     classical
     -- Instantiate the knowledge axiom for `l`-quorum votes.
     have hKnowledgeMem :
-        knowledgeDiamondEventuallyAxiom (S := S)
+        knowledgeBoxAxiom (S := S)
           liveSymb [l]
           (ofEvent ⟨voteSymb, [l, v]⟩) ∈ ThyLive liveSymb := by
       dsimp [ThyLive]
@@ -334,7 +334,7 @@ the proposal will eventually deliver it for `l`. -/
       exact ⟨[l], ofEvent ⟨voteSymb, [l, v]⟩, rfl⟩
     have hKnowledgeEvent :
         AllWorldValid M
-          (knowledgeDiamondEventuallyAxiom (S := S)
+          (knowledgeBoxAxiom (S := S)
             liveSymb [l]
             (ofEvent ⟨voteSymb, [l, v]⟩)) :=
       hThyLive hKnowledgeMem
@@ -361,7 +361,7 @@ the proposal will eventually deliver it for `l`. -/
             ↕ᶠ (□ᶠ↓[[l]]
               (ofEvent ⟨voteSymb, [l, v]⟩)))
         (AllWorldValid.at_end (M := M)
-          (φ := knowledgeDiamondEventuallyAxiom (S := S)
+          (φ := knowledgeBoxAxiom (S := S)
             liveSymb [l] (ofEvent ⟨voteSymb, [l, v]⟩))
           hKnowledgeEvent p)
         hAtEnd

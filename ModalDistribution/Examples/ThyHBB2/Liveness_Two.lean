@@ -169,10 +169,10 @@ theorem livenessTwoThyHBB2
           ofEvent ⟨voteSymb, [ℓ, v]⟩))).2
         (by simpa [wTop] using hVoteBoxTarget)
     have hKnowledge : AllWorldValid M
-        (knowledgeDiamondEventuallyAxiom (S := S)
+        (knowledgeBoxAxiom (S := S)
           liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
       (@hThyLive
-        (knowledgeDiamondEventuallyAxiom (S := S)
+        (knowledgeBoxAxiom (S := S)
           liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))
         (by
           dsimp [ThyLive]
@@ -185,7 +185,7 @@ theorem livenessTwoThyHBB2
               ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
         (AllWorldValid.at_end
           (M := M)
-          (φ := knowledgeDiamondEventuallyAxiom (S := S)
+          (φ := knowledgeBoxAxiom (S := S)
               liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩))
           hKnowledge p) hAtEnd
     exact

@@ -202,7 +202,7 @@ theorem agreementThyHBB3
         hCorrAll (t := wVote) hTimeLe
       have hCorr_now :
           ⟪wVote⟫ ⊨[M] ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ :=
-        ModalDistribution.Logic.alwaysPast_now_of_mem
+        ModalDistribution.Logic.everytime_now_of_mem
           (M := M) (w := wVote)
           hw_mem hCorrAlways
       have hEqVotes :
@@ -279,7 +279,7 @@ theorem agreementThyHBB3
           hCorrAlways
       have hCorr_now :
           ⟪wVote⟫ ⊨[M] ofPredicate ⟨correlationSymb, [l₂, l₁]⟩ :=
-        ModalDistribution.Logic.alwaysPast_now_of_mem
+        ModalDistribution.Logic.everytime_now_of_mem
           (M := M) (w := wVote)
           hw_mem hCorrSymmAlways
       have hEqVotes :

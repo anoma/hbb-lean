@@ -11,12 +11,11 @@ Theory ThyHBB3 axioms:
 
 * Backward rules `Echo?`, `Vote?`, and `Deliver?`
 * Non-equivocation axioms `EchoNE` and `VoteNE`
-* Correlation axioms `3twined`, `$\mnta\tf{seq}$`, `$\mnta\utn$`,
-  `$\mnta$symm`, and `$\mnta$tran`
+* Correlation axioms `3twined`, `(≐seq)`, `(≐⇓)`, `(≐symm)`, and `(≐tran)`
 * Forward rules `Echo!`, `Vote!`, `Vote'!`, and `Deliver!`
 
-All declarations are definitions of modal formulas; proofs are supplied when the
-corresponding lemmas are formalised later.
+These are Figure 11 of the paper; the shared `Echo?`/`EchoNE`/`Echo!` rules
+come from `Examples.HBB`.
 -/
 
 namespace ModalDistribution
@@ -37,7 +36,7 @@ variable {S : Signature}
 section BackwardRules
 
 /-- Backward rule `Vote?`: votes are justified either by an echo quorum or by a
-correlated chain of prior votes. Backward rule axiom. -/
+correlated chain of prior votes. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S) : Formula S :=
@@ -48,8 +47,7 @@ correlated chain of prior votes. Backward rule axiom. -/
           ofPredicate ⟨correlationSymb, [correlated, learner]⟩ ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩))
 
-/-- Backward rule `Deliver?`: deliveries require an `l`-quorum of votes.
-Backward rule axiom. -/
+/-- Backward rule `Deliver?`: deliveries require an `l`-quorum of votes. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun value =>
@@ -60,8 +58,7 @@ end BackwardRules
 
 section NonEquivocation
 
-/-- Axiom `VoteNE`: correlated vote chains determine a unique value.
-Backward rule axiom. -/
+/-- Axiom `VoteNE`: correlated vote chains determine a unique value. -/
 @[simp] def voteNonEquivAxiom
     (voteSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S) : Formula S :=
@@ -76,39 +73,34 @@ end NonEquivocation
 
 section Correlation
 
-/-- Axiom `3twined`: three correlated learners always intersect.
-Backward rule axiom. -/
+/-- Axiom `3twined`: any three quorums (of any three learners) intersect. -/
 @[simp] def threeTwinedAxiom : Formula S :=
   ∀ᶠ fun learner₁ => ∀ᶠ fun learner₂ => ∀ᶠ fun learner₃ =>
     ♢ᶠ[[learner₁, learner₂, learner₃]] ⊤ᶠ
 
-/-- Axiom `$\mnta\tf{seq}$`: correlated learners have sequential intersections.
-Backward rule axiom. -/
-@[simp] def mntaSeqAxiom
+/-- Axiom `$\mnta\tf{seq}$`: correlated learners have sequential intersections. -/
+@[simp] def correlationSeqAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ♢ᶠ[[learner, correlated]] Formula.seq
 
-/-- Axiom `$\mnta\utn$`: correlation is historically persistent.
-Backward rule axiom. -/
-@[simp] def mntaEventuallyAxiom
+/-- Axiom `$\mnta\utn$`: correlation is historically persistent. -/
+@[simp] def correlationMonotoneAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
 
-/-- Axiom `$\mnta$symm`: correlation is symmetric.
-Backward rule axiom. -/
-@[simp] def mntaSymmAxiom
+/-- Axiom `$\mnta$symm`: correlation is symmetric. -/
+@[simp] def correlationSymmAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ofPredicate ⟨correlationSymb, [correlated, learner]⟩
 
-/-- Axiom `$\mnta$tran`: correlation is transitive.
-Backward rule axiom. -/
-@[simp] def mntaTransAxiom
+/-- Axiom `$\mnta$tran`: correlation is transitive. -/
+@[simp] def correlationTransAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun middle => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, middle]⟩ ⇒ᶠ
@@ -119,8 +111,7 @@ end Correlation
 
 section ForwardRules
 
-/-- Forward rule `Vote!`: live learners eventually vote after echo quorums.
-Backward rule axiom. -/
+/-- Forward rule `Vote!`: live learners eventually vote after echo quorums. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -130,8 +121,7 @@ Backward rule axiom. -/
       ∃ᶠ fun witnessed =>
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
-/-- Forward rule `Vote'!`: correlated live knowledge propagates votes.
-Backward rule axiom. -/
+/-- Forward rule `Vote'!`: correlated live knowledge propagates votes. -/
 @[simp] def voteForwardCorrelatedAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb : Signature.EventSymb S)
@@ -143,8 +133,7 @@ Backward rule axiom. -/
       ∃ᶠ fun witnessed =>
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
-/-- Forward rule `Deliver!`: live vote quorums eventually lead to deliveries.
-Backward rule axiom. -/
+/-- Forward rule `Deliver!`: live vote quorums eventually lead to deliveries. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -163,7 +152,7 @@ variable
     (correlationSymb : Signature.PredSymb S)
 
 /-- Theory ThyHBB3 .
-It extends `ThyLive` with the `ThyHBB3`-specific axioms in Backward rule axiom. -/
+It extends `ThyLive` with the `ThyHBB3`-specific axioms in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
@@ -173,10 +162,10 @@ It extends `ThyLive` with the `ThyHBB3`-specific axioms in Backward rule axiom. 
       ax = echoNonEquivAxiom echoSymb ∨
       ax = voteNonEquivAxiom voteSymb correlationSymb ∨
       ax = threeTwinedAxiom (S := S) ∨
-      ax = mntaSeqAxiom correlationSymb ∨
-      ax = mntaEventuallyAxiom correlationSymb ∨
-      ax = mntaSymmAxiom correlationSymb ∨
-      ax = mntaTransAxiom correlationSymb ∨
+      ax = correlationSeqAxiom correlationSymb ∨
+      ax = correlationMonotoneAxiom correlationSymb ∨
+      ax = correlationSymmAxiom correlationSymb ∨
+      ax = correlationTransAxiom correlationSymb ∨
       ax = echoForwardAxiom liveSymb proposeSymb echoSymb ∨
       ax = voteForwardAxiom liveSymb echoSymb voteSymb ∨
       ax = voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb ∨

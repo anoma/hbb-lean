@@ -36,9 +36,9 @@ throughout the paper.
 * `Formula.predicate` (and `predicate0`, `ofPredicate`) ↔ `\tf P(t_1,\dots,t_n)`.
 * `Formula.past` / notation `↓ᶠ φ` ↔ `\itp φ` (``in the past'').
 * `Formula.atEnd` / notation `⤒ᶠ φ` ↔ `\EOT φ` (``at the end of time'').
-* `Formula.sometime` / notation `↕ᶠ φ` ↔ `\sometime φ`.
-* `Formula.alwaysPast` / notation `⇕ᶠ φ` ↔ `\everytime φ`.
-* `Formula.eventuallyPast` / notation `⇓ᶠ φ` ↔ `\allitp φ`.
+* `Formula.sometime` / notation `↕ᶠ φ` — the paper's ↕ (sometime).
+* `Formula.everytime` / notation `⇕ᶠ φ` — the paper's ⇕ (everytime).
+* `Formula.allPast` / notation `⇓ᶠ φ` — the paper's ⇓ (at every past event).
 * `Formula.diamond ls φ` / notation `♢ᶠ[ls] φ` ↔ `\ate{l_1\dots l_n}\phi`.
 * `Formula.diamondPast ls φ` / notation `♢ᶠ↓[ls] φ` ↔ `\atedot{l_1\dots l_n}\phi`.
 * `Formula.diamondEventually ls φ` / notation `♢ᶠ⇓[ls] φ` ↔ `\atecirc{l_1\dots l_n}\phi`.
@@ -127,11 +127,11 @@ def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 
 /-- Always in the past (`⇕`). -/
-def alwaysPast (φ : Formula S) : Formula S :=
+def everytime (φ : Formula S) : Formula S :=
   not (sometime (not φ))
 
 /-- Eventually in the past (`⇓`). -/
-def eventuallyPast (φ : Formula S) : Formula S :=
+def allPast (φ : Formula S) : Formula S :=
   not (.past (not φ))
 
 /-- Box modality. -/
@@ -144,7 +144,7 @@ def diamondPast (ls : List S.Value) (φ : Formula S) : Formula S :=
 
 /-- Diamond with eventual past guard. -/
 def diamondEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
-  .diamond ls (eventuallyPast φ)
+  .diamond ls (allPast φ)
 
 /-- Diamond with empty learner list. -/
 @[simp] def diamondEmpty (φ : Formula S) : Formula S :=
@@ -156,7 +156,7 @@ def boxPast (ls : List S.Value) (φ : Formula S) : Formula S :=
 
 /-- Box with eventual past guard. -/
 def boxEventually (ls : List S.Value) (φ : Formula S) : Formula S :=
-  box ls (Formula.eventuallyPast φ)
+  box ls (Formula.allPast φ)
 
 /-- Box over the empty learner list. -/
 @[simp] def boxEmpty (φ : Formula S) : Formula S :=
@@ -234,10 +234,10 @@ macro_rules
       `(Formula.existsUnique (fun $boundVar => $body))
 
 /-- Helpful notation for the past-eventually modality. -/
-scoped notation "⇓ᶠ" φ => Formula.eventuallyPast φ
+scoped notation "⇓ᶠ" φ => Formula.allPast φ
 
 /-- Helpful notation for the always-in-the-past modality. -/
-scoped notation "⇕ᶠ" φ => Formula.alwaysPast φ
+scoped notation "⇕ᶠ" φ => Formula.everytime φ
 
 /-- Helpful notation for the sometime modality. -/
 scoped notation "↕ᶠ" φ => Formula.sometime φ

@@ -49,7 +49,7 @@ end Unique
 
 /-- `3twined` combines three guarded box facts
 into a joint diamond witness. -/
-theorem threeTwined_phi
+theorem threeTwined_boxes_intersect
     {l₁ l₂ l₃ : Signature.Value S}
     {φ₁ φ₂ φ₃ : Formula S} :
     ⊨[M]
@@ -662,7 +662,7 @@ theorem echo_quorums_agree
             ↓ᶠ (ofEvent ⟨echoSymb, [v₂]⟩)) := by
     classical
     have hThreeTwined :=
-      threeTwined_phi (M := M)
+      threeTwined_boxes_intersect (M := M)
         (l₁ := l) (l₂ := l₁) (l₃ := l₂)
         (φ₁ := Formula.seq)
         (φ₂ := ↓ᶠ (ofEvent ⟨echoSymb, [v₁]⟩))
@@ -874,7 +874,7 @@ theorem always_corr_symm
   classical
   intro hAlways
   -- Symmetry axiom available at every world.
-  have hSymmAx : AllWorldValid M (mntaSymmAxiom correlationSymb) := by
+  have hSymmAx : AllWorldValid M (correlationSymmAxiom correlationSymb) := by
     apply hTheory
     simp [theory]
   have hNoOrig :
@@ -883,7 +883,7 @@ theorem always_corr_symm
     have hAlwaysNot :
         ⟪w⟫ ⊨[M]
           ¬ᶠ (↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))) := by
-      simpa [Formula.alwaysPast] using hAlways
+      simpa [Formula.everytime] using hAlways
     exact
       (Sat.not (M := M) (w := w)
         (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)))).1
@@ -899,10 +899,10 @@ theorem always_corr_symm
       ⟨t, ht_mem, ht_place, hNotSwapped⟩
     -- Instantiate the symmetry axiom at the witnessing world.
     have hSymmLocal :
-        ⟪t⟫ ⊨[M] mntaSymmAxiom correlationSymb :=
+        ⟪t⟫ ⊨[M] correlationSymmAxiom correlationSymb :=
       AllWorldValid.of_mem_history
         (M := M)
-        (φ := mntaSymmAxiom correlationSymb)
+        (φ := correlationSymmAxiom correlationSymb)
         hSymmAx ht_mem
     have hImpLearner :=
       Sat.forall_elim (M := M) (w := t)
@@ -944,7 +944,7 @@ theorem always_corr_symm
     Sat.not_intro (M := M) (w := w)
       (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)))
       hGoal
-  simpa [Formula.alwaysPast] using hNotSwapped
+  simpa [Formula.everytime] using hNotSwapped
 
 /-- End-of-time correlation together with the persistence axiom yields
 correlation throughout each participant’s history. -/
@@ -956,7 +956,7 @@ theorem correlation_global_allPast
     □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
   classical
   have hEventually :
-      AllWorldValid M (mntaEventuallyAxiom correlationSymb) := by
+      AllWorldValid M (correlationMonotoneAxiom correlationSymb) := by
     apply hTheory
     simp [theory]
   intro t ht_le
@@ -968,7 +968,7 @@ theorem correlation_global_allPast
       (EndValid.boxEmpty_guard (M := M)
         (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) p
   have hEventuallyTop :
-      ⟪wTop⟫ ⊨[M] mntaEventuallyAxiom correlationSymb :=
+      ⟪wTop⟫ ⊨[M] correlationMonotoneAxiom correlationSymb :=
     hEventually (by simp [wTop, World.time])
   have hImpLearner :
       ⟪wTop⟫ ⊨[M]
@@ -999,7 +999,7 @@ theorem correlation_global_allPast
   have hNoPast' :
       ⟪wTop⟫ ⊨[M]
         ¬ᶠ (↓ᶠ (¬ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))) := by
-    simpa [Formula.eventuallyPast]
+    simpa [Formula.allPast]
       using hNoPast
   refine Sat.not_intro (M := M) (w := t) ?_
   intro hSome
@@ -1031,13 +1031,13 @@ theorem correlation_seq_diamond
     ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq := by
   classical
   have hSeqAx :
-      AllWorldValid M (mntaSeqAxiom correlationSymb) := by
+      AllWorldValid M (correlationSeqAxiom correlationSymb) := by
     apply hTheory
     simp [theory]
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hSeqLocal :
-      ⟪wTop⟫ ⊨[M] mntaSeqAxiom correlationSymb :=
+      ⟪wTop⟫ ⊨[M] correlationSeqAxiom correlationSymb :=
     hSeqAx (by simp [wTop, World.time])
   have hImpLearner :
       ⟪wTop⟫ ⊨[M]

@@ -133,7 +133,7 @@ theorem livenessOneThyHBB2
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨echoSymb, [v]⟩) :=
-    ThyHBB1.atddot_live_of_eventual_quorum
+    ThyHBB1.boxPast_live_of_eventual_quorum
       (M := M)
       (liveSymb := liveSymb)
       (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -153,7 +153,7 @@ theorem livenessOneThyHBB2
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    promote_live_atddot
+    live_boxPast_nests
       (M := M)
       (liveSymb := liveSymb)
       (l := l)

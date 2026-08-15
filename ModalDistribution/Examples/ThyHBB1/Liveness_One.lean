@@ -147,7 +147,7 @@ theorem livenessOneThyHBB1
           simp [theory])
         (hUnique := hUnique)
     exact
-      atddot_live_of_eventual_quorum
+      boxPast_live_of_eventual_quorum
         (M := M) (liveSymb := liveSymb)
         (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
         (ψ := ofEvent ⟨echoSymb, [v]⟩)
@@ -186,7 +186,7 @@ theorem livenessOneThyHBB1
   -- Step 3: promote echoes to nested quorum knowledge.
   have hStep3Global :
       ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho :=
-    _root_.ModalDistribution.Examples.promote_live_atddot
+    _root_.ModalDistribution.Examples.live_boxPast_nests
       (M := M) (liveSymb := liveSymb)
       (l := l) (φ := ofEvent ⟨echoSymb, [v]⟩)
       (hTheory := hThyLiveTheory)
@@ -385,7 +385,7 @@ theorem livenessOneThyHBB1
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l, v]⟩) :=
-    atddot_live_of_eventual_quorum
+    boxPast_live_of_eventual_quorum
       (M := M) (liveSymb := liveSymb)
       (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
       (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
