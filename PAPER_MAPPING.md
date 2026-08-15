@@ -12,11 +12,10 @@ the figure that defines them.
 
 - Notation 2.2.1 (finite subsets): implicit — `PreHistory` is list-backed, so
   every prehistory is finite by construction.
-- Notations 2.3.6, 3.1.2, 3.3.7 and the Remarks: prose conventions and
-  discussion, no formal content.
+- Notations 2.3.6, 3.1.2, 3.3.7, 6.1.3 and the Remarks: prose conventions
+  and discussion, no formal content.
+- Definitions 1.1.1 and 1.1.2: informal introductory definitions.
 - The paper's illustrative Examples (2.2.5, 2.3.8-2.3.10, 3.3.5, 3.3.6, 5.1.1).
-- Lemma 4.2.1(3,4) and Lemma 4.2.3(3): negative observations ("the reverse
-  implication need not hold"), stated in the paper via counterexample models.
 
 
 ## Section 2: History Structures
@@ -99,9 +98,12 @@ the figure that defines them.
 - **Lemma 4.2.1(1)** — `singletonBoxImpliesDiamond` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 - **Lemma 4.2.1(2)** — `globalSingletonBoxImpliesDiamond` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 - **Lemma 4.2.1(2)** — `quorumBoxImpliesEmptyDiamond` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- **Lemma 4.2.1(3)** — `box_not_implies_diamondEmpty` ([ModalDistribution/Examples/Counterexamples.lean](ModalDistribution/Examples/Counterexamples.lean))
+- **Lemma 4.2.1(4)** — `sat_not_implies_diamond` ([ModalDistribution/Examples/Counterexamples.lean](ModalDistribution/Examples/Counterexamples.lean))
 - **Lemma 4.2.2 (the S4 axiom)** — `diamondPast_idem` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 - **Lemma 4.2.3(1)** — `pastBoxCollapsesToPresentBox` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 - **Lemma 4.2.3(2)** — `pastDiamondBoxCollapsesToPresentBox` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
+- **Lemma 4.2.3(3)** — `pastBox_does_not_reverse` ([ModalDistribution/Examples/Counterexamples.lean](ModalDistribution/Examples/Counterexamples.lean))
 
 ## Section 5: Sequentiality and Liveness
 
