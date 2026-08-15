@@ -507,7 +507,7 @@ theorem sat_diamondPast_nil_event_subset
       (φ := ↓ᶠ (Formula.event ⟨symb, args⟩))).2
       ⟨q, hPast'⟩
 
-/-! ### De Morgan dualities between derived modalities -/
+/-! ### End-of-time validity bridges -/
 
 theorem quorumWitnessAcc_univ
     (M : Model S P)
