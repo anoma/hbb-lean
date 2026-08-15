@@ -136,16 +136,15 @@ theorem agreement
         (hDistinct := hDistinct)
 
   have hVoteAx : AllWorldValid M
-      (voteBackwardAxiom safeSymb echoSymb voteSymb) := by
-    apply hTheory
-    simp [theory]
+      (voteBackwardAxiom safeSymb echoSymb voteSymb) :=
+    theory_voteBackward (M := M) hTheory
 
   have hEchoBack :
       □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
-    hTheory (by simp [theory])
+    theory_echoBackward (M := M) hTheory
 
   have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-    hTheory (by simp [theory])
+    theory_echoNonEquiv (M := M) hTheory
 
   have derive_contradiction :
       ∀ {la lb : Signature.Value S} {va vb : Signature.Value S},
@@ -203,37 +202,11 @@ theorem agreement
         ⟪wNow⟫ ⊨[M] ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩) :=
       hVotes_split.2
 
-    have hVoteImp_now :=
-      Sat.forall_elim (M := M) (w := wNow)
-        (body := fun learner =>
-          ∀ᶠ fun value =>
-            ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-              (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
-                □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := la)
-        (h :=
-          AllWorldValid.of_mem_history
-            (M := M)
-            (φ := voteBackwardAxiom safeSymb echoSymb voteSymb)
-            hVoteAx hNow_mem_history)
-    have hVoteImp_now_value :=
-      Sat.forall_elim (M := M) (w := wNow)
-        (body := fun value =>
-          ofEvent ⟨voteSymb, [la, value]⟩ ⇒ᶠ
-            (ofPredicate ⟨safeSymb, [la]⟩ ∧ᶠ
-              □ᶠ↓[[la]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := va) hVoteImp_now
-    have hSafeEcho_now :=
-      (Sat.imp (M := M) (w := wNow)
-        (φ := ofEvent ⟨voteSymb, [la, va]⟩)
-        (ψ := (ofPredicate ⟨safeSymb, [la]⟩) ∧ᶠ
-          □ᶠ↓[[la]] (ofEvent ⟨echoSymb, [va]⟩))).1
-        hVoteImp_now_value hVote_now
     have hSafeEcho_now_split :=
-      (Sat.and (M := M) (w := wNow)
-        (φ := ofPredicate ⟨safeSymb, [la]⟩)
-        (ψ := □ᶠ↓[[la]] (ofEvent ⟨echoSymb, [va]⟩))).1
-        hSafeEcho_now
+      voteBackward_elim (M := M)
+        (hAx := hVoteAx)
+        (hMem := hNow_mem_history)
+        (hVote := hVote_now)
     have hNow_le : wNow.time ⪯ M.history.val :=
       PreHistory.happensBeforeEq_of_mem
         (P := P) (Event := Signature.EventType S)
@@ -251,38 +224,11 @@ theorem agreement
         hPast_vote_other
     have hPast_mem_history : wPast ∈ M.history.val :=
       hSubset_plain_now _ hPast_mem
-    have hVoteImp_past :=
-      Sat.forall_elim (M := M) (w := wPast)
-        (body := fun learner =>
-          ∀ᶠ fun value =>
-            ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-              (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
-                □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := lb)
-        (h :=
-          AllWorldValid.of_mem_history
-            (M := M)
-            (φ := voteBackwardAxiom safeSymb echoSymb voteSymb)
-            hVoteAx hPast_mem_history)
-    have hVoteImp_past_value :=
-      Sat.forall_elim (M := M) (w := wPast)
-        (body := fun value =>
-          ofEvent ⟨voteSymb, [lb, value]⟩ ⇒ᶠ
-            (ofPredicate ⟨safeSymb, [lb]⟩ ∧ᶠ
-              □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [value]⟩)))
-        (v := vb) hVoteImp_past
-    have hSafeEcho_past :=
-      (Sat.imp (M := M) (w := wPast)
-        (φ := ofEvent ⟨voteSymb, [lb, vb]⟩)
-        (ψ := (ofPredicate ⟨safeSymb, [lb]⟩) ∧ᶠ
-          □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩))).1
-        hVoteImp_past_value hVotePast
-    have hSafeEcho_past_split :=
-      (Sat.and (M := M) (w := wPast)
-        (φ := ofPredicate ⟨safeSymb, [lb]⟩)
-        (ψ := □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩))).1
-        hSafeEcho_past
-    have hEcho_lb_local := hSafeEcho_past_split.2
+    have hEcho_lb_local :=
+      (voteBackward_elim (M := M)
+        (hAx := hVoteAx)
+        (hMem := hPast_mem_history)
+        (hVote := hVotePast)).2
 
     have hPastBox_lb :
         ⟪wNow⟫ ⊨[M]
