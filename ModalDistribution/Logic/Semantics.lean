@@ -136,13 +136,13 @@ theorem exists_intro
   exact hneg
 
 /-- Simp lemma: `Sat.check` for the empty learner list. -/
-@[simp] theorem Sat_check_nil (M : Model S P)
+@[simp] theorem check_nil (M : Model S P)
     (Q : P → Prop) (acc : Set P) :
     Sat.check M Q [] acc ↔ ∃ p' ∈ acc, Q p' := by
   simp [Sat.check]
 
 /-- Simp lemma: `Sat.check` for the inductive step. -/
-@[simp] theorem Sat_check_cons (M : Model S P)
+@[simp] theorem check_cons (M : Model S P)
     (Q : P → Prop)
     (v : S.Value) (vs : List S.Value) (acc : Set P) :
     Sat.check M Q (v :: vs) acc ↔
@@ -151,20 +151,12 @@ theorem exists_intro
 
 /-- Diamonds over the empty learner list are witnessed by some participant.
     This is the unfolded base case of the quorum recursion. -/
-@[simp] theorem Sat_diamond_nil
+@[simp] theorem diamond_nil
     (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
     (⟪w⟫ ⊨[M]♢ᶠ[[]] φ) ↔
       ∃ p' : P, ⟪⟨p', †, w.time⟩⟫ ⊨[M]φ := by
   rcases w with w
   simp [Sat]
-
-/-- Diamonds over empty quorum lists are characterised by any participant
-carrying the witness. -/
-theorem diamond_nil
-    (M : Model S P) (w : World P S.EventType) (φ : Formula S) :
-    (⟪w⟫ ⊨[M]♢ᶠ[[]] φ) ↔
-      ∃ p' : P, ⟪⟨p', †, w.time⟩⟫ ⊨[M]φ :=
-  Sat_diamond_nil (M := M) (w := w) (φ := φ)
 
 /-- The derived `♢ᶠ[]` notation shares the same semantics. -/
 theorem diamondEmpty

@@ -86,7 +86,7 @@ theorem livenessOne
           ↓ᶠ ((predicate0 liveSymb) ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
     obtain ⟨qProp, hPastProp⟩ :=
-      (Sat.Sat_diamond_nil (M := M)
+      (Sat.diamond_nil (M := M)
         (w := wTop)
         (φ := ↓ᶠ ((predicate0 liveSymb) ∧ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1

@@ -343,27 +343,13 @@ private theorem sat_boxPast_of_predecessor
     (hBox_t : ⟪t⟫ ⊨[M]□ᶠ↓[[l]]φ) :
     (⟪w⟫ ⊨[M] □ᶠ↓[[l]] φ) := by
   classical
-  have hBefore :
-      w.time ≺− M.history.val :=
-    History.happensBefore_of_mem (P := P)
-      (Event := Signature.EventType S)
-      (H := M.history.val) (e := w) hMem
-  let wHist :=
-    History.predecessorHistory (H := M.history) hBefore
   have hAcc : t ≪ w := by
     simpa [World.accessible, World.time] using ht_mem
-  have hBeforeTime :
-      PreHistory.happensBefore (World.time t) (World.time w) :=
-    PreHistory.happensBefore_of_accessible (P := P)
-      (Event := Signature.EventType S) hAcc
+  -- Transitivity of accessibility (Proposition 3.4.5).
   have hSubset_t :
-      World.time t ⊆ w.time := by
-    have hSubset' :
-        World.time t ⊆ wHist.val :=
-      History.subset_of_happensBefore (H := wHist)
-        (h_before := by
-          simpa [wHist, World.time] using hBeforeTime)
-    simpa [wHist] using hSubset'
+      World.time t ⊆ w.time := fun x hx =>
+    accessible_trans (H := M.history)
+      (hW := M.time_le_of_mem hMem) (h₂ := hx) (h₁ := hAcc)
   obtain ⟨O, hO, hAll⟩ :=
     (sat_box_singleton_exists (M := M)
       (w := t) (l := l) (φ := ↓ᶠ φ)).1 hBox_t
@@ -394,68 +380,41 @@ theorem diamondPast_idem
       (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] φ) := by
   classical
   intro hDiamond
-  -- Membership witnesses a transitive predecessor history for `w`
-  have hBefore :
-      w.time ≺− M.history.val :=
-    History.happensBefore_of_mem (P := P)
-      (Event := Signature.EventType S) (H := M.history.val)
-      (e := w) hMem
-  let wPred :=
-    History.predecessorHistory (H := M.history) hBefore
-  have hTrans :
-      isTransitive (P := P) (Event := Signature.EventType S) w.time := by
-    have := History.transitive (P := P)
-      (Event := Signature.EventType S) wPred
-    simpa [wPred] using this
-  -- Unfold the outer empty diamond to expose the past witness
+  -- Unfold the two nested diamonds down to the innermost witness `t'`.
   obtain ⟨p, hPast⟩ :=
-    (Sat.Sat_diamond_nil (M := M)
+    (Sat.diamond_nil (M := M)
       (w := w)
       (φ := ↓ᶠ (♢ᶠ↓[[]] φ))).1
       (by simpa [Formula.diamondPast] using hDiamond)
-  -- The past witness provides a predecessor tuple in `w.time`
   obtain ⟨t, ht_mem, ht_place, hDiamond_t⟩ :=
     (Sat.past (M := M)
       (w := ⟨p, †, w.time⟩)
       (φ := ♢ᶠ↓[[]] φ)).1 hPast
-  -- Unfold the inner diamond at the predecessor world
   obtain ⟨q, hPastφ⟩ :=
-    (Sat.Sat_diamond_nil (M := M)
+    (Sat.diamond_nil (M := M)
       (w := t)
       (φ := ↓ᶠ φ)).1
       (by simpa [Formula.diamondPast] using hDiamond_t)
-  -- Extract the final past witness
   obtain ⟨t', ht'_mem, ht'_place, hφ⟩ :=
     (Sat.past (M := M)
       (w := ⟨q, †, t.time⟩) (φ := φ)).1 hPastφ
-  -- Show that the predecessor history embeds back into `w.time`
-  have ht_subset :
-      World.time t ⊆ w.time := by
-    have hAcc : t ≪ ⟨p, †, w.time⟩ := by
-      simpa [World.time] using ht_mem
-    have :=
-      PreHistory.accessible_subset (P := P)
-        (Event := Signature.EventType S)
-        (t' := t) (t := ⟨p, †, w.time⟩)
-        hAcc
-        (by
-          have := hTrans
-          simpa [World.time, isTransitive] using this)
-    simpa [World.time] using this
-  -- Transport the innermost witness back to the ambient world
+  -- Transitivity of accessibility (Proposition 3.4.5) puts `t'` in `w.time`.
+  have hAcc' : t' ≪ w :=
+    accessible_trans (H := M.history)
+      (hW := M.time_le_of_mem hMem)
+      (h₂ := by simpa [World.accessible, World.time] using ht'_mem)
+      (h₁ := by simpa [World.accessible, World.time] using ht_mem)
+  -- Repackage the witness for the outer empty diamond.
   have hPastFinal :
       (⟪⟨q, †, w.time⟩⟫ ⊨[M] ↓ᶠ φ) :=
     (Sat.past (M := M)
       (w := ⟨q, †, w.time⟩)
       (φ := φ)).2
-      ⟨t', ht_subset t' ht'_mem,
+      ⟨t', by simpa [World.accessible, World.time] using hAcc',
         by simpa [World.place] using ht'_place, hφ⟩
-  -- Repackage the witness for the outermost empty diamond
-  have hDiamondFinal :
-      (⟪w⟫ ⊨[M] ♢ᶠ[[]] (↓ᶠ φ)) :=
-    (Sat.Sat_diamond_nil (M := M)
+  simpa [Formula.diamondPast] using
+    (Sat.diamond_nil (M := M)
       (w := w) (φ := ↓ᶠ φ)).2 ⟨q, hPastFinal⟩
-  simpa [Formula.diamondPast] using hDiamondFinal
 
 /-- Paper: Lemma 4.2.3(1). Past box collapses to present box).
 
@@ -504,7 +463,7 @@ theorem pastDiamondBoxCollapsesToPresentBox
   classical
   intro hDiamond
   obtain ⟨q, hPastBox⟩ :=
-    (Sat.Sat_diamond_nil (M := M)
+    (Sat.diamond_nil (M := M)
       (w := w)
       (φ := ↓ᶠ (□ᶠ↓[[l]] φ))).1 hDiamond
   obtain ⟨t, ht_mem, ht_place, hBox_t⟩ :=

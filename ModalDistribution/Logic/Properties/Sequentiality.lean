@@ -59,12 +59,15 @@ variable {M : Model S P}
 
 /-- Paper: Proposition 5.1.4(1). Sequentiality persists along same-place accessibility. -/
 theorem seq_monotone_of_subset
+    (hW : w.time ⪯ M.history.val)
     (hAcc : w' ≪⁻ w)
-    (Hw : History P (Signature.EventType S))
-    (hwTime : Hw.val = w.time)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
     ⟪w'⟫ ⊨[M]Formula.seq := by
   classical
+  obtain ⟨Hw, hwTime⟩ : ∃ Hw : History P (Signature.EventType S), Hw.val = w.time := by
+    rcases hW with hlt | heq
+    · exact ⟨History.predecessorHistory (H := M.history) hlt, rfl⟩
+    · exact ⟨M.history, heq.symm⟩
   have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
     rw [hwTime]
     exact (Sat.seq (M := M) (w := w)).1 hSeq
@@ -88,11 +91,14 @@ theorem seq_monotone_of_subset
 
 /-- Paper: Proposition 5.1.4(2). Sequentiality implies `⇓ᶠ`-sequentiality. -/
 theorem seq_monotone_allItp
-    (Hw : History P (Signature.EventType S))
-    (hwTime : Hw.val = w.time)
+    (hW : w.time ⪯ M.history.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
     ⟪w⟫ ⊨[M]⇓ᶠ Formula.seq := by
   classical
+  obtain ⟨Hw, hwTime⟩ : ∃ Hw : History P (Signature.EventType S), Hw.val = w.time := by
+    rcases hW with hlt | heq
+    · exact ⟨History.predecessorHistory (H := M.history) hlt, rfl⟩
+    · exact ⟨M.history, heq.symm⟩
   have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
     rw [hwTime]
     exact (Sat.seq (M := M) (w := w)).1 hSeq

@@ -83,17 +83,17 @@ theorem box_not_implies_diamondEmpty :
       (sat_diamond_iff_diamondCheck (M := M)
         (ls := [true, false]) (φ := ¬ᶠ (⊥ᶠ : Formula sig)) (w := w0)).1 hDiamond
     have h1 :=
-      (Sat.Sat_check_cons (M := M)
+      (Sat.check_cons (M := M)
         (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[M] (¬ᶠ (⊥ᶠ : Formula sig)))
         (v := true) (vs := [false]) (acc := Set.univ)).1 hCheck
         {b : Bool | b = true} trueSet_mem
     have h2 :=
-      (Sat.Sat_check_cons (M := M)
+      (Sat.check_cons (M := M)
         (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[M] (¬ᶠ (⊥ᶠ : Formula sig)))
         (v := false) (vs := []) (acc := Set.univ ∩ {b : Bool | b = true})).1 h1
         {b : Bool | b = false} falseSet_mem
     obtain ⟨p, hpMem, _⟩ :=
-      (Sat.Sat_check_nil (M := M)
+      (Sat.check_nil (M := M)
         (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[M] (¬ᶠ (⊥ᶠ : Formula sig)))
         (acc := (Set.univ ∩ {b : Bool | b = true}) ∩ {b : Bool | b = false})).1 h2
     have hTrue : p = true := hpMem.1.2
@@ -118,17 +118,17 @@ theorem sat_not_implies_diamond :
       (sat_diamond_iff_diamondCheck (M := M)
         (ls := [true, false]) (φ := (⊤ᶠ : Formula sig)) (w := w0)).1 hDiamond
     have h1 :=
-      (Sat.Sat_check_cons (M := M)
+      (Sat.check_cons (M := M)
         (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[M] (⊤ᶠ : Formula sig))
         (v := true) (vs := [false]) (acc := Set.univ)).1 hCheck
         {b : Bool | b = true} trueSet_mem
     have h2 :=
-      (Sat.Sat_check_cons (M := M)
+      (Sat.check_cons (M := M)
         (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[M] (⊤ᶠ : Formula sig))
         (v := false) (vs := []) (acc := Set.univ ∩ {b : Bool | b = true})).1 h1
         {b : Bool | b = false} falseSet_mem
     obtain ⟨p, hpMem, _⟩ :=
-      (Sat.Sat_check_nil (M := M)
+      (Sat.check_nil (M := M)
         (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[M] (⊤ᶠ : Formula sig))
         (acc := (Set.univ ∩ {b : Bool | b = true}) ∩ {b : Bool | b = false})).1 h2
     have hTrue : p = true := hpMem.1.2
@@ -353,13 +353,13 @@ theorem pastBox_does_not_reverse :
         (ls := [()]) (φ := ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF))) (w := w₃)).1
         (by simpa [Formula.diamondPast] using h)
     have h1 :=
-      (Sat.Sat_check_cons (M := M₃)
+      (Sat.check_cons (M := M₃)
         (Q := fun q => ⟪⟨q, †, w₃.time⟩⟫ ⊨[M₃]
           ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF)))
         (v := ()) (vs := []) (acc := Set.univ)).1 hCheck
         Set.univ trivial
     obtain ⟨q, _, hq⟩ :=
-      (Sat.Sat_check_nil (M := M₃)
+      (Sat.check_nil (M := M₃)
         (Q := fun q => ⟪⟨q, †, w₃.time⟩⟫ ⊨[M₃]
           ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF)))
         (acc := Set.univ ∩ Set.univ)).1 h1

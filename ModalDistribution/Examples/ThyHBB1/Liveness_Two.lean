@@ -105,7 +105,7 @@ theorem livenessTwo
           □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
     intro q
     obtain ⟨qVote, hPastConj⟩ :=
-      (Sat.Sat_diamond_nil (M := M)
+      (Sat.diamond_nil (M := M)
         (w := ⟨q, †, M.history.val⟩)
         (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
           ofEvent ⟨voteSymb, [l, v]⟩))).1
