@@ -161,8 +161,8 @@ theorem livenessOne
       (hTheory := hThyLiveTheory)
       (hQuorum := hStep2Global)
 
-  -- Lemma 6.5.2: with at most one proposal, every learner is everywhere and
-  -- always safe.
+  -- Step 4 (Lemma 6.5.2): with at most one proposal, every learner is
+  -- everywhere and always safe.
   have hSafeAlwaysGlobal :
       □W⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
     have hSafeEnd : ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
@@ -184,6 +184,8 @@ theorem livenessOne
         (φ := ofPredicate ⟨safeSymb, [l]⟩)).1
         (by simpa using hSafeEnd t.place) st hst (by simpa using hpl)
 
+  -- Step 5 (Lemma 6.4.2(2) with (Vote!)): the live echo quorum becomes a
+  -- live vote quorum.
   have hVotesGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -200,9 +202,9 @@ theorem livenessOne
         (hTheory := hTheory)
         (hSafeAlways := hSafeAlwaysGlobal))
 
-  -- Steps 6–7: Lemma 6.4.3, applied to (Knowledge$\atddot{}$) and
-  -- (Deliver!), concludes eventual delivery.
-  have step7 :
+  -- Step 6 (Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!)):
+  -- eventual vote knowledge becomes eventual delivery.
+  have hDeliverImp :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ
           ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
@@ -228,7 +230,7 @@ theorem livenessOne
     Sat.imp_elim (M := M) (w := wTop)
       (φ := predicate0 liveSymb)
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
-      step7 hLivep
+      hDeliverImp hLivep
 
 /-- Paper: Proposition 6.5.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the

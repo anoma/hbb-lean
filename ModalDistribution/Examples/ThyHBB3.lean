@@ -16,4 +16,5 @@ follows Section~8 of the paper:
 * `ThyHBB3.Liveness_One`: Liveness property 1
 * `ThyHBB3.Liveness_Two`: Liveness property 2
 * `ThyHBB3.Agreement`: Agreement property
+* `ThyHBB3.Correctness`: The three properties collected (Theorem 8.2.3)
 -/

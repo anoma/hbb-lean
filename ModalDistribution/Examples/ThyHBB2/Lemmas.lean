@@ -9,9 +9,10 @@ import ModalDistribution.Core.Semifilter
 /-!
 # ThyHBB2 Helper Lemmas
 
-This file bundles auxiliary lemmas for the ThyHBB2 development.  The first
-group translates deliveries witnessed at end of time into the corresponding
-vote quorums, instantiating the `Deliver?` axiom.
+This file bundles auxiliary lemmas for the ThyHBB2 development: translating
+deliveries witnessed at end of time into vote quorums (`Deliver?`), tracing
+votes back to echo quorums (`Vote?`), and turning live echo quorums into
+votes (`Vote!`).
 -/
 
 namespace ModalDistribution

@@ -6,9 +6,9 @@ import ModalDistribution.Logic.Properties.Modalities
 # Sequentiality lemmas
 
 This module packages the lemmas and propositions whose primary focus is the
-sequentiality modality `Formula.seq`.  They were originally developed inside
-`Properties.lean` but are isolated here so that future work on the
-sequential fragment can build on a dedicated library.
+sequentiality modality `Formula.seq`: the Section 5.1 characterisation and
+monotonicity results, and the quorum-intersection witnesses of
+Proposition 5.1.5.
 -/
 
 namespace ModalDistribution

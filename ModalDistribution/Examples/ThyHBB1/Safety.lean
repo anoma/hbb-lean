@@ -9,10 +9,7 @@ import ModalDistribution.Core.History
 # ThyHBB1 Safety and Liveness Helper Lemmas
 
 This file contains intermediate lemmas supporting the safety and liveness properties of the
-ThyHBB1 broadcast protocol. These lemmas are extracted from the main ThyHBB1 file to improve
-modularity and maintainability.
-
-The lemmas are organized into several categories:
+ThyHBB1 broadcast protocol, organized into several categories:
 
 - **Monotonicity lemmas**: Properties about how formulas behave under history restriction
   - `uniquePropose_monotone`: Uniqueness of proposals is preserved in smaller histories
@@ -23,9 +20,16 @@ The lemmas are organized into several categories:
 
 - **Quorum and liveness lemmas**: Lifting properties through quorums
   - `boxPast_of_eventual_quorum`: Quorum knowledge with global implication lifts to future quorum
-  - `boxPast_live_of_eventual_quorum`: Previous result under ThyLive assumption
-  - `live_eventually_consequent`: Composing eventual consequences at end of time
+  - `boxPast_live_of_eventual_quorum`: Previous result under ThyLive assumption (Lemma 6.4.2(2))
+  - `live_sometime_consequent_at`, `live_eventually_consequent`: Composing eventual
+    consequences at the end of time (Lemma 6.4.3 and its per-place core)
 
+- **Safety of a learner** (Lemma 6.4.1):
+  - `safe_monotone`: `safe` persists along in-place accessibility
+  - `safe_allPast`: `safe` implies it always held in the past
+
+- **`Vote!` instantiations**: `voteForward_imp_of_everytime` and `voteForward_imp`
+  package the axiom together with its safety guard for the liveness proofs
 
 These lemmas serve as building blocks for the main agreement and liveness theorems.
 -/

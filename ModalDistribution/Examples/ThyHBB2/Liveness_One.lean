@@ -150,8 +150,8 @@ theorem livenessOne
         (hEchoBox := hEchoBox)
     exact hVoteBox
 
-  -- Steps 5–6: Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!),
-  -- concludes eventual delivery.
+  -- Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!), concludes
+  -- eventual delivery.
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by

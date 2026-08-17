@@ -22,23 +22,30 @@ ModalDistribution/
 │   ├── Prehistory.lean
 │   ├── History.lean
 │   ├── Semifilter.lean
-│   └── Model.lean
+│   ├── Model.lean
+│   └── ...            # Hand-rolled Set/Equiv infrastructure and tactics
 ├── Logic/             # Modal logic syntax, semantics, and axiom system
 │   ├── Syntax.lean
 │   ├── Semantics.lean
 │   ├── AxiomSystem.lean
-│   └── Properties/    # Modality properties, sequentiality, quorums
-├── Examples/          # Includes the three broadcast algorithms and their proofs
+│   └── Properties/    # Satisfaction machinery, modalities, sequentiality, quorums
+├── Examples/          # The three broadcast algorithms and their proofs
 │   ├── ThyLive.lean            # Liveness (Section 5.2)
+│   ├── HBB.lean                # Axiom schemes shared by the three theories
+│   ├── Counterexamples.lean    # Lemmas 4.2.1(3,4) and 4.2.3(3)
 │   ├── ThyHBB1/                # Section 6
 │   │   ├── Axioms.lean
+│   │   ├── Safety.lean
+│   │   ├── Uniqueness.lean
 │   │   ├── Agreement.lean
 │   │   ├── Liveness_One.lean
-│   │   └── Liveness_Two.lean
+│   │   ├── Liveness_Two.lean
+│   │   └── Correctness.lean
 │   ├── ThyHBB2/                # Section 7
-│   │   └── [similar structure]
+│   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
 │   └── ThyHBB3/                # Section 8
-│       └── [similar structure]
+│       └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
+└── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```
 
 See [PAPER_MAPPING.md](PAPER_MAPPING.md) for a detailed mapping between paper definitions/theorems and their Lean implementations; the same mapping is embedded in the sources (every anchored declaration's doc comment begins with `Paper: <item>.`). One representational choice to be aware of: prehistories are list-backed, realising the paper's inductive-datatype presentation rather than the quotiented set-theoretic definition — see the note in PAPER_MAPPING.md.

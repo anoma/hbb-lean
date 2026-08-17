@@ -334,8 +334,6 @@ theorem subset_of_happensBeforeEq {h₁ h₂ : PreHistory P Event}
   · subst h₁₂
     exact ht
 
--- Mutual non-strict happens-before forces equality of prehistories.
-
 /-- Paper: Remark 2.2.7 (fixpoint characterisation). -/
 def prehistory_fixpoint : PreHistory P Event ≃ List (World P Event) where
   toFun := fun h => match h with | mk l => l
@@ -343,19 +341,4 @@ def prehistory_fixpoint : PreHistory P Event ≃ List (World P Event) where
   left_inv := by intro ⟨l⟩; rfl
   right_inv := by intro l; rfl
 
--- Utility Functions
-
--- Constructor helpers (smart constructors for common patterns)
-
-instance [ToString Event] : ToString (MaybeEvent Event) where
-  toString
-  | MaybeEvent.some e => toString e
-  | MaybeEvent.none => "†"
-instance [ToString P] [ToString Event] : ToString (World P Event) where
-  toString t := s!"({World.place t}, {World.event t}, <prehistory>)"
-instance [ToString P] [ToString Event] : ToString (PreHistory P Event) where
-  toString h := match h with | mk l => s!"PreHistory(size={l.length})"
-section Examples
-variable (P : Type u) (Event : Type v) [ToString P] [ToString Event]
-end Examples
 end PreHistory

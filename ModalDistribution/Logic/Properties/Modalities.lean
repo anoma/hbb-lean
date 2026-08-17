@@ -10,8 +10,9 @@ import ModalDistribution.Core.History
 The quorum intersection properties of Subsection 4.1 (Lemma 4.1.1 and
 Notation 4.1.2, with their supporting lemmas) and the modal properties of
 Subsection 4.2 (Lemmas 4.2.1-4.2.3), over the satisfaction machinery from
-`Logic.Properties.Satisfaction`. The file ends with the generic derivation
-lemmas for the boxed and diamond corollaries of the liveness theorems.
+`Logic.Properties.Satisfaction`. The file ends with Lemma 6.4.4 and the
+generic derivation lemmas for the boxed and diamond corollaries of the
+liveness theorems.
 -/
 
 namespace ModalDistribution

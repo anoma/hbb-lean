@@ -238,9 +238,9 @@ theorem happensBefore_trans (h1 h2 h3 : History P Event) :
   exact happensBefore_trans_in_history h3 h1.val h2.val h3.val h12 h23
     (PreHistory.happensBeforeEq_refl h3.val)
 
-/-- Order relation for the happens-before relation on histories.  Reflexivity,
-transitivity and antisymmetry are `PreHistory.happensBeforeEq_refl`,
-`happensBeforeEq_trans` and `happensBeforeEq_antisymm`. -/
+/-- Order relation for the happens-before relation on histories.
+Reflexivity is `PreHistory.happensBeforeEq_refl`; transitivity on the
+members of a history is `happensBefore_trans_in_history`. -/
 instance : LE (History P Event) where
   le h1 h2 := h1.val ⪯ h2.val
 

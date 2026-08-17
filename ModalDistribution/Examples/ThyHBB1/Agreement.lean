@@ -35,7 +35,6 @@ The proof proceeds by contradiction, assuming v₁ ≠ v₂ and deriving a contr
 5. **Step 5**: Use the safe predicate definition to derive sequentiality between learners
 6. **Step 6**: Apply sequentiality again with EchoNE to force v₁ = v₂ (contradiction)
 
-The proof is extracted from the main ThyHBB1 file to improve modularity and maintainability.
 -/
 
 namespace ModalDistribution

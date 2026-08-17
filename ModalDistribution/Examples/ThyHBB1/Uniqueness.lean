@@ -16,7 +16,6 @@ The main results show that:
 - Unique proposals guarantee eventual echoes with the same value
 - At most one proposal implies every learner is safe
 
-These lemmas are extracted from the main ThyHBB1 file to improve modularity and maintainability.
 They support the proof of agreement and liveness properties.
 
 ## Key Lemmas
@@ -26,7 +25,6 @@ The file is organized into several categories:
 - **Guard and value equality lemmas**: Extract and apply uniqueness constraints
   - `uniquePropose_guard_at_history`: Specializes uniqueness to a given history
   - `uniquePropose_equal_values`: Forces observed proposals to agree
-  - `uniquePropose_guard_at_predecessor`: Restricts uniqueness to predecessor histories
 
 - **Echo existence and equality lemmas**: Derive echo properties from unique proposals
   - `uniquePropose_exists_witness_echo`: Antecedent ensures echoes exist

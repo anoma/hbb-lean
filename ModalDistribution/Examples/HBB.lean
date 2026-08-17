@@ -10,7 +10,8 @@ and 11: the `Echo?`, `EchoNE`, and `Echo!` rules are identical in all three
 theories, and the `Deliver?`/`Deliver!` rules are identical in `ThyHBB1` and
 `ThyHBB2` (in `ThyHBB3` the deliver event is binary, so it has its own).
 Each theory's `Axioms.lean` assembles its axiom set from these plus its own
-vote rules.
+vote rules. The `Lemmas` section holds the shared instantiation lemmas for
+`Deliver?` and `Deliver!`.
 -/
 
 namespace ModalDistribution
