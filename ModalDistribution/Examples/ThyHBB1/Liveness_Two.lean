@@ -190,32 +190,28 @@ theorem livenessTwo
       (hImp := voteForward_imp (M := M)
         (hTheory := hTheory) (hSafe := hSafe))
 
-  -- (Knowledge□↓): live participants eventually know the quorum of votes.
-  have hKnowVotes :
-      ⟪wTop⟫ ⊨[M]
-        predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩)) := by
-    have hKnowledge :=
-      _root_.ModalDistribution.Examples.live_eventually_knows_box
-        (M := M) (liveSymb := liveSymb)
-        (l := l₂') (φ := ofEvent ⟨voteSymb, [l, v]⟩)
-        (hTheory := hThyLiveTheory)
-        (hQuorum := hVotesGlobal)
-    simpa [wTop]
-      using hKnowledge p
-
-  -- Lemma 6.4.3 with (Deliver!): eventual votes become eventual deliveries.
-  have hVotesTop :=
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩)))
-      hKnowVotes hLivep
-  exact
-    live_sometime_consequent_at (M := M)
+  -- Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
+  -- knowledge becomes eventual delivery.
+  have hDeliverEventually :
+      ⊨[M](predicate0 liveSymb ⇒ᶠ
+        ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) :=
+    live_eventually_consequent (M := M)
       (hLiveTheory := hThyLiveTheory)
+      (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩))
+      (ψ := ofEvent ⟨deliverSymb, [l₂', l, v]⟩)
+      (hLive :=
+        _root_.ModalDistribution.Examples.live_eventually_knows_box
+          (M := M) (liveSymb := liveSymb)
+          (l := l₂') (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+          (hTheory := hThyLiveTheory)
+          (hQuorum := hVotesGlobal))
       (hImp := HBB.deliverForward_imp (M := M)
         (theory_deliverForward (M := M) hTheory))
-      hLivep hVotesTop
+  exact
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := predicate0 liveSymb)
+      (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩))
+      (by simpa [wTop] using hDeliverEventually p) hLivep
 
 /-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was

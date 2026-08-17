@@ -150,39 +150,30 @@ theorem livenessOne
         (hEchoBox := hEchoBox)
     exact hVoteBox
 
-  have hLiveKnowsVotes :
-      ⟪wTop⟫ ⊨[M]
-        predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)) := by
-    -- Step 5: knowledge axiom (`live_eventually_knows_box`) on the vote quorum.
-    classical
-    have hKnow :=
-      live_eventually_knows_box (M := M)
-        (liveSymb := liveSymb)
-        (l := l)
-        (φ := ofEvent ⟨voteSymb, [l, v]⟩)
-        (hTheory := hThyLive)
-        (hQuorum := hVotesGlobal)
-    simpa [wTop]
-      using hKnow p
+  -- Steps 5–6: Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!),
+  -- concludes eventual delivery.
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-    -- Step 6: combine Step 5 with `Deliver!` via Lemma 6.4.3.
-    classical
-    have hVotesSometime :
-        ⟪wTop⟫ ⊨[M]
-          ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)) :=
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))).1
-        hLiveKnowsVotes hLiveHere
-    exact
-      ThyHBB1.live_sometime_consequent_at (M := M)
+    have hGlobal :=
+      ThyHBB1.live_eventually_consequent (M := M)
         (hLiveTheory := hThyLive)
+        (φ := □ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩))
+        (ψ := ofEvent ⟨deliverSymb, [l, l, v]⟩)
+        (hLive :=
+          live_eventually_knows_box (M := M)
+            (liveSymb := liveSymb)
+            (l := l)
+            (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+            (hTheory := hThyLive)
+            (hQuorum := hVotesGlobal))
         (hImp := HBB.deliverForward_imp (M := M)
           (theory_deliverForward (M := M) hTheory))
-        hLiveHere hVotesSometime
+    exact
+      Sat.imp_elim (M := M) (w := wTop)
+        (φ := predicate0 liveSymb)
+        (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
+        (by simpa [wTop] using hGlobal p) hLiveHere
   simpa [wTop] using hDeliverEventually
 
 /-- Paper: Proposition 7.2.3, first corollary. When the guarded proposal

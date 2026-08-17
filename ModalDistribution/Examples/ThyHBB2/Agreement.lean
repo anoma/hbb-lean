@@ -144,11 +144,10 @@ theorem agreement
       exact hNe rfl
     exact
       seq_two_quorums_eventually
-        (M := M) (H := M.history) (w := wTop)
+        (M := M) (w := wTop)
         (l := l₁) (l' := l₂)
         (evt := ⟨echoSymb, [v₁]⟩)
         (evt' := ⟨echoSymb, [v₂]⟩)
-        (hTime := rfl)
         (hSeq := hSeqTop)
         (hEvt := hEchoBox₁)
         (hEvt' := hEchoBox₂)

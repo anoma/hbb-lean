@@ -481,6 +481,73 @@ theorem pastDiamondBoxCollapsesToPresentBox
 
 /-! ## Corollary derivation for the liveness theorems -/
 
+/-- Paper: Lemma 6.4.4. `\atd{l}` of `\sometime φ` coincides
+with `\atddot{l} φ`. -/
+theorem box_sometime_iff_boxPast
+    (M : Model S P)
+    (φ : Formula S)
+    (l : Signature.Value S) :
+    (⊨[M]□ᶠ[[l]] ↕ᶠφ) ↔
+      (⊨[M]□ᶠ↓[[l]] φ) := by
+  classical
+  constructor
+  · intro hBox
+    refine fun p => ?_
+    let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+    have hBox_p :
+        ⟪wₚ⟫ ⊨[M]
+          □ᶠ[[l]] ↕ᶠ φ := hBox p
+    obtain ⟨O, hO, hAll⟩ :=
+      (sat_box_singleton_exists (M := M)
+          (w := wₚ) (l := l)
+          (φ := ↕ᶠ φ)).1 hBox_p
+    refine
+      (sat_box_singleton_exists (M := M)
+          (w := wₚ) (l := l)
+          (φ := Formula.past φ)).2 ?_
+    refine ⟨O, hO, ?_⟩
+    intro q hqO
+    have hSome_local := hAll q hqO
+    have hSome :
+        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] ↕ᶠ φ :=
+      hSome_local
+    have hPast :
+        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] Formula.past φ :=
+      (Sat.atEnd (M := M)
+        (w := ⟨q, †, M.history.val⟩)
+        (φ := Formula.past φ)).1
+        (by
+          simpa [Formula.sometime]
+            using hSome)
+    exact hPast
+  · intro hBox
+    refine fun p => ?_
+    let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+    have hBox_p :
+        ⟪wₚ⟫ ⊨[M]
+          □ᶠ[[l]] (Formula.past φ) :=
+      hBox p
+    obtain ⟨O, hO, hAll⟩ :=
+      (sat_box_singleton_exists (M := M)
+          (w := wₚ) (l := l)
+          (φ := Formula.past φ)).1 hBox_p
+    refine
+      (sat_box_singleton_exists (M := M)
+          (w := wₚ) (l := l)
+          (φ := ↕ᶠ φ)).2 ?_
+    refine ⟨O, hO, ?_⟩
+    intro q hqO
+    have hPast_local := hAll q hqO
+    have hPast :
+        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] Formula.past φ :=
+      hPast_local
+    have hSome :
+        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] ↕ᶠ φ :=
+      (Sat.atEnd (M := M)
+        (w := ⟨q, †, M.history.val⟩)
+        (φ := Formula.past φ)).2 hPast
+    exact hSome
+
 /-- From an end-of-time implication `(♢↓[]ψ) ⇒ G ⇒ ↕D` and a guard quorum
 `□[l]G`, conclude the past-box corollary `(♢↓[]ψ) ⇒ □↓[l]D`. This packages
 the derivation of the boxed corollaries of the liveness theorems. -/
@@ -493,47 +560,42 @@ theorem endValid_boxPast_of_imp_sometime
   classical
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hGuardTop : ⟪wTop⟫ ⊨[M] □ᶠ[[l]] G := by simpa [wTop] using hGuard p
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hAnte
+  -- The omniscient antecedent transports to every participant.
   obtain ⟨rProp, hPastAnte⟩ :=
     (Sat.diamond_nil (M := M) (w := wTop)
         (φ := Formula.past ψ)).1
       (by simpa [Formula.diamondPast] using hAnte)
-  obtain ⟨O, hO, hAllG⟩ :=
-    (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l) (φ := G)).1 hGuardTop
-  refine
-    (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l) (φ := ↓ᶠ D)).2
-      ⟨O, hO, ?_⟩
-  intro q hqO
-  set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
-  have hAnte_q : ⟪wq⟫ ⊨[M] ♢ᶠ↓[[]] ψ := by
-    have hPastWitness :
-        ⟪⟨rProp, †, wq.time⟩⟫ ⊨[M] Formula.past ψ := by
-      simpa [wq, wTop, World.time] using hPastAnte
+  have hAnteGlobal : ⊨[M]♢ᶠ↓[[]]ψ := by
+    intro q
     have hDiamond :=
-      (Sat.diamond_nil (M := M) (w := wq)
-          (φ := Formula.past ψ)).2 ⟨rProp, hPastWitness⟩
+      (Sat.diamond_nil (M := M) (w := ⟨q, †, M.history.val⟩)
+          (φ := Formula.past ψ)).2
+        ⟨rProp, by simpa [wTop, World.time] using hPastAnte⟩
     simpa [Formula.diamondPast] using hDiamond
-  have hImp_q :
-      ⟪wq⟫ ⊨[M] (♢ᶠ↓[[]] ψ) ⇒ᶠ (G ⇒ᶠ ↕ᶠ D) := by
-    simpa [wq] using hMain q
-  have hNext :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := ♢ᶠ↓[[]] ψ) (ψ := G ⇒ᶠ ↕ᶠ D)
-      hImp_q hAnte_q
-  have hG_q : ⟪wq⟫ ⊨[M] G := by
-    simpa [wq, wTop, World.time] using hAllG q hqO
-  have hEventual :=
-    Sat.imp_elim (M := M) (w := wq)
-      (φ := G) (ψ := ↕ᶠ D) hNext hG_q
-  have hPast :=
-    (Sat.atEnd (M := M) (w := wq)
-      (φ := Formula.past D)).1
-      (by simpa [Formula.sometime] using hEventual)
-  simpa using hPast
+  -- Every member of the guard quorum eventually sees `D`.
+  have hBoxSometime : ⊨[M]□ᶠ[[l]](↕ᶠ D) := by
+    intro q
+    obtain ⟨O, hO, hAllG⟩ :=
+      (sat_box_singleton_exists (M := M)
+          (w := ⟨q, †, M.history.val⟩) (l := l) (φ := G)).1 (hGuard q)
+    refine
+      (sat_box_singleton_exists (M := M)
+          (w := ⟨q, †, M.history.val⟩) (l := l) (φ := ↕ᶠ D)).2
+        ⟨O, hO, ?_⟩
+    intro r hrO
+    exact
+      Sat.imp_elim (M := M) (w := ⟨r, †, M.history.val⟩)
+        (φ := G) (ψ := ↕ᶠ D)
+        (Sat.imp_elim (M := M) (w := ⟨r, †, M.history.val⟩)
+          (φ := ♢ᶠ↓[[]]ψ) (ψ := G ⇒ᶠ ↕ᶠ D)
+          (hMain r) (hAnteGlobal r))
+        (hAllG r hrO)
+  -- Lemma 6.4.4 turns the eventualities into a past box.
+  simpa [wTop] using
+    (box_sometime_iff_boxPast (M := M) (φ := D) (l := l)).1
+      hBoxSometime p
 
 /-- The diamond corollary of `endValid_boxPast_of_imp_sometime`:
 `(♢↓[]ψ) ⇒ ♢↓[]D`. -/

@@ -25,37 +25,49 @@ set_option autoImplicit false
 variable {S : Signature} {P : Type}
 variable {w w' : World P (Signature.EventType S)}
 
-/-- Paper: Lemma 5.1.3. Accessible predecessors preserve in-place accessibility slices. -/
-theorem accessible_subset_of_accessible
-    (hAcc : w' ≪⁻ w)
-    (Hw : History P (Signature.EventType S))
-    (hwTime : Hw.val = w.time) :
-    {t : World P (Signature.EventType S) | t ≪⁻ w'} ⊆
-      {t : World P (Signature.EventType S) | t ≪⁻ w} := by
-  classical
-  intro t ht
-  obtain ⟨ht_acc, ht_place⟩ := ht
-  have ht_mem : t ∈ w'.time := by
-    simpa [World.accessible] using ht_acc
-  have hw'_mem : w' ∈ Hw.val := by
-    simpa [World.accessible, hwTime] using hAcc.1
-  have hw'_before : w'.time ≺− Hw.val := by
-    simpa [World.time] using
-      (History.happensBefore_of_mem
-        (P := P) (Event := Signature.EventType S) hw'_mem)
-  have hSubset : w'.time ⊆ Hw.val :=
-    History.subset_of_happensBefore (H := Hw) hw'_before
-  have ht_mem_hw : t ∈ Hw.val := hSubset _ ht_mem
-  have ht_mem_w : t ∈ w.time := by simpa [hwTime] using ht_mem_hw
-  have hPlace_eq : t.place = w.place := by
-    calc
-      t.place = w'.place := ht_place
-      _ = w.place := hAcc.2
-  refine ⟨?_, hPlace_eq⟩
-  simpa [World.accessible] using ht_mem_w
-
 variable [Nonempty P]
 variable {M : Model S P}
+
+/-- Paper: Lemma 5.1.2. Sequentiality coincides with linear ordering of the in-place slice. -/
+theorem seq_iff_linear_accessible
+    : (⟪w⟫ ⊨[M]Formula.seq) ↔
+      (∀ {w₁ w₂ : World P (Signature.EventType S)},
+        w₁ ≪⁻ w → w₂ ≪⁻ w →
+          (w₁ ≪ w₂ ∨ w₂ ≪ w₁ ∨ w₁ = w₂)) := by
+  classical
+  constructor
+  · intro hSeq
+    have hSeq' : isSequential (P := P) (Event := Signature.EventType S)
+        w.place w.time :=
+      (Sat.seq (M := M) (w := w)).1 hSeq
+    intro w₁ w₂ hw₁ hw₂
+    have hw₁_mem : w₁ ∈ w.time := by
+      simpa [World.accessible] using hw₁.1
+    have hw₂_mem : w₂ ∈ w.time := by
+      simpa [World.accessible] using hw₂.1
+    have hw₁_place : World.place w₁ = w.place := hw₁.2
+    have hw₂_place : World.place w₂ = w.place := hw₂.2
+    exact hSeq' w₁ w₂ hw₁_mem hw₂_mem hw₁_place hw₂_place
+  · intro h
+    have hSeq :
+        isSequential (P := P) (Event := Signature.EventType S)
+          w.place w.time := by
+      intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
+      have ht₁_access : t₁ ≪⁻ w :=
+        ⟨by simpa [World.accessible] using ht₁, hp₁⟩
+      have ht₂_access : t₂ ≪⁻ w :=
+        ⟨by simpa [World.accessible] using ht₂, hp₂⟩
+      exact h (w₁ := t₁) (w₂ := t₂) ht₁_access ht₂_access
+    exact (Sat.seq (M := M) (w := w)).2 hSeq
+
+/-- Paper: Lemma 5.1.3. Accessible predecessors preserve in-place accessibility slices. -/
+theorem accessible_subset_of_accessible
+    (hW : w.time ⪯ M.history.val)
+    (hAcc : w' ≪⁻ w) :
+    {t : World P (Signature.EventType S) | t ≪⁻ w'} ⊆
+      {t : World P (Signature.EventType S) | t ≪⁻ w} := fun _ ht =>
+  ⟨accessible_trans (H := M.history) (hW := hW) (h₂ := ht.1) (h₁ := hAcc.1),
+    ht.2.trans hAcc.2⟩
 
 /-- Paper: Proposition 5.1.4(1). Sequentiality persists along same-place accessibility. -/
 theorem seq_monotone_of_subset
@@ -64,66 +76,28 @@ theorem seq_monotone_of_subset
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
     ⟪w'⟫ ⊨[M]Formula.seq := by
   classical
-  obtain ⟨Hw, hwTime⟩ : ∃ Hw : History P (Signature.EventType S), Hw.val = w.time := by
-    rcases hW with hlt | heq
-    · exact ⟨History.predecessorHistory (H := M.history) hlt, rfl⟩
-    · exact ⟨M.history, heq.symm⟩
-  have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
-    rw [hwTime]
-    exact (Sat.seq (M := M) (w := w)).1 hSeq
-  have hMem : w' ∈ Hw.val := by
-    simpa [World.accessible, hwTime] using hAcc.1
-  have hBefore : w'.time ≺− Hw.val :=
-    History.happensBefore_of_mem (P := P) (Event := Signature.EventType S) hMem
-  have hSeqTime :
-      isSequential (P := P) (Event := Signature.EventType S) w.place w'.time := by
-    exact
-      (History.sequentiality_of_predecessor
-        (p := w.place) (H := Hw) (h' := w'.time)
-        (h_before := hBefore) (hseq := hSeqHw))
-  have hSeqTime' :
-      isSequential (P := P) (Event := Signature.EventType S) w'.place w'.time := by
-    refine fun {t₁ t₂} ht₁ ht₂ hp₁ hp₂ => ?_
-    have hp₁' : World.place t₁ = w.place := hp₁.trans hAcc.2
-    have hp₂' : World.place t₂ = w.place := hp₂.trans hAcc.2
-    exact hSeqTime t₁ t₂ ht₁ ht₂ hp₁' hp₂'
-  exact (Sat.seq (M := M) (w := w')).2 hSeqTime'
+  -- Lemma 5.1.2 reduces sequentiality to linearity of the in-place cone,
+  -- and Lemma 5.1.3 nests the cones.
+  refine (seq_iff_linear_accessible (M := M) (w := w')).2 ?_
+  intro w₁ w₂ h₁ h₂
+  exact
+    (seq_iff_linear_accessible (M := M) (w := w)).1 hSeq
+      (accessible_subset_of_accessible (M := M) (hW := hW) (hAcc := hAcc) h₁)
+      (accessible_subset_of_accessible (M := M) (hW := hW) (hAcc := hAcc) h₂)
 
-/-- Paper: Proposition 5.1.4(2). Sequentiality implies `⇓ᶠ`-sequentiality. -/
+/-- Paper: Proposition 5.1.4(2). Sequentiality implies `⇓ᶠ`-sequentiality.
+This restates part 1 under `⇓`. -/
 theorem seq_monotone_allItp
     (hW : w.time ⪯ M.history.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
     ⟪w⟫ ⊨[M]⇓ᶠ Formula.seq := by
   classical
-  obtain ⟨Hw, hwTime⟩ : ∃ Hw : History P (Signature.EventType S), Hw.val = w.time := by
-    rcases hW with hlt | heq
-    · exact ⟨History.predecessorHistory (H := M.history) hlt, rfl⟩
-    · exact ⟨M.history, heq.symm⟩
-  have hSeqHw : isSequential (P := P) (Event := Signature.EventType S) w.place Hw.val := by
-    rw [hwTime]
-    exact (Sat.seq (M := M) (w := w)).1 hSeq
-  refine Sat.not_intro (M := M) (φ := ↓ᶠ (¬ᶠ Formula.seq)) ?_
-  intro hPast
-  obtain ⟨t, ht_mem, ht_place, ht_notSeq⟩ :=
-    (Sat.past (M := M) (w := w) (φ := ¬ᶠ Formula.seq)).1 hPast
-  have ht_mem_hw : t ∈ Hw.val := by simpa [hwTime] using ht_mem
-  have ht_before : t.time ≺− Hw.val :=
-    History.happensBefore_of_mem
-      (P := P) (Event := Signature.EventType S) ht_mem_hw
-  have hSeq_t_time :
-      isSequential (P := P) (Event := Signature.EventType S) w.place t.time :=
-    History.sequentiality_of_predecessor
-      (p := w.place) (H := Hw) (h' := t.time)
-      (h_before := ht_before) (hseq := hSeqHw)
-  have hSeq_t_place :
-      isSequential (P := P) (Event := Signature.EventType S) t.place t.time := by
-    refine fun {t₁ t₂} ht₁ ht₂ hp₁ hp₂ => ?_
-    have hp₁' : World.place t₁ = w.place := hp₁.trans ht_place
-    have hp₂' : World.place t₂ = w.place := hp₂.trans ht_place
-    exact hSeq_t_time t₁ t₂ ht₁ ht₂ hp₁' hp₂'
-  have hSeq_t : ⟪t⟫ ⊨[M]Formula.seq :=
-    (Sat.seq (M := M) (w := t)).2 hSeq_t_place
-  exact (Sat.not_elim (M := M) (w := t) (φ := Formula.seq)) ht_notSeq hSeq_t
+  refine (Sat.allPast (M := M) (w := w) (φ := Formula.seq)).2 ?_
+  intro t ht hp
+  exact
+    seq_monotone_of_subset (M := M) (hW := hW)
+      (hAcc := ⟨by simpa [World.accessible] using ht, hp⟩)
+      (hSeq := hSeq)
 
 /-- Paper: Proposition 5.1.5(1). Quorum intersections furnish a joint witness. -/
 theorem two_quorums_exists
@@ -166,38 +140,6 @@ theorem two_quorums_exists
   exact
     sat_diamondEmpty_of_local (M := M)
       (w := w) (φ := ((ψ ∧ᶠ φ) ∧ᶠ φ')) hWitness
-
-/-- Paper: Lemma 5.1.2. Sequentiality coincides with linear ordering of the in-place slice. -/
-theorem seq_iff_linear_accessible
-    : (⟪w⟫ ⊨[M]Formula.seq) ↔
-      (∀ {w₁ w₂ : World P (Signature.EventType S)},
-        w₁ ≪⁻ w → w₂ ≪⁻ w →
-          (w₁ ≪ w₂ ∨ w₂ ≪ w₁ ∨ w₁ = w₂)) := by
-  classical
-  constructor
-  · intro hSeq
-    have hSeq' : isSequential (P := P) (Event := Signature.EventType S)
-        w.place w.time :=
-      (Sat.seq (M := M) (w := w)).1 hSeq
-    intro w₁ w₂ hw₁ hw₂
-    have hw₁_mem : w₁ ∈ w.time := by
-      simpa [World.accessible] using hw₁.1
-    have hw₂_mem : w₂ ∈ w.time := by
-      simpa [World.accessible] using hw₂.1
-    have hw₁_place : World.place w₁ = w.place := hw₁.2
-    have hw₂_place : World.place w₂ = w.place := hw₂.2
-    exact hSeq' w₁ w₂ hw₁_mem hw₂_mem hw₁_place hw₂_place
-  · intro h
-    have hSeq :
-        isSequential (P := P) (Event := Signature.EventType S)
-          w.place w.time := by
-      intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-      have ht₁_access : t₁ ≪⁻ w :=
-        ⟨by simpa [World.accessible] using ht₁, hp₁⟩
-      have ht₂_access : t₂ ≪⁻ w :=
-        ⟨by simpa [World.accessible] using ht₂, hp₂⟩
-      exact h (w₁ := t₁) (w₂ := t₂) ht₁_access ht₂_access
-    exact (Sat.seq (M := M) (w := w)).2 hSeq
 
 variable {H H' : History P (Signature.EventType S)}
 variable {p : P}
@@ -384,11 +326,9 @@ theorem seq_two_quorums_events
 
 /-- Paper: Proposition 5.1.5(3). Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
 theorem seq_two_quorums_eventually
-    {H : History P (Signature.EventType S)}
     {w : World P (Signature.EventType S)}
     {l l' : Signature.Value S}
     {evt evt' : Signature.EventType S}
-    (hTime : w.time = H.val)
     (hSeq : ⟪w⟫ ⊨[M]♢ᶠ[[l, l']]Formula.seq)
     (hEvt : ⟪w⟫ ⊨[M]□ᶠ↓[[l]](Formula.ofEvent evt))
     (hEvt' : ⟪w⟫ ⊨[M]□ᶠ↓[[l']](Formula.ofEvent evt'))

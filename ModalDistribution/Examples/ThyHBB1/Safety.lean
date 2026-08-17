@@ -26,8 +26,6 @@ The lemmas are organized into several categories:
   - `boxPast_live_of_eventual_quorum`: Previous result under ThyLive assumption
   - `live_eventually_consequent`: Composing eventual consequences at end of time
 
-- **Modality equivalences**:
-  - `box_sometime_iff_boxPast`: Equivalence between box-sometime and boxPast modalities
 
 These lemmas serve as building blocks for the main agreement and liveness theorems.
 -/
@@ -598,72 +596,6 @@ theorem live_eventually_consequent
         (φ := predicate0 liveSymb) (ψ := ↕ᶠ φ)).1
         (hLive p) hLive_p)
 
-/-- Paper: Lemma 6.4.4. `\atd{l}` of `\sometime φ` coincides
-with `\atddot{l} φ`. -/
-theorem box_sometime_iff_boxPast
-    (φ : Formula S)
-    (l : Signature.Value S) :
-    (⊨[M]□ᶠ[[l]] ↕ᶠφ) ↔
-      (⊨[M]□ᶠ↓[[l]] φ) := by
-  classical
-  constructor
-  · intro hBox
-    refine fun p => ?_
-    let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-    have hBox_p :
-        ⟪wₚ⟫ ⊨[M]
-          □ᶠ[[l]] ↕ᶠ φ := hBox p
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := M)
-          (w := wₚ) (l := l)
-          (φ := ↕ᶠ φ)).1 hBox_p
-    refine
-      (sat_box_singleton_exists (M := M)
-          (w := wₚ) (l := l)
-          (φ := Formula.past φ)).2 ?_
-    refine ⟨O, hO, ?_⟩
-    intro q hqO
-    have hSome_local := hAll q hqO
-    have hSome :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] ↕ᶠ φ :=
-      hSome_local
-    have hPast :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] Formula.past φ :=
-      (Sat.atEnd (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := Formula.past φ)).1
-        (by
-          simpa [Formula.sometime]
-            using hSome)
-    exact hPast
-  · intro hBox
-    refine fun p => ?_
-    let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-    have hBox_p :
-        ⟪wₚ⟫ ⊨[M]
-          □ᶠ[[l]] (Formula.past φ) :=
-      hBox p
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := M)
-          (w := wₚ) (l := l)
-          (φ := Formula.past φ)).1 hBox_p
-    refine
-      (sat_box_singleton_exists (M := M)
-          (w := wₚ) (l := l)
-          (φ := ↕ᶠ φ)).2 ?_
-    refine ⟨O, hO, ?_⟩
-    intro q hqO
-    have hPast_local := hAll q hqO
-    have hPast :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] Formula.past φ :=
-      hPast_local
-    have hSome :
-        ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] ↕ᶠ φ :=
-      (Sat.atEnd (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := Formula.past φ)).2 hPast
-    exact hSome
-
 /-- Paper: Lemma 6.4.1(1). Safety of a learner is monotone along in-place accessibility: if `safe(l)`
 holds at a world of the model, it holds at every same-place predecessor. -/
 theorem safe_monotone
@@ -707,29 +639,18 @@ theorem safe_allPast
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (l : Signature.Value S)
     {w : World P (Signature.EventType S)}
-    (hwMem : w ∈ M.history.val)
+    (hW : w.time ⪯ M.history.val)
     (hSafe : ⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) :
     ⟪w⟫ ⊨[M]⇓ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
   classical
-  have hW : w.time ⪯ M.history.val :=
-    PreHistory.happensBeforeEq_of_mem
-      (P := P) (Event := Signature.EventType S)
-      (hmem := by
-        simpa [World.place, World.event, World.time] using hwMem)
-  refine Sat.not_intro (M := M) (w := w)
-    (φ := ↓ᶠ (¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))) ?_
-  intro hPast
-  obtain ⟨t, ht_mem, ht_place, hNot⟩ :=
-    (Sat.past (M := M) (w := w)
-      (φ := ¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))).1 hPast
-  have hAcc : t ≪⁻ w :=
-    ⟨by simpa [World.accessible] using ht_mem, ht_place⟩
-  have hSafe_t :=
-    safe_monotone (M := M) (hTheory := hTheory) (l := l)
-      (hW := hW) (hAcc := hAcc) hSafe
+  refine (Sat.allPast (M := M) (w := w)
+    (φ := ofPredicate ⟨safeSymb, [l]⟩)).2 ?_
+  intro t ht_mem ht_place
   exact
-    Sat.not_elim (M := M) (w := t)
-      (φ := ofPredicate ⟨safeSymb, [l]⟩) hNot hSafe_t
+    safe_monotone (M := M) (hTheory := hTheory) (l := l)
+      (hW := hW)
+      (hAcc := ⟨by simpa [World.accessible] using ht_mem, ht_place⟩)
+      hSafe
 
 
 /-- The instantiated `Vote!` implication, taking the everywhere-always safety
@@ -774,15 +695,23 @@ theorem voteForward_imp
   refine voteForward_imp_of_everytime (M := M)
     (hTheory := hTheory) ?_
   intro t _
+  -- Lemma 6.4.1(2) at the end-of-time world of `t.place` gives safety at
+  -- every event of that place, which is exactly `⇕safe` at `t`.
+  have hAllPast :
+      ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
+        ⇓ᶠ (ofPredicate ⟨safeSymb, [l]⟩) :=
+    safe_allPast (M := M) (hTheory := hTheory) (l := l)
+      (hW := PreHistory.happensBeforeEq_refl _)
+      (hSafe := by simpa using hSafe t.place)
   refine (Sat.everytime (M := M) (w := t)
     (φ := ofPredicate ⟨safeSymb, [l]⟩)).2 ?_
-  intro s hs _
+  intro s hs hplace
   exact
-    safe_monotone (M := M) (hTheory := hTheory) (l := l)
-      (w := ⟨s.place, †, M.history.val⟩)
-      (hW := PreHistory.happensBeforeEq_refl _)
-      (hAcc := ⟨by simpa [World.accessible] using hs, rfl⟩)
-      (by simpa using hSafe s.place)
+    (Sat.allPast (M := M)
+      (w := ⟨t.place, †, M.history.val⟩)
+      (φ := ofPredicate ⟨safeSymb, [l]⟩)).1
+      hAllPast s (by simpa [World.time] using hs)
+      (by simpa [World.place] using hplace)
 
 end Results
 

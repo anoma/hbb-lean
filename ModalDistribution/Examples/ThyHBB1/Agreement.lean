@@ -125,11 +125,10 @@ theorem agreement
       exact hNe rfl
     exact
       seq_two_quorums_eventually
-        (M := M) (H := M.history) (w := wTop)
+        (M := M) (w := wTop)
         (l := l₁') (l' := l₂')
         (evt := ⟨voteSymb, [l₁, v₁]⟩)
         (evt' := ⟨voteSymb, [l₂, v₂]⟩)
-        (hTime := rfl)
         (hSeq := hSeqTop)
         (hEvt := hVoteBox₁)
         (hEvt' := hVoteBox₂)
@@ -290,11 +289,10 @@ theorem agreement
               ((ofEvent ⟨echoSymb, [vb]⟩) ∧ᶠ
                 ↓ᶠ (ofEvent ⟨echoSymb, [va]⟩))) :=
       seq_two_quorums_eventually
-        (M := M) (H := Hpred) (w := wNow)
+        (M := M) (w := wNow)
         (l := la) (l' := lb)
         (evt := ⟨echoSymb, [va]⟩)
         (evt' := ⟨echoSymb, [vb]⟩)
-        (hTime := rfl)
         (hSeq := step5) (hEvt := hEcho_la_box)
         (hEvt' := hEcho_lb_box)
         (hDistinct := by

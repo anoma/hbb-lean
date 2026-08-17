@@ -96,9 +96,8 @@ theorem livenessTwo
           (learner := ℓ) (value := v)
           (p := p)
           (hVote := hVoteTransfer)
-  have hLiveEchoBox :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
+  have hLiveEchoBoxGlobal :
+      ⊨[M]□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[ℓ]] (ofEvent ⟨echoSymb, [v]⟩)) := by
     -- Promote the echo diamond across the intersecting quorums for `l₂'`.
     classical
@@ -126,88 +125,40 @@ theorem livenessTwo
         (evt := ⟨echoSymb, [v]⟩)
         (hTheory := hThyLive) (hLive := hLive)
         (hQuorum := hQuorumGlobal)
-    simpa [wTop] using hBoxGlobal p
-  have hVoteBoxTarget :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
+    exact hBoxGlobal
+  have hVoteBoxGlobal :
+      ⊨[M]□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
           ofEvent ⟨voteSymb, [ℓ, v]⟩) := by
     -- Use `Vote!` to turn echo quorums for live learners into votes.
-    simpa [wTop]
-      using
-        live_vote_box_from_echo (M := M)
-          (hTheory := hTheory)
-          (l₂' := l₂') (learner := ℓ)
-          (value := v) (p := p)
-          (hEchoBox := hLiveEchoBox)
-  have hLiveKnowsVotes :
-      ⟪wTop⟫ ⊨[M]
-        predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)) := by
-    -- Live knowledge eventually learns the vote quorums.
-    classical
-    have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-      exact fun _ hAx => hTheory (Or.inl hAx)
-    refine Sat.imp_intro (M := M) (w := wTop) ?_
-    intro hLiveTop
-    have hAtEnd :
-        ⟪wTop⟫ ⊨[M]
-          ⤒ᶠ (□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
-      (Sat.atEnd (M := M)
-        (w := wTop)
-        (φ := □ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [ℓ, v]⟩))).2
-        (by simpa [wTop] using hVoteBoxTarget)
-    have hKnowledge : AllWorldValid M
-        (knowledgeBoxAxiom (S := S)
-          liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
-      (@hThyLive
-        (knowledgeBoxAxiom (S := S)
-          liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))
-        (by
-          dsimp [ThyLive]
-          exact Or.inr (Or.inr (Or.inr ⟨[l₂'], ofEvent ⟨voteSymb, [ℓ, v]⟩, rfl⟩)))
-    have hImp :=
-      (Sat.imp (M := M) (w := wTop)
-        (φ := ⤒ᶠ (□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [ℓ, v]⟩)))
-        (ψ := predicate0 liveSymb ⇒ᶠ
-              ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
-        (AllWorldValid.at_end
-          (M := M)
-          (φ := knowledgeBoxAxiom (S := S)
-              liveSymb [l₂'] (ofEvent ⟨voteSymb, [ℓ, v]⟩))
-          hKnowledge p) hAtEnd
+    intro q
     exact
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
-        hImp hLiveTop
+      live_vote_box_from_echo (M := M)
+        (hTheory := hTheory)
+        (l₂' := l₂') (learner := ℓ)
+        (value := v) (p := q)
+        (hEchoBox := by simpa [wTop] using hLiveEchoBoxGlobal q)
+  -- Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
+  -- knowledge becomes eventual delivery.
+  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+    fun _ hAx => hTheory (Or.inl hAx)
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ
           ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
-    -- Apply `Deliver!` once the vote quorum is known by all live members.
-    classical
-    have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-      exact fun _ hAx => hTheory (Or.inl hAx)
-    have hDeliverAx : AllWorldValid M
-        (deliverForwardAxiom liveSymb voteSymb deliverSymb) :=
-      theory_deliverForward (M := M) hTheory
-    refine Sat.imp_intro (M := M) (w := wTop) ?_
-    intro hLiveTop
-    have hVotesTop :
-        ⟪wTop⟫ ⊨[M]
-          ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩)))).1
-        hLiveKnowsVotes hLiveTop
-    exact
-      ThyHBB1.live_sometime_consequent_at (M := M)
+    have hGlobal :=
+      ThyHBB1.live_eventually_consequent (M := M)
         (hLiveTheory := hThyLive)
-        (hImp := HBB.deliverForward_imp (M := M) hDeliverAx)
-        hLiveTop hVotesTop
+        (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩))
+        (ψ := ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩)
+        (hLive :=
+          live_eventually_knows_box (M := M)
+            (liveSymb := liveSymb)
+            (l := l₂') (φ := ofEvent ⟨voteSymb, [ℓ, v]⟩)
+            (hTheory := hThyLive)
+            (hQuorum := hVoteBoxGlobal))
+        (hImp := HBB.deliverForward_imp (M := M)
+          (theory_deliverForward (M := M) hTheory))
+    simpa [wTop] using hGlobal p
   have hGoal :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by

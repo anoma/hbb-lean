@@ -166,7 +166,7 @@ through membership, never through equality of prehistories — exactly the
 - **Lemma 6.4.2(1)** — `boxPast_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.2(2)** — `boxPast_live_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.3** — `live_eventually_consequent` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
-- **Lemma 6.4.4** — `box_sometime_iff_boxPast` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
+- **Lemma 6.4.4** — `box_sometime_iff_boxPast` ([ModalDistribution/Logic/Properties/Modalities.lean](ModalDistribution/Logic/Properties/Modalities.lean))
 - **Proposition 6.4.5 (Liveness 2)** — `livenessTwo` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
 - **Proposition 6.4.5, first corollary** — `livenessTwo_boxPast` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))
 - **Proposition 6.4.5, second corollary** — `livenessTwo_diamondPast` ([ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB1/Liveness_Two.lean))

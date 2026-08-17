@@ -200,43 +200,28 @@ theorem livenessOne
         (hTheory := hTheory)
         (hSafeAlways := hSafeAlwaysGlobal))
 
-  -- Step 6 (Knowledge$\atddot{}$): a live participant eventually knows the votes.
-  have step6 :
-      ⟪wTop⟫ ⊨[M]
-        predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)) := by
-    classical
-    have hKnow :=
-      live_eventually_knows_box
-        (M := M)
-        (liveSymb := liveSymb)
-        (l := l)
-        (φ := ofEvent ⟨voteSymb, [l, v]⟩)
-        (hTheory := hThyLiveTheory)
-        (hQuorum := hVotesGlobal)
-    simpa [wTop]
-      using hKnow p
-
-  -- Step 7: conclude eventual delivery.
+  -- Steps 6–7: Lemma 6.4.3, applied to (Knowledge$\atddot{}$) and
+  -- (Deliver!), concludes eventual delivery.
   have step7 :
       ⟪wTop⟫ ⊨[M]
         predicate0 liveSymb ⇒ᶠ
           ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-    refine Sat.imp_intro (M := M) (w := wTop) ?_
-    intro hLiveTop
-    have hVotesTop :
-        ⟪wTop⟫ ⊨[M]
-          ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)) :=
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))).1
-        step6 hLiveTop
-    exact
-      live_sometime_consequent_at (M := M)
+    have hDeliverEventually :=
+      live_eventually_consequent (M := M)
         (hLiveTheory := hThyLiveTheory)
+        (φ := □ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩))
+        (ψ := ofEvent ⟨deliverSymb, [l, l, v]⟩)
+        (hLive :=
+          live_eventually_knows_box
+            (M := M)
+            (liveSymb := liveSymb)
+            (l := l)
+            (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+            (hTheory := hThyLiveTheory)
+            (hQuorum := hVotesGlobal))
         (hImp := HBB.deliverForward_imp (M := M)
           (theory_deliverForward (M := M) hTheory))
-        hLiveTop hVotesTop
+    simpa [wTop] using hDeliverEventually p
 
   -- Final application of the implication at participant `p`.
   exact

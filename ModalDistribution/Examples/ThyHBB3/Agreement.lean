@@ -144,12 +144,10 @@ theorem agreement
               ↓ᶠ (ofEvent ⟨voteSymb, [l₁, v₁]⟩))) :=
     seq_two_quorums_eventually
       (M := M)
-      (H := M.history)
       (w := wTop)
       (l := l₁) (l' := l₂)
       (evt := ⟨voteSymb, [l₁, v₁]⟩)
       (evt' := ⟨voteSymb, [l₂, v₂]⟩)
-      (hTime := rfl)
       (hSeq := hSeqTop)
       (hEvt :=
         by simpa [wTop] using hVoteBox₁)
