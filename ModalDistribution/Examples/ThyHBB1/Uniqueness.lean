@@ -431,12 +431,6 @@ theorem boxEcho_to_propose_diamond
   have hEchoMem :
       (wEcho.place, MaybeEvent.some ⟨echoSymb, [value]⟩, wEcho.time) ∈ M.history.val :=
     hEcho_event_mem.2
-  have hEchoMem_world : wEcho ∈ M.history.val := by
-    rcases wEcho with ⟨place, event, time⟩
-    have : event = MaybeEvent.some ⟨echoSymb, [value]⟩ := by
-      simpa using hEcho_event
-    subst this
-    simpa using hEchoMem
   have hEchoEvent :
       ⟪wEcho⟫ ⊨[M] ofEvent ⟨echoSymb, [value]⟩ :=
     hEcho_local
