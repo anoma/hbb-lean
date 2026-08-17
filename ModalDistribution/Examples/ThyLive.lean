@@ -905,7 +905,6 @@ theorem diamondEmpty_past_event_flat
       (Event := Signature.EventType S) (H := M.history.val)
       (e := w) hMem
   let Hw := History.predecessorHistory (H := M.history) hBefore
-  have hHw_val : Hw.val = w.time := rfl
   -- Unfold the outer diamond to obtain a witness in the local view of `w`.
   obtain ⟨q₁, hPast₁⟩ :=
     (Sat.diamondEmpty (M := M) (w := w)

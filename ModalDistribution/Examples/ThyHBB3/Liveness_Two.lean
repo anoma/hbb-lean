@@ -59,9 +59,8 @@ theorem livenessTwo
       (hLiveQuorum := hLiveQuorum)
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-    intro ax hAx
-    exact hTheory (Or.inl hAx)
+  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+    fun _ hAx => hTheory (Or.inl hAx)
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hDeliverDiamond
   refine Sat.imp_intro (M := M) (w := wTop) ?_
@@ -385,15 +384,6 @@ theorem livenessTwo
           hVotesEventuallyBox hLiveTop)
 
   -- Apply the live guard to obtain eventual `l₂` votes.
-  have hVotesEventually :
-      ⟪wTop⟫ ⊨[M]
-        ↕ᶠ (□ᶠ↓[[l₂]]
-          (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-    (Sat.imp (M := M) (w := wTop)
-      (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ (□ᶠ↓[[l₂]]
-        (ofEvent ⟨voteSymb, [l₂, v]⟩)))).1
-      hVotesEventuallyBox hLiveHere
 
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]

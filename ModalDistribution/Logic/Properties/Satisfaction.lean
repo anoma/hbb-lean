@@ -650,7 +650,6 @@ theorem hasQuorumWitness.seq_to_past
     (Sat.past (M := M)
       (w := ⟨p, †, M.history.val⟩)
       (φ := ⊤ᶠ)).1 hGuard
-  let Hlocal := World.time t
   have hpPlace' : t.place = p := hpPlace
   have hSeqGlobal :
       isSequential (P := P) (Event := Signature.EventType S) p

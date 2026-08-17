@@ -203,8 +203,6 @@ theorem pastBoxTopImpliesPredecessor
         (⊨[M] ♢ᶠ↓[ls] ⊤ᶠ)) := by
   classical
   intro hActive
-  have hPresentTop :=
-    presentBoxImpliesPastBox (M := M) (ls := ls) (φ := ⊤ᶠ)
   have hPresentPast :=
     presentBoxImpliesPastBox (M := M) (ls := ls) (φ := ↓ᶠ ⊤ᶠ)
   have hActiveLocal :=

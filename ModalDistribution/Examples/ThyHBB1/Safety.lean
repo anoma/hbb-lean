@@ -73,9 +73,6 @@ theorem uniquePropose_monotone
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) := by
   classical
   dsimp [Formula.existsAtMostOne] at hUnique ⊢
-  have hSubset_subset : w'.time ⊆ w.time :=
-    History.transitiveSubset_subset
-      (P := P) (Event := Signature.EventType S) hSubset
   refine Sat.forall_intro (M := M) (w := w')
       (body := fun value =>
         ∀ᶠ fun altValue =>
@@ -424,8 +421,6 @@ theorem boxPast_live_of_eventual_quorum
       (φ := predicate0 liveSymb) (ψ := φ)).1 hLiveφ_tφ
   have hLive_tφ :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] predicate0 liveSymb := hLiveφ_split.1
-  have hφ_tφ :
-      ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] φ := hLiveφ_split.2
   have htφ_mem_history :
       (qφ, evtφ, Hφ) ∈ M.history.val := by
     simpa [World.time]

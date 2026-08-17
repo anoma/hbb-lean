@@ -440,7 +440,6 @@ theorem seq_two_quorums_eventually
         (φ := Formula.ofEvent evt')).2
         ⟨t, by simpa [World.time] using ht_mem,
           by simpa [World.place] using ht_place, ht_evt⟩
-  have hTime_q : w_q.time = H.val := by simpa [World.time, hTime]
   have hDisj_q :=
     seq_two_quorums_events (M := M) (w := w_q)
       (hSeq := hSeq_q)

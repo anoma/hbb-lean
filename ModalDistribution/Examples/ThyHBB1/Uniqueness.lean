@@ -396,9 +396,6 @@ theorem boxEcho_to_propose_diamond
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
   classical
   rcases w with ⟨p, evt, Hw⟩
-  have hSubsetPlain : Hw ⊆ M.history.val :=
-    History.transitiveSubset_subset
-      (P := P) (Event := Signature.EventType S) hSubset
   have hHerHw : isHereditarilyTransitive Hw := hSubset.2
 
   -- Expand the guarded box to obtain a quorum and corresponding witnesses.
@@ -423,8 +420,6 @@ theorem boxEcho_to_propose_diamond
       (w := ⟨qEcho, †, Hw⟩)
       (φ := Formula.ofEvent ⟨echoSymb, [value]⟩)).1 hPastEcho
 
-  have hEchoMem_H :
-      (wEcho.place, wEcho.event, wEcho.time) ∈ Hw := hEcho_memHw
   have hEcho_event_mem :
       wEcho.event = MaybeEvent.some ⟨echoSymb, [value]⟩ ∧
         (wEcho.place, MaybeEvent.some ⟨echoSymb, [value]⟩, wEcho.time) ∈ M.history.val :=
@@ -442,12 +437,6 @@ theorem boxEcho_to_propose_diamond
       simpa using hEcho_event
     subst this
     simpa using hEchoMem
-  have hEchoBack_local :
-      ⟪wEcho⟫ ⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
-    AllWorldValid.of_mem_history
-      (M := M)
-      (φ := echoBackwardAxiom proposeSymb echoSymb)
-      hEchoBack hEchoMem_world
   have hEchoEvent :
       ⟪wEcho⟫ ⊨[M] ofEvent ⟨echoSymb, [value]⟩ :=
     hEcho_local
@@ -535,7 +524,6 @@ theorem echoNonEquiv_diamond
   have hSubsetPlain : Hw ⊆ M.history.val :=
     History.transitiveSubset_subset
       (P := P) (Event := Signature.EventType S) hSubset
-  have hHerHw : isHereditarilyTransitive Hw := hSubset.2
   have hDiamondBase :
       ⟪⟨p, evt, Hw⟩⟫ ⊨[M]
         ♢ᶠ[[]]

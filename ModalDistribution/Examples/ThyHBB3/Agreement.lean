@@ -56,9 +56,8 @@ theorem agreement
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   -- Instances of key axioms.
   have hVoteNE :
-      AllWorldValid M (voteNonEquivAxiom voteSymb correlationSymb) := by
-    apply hTheory
-    simp [theory]
+      AllWorldValid M (voteNonEquivAxiom voteSymb correlationSymb) :=
+    theory_voteNonEquiv (M := M) hTheory
   -- Correlation supplies sequential intersections and persistence.
   have hSeqGlobal :
       ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq :=

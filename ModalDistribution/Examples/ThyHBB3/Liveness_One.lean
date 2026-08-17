@@ -61,19 +61,12 @@ theorem livenessOne
       (hLiveQuorum := hLiveQuorum)
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb := by
-    intro ax hAx
-    exact hTheory (Or.inl hAx)
+  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+    fun _ hAx => hTheory (Or.inl hAx)
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hProposeDiamond
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLiveHere
-  have hLiveQuorumTop :
-      ⟪wTop⟫ ⊨[M] □ᶠ[[l]] predicate0 liveSymb := by
-    simpa [wTop] using hLiveQuorum p
-  have hLiveSequentialTop :
-      ⟪wTop⟫ ⊨[M] □ᶠ[[l]] Formula.seq := by
-    simpa [wTop] using hLiveSequentialGlobal p
   have hProposeQuorumGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -113,12 +106,8 @@ theorem livenessOne
       (proposeSymb := proposeSymb)
       (echoSymb := echoSymb)
       (value := v)
-      (hEcho := by
-        apply hTheory
-        simp [theory])
-      (hEchoBack := by
-        apply hTheory
-        simp [theory])
+      (hEcho := theory_echoForward (M := M) hTheory)
+      (hEchoBack := theory_echoBackward (M := M) hTheory)
       (hUnique := hUnique)
   have hEchoQuorumGlobal :
       ⊨[M]

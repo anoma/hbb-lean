@@ -149,12 +149,6 @@ theorem livenessOne
         (l₂' := l) (learner := l) (value := v) (p := q)
         (hEchoBox := hEchoBox)
     exact hVoteBox
-  have hVotesBox :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩) :=
-    by simpa [wTop] using hVotesGlobal p
 
   have hLiveKnowsVotes :
       ⟪wTop⟫ ⊨[M]
