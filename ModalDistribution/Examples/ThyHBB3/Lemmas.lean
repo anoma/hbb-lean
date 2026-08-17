@@ -40,13 +40,6 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
--- Unique-proposal helpers specialised to the `ThyHBB3` axioms.  These mirror the
--- `ThyHBB2` results but only rely on the echo-forward and echo-backward rules
--- that are also present in `ThyHBB3`.
-namespace Unique
-
-end Unique
-
 /-- Paper: Lemma 8.4.1. `3twined` combines three guarded box facts
 into a joint diamond witness. -/
 theorem threeTwined_boxes_intersect

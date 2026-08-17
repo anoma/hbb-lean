@@ -35,10 +35,6 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-namespace Deliver
-
-end Deliver
-
 /-- Singleton past boxes yield a witness for the corresponding past diamond. -/
 theorem boxPast_singleton_to_diamond_nil
     {w : World P (Signature.EventType S)}
@@ -136,11 +132,6 @@ theorem to_echo_box_end
       (hSubset := hSubset) (hBox := hBox) p
 
 end Vote
-
-/-! Unique-proposal helpers specialised to the `ThyHBB2` axioms. -/
-namespace Unique
-
-end Unique
 
 /-- Quorum intersections transport a vote witnessed at `l₁'` to some live
 member of the `l₂'` quorum. -/
