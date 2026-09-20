@@ -109,7 +109,7 @@ structure MinimalVote (w : World P S.EventType) (a v : S.Value) (r : Nat) where
 theorem minimal_vote (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v : S.Value} {r n : Nat}
     (hb : Corr M σ w a b) (hn : r ≤ n)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n)) :
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n)) :
     Nonempty (MinimalVote (M := M) (σ := σ) w a v r) := by
   let A := fun e : World P S.EventType => e ≪ w ∧
     ∃ b s n, Corr M σ w a b ∧ r ≤ n ∧ (⟪e⟫ ⊨[M] σ.vote b s v n)
@@ -155,7 +155,7 @@ theorem quorum_pair_before (h : BaseProtocol M σ) {w x y : World P S.EventType}
     (hw : w.time ⪯ M.history.val) (hx : x ≪ w) (hy : y ≪ w)
     {a b : S.Value} {φ ψ : Formula S} (hab : Corr M σ w a b)
     (hφ : ⟪x⟫ ⊨[M] □ᶠ↓[[a]] φ) (hψ : ⟪y⟫ ⊨[M] □ᶠ↓[[b]] ψ) :
-    ∃ e f, e ≪ x ∧ f ≪ y ∧
+    ∃ e f, e ≪ x ∧ f ≪ y ∧ e.place = f.place ∧
       (⟪e⟫ ⊨[M] φ) ∧ (⟪f⟫ ⊨[M] ψ) ∧ (e ≪ f ∨ f ≪ e ∨ e = f) := by
   obtain ⟨Q, hQ, hφ⟩ := quorum_exists_iff.mp hφ
   obtain ⟨T, hT, hψ⟩ := quorum_exists_iff.mp hψ
@@ -164,7 +164,7 @@ theorem quorum_pair_before (h : BaseProtocol M σ) {w x y : World P S.EventType}
       (φ := Formula.seq)).mp (h.correlationSeq hw hab) Q hQ T hT
   obtain ⟨e, he, hep, hφ⟩ := hφ p hp.1
   obtain ⟨f, hf, hfp, hψ⟩ := hψ p hp.2
-  exact ⟨e, f, he, hf, hφ, hψ,
+  exact ⟨e, f, he, hf, hep.trans hfp.symm, hφ, hψ,
     hseq e f (accessible_trans hw he hx) (accessible_trans hw hf hy) hep hfp⟩
 
 theorem quorum_lift {w e : World P S.EventType}
@@ -176,6 +176,16 @@ theorem quorum_lift {w e : World P S.EventType}
   intro p hp
   obtain ⟨f, hf, hfp, hφ⟩ := hφ p hp
   exact ⟨f, accessible_trans hw hf he, hfp, hφ⟩
+
+/-- An observed delivery has an observed vote at the delivery-certificate rank. -/
+theorem observed_vote_of_observed_delivery (h : BaseProtocol M σ)
+    {w : World P S.EventType} (hw : w.time ⪯ M.history.val) {a v : S.Value}
+    (hd : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) :
+    ⟪w⟫ ⊨[M] ♢ᶠ↓[[]]
+      (σ.voteFromSomeSource a v (maxDepth M (Corr M σ) a + 1)) := by
+  obtain ⟨e, he, hdel⟩ := past_exists_iff.mp hd
+  exact past_exists_iff.mpr (quorum_witness
+    (quorum_lift hw he (h.deliverBackward (predecessor_possible hw he) hdel)))
 
 theorem vote_value_eq {w : World P S.EventType} {l s v b t u : S.Value} {n k : Nat}
     (hv : ⟪w⟫ ⊨[M] σ.vote l s v n) (hu : ⟪w⟫ ⊨[M] σ.vote b t u k) : v = u := by

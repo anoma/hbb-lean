@@ -8,7 +8,7 @@ variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P} {R : World P S.EventType → S.Value → S.Value → Prop}
 
 /-- The earlier row strictly contains the later row. -/
-def StrictRow (R : World P S.EventType → S.Value → S.Value → Prop)
+def RowStrictlyContains (R : World P S.EventType → S.Value → S.Value → Prop)
     (a : S.Value) (e w : World P S.EventType) : Prop :=
   (∀ b, R w a b → R e a b) ∧ ∃ b, R e a b ∧ ¬ R w a b
 
@@ -19,7 +19,7 @@ def StrictEndingDepthChain (M : Model S P)
   ∃ ws : Fin (n + 1) → World P S.EventType,
     (∀ i, (ws i).time ⪯ M.history.val) ∧
     (∀ i j, i < j → ws i ≪ ws j) ∧
-    (∀ i j, i < j → StrictRow R a (ws i) (ws j)) ∧
+    (∀ i j, i < j → RowStrictlyContains R a (ws i) (ws j)) ∧
     (∀ i, ∃ b, R (ws i) a b) ∧ ws (Fin.last n) = w
 
 theorem strictEndingDepthChain_zero {a : S.Value} {w : World P S.EventType}
@@ -44,7 +44,7 @@ theorem strictEndingDepthChain_le {a : S.Value} {w : World P S.EventType} {n : N
 
 theorem strictEndingDepthChain_append {a : S.Value} {e w : World P S.EventType} {n : Nat}
     (chain : StrictEndingDepthChain M R a e n) (hew : e ≪ w)
-    (hw : w.time ⪯ M.history.val) (hrow : StrictRow R a e w)
+    (hw : w.time ⪯ M.history.val) (hrow : RowStrictlyContains R a e w)
     (hne : ∃ b, R w a b) : StrictEndingDepthChain M R a w (n + 1) := by
   obtain ⟨ws, hp, hc, hr, hn, hend⟩ := chain
   have old : ∀ i, ws i ≪ e ∨ ws i = e := by
@@ -55,7 +55,7 @@ theorem strictEndingDepthChain_append {a : S.Value} {e w : World P S.EventType} 
       exact hc i (Fin.last n) hi
     · right
       rw [Fin.eq_last_of_not_lt hi, hend]
-  have oldrow : ∀ i, StrictRow R a (ws i) w := by
+  have oldrow : ∀ i, RowStrictlyContains R a (ws i) w := by
     intro i
     have hincl : ∀ b, R e a b → R (ws i) a b := by
       intro b hb

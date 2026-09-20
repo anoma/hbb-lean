@@ -9,21 +9,21 @@ variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P} {σ : ProtocolSignature S}
 variable {w : World P S.EventType} {l s v : S.Value} {n : Nat}
 
-theorem someVote_iff :
-    (⟪w⟫ ⊨[M] σ.someVote l v n) ↔ ∃ s, (⟪w⟫ ⊨[M] σ.vote l s v n) := by
+theorem voteFromSomeSource_iff :
+    (⟪w⟫ ⊨[M] σ.voteFromSomeSource l v n) ↔ ∃ s, (⟪w⟫ ⊨[M] σ.vote l s v n) := by
   exact Sat.exists_iff (M := M) w (fun s => σ.vote l s v n)
 
 /-- Forgetting a fixed source is valid; the converse is not assumed. -/
-theorem fixedCertificate_to_certificate
-    (h : ⟪w⟫ ⊨[M] σ.fixedCertificate l s v n) :
-    ⟪w⟫ ⊨[M] σ.certificate l v n := by
+theorem fixedSourceCertificate_to_voteCertificate
+    (h : ⟪w⟫ ⊨[M] σ.fixedSourceCertificate l s v n) :
+    ⟪w⟫ ⊨[M] σ.voteCertificate l v n := by
   obtain ⟨Q, hQ, hall⟩ :=
     (sat_box_singleton_exists M w l (↓ᶠ (σ.vote l s v n))).1 h
-  apply (sat_box_singleton_exists M w l (↓ᶠ (σ.someVote l v n))).2
+  apply (sat_box_singleton_exists M w l (↓ᶠ (σ.voteFromSomeSource l v n))).2
   refine ⟨Q, hQ, ?_⟩
   intro p hp
   obtain ⟨u, hu, hplace, hvote⟩ := hall p hp
-  exact ⟨u, hu, hplace, someVote_iff.mpr ⟨s, hvote⟩⟩
+  exact ⟨u, hu, hplace, voteFromSomeSource_iff.mpr ⟨s, hvote⟩⟩
 
 /-- A constant correlation row has depth exactly one, in any finite model. -/
 theorem maxDepth_eq_one_of_constant

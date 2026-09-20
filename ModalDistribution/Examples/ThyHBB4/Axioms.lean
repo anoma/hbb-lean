@@ -50,15 +50,16 @@ def correlation (σ : ProtocolSignature S) (a b : S.Value) : Formula S :=
 
 def live (σ : ProtocolSignature S) : Formula S := predicate0 σ.liveSymb
 
-/-- The source may differ between signers. -/
-def someVote (σ : ProtocolSignature S) (l v : S.Value) (n : Nat) : Formula S :=
+/-- A vote from an existentially quantified source. -/
+def voteFromSomeSource (σ : ProtocolSignature S) (l v : S.Value) (n : Nat) : Formula S :=
   ∃ᶠ fun s => σ.vote l s v n
 
-def certificate (σ : ProtocolSignature S) (l v : S.Value) (n : Nat) : Formula S :=
-  □ᶠ↓[[l]] (σ.someVote l v n)
+/-- A quorum of votes whose sources may differ between signers. -/
+def voteCertificate (σ : ProtocolSignature S) (l v : S.Value) (n : Nat) : Formula S :=
+  □ᶠ↓[[l]] (σ.voteFromSomeSource l v n)
 
 /-- This certificate fixes one source for the entire quorum. -/
-def fixedCertificate (σ : ProtocolSignature S) (l s v : S.Value) (n : Nat) : Formula S :=
+def fixedSourceCertificate (σ : ProtocolSignature S) (l s v : S.Value) (n : Nat) : Formula S :=
   □ᶠ↓[[l]] (σ.vote l s v n)
 
 def echoCertificate (σ : ProtocolSignature S) (l v : S.Value) : Formula S :=
@@ -76,9 +77,9 @@ def Corr (M : Model S P) (σ : ProtocolSignature S)
 def Legal (M : Model S P) (σ : ProtocolSignature S)
     (w : World P S.EventType) (l v : S.Value) : Prop :=
   ∀ b u n, Corr M σ w b l → u ≠ v →
-    (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b u n)) →
+    (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b u n)) →
     ∃ c m, n < m ∧ Corr M σ w c l ∧
-      (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote c v m))
+      (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource c v m))
 
 /-- The end-of-time world of the same participant. -/
 def endWorld (M : Model S P) (w : World P S.EventType) : World P S.EventType :=
@@ -93,14 +94,14 @@ structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   voteZeroBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l s v},
     (⟪w⟫ ⊨[M] σ.vote l s v 0) →
     (l = s ∧ (⟪w⟫ ⊨[M] σ.echoCertificate l v)) ∨
-      (⟪w⟫ ⊨[M] σ.certificate s v (maxDepth M (Corr M σ) s))
+      (⟪w⟫ ⊨[M] σ.voteCertificate s v (maxDepth M (Corr M σ) s))
   voteSuccBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l s v n},
     (⟪w⟫ ⊨[M] σ.vote l s v (n + 1)) →
-      (⟪w⟫ ⊨[M] σ.fixedCertificate l s v n)
+      (⟪w⟫ ⊨[M] σ.fixedSourceCertificate l s v n)
   deliverBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v},
     (⟪w⟫ ⊨[M] σ.deliver l v) →
-      (⟪w⟫ ⊨[M] σ.certificate l v (maxDepth M (Corr M σ) l + 1))
-  echoNonEquiv : ∀ {w}, w.time ⪯ M.history.val → ∀ {v u},
+      (⟪w⟫ ⊨[M] σ.voteCertificate l v (maxDepth M (Corr M σ) l + 1))
+  echoNonEquivocation : ∀ {w}, w.time ⪯ M.history.val → ∀ {v u},
     (⟪w⟫ ⊨[M] σ.echo v) → (⟪w⟫ ⊨[M] ↓ᶠ (σ.echo u)) → v = u
   voteLegal : ∀ {w}, w.time ⪯ M.history.val → ∀ {l s v n},
     (⟪w⟫ ⊨[M] σ.vote l s v n) → Legal M σ w l v
@@ -125,17 +126,17 @@ structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   voteZeroTransferForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l s v},
     (⟪w⟫ ⊨[M] σ.live) → Legal M σ (endWorld M w) l v →
     Corr M σ (endWorld M w) l s →
-    (⟪w⟫ ⊨[M] σ.certificate s v (maxDepth M (Corr M σ) s)) →
+    (⟪w⟫ ⊨[M] σ.voteCertificate s v (maxDepth M (Corr M σ) s)) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.vote l s v 0))
   voteSuccForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l s v n},
     n + 1 ≤ maxDepth M (Corr M σ) l + 1 →
     (⟪w⟫ ⊨[M] σ.live) → Legal M σ (endWorld M w) l v →
     (l = s ∨ Corr M σ (endWorld M w) l s) →
-    (⟪w⟫ ⊨[M] σ.fixedCertificate l s v n) →
+    (⟪w⟫ ⊨[M] σ.fixedSourceCertificate l s v n) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.vote l s v (n + 1)))
   deliverForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v},
     (⟪w⟫ ⊨[M] σ.live) →
-    (⟪w⟫ ⊨[M] σ.certificate l v (maxDepth M (Corr M σ) l + 1)) →
+    (⟪w⟫ ⊨[M] σ.voteCertificate l v (maxDepth M (Corr M σ) l + 1)) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.deliver l v))
 
 /-- Correlation at a world holds at every causal predecessor. -/

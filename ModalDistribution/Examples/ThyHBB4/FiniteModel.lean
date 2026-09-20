@@ -131,19 +131,9 @@ private theorem atom_early {t : World Unit signature.EventType} {E : signature.E
     by_cases hh : i < 6
     · exact hh
     have hn : label i = † := by
-      cases i with
-      | zero => omega
-      | succ i => cases i with
-        | zero => omega
-        | succ i => cases i with
-          | zero => omega
-          | succ i => cases i with
-            | zero => omega
-            | succ i => cases i with
-              | zero => omega
-              | succ i => cases i with
-                | zero => omega
-                | succ i => rfl
+      have hi : i = (i - 6) + 6 := by omega
+      rw [hi]
+      rfl
     rw [hn] at he
     contradiction
   exact (mem_time _ 6).mpr ⟨i, hi6, rfl⟩
@@ -271,7 +261,7 @@ private theorem sometime_actual (w : World Unit signature.EventType)
     ⟨event i, (mem_time _ 8).mpr ⟨i, hi, rfl⟩, Subsingleton.elim _ _, h⟩
 
 private theorem fixed_at (n k : Nat) (hn : n ≤ 2) (hk : n + 2 < k) :
-    ⟪event k⟫ ⊨[model] symbols.fixedCertificate () () () n := by
+    ⟪event k⟫ ⊨[model] symbols.fixedSourceCertificate () () () n := by
   apply (boxPast (event k) [()] _).mpr
   exact ⟨event (n + 2), (mem_time _ k).mpr ⟨n + 2, hk, rfl⟩, vote_actual n hn⟩
 
@@ -282,7 +272,7 @@ private theorem protocol : ProtocolCM model symbols := by
     voteZeroBackward := ?_
     voteSuccBackward := ?_
     deliverBackward := ?_
-    echoNonEquiv := ?_
+    echoNonEquivocation := ?_
     voteLegal := ?_
     voteSource := ?_
     voteCap := ?_
@@ -320,7 +310,7 @@ private theorem protocol : ProtocolCM model symbols := by
   · intro w _ l v hv
     cases l; cases v
     rw [deliver_world hv, depth]
-    exact fixedCertificate_to_certificate (fixed_at 2 5 (by omega) (by omega))
+    exact fixedSourceCertificate_to_voteCertificate (fixed_at 2 5 (by omega) (by omega))
   · intro w _ v u _ _
     cases v; cases u; rfl
   · intro w _ l s v n _

@@ -14,33 +14,33 @@ theorem transfer_zero_quorum (h : BaseProtocol M σ) {a b s v : S.Value}
     (hcorr : ∀ p : P, Corr M σ ⟨p, †, M.history.val⟩ b a)
     (hlive : ⊨[M] □ᶠ[[b]] σ.live)
     (hcert : ⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ
-      σ.fixedCertificate a s v (maxDepth M (Corr M σ) a))) :
+      σ.fixedSourceCertificate a s v (maxDepth M (Corr M σ) a))) :
     ⊨[M] □ᶠ↓[[b]] (σ.live ∧ᶠ σ.vote b a v 0) := by
   have hlearn : ⊨[M] □ᶠ↓[[b]] (σ.live ∧ᶠ
-      σ.fixedCertificate a s v (maxDepth M (Corr M σ) a)) :=
+      σ.fixedSourceCertificate a s v (maxDepth M (Corr M σ) a)) :=
     live_eventually_knows_quorum (M := M) (hTheory := h.thyLive) (hLive := hlive) (hQuorum := hcert)
   apply ThyHBB1.boxPast_live_of_eventual_quorum h.thyLive
-    (σ.fixedCertificate a s v (maxDepth M (Corr M σ) a)) (σ.vote b a v 0) b hlearn
+    (σ.fixedSourceCertificate a s v (maxDepth M (Corr M σ) a)) (σ.vote b a v 0) b hlearn
   intro w hw
   apply Sat.imp_intro
   intro hboth
   obtain ⟨hl, hc⟩ := (Sat.and (M := M) (w := w) _ _).mp hboth
   exact h.voteZeroTransferForward hw hl (hlegal w.place) (hcorr w.place)
-    (fixedCertificate_to_certificate hc)
+    (fixedSourceCertificate_to_voteCertificate hc)
 
 /-- A delivery quorum meets the destination's live quorum at a live vote.
 Its backward justification is a fixed-source certificate admissible for Knowledge. -/
-theorem delivery_live_fixed_certificate (h : BaseProtocol M σ) {a b v : S.Value}
+theorem delivery_live_fixedSourceCertificate (h : BaseProtocol M σ) {a b v : S.Value}
     (hcorr : ∀ p : P, Corr M σ ⟨p, †, M.history.val⟩ a b)
     (hlive : ⊨[M] □ᶠ[[b]] σ.live)
     {d : World P S.EventType} (hd : d ∈ M.history.val)
     (hdel : ⟪d⟫ ⊨[M] σ.deliver a v) :
     ∃ s, ⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ
-      σ.fixedCertificate a s v (maxDepth M (Corr M σ) a)) := by
+      σ.fixedSourceCertificate a s v (maxDepth M (Corr M σ) a)) := by
   have hdpos := M.time_le_of_mem hd
   have hdback := h.deliverBackward hdpos hdel
   obtain ⟨Q, hQ, hVotes⟩ := (sat_box_singleton_exists (M := M) (w := d)
-    (l := a) (φ := ↓ᶠ (σ.someVote a v (maxDepth M (Corr M σ) a + 1)))).mp hdback
+    (l := a) (φ := ↓ᶠ (σ.voteFromSomeSource a v (maxDepth M (Corr M σ) a + 1)))).mp hdback
   let w : World P S.EventType := ⟨d.place, †, M.history.val⟩
   obtain ⟨T, hT, hLives⟩ := (sat_box_singleton_exists (M := M) (w := w)
     (l := b) (φ := σ.live)).mp (hlive d.place)
@@ -51,7 +51,7 @@ theorem delivery_live_fixed_certificate (h : BaseProtocol M σ) {a b v : S.Value
     (w := ⟨p, †, d.time⟩) _).mp (hVotes p hp.1)
   have htmem : t ∈ M.history.val :=
     History.subset_of_happensBefore (History.happensBefore_of_mem hd) t ht
-  obtain ⟨s, hvote⟩ := someVote_iff.mp hsome
+  obtain ⟨s, hvote⟩ := voteFromSomeSource_iff.mp hsome
   have hcert := h.voteSuccBackward (M.time_le_of_mem htmem) hvote
   have hlEnd : ⟪t⟫ ⊨[M] ⤒ᶠ σ.live := by
     apply (Sat.atEnd M t _).mpr
@@ -85,7 +85,7 @@ theorem livenessTwo_of_delivery_legal (h : BaseProtocol M σ)
     intro q
     exact hDeliveryLegal (PreHistory.happensBeforeEq_refl _) (hcorr q)
       (past_exists_iff.mpr ⟨d, hd, hdval⟩)
-  obtain ⟨s, hcert⟩ := delivery_live_fixed_certificate h hcorr hLiveQuorum hd hdval
+  obtain ⟨s, hcert⟩ := delivery_live_fixedSourceCertificate h hcorr hLiveQuorum hd hdval
   have hsource : ∀ q : P, Corr M σ ⟨q, †, M.history.val⟩ b a :=
     fun q => h.correlationSymm (PreHistory.happensBeforeEq_refl _) (hcorr q)
   have hzero := transfer_zero_quorum h hlegal hsource hLiveQuorum hcert

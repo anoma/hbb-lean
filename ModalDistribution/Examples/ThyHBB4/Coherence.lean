@@ -24,24 +24,18 @@ theorem SwitchCoherence.comparisonWitness (h : BaseProtocol M σ)
   cases k with
   | zero => omega
   | succ n =>
-    obtain ⟨Q, hQ, hq⟩ := quorum_exists_iff.mp
+    obtain ⟨f, g, hf, hg, hplace, hfv, hgv, hord⟩ := quorum_pair_before h hw hE hF hbc
       (h.voteSuccBackward (predecessor_possible hw hE) hEv)
-    obtain ⟨T, hT, ht⟩ := quorum_exists_iff.mp
       (h.voteSuccBackward (predecessor_possible hw hF) hFv)
-    obtain ⟨p, hp, hseq⟩ :=
-      (sat_diamond_pair_iff (M := M) (w := w) (l := b) (l' := c)
-        (φ := Formula.seq)).mp (h.correlationSeq hw hbc) Q hQ T hT
-    obtain ⟨f, hf, hfp, hfv⟩ := hq p hp.1
-    obtain ⟨g, hg, hgp, hgv⟩ := ht p hp.2
     have hfw := accessible_trans hw hf hE
     have hgw := accessible_trans hw hg hF
     refine ⟨f, g, hf, hg, hfv, hgv, ?_⟩
-    rcases hseq f g hfw hgw hfp hgp with hfg | hgf | heq
+    rcases hord with hfg | hgf | heq
     · refine Or.inl ⟨hfg, ?_⟩
       intro a hba
-      exact hsw hw hfg hgw (hfp.trans hgp.symm) (by omega) huv hbc hfv hgv a
+      exact hsw hw hfg hgw hplace (by omega) huv hbc hfv hgv a
         (h.correlationTrans hw (h.correlationSymm hw hbc) hba)
-    · exact Or.inr ⟨hgf, hsw hw hgf hfw (hgp.trans hfp.symm) (by omega)
+    · exact Or.inr ⟨hgf, hsw hw hgf hfw hplace.symm (by omega)
         (Ne.symm huv) (h.correlationSymm hw hbc) hgv hfv⟩
     · subst g
       exact False.elim (huv (vote_value_eq hfv hgv))

@@ -7,7 +7,7 @@ open scoped Formula PreHistory
 variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P} {σ : ProtocolSignature S}
 
-theorem ending_chain_strict_append (h : ProtocolCM M σ) {w e : World P S.EventType}
+theorem endingDepthChain_append_of_lost_correlation (h : ProtocolCM M σ) {w e : World P S.EventType}
     (hw : w.time ⪯ M.history.val) (he : e ≪ w) {a c : S.Value} {n : Nat}
     (hc : Corr M σ e a c) (hnc : ¬ Corr M σ w a c)
     (chain : EndingDepthChain M (Corr M σ) a e n) :
@@ -25,8 +25,8 @@ theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {r n k : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : r ≤ n) (hk : r ≤ k)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n))
-    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote c u k)) :
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n))
+    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource c u k)) :
     EndingDepthChain M (Corr M σ) a w (r + 1) := by
   induction r generalizing w b c v u n k with
   | zero =>
@@ -41,7 +41,7 @@ theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
         rcases h.voteSource hX X.vote with heq | hsrc
         · exact False.elim (hnot (heq ▸ X.correlated))
         · exact h.correlationTrans hX hab hsrc
-      exact ending_chain_strict_append h hw X.before hcorr hnot
+      exact endingDepthChain_append_of_lost_correlation h hw X.before hcorr hnot
         (endingDepthChain_zero _ _ hX)
     by_cases hV : Corr M σ w a V.source
     · by_cases hU : Corr M σ w a U.source
@@ -58,9 +58,9 @@ theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
           quorum_pair h hw hVU (echo V hV) (echo U hU)
         have eq : v = u := by
           rcases hord with hef | hfe | rfl
-          · exact (h.echoNonEquiv (predecessor_possible hw hf) huf
+          · exact (h.echoNonEquivocation (predecessor_possible hw hf) huf
               ((Sat.past _ _ _).mpr ⟨e, hef, hp, hve⟩)).symm
-          · exact h.echoNonEquiv (predecessor_possible hw he) hve
+          · exact h.echoNonEquivocation (predecessor_possible hw he) hve
               ((Sat.past _ _ _).mpr ⟨f, hfe, hp.symm, huf⟩)
           · have heq := ((Sat.ofEvent _ _ _).mp hve).1.symm.trans
               ((Sat.ofEvent _ _ _).mp huf).1
@@ -74,7 +74,7 @@ theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
     obtain ⟨V⟩ := minimal_vote h hw hb hn hv
     obtain ⟨U⟩ := minimal_vote h hw hc hk hu
     have hVU := h.correlationTrans hw (h.correlationSymm hw V.correlated) U.correlated
-    obtain ⟨e, f, he, hf, hve, huf, hord⟩ := quorum_pair_before h hw V.before U.before hVU
+    obtain ⟨e, f, he, hf, _, hve, huf, hord⟩ := quorum_pair_before h hw V.before U.before hVU
       (h.voteSuccBackward (predecessor_possible hw V.before) V.vote)
       (h.voteSuccBackward (predecessor_possible hw U.before) U.vote)
     have step : ∀ {v u}, v ≠ u →
@@ -90,7 +90,7 @@ theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
       have haV := h.causalMonotone hw V.correlated hfw
       have haU := h.causalMonotone hw U.correlated hfw
       have hVU := h.correlationTrans hfpos (h.correlationSymm hfpos haV) haU
-      have hPast : ⟪f⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote V.target v r) :=
+      have hPast : ⟪f⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource V.target v r) :=
         past_exists_iff.mpr ⟨e, hef, (Sat.exists_iff _ _).mpr ⟨V.source, hve⟩⟩
       obtain ⟨c, k, hrk, hcU, hcv⟩ := h.voteLegal hfpos huf V.target v r hVU hvu hPast
       have hac := h.correlationTrans hfpos haU (h.correlationSymm hfpos hcU)
@@ -101,7 +101,7 @@ theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
         exact U.minimal g (accessible_trans (predecessor_possible hw U.before) hgf hf)
           c s k hc (by omega) hgv
       have chain := ih hfpos haV hac hvu (Nat.le_refl r) (by omega : r ≤ k) hPast hcv
-      exact ending_chain_strict_append h hw hfw hac hnot chain
+      exact endingDepthChain_append_of_lost_correlation h hw hfw hac hnot chain
     rcases hord with hef | hfe | heq
     · exact step hvu V U e f he hf hve huf hef
     · exact step (Ne.symm hvu) U V f e hf he huf hve hfe
@@ -113,8 +113,8 @@ theorem conflicting_rank_lt (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {n k : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : maxDepth M (Corr M σ) a - 1 ≤ n)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n))
-    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote c u k)) :
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n))
+    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource c u k)) :
     k < maxDepth M (Corr M σ) a - 1 := by
   by_cases hk : k < maxDepth M (Corr M σ) a - 1
   · exact hk
@@ -128,7 +128,7 @@ theorem high_vote_legal (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v : S.Value} {n : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c)
     (hn : maxDepth M (Corr M σ) a - 1 ≤ n)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n)) : Legal M σ w c v := by
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n)) : Legal M σ w c v := by
   intro d u k hdc huv hu
   have had := h.correlationTrans hw hc (h.correlationSymm hw hdc)
   have hlt := conflicting_rank_lt h hw hb had (Ne.symm huv) hn hv hu
@@ -140,14 +140,8 @@ theorem agreement_at (h : ProtocolCM M σ) {w : World P S.EventType}
     (hab : Corr M σ w a b)
     (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v))
     (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver b u)) : v = u := by
-  have votes : ∀ {a v}, (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) →
-      (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote a v (maxDepth M (Corr M σ) a + 1))) := by
-    intro a v hv
-    obtain ⟨e, he, hd⟩ := past_exists_iff.mp hv
-    exact past_exists_iff.mpr (quorum_witness
-      (quorum_lift hw he (h.deliverBackward (predecessor_possible hw he) hd)))
-  have hv' := votes hv
-  have hu' := votes hu
+  have hv' := observed_vote_of_observed_delivery h.toBaseProtocol hw hv
+  have hu' := observed_vote_of_observed_delivery h.toBaseProtocol hw hu
   by_cases heq : v = u
   · exact heq
   apply False.elim
@@ -180,9 +174,7 @@ theorem delivery_legal (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v : S.Value}
     (hab : Corr M σ w a b)
     (hdel : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) : Legal M σ w b v := by
-  obtain ⟨d, hd, hdval⟩ := past_exists_iff.mp hdel
-  have hcert := quorum_lift hw hd (h.deliverBackward (predecessor_possible hw hd) hdval)
-  have hvote := past_exists_iff.mpr (quorum_witness hcert)
+  have hvote := observed_vote_of_observed_delivery h.toBaseProtocol hw hdel
   have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
   exact high_vote_legal h hw haa hab (by omega) hvote
 

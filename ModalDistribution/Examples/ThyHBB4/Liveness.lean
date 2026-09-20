@@ -25,7 +25,7 @@ theorem capped_round_progress (h : BaseProtocol M σ) {l s v : S.Value}
     intro hn
     have hp := ih (by omega)
     apply ThyHBB1.boxPast_live_of_eventual_quorum h.thyLive
-      (σ.fixedCertificate l s v n) (σ.vote l s v (n + 1)) l
+      (σ.fixedSourceCertificate l s v n) (σ.vote l s v (n + 1)) l
       (live_boxPast_nests (M := M) (hTheory := h.thyLive) (hAllowed := .event _) (hQuorum := hp))
     intro w hw
     apply Sat.imp_intro
@@ -43,19 +43,19 @@ theorem deliver_of_live_zero_quorum (h : BaseProtocol M σ) {l s v : S.Value}
     (maxDepth M (Corr M σ) l + 1) (Nat.le_refl _)
   have hknow := live_eventually_knows_box (M := M) (hTheory := h.thyLive) (hAllowed := .event _) (hQuorum := hlast)
   have hforward : □W⊨[M]
-      (σ.live ∧ᶠ σ.fixedCertificate l s v (maxDepth M (Corr M σ) l + 1)) ⇒ᶠ
+      (σ.live ∧ᶠ σ.fixedSourceCertificate l s v (maxDepth M (Corr M σ) l + 1)) ⇒ᶠ
         ↕ᶠ (σ.deliver l v) := by
     intro w hw
     apply Sat.imp_intro
     intro hboth
     obtain ⟨hlive, hcert⟩ := (Sat.and (M := M) (w := w) _ _).1 hboth
-    exact h.deliverForward hw hlive (fixedCertificate_to_certificate hcert)
+    exact h.deliverForward hw hlive (fixedSourceCertificate_to_voteCertificate hcert)
   intro p
   apply Sat.imp_intro
   intro hlive
   exact ThyHBB1.live_sometime_consequent_at h.thyLive hforward hlive
     (Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩) (φ := σ.live)
-      (ψ := ↕ᶠ (σ.fixedCertificate l s v (maxDepth M (Corr M σ) l + 1)))
+      (ψ := ↕ᶠ (σ.fixedSourceCertificate l s v (maxDepth M (Corr M σ) l + 1)))
       (hknow p) hlive)
 
 /-- A unique proposal known at a live event initializes the self-sourced round-zero quorum. -/
@@ -103,7 +103,7 @@ theorem legal_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}
     ∀ p : P, Legal M σ ⟨p, †, M.history.val⟩ l v := by
   intro p b u n _ hne hbad
   obtain ⟨e, he, hvote⟩ := past_exists_iff.mp hbad
-  obtain ⟨s, hvote⟩ := someVote_iff.mp hvote
+  obtain ⟨s, hvote⟩ := voteFromSomeSource_iff.mp hvote
   have hp := vote_provenance h (predecessor_possible (PreHistory.happensBeforeEq_refl _) he) hvote
   obtain ⟨t, ht, hprop⟩ := past_exists_iff.mp hp
   have hknownu : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ↓[[]] (σ.propose u) :=
@@ -111,7 +111,7 @@ theorem legal_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}
   exact False.elim (hne (ThyHBB1.uniquePropose_equal_values u v
     (ThyHBB1.uniquePropose_guard_at_history (hUnique p)) hknownu (hKnown p)))
 
-/-- Liveness 1: a uniquely proposed value known by a live participant is eventually delivered. -/
+/-- Liveness 1: a uniquely proposed value known by a live participant is delivered sometime in the history. -/
 theorem livenessOne (h : BaseProtocol M σ) {l v : S.Value}
     (hLiveQuorum : ⊨[M] □ᶠ[[l]] σ.live)
     (hUnique : ⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u)) :

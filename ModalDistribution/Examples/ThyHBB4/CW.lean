@@ -15,8 +15,8 @@ theorem conflict_depth_succ (h : ProtocolCW M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {r n k : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : r + 1 ≤ n) (hk : r + 1 ≤ k)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n))
-    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote c u k)) :
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n))
+    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource c u k)) :
     StrictEndingDepthChain M (Corr M σ) a w r := by
   induction r generalizing w b c v u n k with
   | zero => exact strictEndingDepthChain_zero hw ⟨b, hb⟩
@@ -45,7 +45,7 @@ theorem conflict_depth_succ (h : ProtocolCW M σ) {w : World P S.EventType}
           (hinc d (h.correlationTrans hw (h.correlationSymm hw V.correlated) hd))
       have haV := hincl V.target V.correlated
       have hVU := h.correlationTrans hfpos (h.correlationSymm hfpos haV) haU
-      have hPast : ⟪f⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote V.target v (r + 1)) :=
+      have hPast : ⟪f⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource V.target v (r + 1)) :=
         past_exists_iff.mpr ⟨e, hef, (Sat.exists_iff _ _).mpr ⟨V.source, hve⟩⟩
       obtain ⟨d, j, hrj, hdU, hdv⟩ :=
         h.voteLegal hfpos huf V.target v (r + 1) hVU hvu hPast
@@ -71,8 +71,8 @@ theorem conflict_depth (h : ProtocolCW M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {r n k : Nat}
     (hr : 1 ≤ r) (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : r ≤ n) (hk : r ≤ k)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n))
-    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote c u k)) :
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n))
+    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource c u k)) :
     r ≤ maxDepth M (Corr M σ) a := by
   have hchain := conflict_depth_succ h hw hb hc hvu
     (by omega : r - 1 + 1 ≤ n) (by omega : r - 1 + 1 ≤ k) hv hu
@@ -84,8 +84,8 @@ theorem conflicting_rank_le (h : ProtocolCW M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {n k : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : maxDepth M (Corr M σ) a + 1 ≤ n)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n))
-    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote c u k)) :
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n))
+    (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource c u k)) :
     k ≤ maxDepth M (Corr M σ) a := by
   by_cases hk : k ≤ maxDepth M (Corr M σ) a
   · exact hk
@@ -97,7 +97,7 @@ theorem high_vote_legal (h : ProtocolCW M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v : S.Value} {n : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c)
     (hn : maxDepth M (Corr M σ) a + 1 ≤ n)
-    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n)) : Legal M σ w c v := by
+    (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.voteFromSomeSource b v n)) : Legal M σ w c v := by
   intro d u k hdc huv hu
   have had := h.correlationTrans hw hc (h.correlationSymm hw hdc)
   have hle := conflicting_rank_le h hw hb had (Ne.symm huv) hn hv hu
@@ -109,14 +109,8 @@ theorem agreement_at (h : ProtocolCW M σ) {w : World P S.EventType}
     (hab : Corr M σ w a b)
     (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v))
     (hu : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver b u)) : v = u := by
-  have votes : ∀ {a v}, (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) →
-      (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote a v (maxDepth M (Corr M σ) a + 1))) := by
-    intro a v hv
-    obtain ⟨e, he, hd⟩ := past_exists_iff.mp hv
-    exact past_exists_iff.mpr (quorum_witness
-      (quorum_lift hw he (h.deliverBackward (predecessor_possible hw he) hd)))
-  have hv' := votes hv
-  have hu' := votes hu
+  have hv' := observed_vote_of_observed_delivery h.toBaseProtocol hw hv
+  have hu' := observed_vote_of_observed_delivery h.toBaseProtocol hw hu
   by_cases heq : v = u
   · exact heq
   apply False.elim
@@ -142,9 +136,7 @@ theorem delivery_legal (h : ProtocolCW M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v : S.Value}
     (hab : Corr M σ w a b)
     (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) : Legal M σ w b v := by
-  obtain ⟨e, he, hd⟩ := past_exists_iff.mp hv
-  have hcert := quorum_lift hw he (h.deliverBackward (predecessor_possible hw he) hd)
-  have hvote := past_exists_iff.mpr (quorum_witness hcert)
+  have hvote := observed_vote_of_observed_delivery h.toBaseProtocol hw hv
   have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
   exact high_vote_legal h hw haa hab (Nat.le_refl _) hvote
 
