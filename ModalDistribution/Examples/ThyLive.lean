@@ -74,7 +74,8 @@ inductive KnowledgeBody : Formula S → Prop where
   | quorum (l : S.Value) (evt : S.EventType) :
       KnowledgeBody (□ᶠ↓[[l]] (Formula.ofEvent evt))
 
-/-- Paper: Definition 5.2.4 (the theory of liveness). The liveness theory with Knowledge restricted to `KnowledgeBody`. -/
+/-- Paper: Definition 5.2.4 (the theory of liveness).
+Knowledge is restricted to `KnowledgeBody`. -/
 @[simp] def ThyLive
     (liveSymb : Signature.PredSymb S) :
     Set (Formula S) :=
@@ -117,7 +118,6 @@ theorem thyLive_knowledgeBox (hTheory : M ⊨ᵀ ThyLive liveSymb)
   hTheory (Or.inr (Or.inr (Or.inr ⟨ls, φ, hAllowed, rfl⟩)))
 
 end Projections
-
 
 section Results
 
@@ -386,7 +386,6 @@ theorem live_allPast
   exact
     Sat.not_elim (M := M) (w := t')
       (φ := Formula.predicate0 liveSymb) hNot hLive_t'
-
 
 /-- A quorum of live participants is a quorum of sequential participants,
 by the `(LiveSeq)` axiom. -/

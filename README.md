@@ -13,7 +13,7 @@ event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory
 for unrestricted Knowledge and its historical provenance.
 
 **HBB4 CM, SW, and CW:** All three versions cap target-learner votes at
-`MaxDepth(l) + 1`, permits self-source advancement, and uses eventual delivery.
+`MaxDepth(l) + 1`, permit self-source advancement, and use eventual delivery.
 Their agreement and liveness proofs require no three-quorum intersection axiom.
 `MaxDepth` is the attained maximum of distinct-row causal-chain lengths, not a
 separate budget. The rules are semantic schemata over the existing model because

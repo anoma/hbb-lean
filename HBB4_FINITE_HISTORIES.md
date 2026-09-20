@@ -144,8 +144,10 @@ These applications do not require closure of Knowledge under arbitrary formulas
 or arbitrary modal nesting. The causal-depth formulas used in the obstruction
 are therefore not required by these proof arguments. This is a sufficient
 inventory of the displayed proof applications, not a proof of minimality or of
-satisfiability of a restricted theory. The manuscript still requires the full
-Knowledge scheme; an inventory of proof uses does not authorize narrowing it.
+satisfiability of a restricted theory. The implemented correction uses only
+`E`, `K E`, and `Q_l E`: Liveness 2 disseminates a fixed-source certificate
+before existentially hiding its source. The finite witness separately checks
+satisfiability of the complete corrected theories.
 
 ## Other assumptions used by progress
 
@@ -168,28 +170,17 @@ self-correlation cannot replace equality. Liveness 1's conclusion needs
 `Sometime Deliver(l,v)`: an event atom evaluated at the end-of-time null event
 does not assert an earlier delivery.
 
-## Historical assessment before the Knowledge restriction
+## Current formulation
 
-The source definitions remain controlling. In particular, retain finite
-histories, the manuscript's `ThyLive`, and the stated liveness judgements.
-Protocol-specific hypotheses from the PDFs must be identified explicitly as
-extensions and checked against that fixed foundation.
+The finite-history foundation is retained. The implemented corrections restrict
+Knowledge, cap votes at the target learner's exact `MaxDepth + 1`, allow
+self-source advancement, and express Liveness 1 using eventual delivery. CM,
+SW, and CW are separate extensions of the shared protocol rules.
 
-The PDFs' use of countably infinite complete runs cannot serve as a model
-witness in this formalization. Under the unrestricted assumptions, the checked
-obstruction also prevents any finite witness containing a live event.
-Consequently a theorem whose premise includes a live event may be formally
-provable while admitting no instance with that premise true. Such a proof
-must not be presented as evidence of actual protocol progress.
-
-Restricting Knowledge, adopting an optional round cap, imposing finiteness of
-the live set, or changing liveness to a statement about extensions would each
-require a separate change to the specification. The current branch specifically experiments with the Knowledge restriction;
-the other changes are not authorized.
-The source-proof inventory above remains useful for understanding the arguments,
-but does not resolve the manuscript-level obstruction.
-
-The next work must distinguish results provable in the manuscript's foundation
-from claims in the PDFs that depend on a different foundation, and report any
-unachievable nonvacuity claim explicitly. A faithful formalization may expose a
-problem in its source; it must not repair that source by changing its meaning.
+The PDFs' countably infinite runs are not used. Lean checks agreement and both
+liveness results for each theory, as well as a common eight-event execution
+satisfying their liveness premises. The unrestricted obstruction remains an
+explicit theorem about the unrestricted assumptions; it does not apply to the
+corrected theories. See [the CM investigation](audits/hbb4_cm/INVESTIGATION.md)
+and [the source mapping](PAPER_MAPPING.md) for the proof dependencies and exact
+scope of the formalized results.

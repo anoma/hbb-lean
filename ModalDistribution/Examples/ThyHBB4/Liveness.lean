@@ -54,7 +54,9 @@ theorem deliver_of_live_zero_quorum (h : BaseProtocol M σ) {l s v : S.Value}
   apply Sat.imp_intro
   intro hlive
   exact ThyHBB1.live_sometime_consequent_at h.thyLive hforward hlive
-    (Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩) (φ := σ.live) (ψ := ↕ᶠ (σ.fixedCertificate l s v (maxDepth M (Corr M σ) l + 1))) (hknow p) hlive)
+    (Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩) (φ := σ.live)
+      (ψ := ↕ᶠ (σ.fixedCertificate l s v (maxDepth M (Corr M σ) l + 1)))
+      (hknow p) hlive)
 
 /-- A unique proposal known at a live event initializes the self-sourced round-zero quorum. -/
 theorem live_zero_quorum_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}
