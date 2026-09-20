@@ -91,22 +91,5 @@ theorem livenessTwo_of_delivery_legal (h : BaseProtocol M σ)
   have hzero := transfer_zero_quorum h hlegal hsource hLiveQuorum hcert
   exact deliver_of_live_zero_quorum h hlegal (fun q => Or.inr (hsource q)) hzero p
 
-/-- Causal monotonicity makes a delivered value legal throughout its correlation row. -/
-theorem delivery_legal (h : ProtocolCM M σ) {w : World P S.EventType}
-    (hw : w.time ⪯ M.history.val) {a b v : S.Value}
-    (hab : Corr M σ w a b)
-    (hdel : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) : Legal M σ w b v := by
-  obtain ⟨d, hd, hdval⟩ := past_exists_iff.mp hdel
-  have hcert := quorum_lift hw hd (h.deliverBackward (predecessor_possible hw hd) hdval)
-  have hvote := past_exists_iff.mpr (quorum_witness hcert)
-  have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
-  exact high_vote_legal h hw haa hab (by omega) hvote
-
-/-- Liveness 2 for the causal-monotonicity theory. -/
-theorem livenessTwo (h : ProtocolCM M σ) {a b v : S.Value}
-    (hCorrelation : ⊨[M] □ᶠ[] (σ.correlation a b))
-    (hLiveQuorum : ⊨[M] □ᶠ[[b]] σ.live) :
-    ⊨[M] (♢ᶠ↓[[]] (σ.deliver a v)) ⇒ᶠ σ.live ⇒ᶠ ↕ᶠ (σ.deliver b v) := by
-  exact livenessTwo_of_delivery_legal h (delivery_legal h) hCorrelation hLiveQuorum
 
 end ModalDistribution.Examples.ThyHBB4

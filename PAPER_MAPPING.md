@@ -252,13 +252,13 @@ finite witness uses distinct vote symbols for distinct ranks.
 | Manuscript MaxDepth, exact maximum | `maxDepth`, `maxDepth_attained`, `le_maxDepth` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
 | Finite-history bound | `maxDepth_bounded` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
 | Revised note §3.3, equations (1)–(16), CM, cap | `Legal`, `ProtocolCM` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
-| Lemma 4.1, conflict-depth lower bound | `conflict_depth` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
-| Corollary 4.2, dominance and legality | `conflicting_rank_lt`, `high_vote_legal` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
+| Lemma 4.1, conflict-depth lower bound | `CM.conflict_depth` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
+| Corollary 4.2, dominance and legality | `CM.conflicting_rank_lt`, `CM.high_vote_legal` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
 | Lemma 5.1, provenance | `vote_provenance`, `deliver_provenance` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
-| Theorem 5.2, agreement | `agreement` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
+| Theorem 5.2, agreement | `CM.agreement` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
 | Lemma 5.4, capped round progression | `capped_round_progress` | [Liveness.lean](ModalDistribution/Examples/ThyHBB4/Liveness.lean) |
-| Theorem 5.5, Liveness 1 | `livenessOne` | [Liveness.lean](ModalDistribution/Examples/ThyHBB4/Liveness.lean) |
-| Theorem 5.6, Liveness 2 | `livenessTwo` | [LivenessTwo.lean](ModalDistribution/Examples/ThyHBB4/LivenessTwo.lean) |
+| Theorem 5.5, Liveness 1 | `CM.livenessOne` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
+| Theorem 5.6, Liveness 2 | `CM.livenessTwo` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
 | Finite nonvacuity of the corrected protocol | `FiniteModel.finite_protocol_nonvacuous` | [FiniteModel.lean](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean) |
 
 The conflict-depth theorem constructs a chain with pairwise-distinct rows, enough
@@ -281,11 +281,11 @@ versions follow `hbb4_weaker_coherence.pdf`, Sections 1–4.
 | Definition 2.2, CW | `ComparisonWitness`, `ProtocolCW` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
 | Proposition 2.3, CM ⇒ SW ⇒ CW | `ProtocolCM.toSW`, `ProtocolSW.toCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
 | Strict nonempty row-chain invariant | `StrictEndingDepthChain` | [StrictDepth.lean](ModalDistribution/Examples/ThyHBB4/StrictDepth.lean) |
-| Lemma 3.1, CW conflict-depth | `CW.conflict_depth` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
-| Corollary 3.2, legality at delivery rank | `CW.high_vote_legal`, `CW.delivery_legal` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
-| Theorem 4.1, CW agreement | `CW.agreement` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
-| Theorem 4.1, SW agreement | `SW.agreement` | [Variants.lean](ModalDistribution/Examples/ThyHBB4/Variants.lean) |
-| Sections 4.4–4.5, SW/CW liveness | `SW.livenessOne`, `SW.livenessTwo`, `CW.livenessOne`, `CW.livenessTwo` | [Variants.lean](ModalDistribution/Examples/ThyHBB4/Variants.lean) |
+| Lemma 3.1, CW conflict-depth | `CW.conflict_depth` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
+| Corollary 3.2, legality at delivery rank | `CW.high_vote_legal`, `CW.delivery_legal` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
+| Theorem 4.1, CW agreement | `CW.agreement` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
+| Theorem 4.1, SW agreement | `SW.agreement` | [SW.lean](ModalDistribution/Examples/ThyHBB4/SW.lean) |
+| Sections 4.4–4.5, SW/CW liveness | `SW.livenessOne`, `SW.livenessTwo`, `CW.livenessOne`, `CW.livenessTwo` | [SW.lean](ModalDistribution/Examples/ThyHBB4/SW.lean), [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
 | Common finite nonvacuity | `FiniteModel.finite_protocol_nonvacuous` | [FiniteModel.lean](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean) |
 
 CW's induction retains strict row inclusion, yielding a chain of `r` worlds from

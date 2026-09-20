@@ -138,9 +138,10 @@ unnecessary for these correctness proofs.
 
 `Depth.lean` defines the attained exact maximum and proves its finite bound.
 `Axioms.lean` states every corrected capped CM rule as a semantic schema over
-existing satisfaction. `Safety.lean` proves the causal conflict-depth argument,
-provenance, dominance, legality, and agreement. `Liveness.lean` and
-`LivenessTwo.lean` prove the two liveness implications with restricted Knowledge.
+existing satisfaction. `CM.lean` proves causal conflict-depth, dominance, legality,
+agreement, and both liveness results. `Safety.lean` supplies shared provenance
+and quorum lemmas; `Liveness.lean` and `LivenessTwo.lean` supply shared liveness
+arguments with restricted Knowledge.
 
 `FiniteModel.finite_protocol_nonvacuous` kernel-checks a separate singleton
 execution: proposal, echo, votes at ranks 0/1/2, delivery, and two silent events.

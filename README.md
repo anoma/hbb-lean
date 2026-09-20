@@ -77,12 +77,13 @@ ModalDistribution/
 │       ├── Axioms.lean        # Shared rules and CM/SW/CW axioms
 │       ├── Coherence.lean     # CM ⇒ SW ⇒ CW proofs
 │       ├── Semantics.lean
-│       ├── Safety.lean        # Shared provenance and CM safety
+│       ├── Safety.lean        # Shared provenance and quorum lemmas
 │       ├── StrictDepth.lean   # Strict row-inclusion chains
-│       ├── WeakSafety.lean    # CW conflict-depth and agreement
 │       ├── Liveness.lean      # Capped progress and Liveness 1
 │       ├── LivenessTwo.lean   # Shared fixed-source transfer
-│       ├── Variants.lean      # SW/CW correctness endpoints
+│       ├── CM.lean            # CM agreement and both liveness results
+│       ├── SW.lean            # SW agreement and both liveness results
+│       ├── CW.lean            # CW agreement and both liveness results
 │       └── FiniteModel.lean   # Finite live protocol witness
 └── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```

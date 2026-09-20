@@ -1,4 +1,4 @@
-import ModalDistribution.Examples.ThyHBB4.Coherence
+import ModalDistribution.Examples.ThyHBB4.LivenessTwo
 import ModalDistribution.Examples.ThyHBB4.StrictDepth
 
 namespace ModalDistribution.Examples.ThyHBB4.CW
@@ -147,5 +147,20 @@ theorem delivery_legal (h : ProtocolCW M σ) {w : World P S.EventType}
   have hvote := past_exists_iff.mpr (quorum_witness hcert)
   have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
   exact high_vote_legal h hw haa hab (Nat.le_refl _) hvote
+
+/-- Liveness 1 under comparison-witness coherence. -/
+theorem livenessOne (h : ProtocolCW M σ) {l v : S.Value}
+    (hLiveQuorum : ⊨[M] □ᶠ[[l]] σ.live)
+    (hUnique : ⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u)) :
+    ⊨[M] (♢ᶠ↓[[]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.propose v))) ⇒ᶠ
+      σ.live ⇒ᶠ ↕ᶠ (σ.deliver l v) := by
+  exact ThyHBB4.livenessOne h.toBaseProtocol hLiveQuorum hUnique
+
+/-- Liveness 2 under comparison-witness coherence. -/
+theorem livenessTwo (h : ProtocolCW M σ) {a b v : S.Value}
+    (hCorrelation : ⊨[M] □ᶠ[] (σ.correlation a b))
+    (hLiveQuorum : ⊨[M] □ᶠ[[b]] σ.live) :
+    ⊨[M] (♢ᶠ↓[[]] (σ.deliver a v)) ⇒ᶠ σ.live ⇒ᶠ ↕ᶠ (σ.deliver b v) := by
+  exact livenessTwo_of_delivery_legal h.toBaseProtocol (delivery_legal h) hCorrelation hLiveQuorum
 
 end ModalDistribution.Examples.ThyHBB4.CW

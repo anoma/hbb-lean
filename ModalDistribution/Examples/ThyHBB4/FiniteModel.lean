@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.ThyHBB4.Semantics
 import ModalDistribution.Examples.ThyHBB4.Coherence
 
-/-! A finite completed execution for the capped CM protocol. -/
+/-! A common finite completed execution for the capped CM, SW, and CW theories. -/
 namespace ModalDistribution.Examples.ThyHBB4.FiniteModel
 open ModalDistribution.Logic PreHistory History World
 open scoped Formula

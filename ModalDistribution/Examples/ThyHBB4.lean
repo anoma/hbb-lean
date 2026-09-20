@@ -6,8 +6,9 @@ import ModalDistribution.Examples.ThyHBB4.Liveness
 import ModalDistribution.Examples.ThyHBB4.LivenessTwo
 import ModalDistribution.Examples.ThyHBB4.Coherence
 import ModalDistribution.Examples.ThyHBB4.StrictDepth
-import ModalDistribution.Examples.ThyHBB4.WeakSafety
-import ModalDistribution.Examples.ThyHBB4.Variants
+import ModalDistribution.Examples.ThyHBB4.CM
+import ModalDistribution.Examples.ThyHBB4.CW
+import ModalDistribution.Examples.ThyHBB4.SW
 import ModalDistribution.Examples.ThyHBB4.FiniteModel
 
 /-!
