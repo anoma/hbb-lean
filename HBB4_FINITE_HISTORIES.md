@@ -1,12 +1,19 @@
 # HBB4 with finite histories: obstruction and progress assumptions
 
+**Branch status:** The user authorized an experiment restricting Knowledge to
+`E`, `K E`, and `Q_l E` for HBB1–3. All their correctness statements compile
+under that restriction. `FiniteModel.exists_live_event_model` proves the shared
+restricted theory admits a finite model with a live performed event. The
+unrestricted obstruction and HBB4 inventory below are historical analysis;
+HBB4 implementation is outside the current task.
+
 The manuscript and the Lean formalization both use finite histories. The
 manuscript's definitions and axioms control this formalization; the HBB4 PDFs
 supply proposed results to check within that foundation. Their adoption of
 countably infinite complete runs is a deviation from the manuscript's defined
 model, not an authorized change to this project.
 
-Lean proves that `LiveAlways` and the current unrestricted Knowledge scheme
+Lean proves that `LiveAlways` and the unrestricted Knowledge scheme in Figure 6
 exclude every live event. The matching manuscript assumptions have the same
 mathematical obstruction. This is a finding to report, not permission to alter
 those assumptions or substitute a different liveness statement.
@@ -74,13 +81,11 @@ August 2026 generalization of a derived knowledge lemma.
 ## What Lean proves
 
 [FiniteHistory.lean](ModalDistribution/Examples/ThyLive/FiniteHistory.lean)
-contains three theorems:
+contains the following obstruction theorem:
 
 | Theorem | Exact consequence |
 | --- | --- |
 | `no_live_event` | `LiveAlways`, together with empty-index Knowledge for causal-depth formulas at end of time, excludes every live event in the model's history. |
-| `thyLive_no_live_event` | The existing `ThyLive` theory implies that consequence. |
-| `thyLive_no_live_witness` | For every formula `φ`, `K(live ∧ φ)` is false at end of time under `ThyLive`. Taking `φ = K Propose(v)` covers the live-witness antecedent of Liveness 1. |
 
 Here `K φ` means that a causal predecessor satisfies `φ`. The proof defines
 `δ₀ = ⊤` and `δₙ₊₁ = K δₙ`. Satisfaction of `δₙ` implies that the existing
@@ -91,12 +96,12 @@ height, which gives the contradiction.
 
 The proof uses the existing `Model`, `Formula`, satisfaction relation, and height
 lemmas. Its assumptions do not include `LiveSeq`, quorum Knowledge, correlation,
-or any protocol rule. The build audits all three theorems for dependence only on
+or any protocol rule. The build audits this theorem for dependence only on
 Lean's standard axioms: `propext`, `Classical.choice`, and `Quot.sound`.
 
 The conclusion concerns actual live events. It does not say that no participant
 can be designated live, or that all models of the theory are inconsistent.
-Previously checked liveness implications remain checked implications; this
+Previously checked liveness implications remain checked implications; under unrestricted Knowledge, this
 result shows that their live-witness antecedents cannot occur.
 
 ## Knowledge instances used by the HBB4 proofs
@@ -162,7 +167,7 @@ self-correlation cannot replace equality. Liveness 1's conclusion needs
 `Sometime Deliver(l,v)`: an event atom evaluated at the end-of-time null event
 does not assert an earlier delivery.
 
-## Consequences for the HBB4 formalization
+## Historical assessment before the Knowledge restriction
 
 The source definitions remain controlling. In particular, retain finite
 histories, the manuscript's `ThyLive`, and the stated liveness judgements.
@@ -170,7 +175,7 @@ Protocol-specific hypotheses from the PDFs must be identified explicitly as
 extensions and checked against that fixed foundation.
 
 The PDFs' use of countably infinite complete runs cannot serve as a model
-witness in this formalization. Under the current assumptions, the checked
+witness in this formalization. Under the unrestricted assumptions, the checked
 obstruction also prevents any finite witness containing a live event.
 Consequently a theorem whose premise includes a live event may be formally
 provable while admitting no instance with that premise true. Such a proof
@@ -178,7 +183,8 @@ must not be presented as evidence of actual protocol progress.
 
 Restricting Knowledge, adopting an optional round cap, imposing finiteness of
 the live set, or changing liveness to a statement about extensions would each
-require a separate change to the specification. None is the current task.
+require a separate change to the specification. The current branch specifically experiments with the Knowledge restriction;
+the other changes are not authorized.
 The source-proof inventory above remains useful for understanding the arguments,
 but does not resolve the manuscript-level obstruction.
 

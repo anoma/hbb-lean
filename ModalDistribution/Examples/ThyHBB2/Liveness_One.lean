@@ -127,7 +127,7 @@ theorem livenessOne
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    live_boxPast_nests
+    live_boxPast_nests (hAllowed := .event _)
       (M := M)
       (liveSymb := liveSymb)
       (l := l)
@@ -161,7 +161,7 @@ theorem livenessOne
         (φ := □ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩))
         (ψ := ofEvent ⟨deliverSymb, [l, l, v]⟩)
         (hLive :=
-          live_eventually_knows_box (M := M)
+          live_eventually_knows_box (hAllowed := .event _) (M := M)
             (liveSymb := liveSymb)
             (l := l)
             (φ := ofEvent ⟨voteSymb, [l, v]⟩)

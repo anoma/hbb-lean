@@ -84,26 +84,4 @@ theorem no_live_event
   have hlt := height_lt_of_happensBefore (happensBefore_of_mem ht)
   exact (Nat.not_le_of_lt hlt) hle
 
-/-- The obstruction applies to the repository's current `ThyLive` theory. -/
-theorem thyLive_no_live_event
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    {e : World P S.EventType} (he : e ∈ M.history.val) :
-    ¬ (⟪e⟫ ⊨[M] Formula.predicate0 liveSymb) := by
-  exact no_live_event (thyLive_liveAlways hTheory)
-    (fun n => AllWorldValid.at_end M
-      (thyLive_knowledgeDiamond hTheory [] (causalDepthFormula n))) he
-
-/-- In particular, the live-witness antecedent used by Liveness 1 is false,
-regardless of the formula known at that witness. -/
-theorem thyLive_no_live_witness
-    (hTheory : M ⊨ᵀ ThyLive liveSymb) (φ : Formula S) :
-    ⊨[M] ¬ᶠ (♢ᶠ↓[[]] (Formula.predicate0 liveSymb ∧ᶠ φ)) := by
-  classical
-  intro p
-  apply (Sat.not M ⟨p, †, M.history.val⟩ _).mpr
-  intro h
-  obtain ⟨q, hq⟩ := (Sat.diamond_nil M ⟨p, †, M.history.val⟩ _).mp h
-  obtain ⟨e, he, _, hBody⟩ := (Sat.past M ⟨q, †, M.history.val⟩ _).mp hq
-  exact thyLive_no_live_event hTheory he (Sat.and_left M e hBody)
-
 end ModalDistribution.Examples.FiniteHistory

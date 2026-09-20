@@ -151,7 +151,7 @@ theorem livenessTwo
         (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [ℓ, v]⟩))
         (ψ := ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩)
         (hLive :=
-          live_eventually_knows_box (M := M)
+          live_eventually_knows_box (hAllowed := .event _) (M := M)
             (liveSymb := liveSymb)
             (l := l₂') (φ := ofEvent ⟨voteSymb, [ℓ, v]⟩)
             (hTheory := hThyLive)

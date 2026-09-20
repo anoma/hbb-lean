@@ -155,7 +155,7 @@ theorem livenessOne
   -- Step 3: promote echoes to nested quorum knowledge.
   have hStep3Global :
       ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho :=
-    _root_.ModalDistribution.Examples.live_boxPast_nests
+    _root_.ModalDistribution.Examples.live_boxPast_nests (hAllowed := .event _)
       (M := M) (liveSymb := liveSymb)
       (l := l) (φ := ofEvent ⟨echoSymb, [v]⟩)
       (hTheory := hThyLiveTheory)
@@ -214,7 +214,7 @@ theorem livenessOne
         (φ := □ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩))
         (ψ := ofEvent ⟨deliverSymb, [l, l, v]⟩)
         (hLive :=
-          live_eventually_knows_box
+          live_eventually_knows_box (hAllowed := .event _)
             (M := M)
             (liveSymb := liveSymb)
             (l := l)

@@ -200,7 +200,7 @@ theorem livenessTwo
       (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩))
       (ψ := ofEvent ⟨deliverSymb, [l₂', l, v]⟩)
       (hLive :=
-        _root_.ModalDistribution.Examples.live_eventually_knows_box
+        _root_.ModalDistribution.Examples.live_eventually_knows_box (hAllowed := .event _)
           (M := M) (liveSymb := liveSymb)
           (l := l₂') (φ := ofEvent ⟨voteSymb, [l, v]⟩)
           (hTheory := hThyLiveTheory)

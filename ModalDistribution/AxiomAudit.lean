@@ -2,6 +2,7 @@ import ModalDistribution.Examples.ThyHBB1
 import ModalDistribution.Examples.ThyHBB2
 import ModalDistribution.Examples.ThyHBB3
 import ModalDistribution.Examples.ThyLive.FiniteHistory
+import ModalDistribution.Examples.ThyLive.FiniteModel
 
 /-!
 # Axiom audit
@@ -64,14 +65,9 @@ If any custom axiom ever enters the proof of one of these theorems, the
 #guard_msgs in
 #print axioms ModalDistribution.Examples.FiniteHistory.no_live_event
 
-/-- info: 'ModalDistribution.Examples.FiniteHistory.thyLive_no_live_event' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms ModalDistribution.Examples.FiniteHistory.thyLive_no_live_event
 
-/-- info: 'ModalDistribution.Examples.FiniteHistory.thyLive_no_live_witness' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.FiniteModel.exists_live_event_model' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.FiniteHistory.thyLive_no_live_witness
+#print axioms ModalDistribution.Examples.FiniteModel.exists_live_event_model

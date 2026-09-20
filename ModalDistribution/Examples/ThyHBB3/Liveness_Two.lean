@@ -233,7 +233,7 @@ theorem livenessTwo
           □ᶠ↓[[l₂]]
             (predicate0 liveSymb ∧ᶠ
               ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) :=
-      live_eventually_knows (M := M)
+      live_eventually_knows (hAllowed := .event _) (M := M)
         (liveSymb := liveSymb)
         (l := l₂)
         (φ := ofEvent ⟨voteSymb, [l₁, v]⟩)
@@ -327,7 +327,7 @@ theorem livenessTwo
       refine Or.inr ?_
       refine Or.inr ?_
       refine Or.inr ?_
-      exact ⟨[l₂], ofEvent ⟨voteSymb, [l₂, v]⟩, rfl⟩
+      exact ⟨[l₂], ofEvent ⟨voteSymb, [l₂, v]⟩, KnowledgeBody.event _, rfl⟩
     have hKnowledgeEvent :
         AllWorldValid M
           (knowledgeBoxAxiom (S := S)

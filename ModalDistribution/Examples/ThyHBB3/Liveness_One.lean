@@ -138,7 +138,7 @@ theorem livenessOne
         (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
         (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
         (l := l)
-        (hQuorum := live_boxPast_nests (M := M)
+        (hQuorum := live_boxPast_nests (hAllowed := .event _) (M := M)
           (liveSymb := liveSymb) (l := l)
           (φ := ofEvent ⟨echoSymb, [v]⟩)
           (hTheory := hThyLive)
@@ -165,7 +165,7 @@ theorem livenessOne
       refine Or.inr ?_
       refine Or.inr ?_
       refine Or.inr ?_
-      exact ⟨[l], ofEvent ⟨voteSymb, [l, v]⟩, rfl⟩
+      exact ⟨[l], ofEvent ⟨voteSymb, [l, v]⟩, KnowledgeBody.event _, rfl⟩
     have hKnowledgeEvent :
         AllWorldValid M
           (knowledgeBoxAxiom (S := S)

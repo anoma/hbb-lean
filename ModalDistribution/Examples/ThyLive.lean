@@ -10,8 +10,9 @@ import ModalDistribution.Core.History
 We formalise the liveness theory.  The theory is
 parametrised by a distinguished predicate symbol `liveSymb`, and contains the
 axioms `LiveAlways` and `LiveSeq`, together with two knowledge axiom
-schemes.  This file records the theory and lemmas and
-propositions that depend on it.
+schemes restricted to bodies `E`, `K E`, and `Q_l E`, for event atoms `E`.
+This explicitly amends Figure 6; the finite-history semantics are unchanged.
+This file records the theory and the propositions that depend on it.
 -/
 
 namespace ModalDistribution
@@ -65,16 +66,24 @@ section Axioms
     ((Formula.predicate0 liveSymb) ⇒ᶠ
       ↕ᶠ (□ᶠ↓[ls] φ))
 
-/-- Paper: Definition 5.2.4 (the theory of liveness). The collection of liveness axioms (`ThyLive`). -/
+/-- The three permitted Knowledge bodies. This grammar is not recursive:
+`known` and `quorum` take event atoms, never another Knowledge body. -/
+inductive KnowledgeBody : Formula S → Prop where
+  | event (evt : S.EventType) : KnowledgeBody (Formula.ofEvent evt)
+  | known (evt : S.EventType) : KnowledgeBody (♢ᶠ↓[[]] (Formula.ofEvent evt))
+  | quorum (l : S.Value) (evt : S.EventType) :
+      KnowledgeBody (□ᶠ↓[[l]] (Formula.ofEvent evt))
+
+/-- Paper: Definition 5.2.4 (the theory of liveness). The liveness theory with Knowledge restricted to `KnowledgeBody`. -/
 @[simp] def ThyLive
     (liveSymb : Signature.PredSymb S) :
     Set (Formula S) :=
   { φ |
       φ = liveAlwaysAxiom (S := S) liveSymb ∨
       φ = liveSeqAxiom (S := S) liveSymb ∨
-      (∃ ls ψ,
+      (∃ ls ψ, KnowledgeBody ψ ∧
         φ = knowledgeDiamondAxiom (S := S) liveSymb ls ψ) ∨
-      (∃ ls ψ,
+      (∃ ls ψ, KnowledgeBody ψ ∧
         φ = knowledgeBoxAxiom (S := S) liveSymb ls ψ) }
 
 end Axioms
@@ -95,15 +104,17 @@ theorem thyLive_liveSeq (hTheory : M ⊨ᵀ ThyLive liveSymb) :
 
 /-- Project validity of a `(Knowledge♢↓)` instance out of a model of `ThyLive`. -/
 theorem thyLive_knowledgeDiamond (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    (ls : List (Signature.Value S)) (φ : Formula S) :
+    (ls : List (Signature.Value S)) (φ : Formula S)
+    (hAllowed : KnowledgeBody φ) :
     □W⊨[M] knowledgeDiamondAxiom (S := S) liveSymb ls φ :=
-  hTheory (Or.inr (Or.inr (Or.inl ⟨ls, φ, rfl⟩)))
+  hTheory (Or.inr (Or.inr (Or.inl ⟨ls, φ, hAllowed, rfl⟩)))
 
 /-- Project validity of a `(Knowledge□↓)` instance out of a model of `ThyLive`. -/
 theorem thyLive_knowledgeBox (hTheory : M ⊨ᵀ ThyLive liveSymb)
-    (ls : List (Signature.Value S)) (φ : Formula S) :
+    (ls : List (Signature.Value S)) (φ : Formula S)
+    (hAllowed : KnowledgeBody φ) :
     □W⊨[M] knowledgeBoxAxiom (S := S) liveSymb ls φ :=
-  hTheory (Or.inr (Or.inr (Or.inr ⟨ls, φ, rfl⟩)))
+  hTheory (Or.inr (Or.inr (Or.inr ⟨ls, φ, hAllowed, rfl⟩)))
 
 end Projections
 
@@ -409,6 +420,7 @@ theorem live_quorum_seq
 theorem knowledgeDiamond_imp_at_end
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ : Formula S}
+    (hAllowed : KnowledgeBody φ)
     (p : P) :
     ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
       (⤒ᶠ (♢ᶠ↓[[]]
@@ -418,7 +430,7 @@ theorem knowledgeDiamond_imp_at_end
   classical
   have hKnowMem :
       knowledgeDiamondAxiom (S := S) liveSymb [] φ ∈ ThyLive liveSymb := by
-    simp [ThyLive, Formula.sometime, Formula.diamondPast]
+    exact Or.inr (Or.inr (Or.inl ⟨[], φ, hAllowed, rfl⟩))
   have hKnow :
       AllWorldValid M (knowledgeDiamondAxiom (S := S) liveSymb [] φ) :=
     hTheory hKnowMem
@@ -428,10 +440,11 @@ theorem knowledgeDiamond_imp_at_end
       hKnow p
 
 /-- Knowledge axiom `Knowledge₍⋄₎` yields an end-of-time sometime guarantee for
-arbitrary past guards. -/
+admissible past guards. -/
 theorem knowledgeDiamond_sometime_at_end_formula
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ : Formula S}
+    (hAllowed : KnowledgeBody φ)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
     (hEvent : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
@@ -448,7 +461,7 @@ theorem knowledgeDiamond_sometime_at_end_formula
           ((Formula.predicate0 liveSymb) ∧ᶠ φ))).2 hEvent
   have hImp :=
     knowledgeDiamond_imp_at_end (M := M)
-      (hTheory := hTheory) (φ := φ) (p := p)
+      (hTheory := hTheory) (φ := φ) (hAllowed := hAllowed) (p := p)
   have hLiveImp :
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         (Formula.predicate0 liveSymb) ⇒ᶠ
@@ -481,6 +494,7 @@ theorem knowledgeDiamond_sometime_at_end
   classical
   exact
     knowledgeDiamond_sometime_at_end_formula (M := M)
+      (hAllowed := .event evt)
       (hTheory := hTheory)
       (hLive := hLive) (hEvent := hEvent)
 
@@ -491,6 +505,7 @@ theorem knowledgeDiamond_sometime_at_end
 -/
 theorem live_eventually_knows_box
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hAllowed : KnowledgeBody φ)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M](Formula.predicate0 liveSymb) ⇒ᶠ ↕ᶠ (□ᶠ↓[[l]] φ) := by
   classical
@@ -506,7 +521,7 @@ theorem live_eventually_knows_box
     refine Or.inr ?_
     refine Or.inr ?_
     refine Or.inr ?_
-    exact ⟨[l], φ, rfl⟩
+    exact ⟨[l], φ, hAllowed, rfl⟩
 
   have hKnowledge :
       AllWorldValid M
@@ -548,6 +563,7 @@ theorem live_eventually_knows_box
 
 private theorem live_boxPast_nests_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hAllowed : KnowledgeBody φ)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ))
     {q : P}
     (hPastLiveφ :
@@ -561,7 +577,7 @@ private theorem live_boxPast_nests_past
     refine Or.inr ?_
     refine Or.inr ?_
     refine Or.inr ?_
-    exact ⟨[l], φ, rfl⟩
+    exact ⟨[l], φ, hAllowed, rfl⟩
   have hKnowledge :
       AllWorldValid M
         (knowledgeBoxAxiom (S := S)
@@ -693,10 +709,11 @@ private theorem live_boxPast_nests_past
       (φ := (Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ)).2
       ⟨tBox, htBox_mem, htBox_place, hConj⟩
 
-/-- Paper: Lemma 5.2.12. Liveness quorum boxes promote to nested
+/-- Paper: Lemma 5.2.12, restricted to admissible Knowledge bodies. Liveness quorum boxes promote to nested
 quorum boxes under `ThyLive`. -/
 theorem live_boxPast_nests
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hAllowed : KnowledgeBody φ)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] φ) := by
   classical
@@ -725,12 +742,14 @@ theorem live_boxPast_nests
     simpa [wₚ] using hAll q hqO
   exact
     live_boxPast_nests_past (S := S) (P := P) (M := M)
+      (hAllowed := hAllowed)
       (φ := φ) (l := l) (liveSymb := liveSymb)
       (hTheory := hTheory)
       (hQuorum := hQuorum) (q := q) hPastLiveφ
 
 theorem live_knows_eventually_past
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hAllowed : KnowledgeBody φ)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
     (hEvent : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb)
@@ -741,6 +760,7 @@ theorem live_knows_eventually_past
   classical
   have hSometime :=
     knowledgeDiamond_sometime_at_end_formula (M := M)
+      (hAllowed := hAllowed)
       (hTheory := hTheory)
       (hLive := hLive) (hEvent := hEvent)
   have hPastDiamond :
@@ -815,6 +835,7 @@ theorem live_knows_eventually_event_past
         ♢ᶠ↓[[]]
           (♢ᶠ↓[[]] (Formula.ofEvent evt))) :=
   live_knows_eventually_past (M := M)
+    (hAllowed := .known evt)
     (hTheory := hTheory)
     (φ := ♢ᶠ↓[[]] (Formula.ofEvent evt))
     (hLive := hLive) (hEvent := hEvent p)
@@ -886,6 +907,7 @@ theorem live_knows_eventually_quorum_past
   classical
   have hPast :=
     live_knows_eventually_past (M := M)
+      (hAllowed := .quorum l₁ evt)
       (hTheory := hTheory)
       (φ := □ᶠ↓[id [l₁]] (Formula.ofEvent evt))
       (hLive := hLive) (hEvent := hQuorum p)
@@ -922,9 +944,10 @@ theorem live_knows_eventually_quorum_past
           (ψ := □ᶠ↓[id [l₁]] (Formula.ofEvent evt))).2
           ⟨hSplit.1, hBox⟩)
 
-/-- Paper: Proposition 5.2.8. Live quorums eventually know past facts. -/
+/-- Paper: Proposition 5.2.8, restricted to admissible Knowledge bodies. Live quorums eventually know past facts. -/
 theorem live_eventually_knows
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hAllowed : KnowledgeBody φ)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
     (hEvent : ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ φ)) :
     ⊨[M]□ᶠ↓[id [l]]
@@ -946,6 +969,7 @@ theorem live_eventually_knows
     intro q' hLiveLocal
     exact
       live_knows_eventually_past (M := M)
+      (hAllowed := hAllowed)
         (hTheory := hTheory) (p := q')
         (hLive := hLiveLocal) (hEvent := hEvent q')
   have hBoxPast :=
@@ -1035,6 +1059,7 @@ theorem live_eventually_knows_performed
         ♢ᶠ↓[[]] (Formula.ofEvent evt)) := by
   exact
     live_eventually_knows (M := M)
+      (hAllowed := .event evt)
       (hTheory := hTheory) (hLive := hLive) (hEvent := hEvent)
 
 /-- Paper: Corollary 5.2.9(3). Live quorums eventually know quorum facts. -/

@@ -21,13 +21,18 @@ written without the `ThyHBB<n>.` prefix; e.g. Proposition 6.3.1 is
 
 ## Representation note
 
-For the revised HBB4 note's Proposition 1.1 (finite-history vacuity), see
-`FiniteHistory.no_live_event`, `FiniteHistory.thyLive_no_live_event`, and
-`FiniteHistory.thyLive_no_live_witness` in
-[FiniteHistory.lean](ModalDistribution/Examples/ThyLive/FiniteHistory.lean).
-These theorems diagnose the current progress assumptions using the existing
-finite semantics. [HBB4_FINITE_HISTORIES.md](HBB4_FINITE_HISTORIES.md) records
-the consequences for HBB4 and the source-proof dependency audit.
+This branch amends Figure 6 and Definition 5.2.4: Knowledge bodies are exactly
+`E`, `K E`, and `Q_l E` (`KnowledgeBody`), with arbitrary outer learner lists.
+Shared lemmas involving Knowledge now require that admissibility premise;
+HBB1–3 correctness statements and the finite-history foundation are unchanged.
+`FiniteModel.exists_live_event_model` exhibits a finite model of the restricted
+shared theory with a live performed event.
+
+`FiniteHistory.no_live_event` in
+[FiniteHistory.lean](ModalDistribution/Examples/ThyLive/FiniteHistory.lean)
+diagnoses unrestricted Knowledge, explicitly assumed for every causal-depth
+formula. It does not apply to the restricted theory. See
+[HBB4_FINITE_HISTORIES.md](HBB4_FINITE_HISTORIES.md) for historical context.
 
 `PreHistory` is backed by lists rather than finite sets, so it realises the
 paper's inductive-datatype presentation (Section 2.1) instead of the
@@ -144,7 +149,7 @@ through membership, never through equality of prehistories — exactly the
 - **Figure 6, axiom-scheme (Knowledge□↓)** — `knowledgeBoxAxiom` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Definition 5.2.4 (the theory of liveness)** — `ThyLive` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Lemma 5.2.7** — `sometime_past_end` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
-- **Proposition 5.2.8** — `live_eventually_knows` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
+- **Proposition 5.2.8, restricted to `KnowledgeBody`** — `live_eventually_knows` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Corollary 5.2.9(1)** — `live_eventually_knows_event` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Corollary 5.2.9(2)** — `live_eventually_knows_performed` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Corollary 5.2.9(3)** — `live_eventually_knows_quorum` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
@@ -152,7 +157,7 @@ through membership, never through equality of prehistories — exactly the
 - **Lemma 5.2.10(2)** — `alwaysLiveEquivBackward` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Lemma 5.2.10(3)** — `live_allPast` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 - **Proposition 5.2.11** — `intertwined_two_quorums` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
-- **Lemma 5.2.12** — `live_boxPast_nests` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
+- **Lemma 5.2.12, restricted to `KnowledgeBody`** — `live_boxPast_nests` ([ModalDistribution/Examples/ThyLive.lean](ModalDistribution/Examples/ThyLive.lean))
 
 ## Section 6: Theory ThyHBB1
 

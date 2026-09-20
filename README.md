@@ -1,12 +1,16 @@
 # Heterogeneous Broadcast in Lean 4
 
-A complete Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of three broadcast algorithms using history structures and modal logic.
+A Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of three broadcast algorithms using history structures and modal logic.
 
-**Finite-history liveness caveat:** A kernel-checked result now shows that the
-current `ThyLive` assumptions exclude every live event in a finite history.
-The liveness implications are verified, but their live-witness antecedents cannot
-occur under those assumptions. See [the HBB4 finite-history investigation](HBB4_FINITE_HISTORIES.md)
-for the proof, the manuscript correspondence, and the HBB4 proof audit.
+**Knowledge restriction on this branch:** `ThyLive` permits Knowledge bodies
+exactly `E`, `K E`, and `Q_l E`, where `E` is an event atom. This is an explicit
+amendment to Figure 6's unrestricted scheme; finite histories and semantics are
+unchanged. All HBB1–3 correctness statements are preserved and kernel-checked.
+[The finite-model theorem](ModalDistribution/Examples/ThyLive/FiniteModel.lean)
+exhibits a model of the restricted shared theory containing a live performed
+event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory.
+[The finite-history investigation](HBB4_FINITE_HISTORIES.md) records the obstruction
+for unrestricted Knowledge and its historical provenance.
 
 ## What's in this repository?
 
