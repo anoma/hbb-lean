@@ -275,7 +275,7 @@ private theorem fixed_at (n k : Nat) (hn : n ≤ 2) (hk : n + 2 < k) :
   apply (boxPast (event k) [()] _).mpr
   exact ⟨event (n + 2), (mem_time _ k).mpr ⟨n + 2, hk, rfl⟩, vote_actual n hn⟩
 
-private theorem protocol : Protocol model symbols := by
+private theorem protocol : ProtocolCM model symbols := by
   refine {
     thyLive := live_theory
     echoBackward := ?_
@@ -361,7 +361,7 @@ private theorem protocol : Protocol model symbols := by
 The participant, learner, and value sorts here are singletons. -/
 theorem finite_protocol_nonvacuous :
     ∃ (S : Signature) (M : Model S Unit) (σ : ProtocolSignature S) (l v : S.Value),
-      Protocol M σ ∧ ProtocolSW M σ ∧ ProtocolCW M σ ∧
+      ProtocolCM M σ ∧ ProtocolSW M σ ∧ ProtocolCW M σ ∧
       (⊨[M] □ᶠ[[l]] σ.live) ∧
       (⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u)) ∧
       (⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.propose v))) ∧

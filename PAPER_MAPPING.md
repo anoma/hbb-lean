@@ -243,7 +243,7 @@ through membership, never through equality of prehistories — exactly the
 These results implement the CM repair in `hbb4_proofs_revised.pdf`, Sections 3–5,
 with the finite foundation and the restricted shared Knowledge scheme.
 Natural ranks index the vote-symbol family, and legality quantifies over those
-ranks semantically. `Protocol` contains the explicit axiom schemata, not assumed
+ranks semantically. `ProtocolCM` contains the explicit axiom schemata, not assumed
 correctness properties. Correctness permits arbitrary symbol families; the
 finite witness uses distinct vote symbols for distinct ranks.
 
@@ -251,7 +251,7 @@ finite witness uses distinct vote symbols for distinct ranks.
 | --- | --- | --- |
 | Manuscript MaxDepth, exact maximum | `maxDepth`, `maxDepth_attained`, `le_maxDepth` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
 | Finite-history bound | `maxDepth_bounded` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
-| Revised note §3.3, equations (1)–(16), CM, cap | `Legal`, `Protocol` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
+| Revised note §3.3, equations (1)–(16), CM, cap | `Legal`, `ProtocolCM` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
 | Lemma 4.1, conflict-depth lower bound | `conflict_depth` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
 | Corollary 4.2, dominance and legality | `conflicting_rank_lt`, `high_vote_legal` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
 | Lemma 5.1, provenance | `vote_provenance`, `deliver_provenance` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
@@ -271,15 +271,15 @@ not assume Knowledge for arbitrary existential-source certificate bodies.
 ## HBB4: positive-round switch and comparison-witness coherence
 
 `BaseProtocol` contains the shared capped rules and participant-local correlation
-persistence. `Protocol`, `ProtocolSW`, and `ProtocolCW` extend that base with CM,
+persistence. `ProtocolCM`, `ProtocolSW`, and `ProtocolCW` extend that base with CM,
 SW, and CW respectively. In particular, SW and CW do not assume CM. These two
 versions follow `hbb4_weaker_coherence.pdf`, Sections 1–4.
 
 | Source claim | Declaration | File |
 | --- | --- | --- |
-| Definition 2.1, SW | `SwitchCoherence`, `ProtocolSW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
-| Definition 2.2, CW | `ComparisonWitness`, `ProtocolCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
-| Proposition 2.3, CM ⇒ SW ⇒ CW | `Protocol.toSW`, `ProtocolSW.toCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
+| Definition 2.1, SW | `SwitchCoherence`, `ProtocolSW` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
+| Definition 2.2, CW | `ComparisonWitness`, `ProtocolCW` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
+| Proposition 2.3, CM ⇒ SW ⇒ CW | `ProtocolCM.toSW`, `ProtocolSW.toCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
 | Strict nonempty row-chain invariant | `StrictEndingDepthChain` | [StrictDepth.lean](ModalDistribution/Examples/ThyHBB4/StrictDepth.lean) |
 | Lemma 3.1, CW conflict-depth | `CW.conflict_depth` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
 | Corollary 3.2, legality at delivery rank | `CW.high_vote_legal`, `CW.delivery_legal` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |

@@ -74,8 +74,8 @@ ModalDistribution/
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
 │   └── ThyHBB4/                # Corrected capped CM/SW/CW protocols
 │       ├── Depth.lean         # Exact finite MaxDepth
-│       ├── Axioms.lean        # Shared protocol and CM
-│       ├── Coherence.lean     # SW, CW, and CM ⇒ SW ⇒ CW
+│       ├── Axioms.lean        # Shared rules and CM/SW/CW axioms
+│       ├── Coherence.lean     # CM ⇒ SW ⇒ CW proofs
 │       ├── Semantics.lean
 │       ├── Safety.lean        # Shared provenance and CM safety
 │       ├── StrictDepth.lean   # Strict row-inclusion chains

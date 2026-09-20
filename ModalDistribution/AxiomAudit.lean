@@ -111,10 +111,10 @@ depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.FiniteModel.finite_protocol_nonvacuous
 
-/-- info: 'ModalDistribution.Examples.ThyHBB4.Protocol.toSW'
+/-- info: 'ModalDistribution.Examples.ThyHBB4.ProtocolCM.toSW'
 depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms ModalDistribution.Examples.ThyHBB4.Protocol.toSW
+#print axioms ModalDistribution.Examples.ThyHBB4.ProtocolCM.toSW
 
 /-- info: 'ModalDistribution.Examples.ThyHBB4.ProtocolSW.toCW'
 depends on axioms: [propext, Classical.choice, Quot.sound] -/

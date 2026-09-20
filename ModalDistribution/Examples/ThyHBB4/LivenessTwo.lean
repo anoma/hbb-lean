@@ -92,7 +92,7 @@ theorem livenessTwo_of_delivery_legal (h : BaseProtocol M σ)
   exact deliver_of_live_zero_quorum h hlegal (fun q => Or.inr (hsource q)) hzero p
 
 /-- Causal monotonicity makes a delivered value legal throughout its correlation row. -/
-theorem delivery_legal (h : Protocol M σ) {w : World P S.EventType}
+theorem delivery_legal (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v : S.Value}
     (hab : Corr M σ w a b)
     (hdel : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) : Legal M σ w b v := by
@@ -103,7 +103,7 @@ theorem delivery_legal (h : Protocol M σ) {w : World P S.EventType}
   exact high_vote_legal h hw haa hab (by omega) hvote
 
 /-- Liveness 2 for the causal-monotonicity theory. -/
-theorem livenessTwo (h : Protocol M σ) {a b v : S.Value}
+theorem livenessTwo (h : ProtocolCM M σ) {a b v : S.Value}
     (hCorrelation : ⊨[M] □ᶠ[] (σ.correlation a b))
     (hLiveQuorum : ⊨[M] □ᶠ[[b]] σ.live) :
     ⊨[M] (♢ᶠ↓[[]] (σ.deliver a v)) ⇒ᶠ σ.live ⇒ᶠ ↕ᶠ (σ.deliver b v) := by

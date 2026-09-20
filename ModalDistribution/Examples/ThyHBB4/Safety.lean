@@ -184,7 +184,7 @@ theorem vote_value_eq {w : World P S.EventType} {l s v b t u : S.Value} {n k : N
     match e with | .none => [] | .some a => a.args) he
   exact (List.cons.inj (List.cons.inj (List.cons.inj ha).2).2).1
 
-theorem ending_chain_strict_append (h : Protocol M σ) {w e : World P S.EventType}
+theorem ending_chain_strict_append (h : ProtocolCM M σ) {w e : World P S.EventType}
     (hw : w.time ⪯ M.history.val) (he : e ≪ w) {a c : S.Value} {n : Nat}
     (hc : Corr M σ e a c) (hnc : ¬ Corr M σ w a c)
     (chain : EndingDepthChain M (Corr M σ) a e n) :
@@ -198,7 +198,7 @@ theorem ending_chain_strict_append (h : Protocol M σ) {w e : World P S.EventTyp
   exact hnc (Eq.mp (congrFun heq c) huCorr)
 
 /-- Conflicting ranks force a chain of strictly changing correlation rows. -/
-theorem conflict_depth (h : Protocol M σ) {w : World P S.EventType}
+theorem conflict_depth (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {r n k : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : r ≤ n) (hk : r ≤ k)
@@ -286,7 +286,7 @@ theorem conflict_depth (h : Protocol M σ) {w : World P S.EventType}
       exact False.elim (hvu (vote_value_eq hve huf))
 
 /-- A vote at the depth threshold dominates all conflicting votes in its row. -/
-theorem conflicting_rank_lt (h : Protocol M σ) {w : World P S.EventType}
+theorem conflicting_rank_lt (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v u : S.Value} {n k : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c) (hvu : v ≠ u)
     (hn : maxDepth M (Corr M σ) a - 1 ≤ n)
@@ -301,7 +301,7 @@ theorem conflicting_rank_lt (h : Protocol M σ) {w : World P S.EventType}
   omega
 
 /-- The dominating vote is the witness required by every legality clause. -/
-theorem high_vote_legal (h : Protocol M σ) {w : World P S.EventType}
+theorem high_vote_legal (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b c v : S.Value} {n : Nat}
     (hb : Corr M σ w a b) (hc : Corr M σ w a c)
     (hn : maxDepth M (Corr M σ) a - 1 ≤ n)
@@ -323,7 +323,7 @@ theorem deliver_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
   exact past_exists_iff.mpr ⟨f, accessible_trans hw hf he, hp⟩
 
 /-- Deliveries observed at a correlated world agree, even with unequal depths. -/
-theorem agreement_at (h : Protocol M σ) {w : World P S.EventType}
+theorem agreement_at (h : ProtocolCM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v u : S.Value}
     (hab : Corr M σ w a b)
     (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v))
@@ -349,7 +349,7 @@ theorem agreement_at (h : Protocol M σ) {w : World P S.EventType}
     omega
 
 /-- End-of-time agreement under the manuscript's permanent-correlation premise. -/
-theorem agreement (h : Protocol M σ) {a b v u : S.Value}
+theorem agreement (h : ProtocolCM M σ) {a b v u : S.Value}
     (hab : ∀ p : P, Corr M σ ⟨p, †, M.history.val⟩ a b) :
     ∀ p : P, (⟪(p, †, M.history.val)⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) →
       (⟪(p, †, M.history.val)⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver b u)) → v = u := by

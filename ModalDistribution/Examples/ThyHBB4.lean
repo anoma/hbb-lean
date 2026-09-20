@@ -15,7 +15,7 @@ import ModalDistribution.Examples.ThyHBB4.FiniteModel
 
 The three theories share finite histories, exact correlation depth, bounded
 rounds, self-source advancement, eventual delivery, and restricted Knowledge.
-`Protocol`, `ProtocolSW`, and `ProtocolCW` specify the separate coherence
+`ProtocolCM`, `ProtocolSW`, and `ProtocolCW` specify the separate coherence
 conditions over `BaseProtocol`. Agreement and both liveness results are proved
 for all three; `FiniteModel` supplies a common finite live execution.
 -/
