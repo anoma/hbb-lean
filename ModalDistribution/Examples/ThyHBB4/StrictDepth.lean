@@ -12,7 +12,7 @@ def RowStrictlyContains (R : World P S.EventType → S.Value → S.Value → Pro
     (a : S.Value) (e w : World P S.EventType) : Prop :=
   (∀ b, R w a b → R e a b) ∧ ∃ b, R e a b ∧ ¬ R w a b
 
-/-- Unlike an arbitrary distinct-row chain, this chain retains strict inclusion. -/
+/-- A chain of `n + 1` worlds ending at `w`, with strict row inclusion and nonempty rows. -/
 def StrictEndingDepthChain (M : Model S P)
     (R : World P S.EventType → S.Value → S.Value → Prop)
     (a : S.Value) (w : World P S.EventType) (n : Nat) : Prop :=

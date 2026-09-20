@@ -18,7 +18,7 @@ This file contains the main agreement theorem for the ThyHBB1 broadcast protocol
   The agreement property states that if two different values are delivered at different learners,
   then sequentiality must be violated. More precisely, if:
   - Two deliver events occur for values v₁ and v₂ at learners l₁ and l₂
-  - Sequentiality holds between reporting processes l₁' and l₂'
+  - Sequentiality holds between reporting learners reporting₁ and reporting₂
   Then v₁ = v₂.
 
 This is the fundamental correctness property of the broadcast protocol: under sequentiality
@@ -67,45 +67,48 @@ broadcast protocol: all processes that deliver a value must deliver the same val
 The proof proceeds by contradiction, deriving a contradiction from the assumption
 that two different values v₁ ≠ v₂ are delivered under sequentiality.
 
-See also: `agreement_of_deliveries`, agreement properties for ThyHBB2 and ThyHBB3. -/
+The paper-facing modal form is `agreement_modal`. -/
 theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁ l₂ l₁' l₂' : Signature.Value S}
+    {l₁ l₂ reporting₁ reporting₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
-    (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq) :
-    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
-         (♢ᶠ↓[[]] (ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
-         (v₁ ≃ᶠ v₂) := by
+    (hSeq : ∀ Q ∈ (M.learner reporting₁).quorums,
+      ∀ R ∈ (M.learner reporting₂).quorums,
+        ∃ p ∈ Q ∩ R, isSequential (Event := S.EventType) p M.history.val)
+    (hDeliver₁ : Occurs M (ofEvent ⟨deliverSymb, [reporting₁, l₁, v₁]⟩))
+    (hDeliver₂ : Occurs M (ofEvent ⟨deliverSymb, [reporting₂, l₂, v₂]⟩)) :
+    v₁ = v₂ := by
   classical
-  intro p
+  let p : P := Classical.choice inferInstance
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hSeqTop : ⟪wTop⟫ ⊨[M] ♢ᶠ[[l₁', l₂']]Formula.seq := hSeq p
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₁
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₂
+  have hSeq : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]Formula.seq := by
+    intro q
+    exact (sat_diamond_pair_iff M _ reporting₁ reporting₂ Formula.seq).2 hSeq
+  have hDeliver₁ := (occurs_iff_end_diamondPast).1 hDeliver₁ p
+  have hDeliver₂ := (occurs_iff_end_diamondPast).1 hDeliver₂ p
+  have hSeqTop : ⟪wTop⟫ ⊨[M] ♢ᶠ[[reporting₁, reporting₂]]Formula.seq := hSeq p
   by_cases hNe : v₁ = v₂
   · simpa [Sat] using hNe
 
   have hVoteBox₁ :
       ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
+        □ᶠ↓[[reporting₁]] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
           (hDeliverAx := by apply hTheory; simp [theory])
-          (reporting := l₁') (learner := l₁)
+          (reporting := reporting₁) (learner := l₁)
           (value := v₁) (p := p)
           (hDeliver := hDeliver₁)
   have hVoteBox₂ :
       ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
+        □ᶠ↓[[reporting₂]] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
           (hDeliverAx := by apply hTheory; simp [theory])
-          (reporting := l₂') (learner := l₂)
+          (reporting := reporting₂) (learner := l₂)
           (value := v₂) (p := p)
           (hDeliver := hDeliver₂)
 
@@ -125,7 +128,7 @@ theorem agreement
     exact
       seq_two_quorums_eventually
         (M := M) (w := wTop)
-        (l := l₁') (l' := l₂')
+        (l := reporting₁) (l' := reporting₂)
         (evt := ⟨voteSymb, [l₁, v₁]⟩)
         (evt' := ⟨voteSymb, [l₂, v₂]⟩)
         (hSeq := hSeqTop)
@@ -341,32 +344,22 @@ theorem agreement
           (fun h => hNe h.symm) hRight
       simpa [Sat] using hEqFinal.symm
 
-/-- Paper: Proposition 6.3.1, hypothesis form. Agreement from deliveries helper for ThyHBB1 (Corollary of agreement property).
-
-Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of time,
-the delivered values must coincide. This factors out the core reasoning used in
-the main agreement theorem.
-
-See also: `agreement`. -/
-theorem agreement_of_deliveries
+/-- Paper-facing modal form of agreement. -/
+theorem agreement_modal
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁ l₂ l₁' l₂' : Signature.Value S}
+    {l₁ l₂ reporting₁ reporting₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
-    (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq)
-    (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
-    (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
-    ⊨[M] v₁ ≃ᶠ v₂ := by
-  classical
-  exact
-    EndValid.imp_elim (M := M)
-      (EndValid.imp_elim (M := M)
-        (agreement (M := M)
-          (hTheory := hTheory) (l₁ := l₁) (l₂ := l₂)
-          (l₁' := l₁') (l₂' := l₂') (v₁ := v₁) (v₂ := v₂)
-          (hSeq := hSeq))
-        hDeliver₁)
-      hDeliver₂
+    (hSeq : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]Formula.seq) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l₁, v₁]⟩)) ⇒ᶠ
+         (♢ᶠ↓[[]] (ofEvent ⟨deliverSymb, [reporting₂, l₂, v₂]⟩)) ⇒ᶠ
+         (v₁ ≃ᶠ v₂) := by
+  intro p hDeliver₁ hDeliver₂
+  apply agreement hTheory
+  · exact (sat_diamond_pair_iff M _ reporting₁ reporting₂ Formula.seq).1 (hSeq p)
+  · exact observedAt_final_iff.mp (observedAt_iff.mpr hDeliver₁)
+  · exact observedAt_final_iff.mp (observedAt_iff.mpr hDeliver₂)
+
 
 end ThyHBB1
 end Examples

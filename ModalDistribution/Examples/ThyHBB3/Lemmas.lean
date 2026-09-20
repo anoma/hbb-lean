@@ -576,14 +576,14 @@ theorem echo_quorums_agree
 
 /-- Paper: Lemma 8.4.3(2). past votes also determine a unique
 value once sequentiality holds. -/
-theorem votes_eventually_agree
+theorem observed_votes_agree
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l l₁ l₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
     (hSeq : ⊨[M]□ᶠ[[l]]Formula.seq)
-    (hVote₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v₁]⟩))
-    (hVote₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₂, v₂]⟩)) :
+    (hVote₁ : Occurs M (ofEvent ⟨voteSymb, [l₁, v₁]⟩))
+    (hVote₂ : Occurs M (ofEvent ⟨voteSymb, [l₂, v₂]⟩)) :
     v₁ = v₂ := by
   classical
   obtain ⟨source₁, hEcho₁⟩ :=
@@ -591,13 +591,13 @@ theorem votes_eventually_agree
       (M := M)
       (hTheory := hTheory)
       (learner := l₁) (value := v₁)
-      (hVote := hVote₁)
+      (hVote := occurs_iff_end_diamondPast.mp hVote₁)
   obtain ⟨source₂, hEcho₂⟩ :=
     vote_implies_echo_quorum_end
       (M := M)
       (hTheory := hTheory)
       (learner := l₂) (value := v₂)
-      (hVote := hVote₂)
+      (hVote := occurs_iff_end_diamondPast.mp hVote₂)
   exact
     echo_quorums_agree
       (M := M)
@@ -628,39 +628,18 @@ theorem always_corr_symm
       ((Sat.everytime (M := M) (w := w)
         (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1 hAlways t ht hp)
 
-/-- End-of-time correlation together with the persistence axiom yields
-correlation throughout each participant’s history. -/
+/-- Correlation at every participant's final world persists to every actual event.
+Only persistence along that event's own participant is required. -/
 theorem correlation_global_allPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
-    (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
-    □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
-  classical
-  intro t ht_le
-  refine
-    (Sat.everytime (M := M) (w := t)
-      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).2 ?_
-  intro s hs hp
-  -- Correlation holds at the end of time at `s.place`…
-  have hCorrTop :
-      ⟪⟨s.place, †, M.history.val⟩⟫ ⊨[M]
-        ofPredicate ⟨correlationSymb, [l₁, l₂]⟩ :=
-    (EndValid.boxEmpty_guard (M := M)
-      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) s.place
-  -- …so, by `(≐⇓)`, it holds throughout that participant's past.
-  have hAllPast :
-      ⟪⟨s.place, †, M.history.val⟩⟫ ⊨[M]
-        ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
-    correlationMonotone_elim (M := M)
-      (theory_correlationMonotone (M := M) hTheory)
-      (by simp [World.time])
-      hCorrTop
-  exact
-    (Sat.allPast (M := M)
-      (w := ⟨s.place, †, M.history.val⟩)
-      (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1
-      hAllPast s (by simpa [World.time] using hs) rfl
+    (hCorrelation : ∀ p, Correlated M correlationSymb (finalWorld M p) l₁ l₂)
+    {e : World P S.EventType} (he : e ∈ M.history.val) :
+    Correlated M correlationSymb e l₁ l₂ := by
+  refine correlated_at_event_of_final ?_ hCorrelation he
+  intro w hw hc t ht hp
+  exact correlationPast (theory_correlationMonotone hTheory) hw hc ht hp
 
 /-- Correlated learners admit a sequential intersection witness. -/
 theorem correlation_seq_diamond
@@ -678,222 +657,6 @@ theorem correlation_seq_diamond
       ((EndValid.boxEmpty_guard (M := M)
         (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) p)
 
-/-- Helper: Split antecedent `(live ∧ corr) ∧ ◊vote` into components -/
-theorem split_live_corr_vote_antecedent
-    {w : World P (Signature.EventType S)}
-    {l₁ l₂ v : Signature.Value S}
-    (hAnte : ⟪w⟫ ⊨[M]((predicate0 liveSymb ∧ᶠ
-          ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-        ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))) :
-    (⟪w⟫ ⊨[M] predicate0 liveSymb) ∧
-    (⟪w⟫ ⊨[M] ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧
-    (⟪w⟫ ⊨[M] ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) := by
-  have hAnteSplit :=
-    (Sat.and (M := M) (w := w)
-        (φ := predicate0 liveSymb ∧ᶠ
-            ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
-        (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).1
-      hAnte
-  have hLiveCorr :=
-    (Sat.and (M := M) (w := w)
-        (φ := predicate0 liveSymb)
-        (ψ := ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))).1
-      hAnteSplit.1
-  exact ⟨hLiveCorr.1, hLiveCorr.2, hAnteSplit.2⟩
-
-/-- Helper: Chain three forall eliminations for vote correlation axiom -/
-theorem forall_elim_vote_correlated_chain
-    {w : World P (Signature.EventType S)}
-    {l₁ l₂ v : Signature.Value S}
-    (hVoteCorrLocal : ⟪w⟫ ⊨[M]voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) :
-    ⟪w⟫ ⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          (⇕ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)) ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
-        ∃ᶠ fun witnessed =>
-          ↕ᶠ (ofEvent ⟨voteSymb, [l₂, witnessed]⟩) := by
-  have hVoteCorrFor₁ :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner =>
-        ∀ᶠ fun correlated => ∀ᶠ fun value =>
-          (predicate0 liveSymb ∧ᶠ
-              (⇕ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩)) ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩)) ⇒ᶠ
-            ∃ᶠ fun witnessed =>
-              ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩))
-      (v := l₂) hVoteCorrLocal
-  have hVoteCorrFor₂ :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun correlated => ∀ᶠ fun value =>
-        (predicate0 liveSymb ∧ᶠ
-            (⇕ᶠ (ofPredicate ⟨correlationSymb, [l₂, correlated]⟩)) ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩)) ⇒ᶠ
-          ∃ᶠ fun witnessed =>
-            ↕ᶠ (ofEvent ⟨voteSymb, [l₂, witnessed]⟩))
-      (v := l₁) hVoteCorrFor₁
-  have hVoteCorrFor₃ :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        (predicate0 liveSymb ∧ᶠ
-            (⇕ᶠ (ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)) ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, value]⟩)) ⇒ᶠ
-          ∃ᶠ fun witnessed =>
-            ↕ᶠ (ofEvent ⟨voteSymb, [l₂, witnessed]⟩))
-      (v := v) hVoteCorrFor₂
-  simpa [voteForwardCorrelatedAxiom] using hVoteCorrFor₃
-
-/-- Helper: Chain two forall eliminations for vote forward axiom -/
-theorem forall_elim_vote_forward_chain
-    {w : World P (Signature.EventType S)}
-    {l v : Signature.Value S}
-    (hVoteLocal : ⟪w⟫ ⊨[M]voteForwardAxiom liveSymb echoSymb voteSymb) :
-    ⟪w⟫ ⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l]](ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
-        ∃ᶠ fun witnessed =>
-          ↕ᶠ (ofEvent ⟨voteSymb, [l, witnessed]⟩) := by
-  have hImpLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner =>
-        ∀ᶠ fun value =>
-          (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
-            ∃ᶠ fun witnessed =>
-              ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩))
-      (v := l) hVoteLocal
-  have hImpValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]](ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
-          ∃ᶠ fun witnessed =>
-            ↕ᶠ (ofEvent ⟨voteSymb, [l, witnessed]⟩))
-      (v := v) hImpLearner
-  exact hImpValue
-
-/-- Helper: Lift local `↕vote` to global `◊↓vote` using subset reasoning -/
-theorem lift_local_vote_to_global
-    {t : World P (Signature.EventType S)}
-    {l v : Signature.Value S}
-    (ht : t.time ⪯ M.history.val)
-    (hVote : ⟪t⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩)) :
-    ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩) := by
-  have hSubset_trn :
-      t.time ⊆trn M.history.val :=
-    ModalDistribution.Logic.time_subset_trn_history
-      (M := M) (t := t) ht
-  intro p
-  simpa using
-    (sat_diamondPast_nil_event_subset (M := M)
-      (w := ⟨p, †, M.history.val⟩)
-      (w' := t)
-      (symb := voteSymb)
-      (args := [l, v])
-      (hSubset := hSubset_trn)
-      hVote)
-
-/-- Helper: Unpack existential vote witness and lift to global diamond -/
-theorem vote_exists_to_global_diamond
-    {t : World P (Signature.EventType S)}
-    {l v : Signature.Value S}
-    (hVote : ⟪t⟫ ⊨[M]↕ᶠ(ofEvent ⟨voteSymb, [l, v]⟩)) :
-    ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩) := by
-  have hSometimeVote :=
-    (Sat.sometime (M := M) (w := t)
-        (φ := ofEvent ⟨voteSymb, [l, v]⟩)).1 hVote
-  obtain ⟨tVote, htVote_mem, htVote_place, hVote_event⟩ := hSometimeVote
-  intro p
-  have hPastVote :
-      ⟪⟨tVote.place, †, M.history.val⟩⟫ ⊨[M]
-        ↓ᶠ (ofEvent ⟨voteSymb, [l, v]⟩) := by
-    refine
-      (Sat.past (M := M)
-          (w := ⟨tVote.place, †, M.history.val⟩)
-          (φ := ofEvent ⟨voteSymb, [l, v]⟩)).2 ?_
-    refine ⟨tVote, htVote_mem, rfl, hVote_event⟩
-  have hDiamondTop :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
-        ♢ᶠ[[]](↓ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) :=
-    (Sat.diamond_nil (M := M)
-        (w := ⟨p, †, M.history.val⟩)
-        (φ := ↓ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))).2
-      ⟨tVote.place, hPastVote⟩
-  simpa [Formula.diamondPast] using hDiamondTop
-
-/-- Helper: splits the compound antecedent, obtains symmetric correlation,
-and rebuilds the antecedent with swapped learners. -/
-theorem split_and_swap_correlation
-    (hTheory : M ⊨ᵀ
-      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    {t : World P (Signature.EventType S)}
-    {l₁ l₂ : Signature.Value S}
-    {v : Signature.Value S}
-    (hAnte : ⟪t⟫ ⊨[M]((predicate0 liveSymb ∧ᶠ
-            ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))) :
-    ⟪t⟫ ⊨[M]
-      ((predicate0 liveSymb ∧ᶠ
-            ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)) ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) := by
-  -- Split antecedent into live, correlation, and vote components
-  have ⟨hLive, hCorr₁, hVote₁⟩ :=
-    split_live_corr_vote_antecedent (M := M)
-      (liveSymb := liveSymb) (correlationSymb := correlationSymb) (voteSymb := voteSymb)
-      (w := t) (l₁ := l₁) (l₂ := l₂) (v := v) hAnte
-  -- Get symmetric correlation
-  have hCorr₂ :=
-    always_corr_symm (M := M)
-      (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-      (hTheory := hTheory) (w := t)
-      (l₁ := l₁) (l₂ := l₂) hCorr₁
-  -- Build swapped antecedent
-  have hLiveCorrSym :=
-    (Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb)
-        (ψ := ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₂, l₁]⟩))).2
-      ⟨hLive, hCorr₂⟩
-  exact
-    (Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb ∧ᶠ
-            ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₂, l₁]⟩))
-        (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).2
-      ⟨hLiveCorrSym, hVote₁⟩
-
-/-- Helper: applies the voteForwardCorrelatedAxiom via forall elimination
-and extracts the witness value from the existential. -/
-theorem apply_vote_corr_and_extract_witness
-    {t : World P (Signature.EventType S)}
-    {l₁ l₂ : Signature.Value S}
-    {v : Signature.Value S}
-    (hVoteCorrLocal : ⟪t⟫ ⊨[M](voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb))
-    (hVoteAnte : ⟪t⟫ ⊨[M]((predicate0 liveSymb ∧ᶠ
-            ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)) ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))) :
-    ∃ v₂ : Signature.Value S,
-      ⟪t⟫ ⊨[M] (↕ᶠ (ofEvent ⟨voteSymb, [l₂, v₂]⟩)) := by
-  -- Apply vote correlation axiom via forall elimination chain
-  have hVoteImp :=
-    (Sat.imp (M := M) (w := t)
-        (φ :=
-          ((predicate0 liveSymb ∧ᶠ
-                ⇕ᶠ(ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)) ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)))
-        (ψ :=
-          ∃ᶠ fun witnessed =>
-            ↕ᶠ (ofEvent ⟨voteSymb, [l₂, witnessed]⟩))).1
-      (forall_elim_vote_correlated_chain (M := M)
-        (liveSymb := liveSymb) (voteSymb := voteSymb) (correlationSymb := correlationSymb)
-        (w := t) (l₁ := l₁) (l₂ := l₂) (v := v) hVoteCorrLocal)
-  have hVoteExists := hVoteImp hVoteAnte
-  -- Extract witness value
-  exact
-    (Sat.exists_iff (M := M) (w := t)
-        (body := fun witnessed =>
-          ↕ᶠ (ofEvent ⟨voteSymb, [l₂, witnessed]⟩))).1
-      hVoteExists
-
 /-- Helper: lifts both votes to global and applies agreement to prove
 the values are equal. -/
 theorem agree_on_correlated_votes
@@ -908,31 +671,14 @@ theorem agree_on_correlated_votes
     (hVote₁ : ⟪t⟫ ⊨[M](♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)))
     (hVote₂ : ⟪t⟫ ⊨[M](↕ᶠ(ofEvent ⟨voteSymb, [l₂, v₂]⟩))) :
     v = v₂ := by
-  -- Lift both votes to global
-  have hVote₁_global :=
-    lift_local_vote_to_global (M := M)
-      (voteSymb := voteSymb)
-      (t := t) (l := l₁) (v := v) ht hVote₁
-  have hVote₂_global :=
-    vote_exists_to_global_diamond (M := M)
-      (voteSymb := voteSymb)
-      (t := t) (l := l₂) (v := v₂) hVote₂
-  -- Apply agreement lemma
-  exact
-    votes_eventually_agree (M := M)
-      (liveSymb := liveSymb)
-      (proposeSymb := proposeSymb) (echoSymb := echoSymb)
-      (voteSymb := voteSymb) (deliverSymb := deliverSymb)
-      (correlationSymb := correlationSymb)
-      (hTheory := hTheory)
-      (l := l) (l₁ := l₁) (l₂ := l₂)
-      (v₁ := v) (v₂ := v₂)
-      (hSeq := hSeq)
-      (hVote₁ := hVote₁_global) (hVote₂ := hVote₂_global)
+  obtain ⟨e, he, hv⟩ := observedAt_iff.mpr hVote₁
+  have hSubset := History.transitiveSubset_subset (time_subset_trn_history (M := M) (t := t) ht)
+  obtain ⟨f, hf, _, hu⟩ := (occursAt_iff (w := t)).mpr hVote₂
+  exact observed_votes_agree hTheory hSeq ⟨e, hSubset e he, hv⟩ ⟨f, hf, hu⟩
 
 /-- Paper: Lemma 8.4.3(3). correlated live knowledge of a vote
 forces eventual votes for the correlated learner. -/
-theorem correlated_vote_eventually
+theorem correlated_vote_sometime
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S}
@@ -950,7 +696,6 @@ theorem correlated_vote_eventually
         (voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) :=
     theory_voteForwardCorrelated (M := M) hTheory
   intro t ht
-  have hVoteCorrLocal := hVoteCorrAx ht
   refine
     Sat.imp_intro (M := M) (w := t)
       (φ :=
@@ -959,56 +704,17 @@ theorem correlated_vote_eventually
             ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)))
       (ψ := ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩)) ?_
   intro hAnte
-  -- Split antecedent and swap correlation
-  have hVoteAnte := split_and_swap_correlation hTheory hAnte
-  -- Extract original vote for agreement
-  have hVote₁ :=
-    (split_live_corr_vote_antecedent (M := M)
-      (liveSymb := liveSymb) (correlationSymb := correlationSymb) (voteSymb := voteSymb)
-      (w := t) (l₁ := l₁) (l₂ := l₂) (v := v) hAnte).2.2
-  -- Apply axiom and extract witness
-  obtain ⟨v₂, hVote₂⟩ := apply_vote_corr_and_extract_witness hVoteCorrLocal hVoteAnte
+  obtain ⟨hlc, hVote₁⟩ := (Sat.and M t _ _).mp hAnte
+  obtain ⟨hLive, hCorr⟩ := (Sat.and M t _ _).mp hlc
+  have hCorrSymm := always_corr_symm hTheory hCorr
+  obtain ⟨v₂, hVote₂⟩ := vote_of_correlated_observation hVoteCorrAx ht hLive
+    ((Sat.everytime M t _).mp hCorrSymm) (observedAt_iff.mpr hVote₁)
+  have hVote₂ := (occursAt_iff (w := t)).mp hVote₂
   -- Prove values agree
   have hValueEq : v = v₂ :=
     agree_on_correlated_votes hTheory ht hSeq hVote₁ hVote₂
   cases hValueEq
   simpa using hVote₂
-
-/-- Helper: applies the voteForwardAxiom via forall elimination
-and extracts the witness value from the existential. -/
-theorem apply_vote_forward_and_extract_witness
-    {t : World P (Signature.EventType S)}
-    {l : Signature.Value S}
-    {v : Signature.Value S}
-    (hVoteLocal : ⟪t⟫ ⊨[M](voteForwardAxiom liveSymb echoSymb voteSymb))
-    (hLive : ⟪t⟫ ⊨[M](predicate0 liveSymb))
-    (hEchoLocal : ⟪t⟫ ⊨[M](□ᶠ↓[[l]](ofEvent ⟨echoSymb, [v]⟩))) :
-    ∃ v₂ : Signature.Value S,
-      ⟪t⟫ ⊨[M] (↕ᶠ (ofEvent ⟨voteSymb, [l, v₂]⟩)) := by
-  -- Apply vote forward axiom via forall elimination chain
-  have hVoteImp :=
-    (Sat.imp (M := M) (w := t)
-        (φ :=
-          predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]](ofEvent ⟨echoSymb, [v]⟩))
-        (ψ :=
-          ∃ᶠ fun witnessed =>
-            ↕ᶠ (ofEvent ⟨voteSymb, [l, witnessed]⟩))).1
-      (forall_elim_vote_forward_chain (M := M)
-        (liveSymb := liveSymb) (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (w := t) (l := l) (v := v) hVoteLocal)
-  have hVoteAnte' :=
-    (Sat.and (M := M) (w := t)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[l]](ofEvent ⟨echoSymb, [v]⟩))).2
-      ⟨hLive, hEchoLocal⟩
-  have hVoteExists := hVoteImp hVoteAnte'
-  -- Extract witness value
-  exact
-    (Sat.exists_iff (M := M) (w := t)
-        (body := fun witnessed =>
-          ↕ᶠ (ofEvent ⟨voteSymb, [l, witnessed]⟩))).1
-      hVoteExists
 
 /-- Helper: lifts vote to global, extracts echo source, applies agreement,
 and returns simplified result. -/
@@ -1029,11 +735,8 @@ theorem agree_on_echo_and_vote
       (t := t) (learner := l)
       (φ := ofEvent ⟨echoSymb, [v]⟩)
       (hSubset := hSubset) (hBox := hEchoLocal)
-  -- Lift vote to global
-  have hVote₂_global :=
-    vote_exists_to_global_diamond (M := M)
-      (voteSymb := voteSymb)
-      (t := t) (l := l) (v := v₂) hVote₂
+  obtain ⟨event, hevent, _, hvote⟩ := (occursAt_iff (w := t)).mpr hVote₂
+  have hVote₂_global := occurs_iff_end_diamondPast.mp ⟨event, hevent, hvote⟩
   -- Extract echo source from vote
   obtain ⟨sourceEcho, hEchoVote⟩ :=
     vote_implies_echo_quorum_end
@@ -1061,7 +764,7 @@ theorem agree_on_echo_and_vote
 
 /-- Paper: Lemma 8.4.3(4). a live echo quorum yields eventual
 votes for the same learner. -/
-theorem live_echo_eventually_vote
+theorem live_echo_vote_sometime
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l : Signature.Value S}
@@ -1075,7 +778,6 @@ theorem live_echo_eventually_vote
   have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) :=
     theory_voteForward (M := M) hTheory
   intro t htMem
-  have hVoteLocal := hVoteAx htMem
   refine
     Sat.imp_intro (M := M) (w := t)
       (φ :=
@@ -1098,7 +800,9 @@ theorem live_echo_eventually_vote
   have hSubset_history : t.time ⊆ M.history.val :=
     History.transitiveSubset_subset hSubset_history_trn
   -- Apply axiom and extract witness
-  obtain ⟨v₂, hVote₂⟩ := apply_vote_forward_and_extract_witness hVoteLocal hLive hEchoLocal
+  obtain ⟨v₂, hVote₂⟩ := vote_of_echo_quorum hVoteAx htMem hLive
+    (quorumAt_iff.mpr hEchoLocal)
+  have hVote₂ := (occursAt_iff (w := t)).mp hVote₂
   -- Prove values agree and simplify
   exact agree_on_echo_and_vote hTheory hSubset_history hSeq hEchoLocal hVote₂
 

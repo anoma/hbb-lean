@@ -10,7 +10,7 @@ import ModalDistribution.Logic.Syntax
 We formalise the satisfaction relation from
 the validity figure.  Satisfaction is defined for a model, a
 participant, a local history, and a variable assignment.  We also introduce
-end-of-time validity, event-driven validity, and the notion of active
+end-of-time validity, all-world validity, and the notion of active
 participants .
 -/
 
@@ -67,6 +67,36 @@ def Sat (M : Model S P)
 
 notation:65 "⟪" w "⟫" " ⊨[" M "]" φ =>
   Sat M (place w) (event w) (time w) φ
+
+/-- The final-history world of a participant. -/
+def finalWorld (M : Model S P) (p : P) : World P S.EventType :=
+  ⟨p, †, M.history.val⟩
+
+/-- A formula holds at some event in the observer's causal past. -/
+def ObservedAt (M : Model S P) (w : World P S.EventType) (φ : Formula S) : Prop :=
+  ∃ e, e ≪ w ∧ (⟪e⟫ ⊨[M] φ)
+
+/-- A formula holds at an actual event of the given participant. -/
+def OccursAt (M : Model S P) (p : P) (φ : Formula S) : Prop :=
+  ∃ e ∈ M.history.val, e.place = p ∧ (⟪e⟫ ⊨[M] φ)
+
+/-- A formula holds at some actual event in the model history. -/
+def Occurs (M : Model S P) (φ : Formula S) : Prop :=
+  ∃ e ∈ M.history.val, (⟪e⟫ ⊨[M] φ)
+
+/-- Exactly one value has an occurrence in the model history. -/
+def UniqueOccurrence (M : Model S P) (body : S.Value → Formula S) : Prop :=
+  ∃ v, Occurs M (body v) ∧ ∀ u, Occurs M (body u) → u = v
+
+/-- Correlation of two learners at the specified observing world. -/
+def Correlated (M : Model S P) (correlationSymb : S.PredSymb)
+    (w : World P S.EventType) (a b : S.Value) : Prop :=
+  ⟪w⟫ ⊨[M] Formula.ofPredicate ⟨correlationSymb, [a, b]⟩
+
+/-- Some quorum's participants satisfy the formula at the observer's history. -/
+def QuorumAt (M : Model S P) (w : World P S.EventType)
+    (l : S.Value) (φ : Formula S) : Prop :=
+  ∃ Q ∈ (M.learner l).quorums, ∀ p ∈ Q, ⟪⟨p, †, w.time⟩⟫ ⊨[M] φ
 
 namespace Sat
 
@@ -394,7 +424,7 @@ theorem past
   rcases w with ⟨p, evt, H⟩
   simp [Sat]
 
-/-- Paper: Lemma 3.6.4(1). Sometime (eventually in the future at end of time) unfolds. -/
+/-- Paper: Lemma 3.6.4(1). Sometime means an occurrence in the participant’s full history. -/
 theorem sometime
     (M : Model S P)
     (w : World P S.EventType)
@@ -707,7 +737,7 @@ theorem EndValid.imp_elim
     Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩)
       (φ := φ) (ψ := ψ) (hImp p) (hφ p)
 
-/-- Paper: Definition 3.4.10(3) (all-world validity □W⊨). Event-driven validity. -/
+/-- Paper: Definition 3.4.10(3) (all-world validity □W⊨). Validity at every world whose history is a possible prefix, including final worlds. -/
 @[simp] def AllWorldValid
     (M : Model S P) (φ : Formula S) : Prop :=
   ∀ {t : World P S.EventType},
@@ -732,7 +762,7 @@ theorem AllWorldValid.of_mem_history
     ⟪t⟫ ⊨[M]φ :=
   h (M.time_le_of_mem ht)
 
-/-- Instantiate an event-driven validity at an end-of-time world. -/
+/-- Instantiate all-world validity at an end-of-time world. -/
 theorem AllWorldValid.at_end
     (M : Model S P) {φ : Formula S}
     (h : AllWorldValid M φ)

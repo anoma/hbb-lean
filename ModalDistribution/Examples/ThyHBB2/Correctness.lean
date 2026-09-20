@@ -32,11 +32,47 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 theorem correctness
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
+    (∀ {l₁ l₂ reporting₁ reporting₂ : Signature.Value S}
+    {v₁ v₂ : Signature.Value S}
+    (_hSeq : ∀ Q ∈ (M.learner l₁).quorums,
+      ∀ R ∈ (M.learner l₂).quorums,
+        ∃ p ∈ Q ∩ R, isSequential (Event := S.EventType) p M.history.val)
+    (_hDeliver₁ : Occurs M (ofEvent ⟨deliverSymb, [reporting₁, l₁, v₁]⟩))
+    (_hDeliver₂ : Occurs M (ofEvent ⟨deliverSymb, [reporting₂, l₂, v₂]⟩)),
+    v₁ = v₂) ∧
+    (∀ {l : Signature.Value S}
+    {v : Signature.Value S}
+    (_hLiveQuorum : ∃ Q ∈ (M.learner l).quorums,
+      ∀ q ∈ Q, ⟪finalWorld M q⟫ ⊨[M] predicate0 liveSymb)
+    (_hUnique : UniqueOccurrence M (fun value => ofEvent ⟨proposeSymb, [value]⟩))
+    (_hKnownProposal : ∃ e ∈ M.history.val,
+      (⟪e⟫ ⊨[M] predicate0 liveSymb) ∧
+        ObservedAt M e (ofEvent ⟨proposeSymb, [v]⟩))
+    (p : P) (_hLiveParticipant : ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb),
+    OccursAt M p (ofEvent ⟨deliverSymb, [l, l, v]⟩)) ∧
+    (∀ {reporting₁ reporting₂ ℓ : Signature.Value S}
+    {v : Signature.Value S}
+    (_hIntersect : ∀ Q ∈ (M.learner reporting₁).quorums,
+      ∀ R ∈ (M.learner reporting₂).quorums, ∃ q, q ∈ Q ∧ q ∈ R)
+    (_hLive : ∃ Q ∈ (M.learner reporting₂).quorums,
+      ∀ q ∈ Q, ⟪finalWorld M q⟫ ⊨[M] predicate0 liveSymb)
+    (_hDelivered : Occurs M (ofEvent ⟨deliverSymb, [reporting₁, ℓ, v]⟩))
+    (p : P) (_hLiveParticipant : ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb),
+    OccursAt M p (ofEvent ⟨deliverSymb, [reporting₂, ℓ, v]⟩)) := by
+  exact ⟨fun hSeq hFirst hSecond => agreement hTheory hSeq hFirst hSecond,
+    fun hQuorum hUnique hKnown p hLive => livenessOne hTheory hQuorum hUnique hKnown p hLive,
+    fun hIntersect hQuorum hDelivered p hLive =>
+      livenessTwo hTheory hIntersect hQuorum hDelivered p hLive⟩
+
+/-- The paper-facing modal correctness summary. -/
+theorem correctness_modal
+    (hTheory : M ⊨ᵀ
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     -- Agreement
-    (∀ {l₁ l₂ l₁' l₂' v₁ v₂ : Signature.Value S},
+    (∀ {l₁ l₂ reporting₁ reporting₂ v₁ v₂ : Signature.Value S},
       (⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq) →
-      ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
-           (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
+      ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l₁, v₁]⟩)) ⇒ᶠ
+           (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₂, l₂, v₂]⟩)) ⇒ᶠ
            (v₁ ≃ᶠ v₂)) ∧
     -- Liveness 1
     (∀ {l v : Signature.Value S},
@@ -47,20 +83,21 @@ theorem correctness
            predicate0 liveSymb ⇒ᶠ
            ↕ᶠ(ofEvent ⟨deliverSymb, [l, l, v]⟩)) ∧
     -- Liveness 2
-    (∀ {l₁' l₂' l v : Signature.Value S},
-      (⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ) →
-      (⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) →
-      ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
+    (∀ {reporting₁ reporting₂ l v : Signature.Value S},
+      (⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ) →
+      (⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb) →
+      ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l, v]⟩)) ⇒ᶠ
            predicate0 liveSymb ⇒ᶠ
-           ↕ᶠ(ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) :=
+           ↕ᶠ(ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩)) :=
   ⟨fun hSeq =>
-      agreement (M := M) (hTheory := hTheory) (hSeq := hSeq),
+      agreement_modal (M := M) (hTheory := hTheory) (hSeq := hSeq),
    fun hLiveQuorum hUnique =>
-      livenessOne (M := M) (hTheory := hTheory)
+      livenessOne_modal (M := M) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
    fun hIntersect hLive =>
-      livenessTwo (M := M) (hTheory := hTheory)
+      livenessTwo_modal (M := M) (hTheory := hTheory)
         (hIntersect := hIntersect) (hLive := hLive)⟩
+
 
 end ThyHBB2
 end Examples

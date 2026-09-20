@@ -168,16 +168,16 @@ private theorem live_theory : Theory.Valid (M := model) (ThyLive ()) := by
     rcases hw with hw | hw
     · exact History.sequentiality_of_predecessor (H := model.history) hw (sequential 8)
     · rw [hw]; exact sequential 8
-  · change (⟪endWorld model w⟫ ⊨[model] ♢ᶠ↓[ls] (Formula.predicate0 () ∧ᶠ φ)) → _
+  · change (⟪finalWorld model w.place⟫ ⊨[model] ♢ᶠ↓[ls] (Formula.predicate0 () ∧ᶠ φ)) → _
     intro h _
-    obtain ⟨t, ht, hs⟩ := (diamondPast (endWorld model w) ls _).mp h
+    obtain ⟨t, ht, hs⟩ := (diamondPast (finalWorld model w.place) ls _).mp h
     obtain ⟨u, hu, hus⟩ := allowed_early ha ⟨t, ht, (Sat.and ..).mp hs |>.2⟩
     apply (Sat.sometime model w _).mpr
     refine ⟨event 7, (mem_time _ 8).mpr ⟨7, by omega, rfl⟩, Subsingleton.elim _ _, ?_⟩
     exact (diamondPast (event 7) ls φ).mpr ⟨u, hu, hus⟩
-  · change (⟪endWorld model w⟫ ⊨[model] □ᶠ↓[ls] (Formula.predicate0 () ∧ᶠ φ)) → _
+  · change (⟪finalWorld model w.place⟫ ⊨[model] □ᶠ↓[ls] (Formula.predicate0 () ∧ᶠ φ)) → _
     intro h _
-    obtain ⟨t, ht, hs⟩ := (boxPast (endWorld model w) ls _).mp h
+    obtain ⟨t, ht, hs⟩ := (boxPast (finalWorld model w.place) ls _).mp h
     obtain ⟨u, hu, hus⟩ := allowed_early ha ⟨t, ht, (Sat.and ..).mp hs |>.2⟩
     apply (Sat.sometime model w _).mpr
     refine ⟨event 7, (mem_time _ 8).mpr ⟨7, by omega, rfl⟩, Subsingleton.elim _ _, ?_⟩
@@ -192,14 +192,14 @@ private def symbols : ProtocolSignature signature where
   deliverSymb := .deliver
 
 private theorem corr (w : World Unit signature.EventType) (a b : signature.Value) :
-    Corr model symbols w a b := Set.mem_univ _
+    Correlated model symbols.correlationSymb w a b := Set.mem_univ _
 
 private theorem legal (w : World Unit signature.EventType) (l v : signature.Value) :
     Legal model symbols w l v := by
   intro b u n _ hne _
   exact False.elim (hne (by cases u; cases v; rfl))
 
-private theorem depth (a : signature.Value) : maxDepth model (Corr model symbols) a = 1 := by
+private theorem depth (a : signature.Value) : maxDepth model (Correlated model symbols.correlationSymb) a = 1 := by
   apply maxDepth_eq_one_of_constant
   intro w u
   funext b

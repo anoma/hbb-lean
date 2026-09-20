@@ -137,13 +137,13 @@ def accessible (t' t : World P Event) : Prop :=
   t' ∈ World.time t
 
 /-- Paper: Definition 3.4.2(4) (in-place accessibility, ≪⁻). Same-place accessibility (`≪^{-}` in Accessibility(4)). -/
-def accessibleLe (t' t : World P Event) : Prop :=
+def accessibleAtSamePlace (t' t : World P Event) : Prop :=
   accessible t' t ∧ World.place t' = World.place t
 
 end World
 namespace PreHistory
 scoped infix:50 " ≪ " => World.accessible
-scoped infix:50 " ≪⁻ " => World.accessibleLe
+scoped infix:50 " ≪⁻ " => World.accessibleAtSamePlace
 end PreHistory
 namespace World
 open scoped PreHistory

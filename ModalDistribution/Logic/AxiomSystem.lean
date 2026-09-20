@@ -7,8 +7,8 @@ import ModalDistribution.Logic.Syntax
 We package closed formulas as axioms and formalise the notion of when a model
 satisfies an axiom or a theory.  A theory is a
 (possibly infinite) set of axioms, and a model satisfies a theory exactly when
-it satisfies each of its axioms at every event in history (our event-driven
-validity judgement `□W⊨`).
+it satisfies each axiom at every world whose history is a possible prefix of
+the model history, including final worlds (the judgement `□W⊨`).
 -/
 
 namespace ModalDistribution

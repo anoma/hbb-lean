@@ -41,18 +41,19 @@ Correlation between l₁ and l₂ forces any deliveries for those learners
 to agree on the value. This uses the correlation predicate to establish quorum
 intersection, which is the key innovation of HBB3.
 
-See also: `agreement`, `agreement`, `agreement_of_deliveries`. -/
+The modal paper statement is `agreement_modal`. -/
 theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
-    (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
-    ⊨[M]
-      ((♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v₁]⟩)) ⇒ᶠ
-        ((♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂, v₂]⟩)) ⇒ᶠ
-          (v₁ ≃ᶠ v₂))) := by
+    {l₁ l₂ v₁ v₂ : S.Value}
+    (hCorrelationFinal : ∀ p, Correlated M correlationSymb (finalWorld M p) l₁ l₂)
+    (hDelivery₁ : Occurs M (ofEvent ⟨deliverSymb, [l₁, v₁]⟩))
+    (hDelivery₂ : Occurs M (ofEvent ⟨deliverSymb, [l₂, v₂]⟩)) : v₁ = v₂ := by
   classical
-  intro p
+  let p : P := Classical.choice inferInstance
+  have hCorrelation := correlated_final_iff_end.mp hCorrelationFinal
+  have hDeliver₁ := (occurs_iff_end_diamondPast.mp hDelivery₁) p
+  have hDeliver₂ := (occurs_iff_end_diamondPast.mp hDelivery₂) p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   -- Instances of key axioms.
   have hVoteNE :
@@ -75,21 +76,11 @@ theorem agreement
       ⟪wTop⟫ ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq :=
     by simpa [wTop] using hSeqGlobal p
   have hCorrAll :
-      □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
-    correlation_global_allPast
-      (M := M)
-      (liveSymb := liveSymb)
-      (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb)
-      (voteSymb := voteSymb)
-      (deliverSymb := deliverSymb)
-      (correlationSymb := correlationSymb)
-      (hTheory := hTheory)
-      (hCorrelation := hCorrelation)
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₁
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₂
+      □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
+    intro w _
+    apply (Sat.everytime M w _).mpr
+    intro e he _
+    exact correlation_global_allPast hTheory hCorrelationFinal he
   by_cases hEq : v₁ = v₂
   · simpa [Sat] using hEq
   -- Back out the supporting vote quorums from the deliveries.
@@ -218,7 +209,7 @@ theorem agreement
           (hVote_now := hVote_now)
           (hVote_past := hVote_past)
           (hCorr := hCorr_now)
-      exact by simp [Sat, hEqVotes]
+      exact hEqVotes
   | inr hRight =>
       -- Symmetric case: the second vote is current.
       have hRight' :
@@ -295,29 +286,21 @@ theorem agreement
           (hVote_now := hVote_now)
           (hVote_past := hVote_past)
           (hCorr := hCorr_now)
-      exact by simp [Sat, hEqVotes.symm]
+      exact hEqVotes.symm
 
-/-- Paper: Proposition 8.3.1, hypothesis form. If deliveries for learners
-`l₁` and `l₂` both occur, their values coincide. -/
-theorem agreement_of_deliveries
+/-- Paper: Proposition 8.3.1, modal presentation of agreement. -/
+theorem agreement_modal
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v₁ v₂ : Signature.Value S}
-    (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
-    (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v₁]⟩))
-    (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂, v₂]⟩)) :
-    ⊨[M] v₁ ≃ᶠ v₂ := by
-  classical
-  exact
-    EndValid.imp_elim (M := M)
-      (EndValid.imp_elim (M := M)
-        (agreement (M := M)
-      (hTheory := hTheory)
-      (l₁ := l₁) (l₂ := l₂)
-      (v₁ := v₁) (v₂ := v₂)
-      (hCorrelation := hCorrelation))
-        hDeliver₁)
-      hDeliver₂
+    (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) :
+    ⊨[M]
+      ((♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v₁]⟩)) ⇒ᶠ
+        ((♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂, v₂]⟩)) ⇒ᶠ
+          (v₁ ≃ᶠ v₂))) := by
+  apply occurrence_agreement_iff.mp
+  exact agreement hTheory (correlated_final_iff_end.mpr hCorrelation)
+
 end ThyHBB3
 end Examples
 end ModalDistribution

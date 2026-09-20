@@ -49,7 +49,7 @@ throughout the paper.
 * `Formula.boxEmpty φ` / notation `□ᶠ[] φ` ↔ `\atd{}\phi`.
 * `Formula.seq` ↔ the distinguished predicate `\tf{seq}`.
 * `World.accessible` / notation `t' ≪ t` ↔ `\accessible` .
-* `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `\accessible^{-}` .
+* `World.accessibleAtSamePlace` / notation `t' ≪⁻ t` ↔ `\accessible^{-}` .
 
 > **Validity notation warning.**  The paper uses three related validity
 > judgements (`\aworld\mentHφ`, `\mentHφ`, `\alltimeplace\mentHφ`).  In this

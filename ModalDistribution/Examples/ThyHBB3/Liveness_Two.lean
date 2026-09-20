@@ -12,8 +12,8 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This file states the Liveness~2 property for `ThyHBB3`, following
 Liveness property 2 for ThyHBB3. When `l₁` and `l₂` are always correlated
-and `l₂` has a live quorum, any delivery for `l₁` eventually propagates to a
-live delivery for `l₂`.
+and `l₂` has a live quorum, a delivery for `l₁` gives every live participant a delivery for `l₂`
+somewhere in the model history.
 -/
 
 namespace ModalDistribution
@@ -39,32 +39,31 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
 /-- Paper: Proposition 8.4.5 (Liveness 2). If learners `l₁` and `l₂` are always
-correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
-forces a live delivery for `l₂`. -/
+correlated and `l₂` has a live quorum, a delivery for `l₁` gives every live
+participant a delivery for `l₂` somewhere in the model history. -/
 theorem livenessTwo
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
-    {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
-    (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
-    (hLiveQuorum : ⊨[M]□ᶠ[[l₂]]predicate0 liveSymb) :
-    ⊨[M]
-      (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v]⟩)) ⇒ᶠ
-        predicate0 liveSymb ⇒ᶠ
-        ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) := by
+    {l₁ l₂ v : S.Value}
+    (hCorrelationFinal : ∀ p, Correlated M correlationSymb (finalWorld M p) l₁ l₂)
+    (hLiveQuorumFinal : ∃ Q ∈ (M.learner l₂).quorums,
+      ∀ p ∈ Q, ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb)
+    (hDelivery : Occurs M (ofEvent ⟨deliverSymb, [l₁, v]⟩))
+    (p : P) (hLiveHere : ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) :
+    OccursAt M p (ofEvent ⟨deliverSymb, [l₂, v]⟩) := by
   classical
+  have hCorrelation := correlated_final_iff_end.mp hCorrelationFinal
+  have hLiveQuorum := quorum_final_iff_end.mp hLiveQuorumFinal
+  have hDeliverDiamond := (occurs_iff_end_diamondPast.mp hDelivery) p
+  apply (occursAt_iff (w := finalWorld M p)).mpr
   have hLiveSequentialGlobal :
       ⊨[M]□ᶠ[[l₂]] Formula.seq :=
     live_quorum_seq (M := M)
       (hTheory := fun _ hAx => hTheory (Or.inl hAx))
       (hLiveQuorum := hLiveQuorum)
-  intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
   have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
     fun _ hAx => hTheory (Or.inl hAx)
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliverDiamond
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hLiveHere
   -- Quorum intersections supplied by the correlation hypothesis.
   have hIntersectGlobal :
       ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ :=
@@ -79,18 +78,11 @@ theorem livenessTwo
       hTheory hCorrelation
   -- Correlation persists through every local past (available as an event-valid fact).
   have hCorrelationAlways :
-      □W⊨[M] (⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) := by
-    exact
-      correlation_global_allPast
-        (M := M)
-        (liveSymb := liveSymb)
-        (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb)
-        (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb)
-        (correlationSymb := correlationSymb)
-        (hTheory := hTheory)
-        (hCorrelation := hCorrelation)
+      □W⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) := by
+    intro w _
+    apply (Sat.everytime M w _).mpr
+    intro e he _
+    exact correlation_global_allPast hTheory hCorrelationFinal he
   -- `Deliver?`: deliveries for `l₁` enforce an `l₁` vote quorum.
   have hVotesBox_l₁ :
       ⟪wTop⟫ ⊨[M]
@@ -255,7 +247,7 @@ theorem livenessTwo
                 ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
               ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
             ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      correlated_vote_eventually
+      correlated_vote_sometime
         (M := M)
         (liveSymb := liveSymb)
         (proposeSymb := proposeSymb)
@@ -395,6 +387,22 @@ theorem livenessTwo
 
   exact hDeliverEventually
 
+/-- Paper-facing modal formulation of Liveness Two. -/
+theorem livenessTwo_modal
+    (hTheory : M ⊨ᵀ
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
+    {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
+    (hCorrelation : ⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
+    (hLiveQuorum : ⊨[M]□ᶠ[[l₂]]predicate0 liveSymb) :
+    ⊨[M]
+      (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v]⟩)) ⇒ᶠ
+        predicate0 liveSymb ⇒ᶠ
+        ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) := by
+  apply occurrence_liveness_iff.mp
+  intro hd p hlive
+  exact livenessTwo hTheory (correlated_final_iff_end.mpr hCorrelation)
+    (quorum_final_iff_end.mpr hLiveQuorum) hd p hlive
+
 /-- Paper: Proposition 8.4.5, first corollary. A delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
 the same value. -/
@@ -411,7 +419,7 @@ theorem livenessTwo_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessTwo (M := M)
+      livenessTwo_modal (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
@@ -434,7 +442,7 @@ theorem livenessTwo_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessTwo (M := M)
+      livenessTwo_modal (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)

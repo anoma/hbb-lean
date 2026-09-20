@@ -5,7 +5,7 @@ A Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast v
 **Knowledge restriction on this branch:** `ThyLive` permits Knowledge bodies
 exactly `E`, `K E`, and `Q_l E`, where `E` is an event atom. This is an explicit
 amendment to Figure 6's unrestricted scheme; finite histories and semantics are
-unchanged. All HBB1–3 correctness statements are preserved and kernel-checked.
+unchanged. All HBB1–3 correctness claims retain their mathematical meaning and are kernel-checked.
 [The finite-model theorem](ModalDistribution/Examples/ThyLive/FiniteModel.lean)
 exhibits a model of the restricted shared theory containing a live performed
 event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory.
@@ -13,7 +13,7 @@ event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory
 for unrestricted Knowledge and its historical provenance.
 
 **HBB4 CM, SW, and CW:** All three versions cap target-learner votes at
-`MaxDepth(l) + 1`, permit self-source advancement, and use eventual delivery.
+`MaxDepth(l) + 1`, permit self-source advancement, and use delivery sometime in the completed history.
 Their agreement and liveness proofs require no three-quorum intersection axiom.
 `MaxDepth` is the attained maximum of distinct-row causal-chain lengths, not a
 separate budget. The rules are semantic schemata over the existing model because
@@ -27,6 +27,28 @@ delivery rank. The formalization does not yet include separating models proving
 these coherence implications strict. The separate
 [52-event executable audit](audits/hbb4_cm/INVESTIGATION.md) additionally exercises
 distinct learners and failure of three-quorum intersection.
+
+## Reading the proofs
+
+The canonical `agreement`, `livenessOne`, and `livenessTwo` theorems use explicit
+participants and semantic observations. Their `_modal` corollaries express the
+same results in the paper's notation. Shared equivalences in
+[Properties/Satisfaction.lean](ModalDistribution/Logic/Properties/Satisfaction.lean)
+connect the two presentations.
+
+Three world domains matter: a **possible world** has a history preceding or equal
+to the model history; an **actual event** belongs to that history; a **final world**
+`finalWorld M p` evaluates a participant at the full history with the null event.
+Theory validity ranges over possible worlds. `ObservedAt M w φ` witnesses an
+actual causal predecessor of `w`; `OccursAt M p φ` witnesses an event somewhere
+in the full history at participant `p`, without asserting it follows an observation.
+`Occurs M φ` permits any participant. `Correlated` makes the world at which
+correlation is evaluated explicit.
+
+For the correlation comparison, start with HBB3's `correlation_global_allPast`
+and HBB4's `CausalMonotonicity`. The former assumes correlation at every final
+participant; the latter starts from correlation at a single possible world.
+Both use the same `Correlated` predicate.
 
 ## What's in this repository?
 

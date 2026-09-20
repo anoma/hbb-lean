@@ -453,13 +453,14 @@ theorem correlationSeq_elim
       (ψ := ♢ᶠ[[learner, correlated]] Formula.seq)).1
       hCorrelated hCorr
 
-/-- Instantiate `(≐⇓)` at a world: correlation persists through the past. -/
-theorem correlationMonotone_elim
+/-- `(≐⇓)`: correlation persists to predecessors at the same participant. -/
+theorem correlationPast
     (hAx : □W⊨[M] correlationMonotoneAxiom correlationSymb)
     (hW : w.time ⪯ M.history.val)
     {learner correlated : S.Value}
-    (hCorr : ⟪w⟫ ⊨[M]ofPredicate ⟨correlationSymb, [learner, correlated]⟩) :
-    ⟪w⟫ ⊨[M]⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩) := by
+    (hCorr : Correlated M correlationSymb w learner correlated)
+    {e : World P S.EventType} (he : e ≪ w) (hPlace : e.place = w.place) :
+    Correlated M correlationSymb e learner correlated := by
   classical
   have hLearner :=
     Sat.forall_elim (M := M) (w := w)
@@ -475,11 +476,12 @@ theorem correlationMonotone_elim
         ofPredicate ⟨correlationSymb, [learner, correlated']⟩ ⇒ᶠ
           ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated']⟩))
       (v := correlated) hLearner
-  exact
+  have hPast :=
     (Sat.imp (M := M) (w := w)
       (φ := ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
       (ψ := ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩))).1
       hCorrelated hCorr
+  exact (Sat.allPast M w _).mp hPast e he hPlace
 
 /-- Instantiate `(≐symm)` at a world: correlation is symmetric. -/
 theorem correlationSymm_elim
@@ -538,6 +540,38 @@ theorem deliverForward_imp
             □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value']⟩)) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨deliverSymb, [learner, value']⟩))
       (v := value) hLearner
+
+/-- `Vote!` produces a vote at this participant; the rule does not yet fix its value. -/
+theorem vote_of_echo_quorum
+    (hAx : □W⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb)
+    (hw : w.time ⪯ M.history.val) {l v : S.Value}
+    (hLive : ⟪w⟫ ⊨[M] predicate0 liveSymb)
+    (hEcho : QuorumAt M w l (↓ᶠ (ofEvent ⟨echoSymb, [v]⟩))) :
+    ∃ u, OccursAt M w.place (ofEvent ⟨voteSymb, [l, u]⟩) := by
+  have rule := Sat.forall_elim M w _ l (hAx hw)
+  have rule := Sat.forall_elim M w _ v rule
+  obtain ⟨u, hu⟩ := (Sat.exists_iff (M := M) w _).mp
+    (Sat.imp_elim M w rule (Sat.and_intro M w hLive (quorumAt_iff.mp hEcho)))
+  exact ⟨u, (occursAt_iff (w := w)).mpr hu⟩
+
+/-- `Vote'!` transfers an observed vote to a learner correlated throughout
+this participant's actual history. The output value remains existential. -/
+theorem vote_of_correlated_observation
+    (hAx : □W⊨[M] voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb)
+    (hw : w.time ⪯ M.history.val) {l source v : S.Value}
+    (hLive : ⟪w⟫ ⊨[M] predicate0 liveSymb)
+    (hCorrelation : ∀ e ∈ M.history.val, e.place = w.place →
+      Correlated M correlationSymb e l source)
+    (hVote : ObservedAt M w (ofEvent ⟨voteSymb, [source, v]⟩)) :
+    ∃ u, OccursAt M w.place (ofEvent ⟨voteSymb, [l, u]⟩) := by
+  have rule := Sat.forall_elim M w _ l (hAx hw)
+  have rule := Sat.forall_elim M w _ source rule
+  have rule := Sat.forall_elim M w _ v rule
+  have hc := (Sat.everytime M w _).mpr hCorrelation
+  obtain ⟨u, hu⟩ := (Sat.exists_iff (M := M) w _).mp
+    (Sat.imp_elim M w rule
+      (Sat.and_intro M w (Sat.and_intro M w hLive hc) (observedAt_iff.mp hVote)))
+  exact ⟨u, (occursAt_iff (w := w)).mpr hu⟩
 
 end Instantiations
 

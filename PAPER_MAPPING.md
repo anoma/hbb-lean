@@ -78,7 +78,7 @@ through membership, never through equality of prehistories — exactly the
 - **Definition 3.3.2 (semifilters)** — `Semifilter` ([ModalDistribution/Core/Semifilter.lean](ModalDistribution/Core/Semifilter.lean))
 - **Definition 3.3.3 (models)** — `Model` ([ModalDistribution/Core/Model.lean](ModalDistribution/Core/Model.lean))
 - **Definition 3.4.2(3) (accessibility, ≪)** — `accessible` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
-- **Definition 3.4.2(4) (in-place accessibility, ≪⁻)** — `accessibleLe` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
+- **Definition 3.4.2(4) (in-place accessibility, ≪⁻)** — `accessibleAtSamePlace` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
 - **Lemma 3.4.3** — `happensBefore_of_accessible` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
 - **Lemma 3.4.4** — `accessible_happensBefore_history` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 - **Proposition 3.4.5 (irreflexivity)** — `accessible_irrefl` ([ModalDistribution/Core/Prehistory.lean](ModalDistribution/Core/Prehistory.lean))
@@ -173,7 +173,7 @@ through membership, never through equality of prehistories — exactly the
 - **Definition 6.1.2 (theory ThyHBB1)** — `theory` ([ModalDistribution/Examples/ThyHBB1/Axioms.lean](ModalDistribution/Examples/ThyHBB1/Axioms.lean))
 - **Theorem 6.1.6 / Figure 8** — `correctness` ([ModalDistribution/Examples/ThyHBB1/Correctness.lean](ModalDistribution/Examples/ThyHBB1/Correctness.lean))
 - **Proposition 6.3.1 (Agreement)** — `agreement` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
-- **Proposition 6.3.1, hypothesis form** — `agreement_of_deliveries` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
+- **Proposition 6.3.1, paper form** — `agreement_modal` ([ModalDistribution/Examples/ThyHBB1/Agreement.lean](ModalDistribution/Examples/ThyHBB1/Agreement.lean))
 - **Lemma 6.4.1(1)** — `safe_monotone` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.1(2)** — `safe_allPast` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
 - **Lemma 6.4.2(1)** — `boxPast_of_eventual_quorum` ([ModalDistribution/Examples/ThyHBB1/Safety.lean](ModalDistribution/Examples/ThyHBB1/Safety.lean))
@@ -196,7 +196,7 @@ through membership, never through equality of prehistories — exactly the
 - **Definition 7.1.1 (theory ThyHBB2)** — `theory` ([ModalDistribution/Examples/ThyHBB2/Axioms.lean](ModalDistribution/Examples/ThyHBB2/Axioms.lean))
 - **Theorem 7.1.3 / Figure 10** — `correctness` ([ModalDistribution/Examples/ThyHBB2/Correctness.lean](ModalDistribution/Examples/ThyHBB2/Correctness.lean))
 - **Proposition 7.2.1 (Agreement)** — `agreement` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
-- **Proposition 7.2.1, hypothesis form** — `agreement_of_deliveries` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
+- **Proposition 7.2.1, paper form** — `agreement_modal` ([ModalDistribution/Examples/ThyHBB2/Agreement.lean](ModalDistribution/Examples/ThyHBB2/Agreement.lean))
 - **Proposition 7.2.2 (Liveness 2)** — `livenessTwo` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
 - **Proposition 7.2.2, first corollary** — `livenessTwo_boxPast` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
 - **Proposition 7.2.2, second corollary** — `livenessTwo_diamondPast` ([ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB2/Liveness_Two.lean))
@@ -219,15 +219,16 @@ through membership, never through equality of prehistories — exactly the
 - **Figure 11, rule (Deliver!)** — `deliverForwardAxiom` ([ModalDistribution/Examples/ThyHBB3/Axioms.lean](ModalDistribution/Examples/ThyHBB3/Axioms.lean))
 - **Definition 8.2.1 (theory ThyHBB3)** — `theory` ([ModalDistribution/Examples/ThyHBB3/Axioms.lean](ModalDistribution/Examples/ThyHBB3/Axioms.lean))
 - **Theorem 8.2.3 / Figure 12** — `correctness` ([ModalDistribution/Examples/ThyHBB3/Correctness.lean](ModalDistribution/Examples/ThyHBB3/Correctness.lean))
+- **Proposition 8.3.1, correlation propagation** — `correlation_global_allPast` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Proposition 8.3.1 (Agreement)** — `agreement` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
-- **Proposition 8.3.1, hypothesis form** — `agreement_of_deliveries` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
+- **Proposition 8.3.1, paper form** — `agreement_modal` ([ModalDistribution/Examples/ThyHBB3/Agreement.lean](ModalDistribution/Examples/ThyHBB3/Agreement.lean))
 - **Lemma 8.4.1** — `threeTwined_boxes_intersect` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.2(1)** — `vote_implies_echo_quorum_local` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.2(2)** — `vote_implies_echo_quorum_end` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.3(1)** — `echo_quorums_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-- **Lemma 8.4.3(2)** — `votes_eventually_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-- **Lemma 8.4.3(3)** — `correlated_vote_eventually` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
-- **Lemma 8.4.3(4)** — `live_echo_eventually_vote` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- **Lemma 8.4.3(2)** — `observed_votes_agree` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- **Lemma 8.4.3(3)** — `correlated_vote_sometime` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
+- **Lemma 8.4.3(4)** — `live_echo_vote_sometime` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.4(1)** — `correlationImpliesPairwiseQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Lemma 8.4.4(2)** — `correlationImpliesQuorumIntersection` ([ModalDistribution/Examples/ThyHBB3/Lemmas.lean](ModalDistribution/Examples/ThyHBB3/Lemmas.lean))
 - **Proposition 8.4.5 (Liveness 2)** — `livenessTwo` ([ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean](ModalDistribution/Examples/ThyHBB3/Liveness_Two.lean))
@@ -252,7 +253,7 @@ finite witness uses distinct vote symbols for distinct ranks.
 | Manuscript MaxDepth, exact maximum | `maxDepth`, `maxDepth_attained`, `le_maxDepth` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
 | Finite-history bound | `maxDepth_bounded` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
 | Revised note §3.3, equations (1)–(16), CM, cap | `Legal`, `ProtocolCM` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
-| Lemma 4.1, conflict-depth lower bound | `CM.conflict_depth` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
+| Lemma 4.1, conflict-depth lower bound | `CM.conflict_yields_depth_chain` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
 | Corollary 4.2, dominance and legality | `CM.conflicting_rank_lt`, `CM.high_vote_legal` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
 | Lemma 5.1, provenance | `vote_provenance`, `deliver_provenance` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
 | Theorem 5.2, agreement | `CM.agreement` | [CM.lean](ModalDistribution/Examples/ThyHBB4/CM.lean) |
@@ -281,7 +282,7 @@ versions follow `hbb4_weaker_coherence.pdf`, Sections 1–4.
 | Definition 2.2, CW | `ComparisonWitness`, `ProtocolCW` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
 | Proposition 2.3, CM ⇒ SW ⇒ CW | `ProtocolCM.toSW`, `ProtocolSW.toCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
 | Strict nonempty row-chain invariant | `StrictEndingDepthChain` | [StrictDepth.lean](ModalDistribution/Examples/ThyHBB4/StrictDepth.lean) |
-| Lemma 3.1, CW conflict-depth | `CW.conflict_depth` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
+| Lemma 3.1, CW conflict-depth | `CW.conflict_rank_le_depth` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
 | Corollary 3.2, legality at delivery rank | `CW.high_vote_legal`, `CW.delivery_legal` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
 | Theorem 4.1, CW agreement | `CW.agreement` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
 | Theorem 4.1, SW agreement | `SW.agreement` | [SW.lean](ModalDistribution/Examples/ThyHBB4/SW.lean) |
@@ -297,3 +298,25 @@ progression, and certificate transfer are shared over `BaseProtocol`.
 The strictness witnesses from Section 5 and the optional finite-learner counting
 bound from Section 6 are not formalized. They are not premises of correctness:
 exact MaxDepth is already finite by the history-height bound.
+
+## Semantic and paper-facing statements
+
+For each `ThyHBB1`, `ThyHBB2`, and `ThyHBB3` namespace, `agreement`,
+`livenessOne`, `livenessTwo`, and `correctness` are semantic proof interfaces;
+the corresponding `_modal` results give the paper formulas in the same files.
+HBB4 uses the same convention in each of `ThyHBB4.CM`, `ThyHBB4.SW`, and
+`ThyHBB4.CW` for its three correctness theorems.
+
+The common checked correspondences are `Logic.occurrence_agreement_iff`,
+`Logic.occurrence_liveness_iff`, `Logic.uniqueOccurrence_iff_end`,
+`Logic.correlated_final_iff_end`, and `Logic.quorum_final_iff_end` in
+[Properties/Satisfaction.lean](ModalDistribution/Logic/Properties/Satisfaction.lean).
+They preserve participant quantification, causal observation, and the full-history
+meaning of `sometime`. Theory axioms quantify over possible worlds, whereas
+occurrence predicates quantify over actual events. Final-world predicates evaluate
+at the full history for the named participant.
+
+HBB4's axiom fields cite the repaired note's equation numbers directly.
+`maxDepth` is model-global; correlation and legality depend on their explicit world.
+The natural-number quantifiers in legality are semantic schemata, not extra values
+in the formula language.

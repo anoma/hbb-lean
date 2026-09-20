@@ -27,10 +27,37 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
+/-- Agreement and both liveness properties, with explicit event witnesses. -/
+theorem correctness
+    (hTheory : M ⊨ᵀ
+      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
+    (∀ {a b v u : S.Value},
+      (∀ p, Correlated M correlationSymb (finalWorld M p) a b) →
+      Occurs M (ofEvent ⟨deliverSymb, [a, v]⟩) →
+      Occurs M (ofEvent ⟨deliverSymb, [b, u]⟩) → v = u) ∧
+    (∀ {l v : S.Value},
+      (∃ Q ∈ (M.learner l).quorums,
+        ∀ p ∈ Q, ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) →
+      UniqueOccurrence M (fun u => ofEvent ⟨proposeSymb, [u]⟩) →
+      (∃ e ∈ M.history.val, (⟪e⟫ ⊨[M] predicate0 liveSymb) ∧
+        ObservedAt M e (ofEvent ⟨proposeSymb, [v]⟩)) →
+      ∀ p, (⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) →
+        OccursAt M p (ofEvent ⟨deliverSymb, [l, v]⟩)) ∧
+    (∀ {a b v : S.Value},
+      (∀ p, Correlated M correlationSymb (finalWorld M p) a b) →
+      (∃ Q ∈ (M.learner b).quorums,
+        ∀ p ∈ Q, ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) →
+      Occurs M (ofEvent ⟨deliverSymb, [a, v]⟩) →
+      ∀ p, (⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) →
+        OccursAt M p (ofEvent ⟨deliverSymb, [b, v]⟩)) := by
+  exact ⟨agreement hTheory,
+    fun hq hu he p hl => livenessOne hTheory hq hu he p hl,
+    fun hc hq hd p hl => livenessTwo hTheory hc hq hd p hl⟩
+
 /-- Paper: Theorem 8.2.3 / Figure 12. The correctness properties of `ThyHBB3`, collected: Agreement
 (Proposition 8.3.1), Liveness 1 (Proposition 8.5.1), and Liveness 2
 (Proposition 8.4.5). -/
-theorem correctness
+theorem correctness_modal
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     -- Agreement
@@ -55,13 +82,13 @@ theorem correctness
            predicate0 liveSymb ⇒ᶠ
            ↕ᶠ(ofEvent ⟨deliverSymb, [l₂, v]⟩)) :=
   ⟨fun hCorrelation =>
-      agreement (M := M) (hTheory := hTheory)
+      agreement_modal (M := M) (hTheory := hTheory)
         (hCorrelation := hCorrelation),
    fun hLiveQuorum hUnique =>
-      livenessOne (M := M) (hTheory := hTheory)
+      livenessOne_modal (M := M) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
    fun hCorrelation hLiveQuorum =>
-      livenessTwo (M := M) (hTheory := hTheory)
+      livenessTwo_modal (M := M) (hTheory := hTheory)
         (hCorrelation := hCorrelation) (hLiveQuorum := hLiveQuorum)⟩
 
 end ThyHBB3

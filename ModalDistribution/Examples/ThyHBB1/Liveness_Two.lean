@@ -39,30 +39,37 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 6.4.5 (Liveness 2). Liveness property 2 specialised to `ThyHBB1`.
-If a value is delivered to learner l₁' and:
-- Learners l₁' and l₂' have intersecting quorums
-- The safe condition holds for learner l
-- All of learner l₂'s quorum members are live
-Then if p is live, the value will eventually be delivered to learner l₂'. -/
+/-- Paper: Proposition 6.4.5 (Liveness 2). Under the stated quorum and safety
+conditions, a delivery reported by `reporting₁` entails a delivery reported by
+`reporting₂` at every participant live at the final history. The target learner
+and value are preserved; delivery is somewhere in the participant's history. -/
 theorem livenessTwo
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁' l₂' l : Signature.Value S}
+    {reporting₁ reporting₂ l : Signature.Value S}
     {v : Signature.Value S}
-    (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
-    (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
-    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
-    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
-         predicate0 liveSymb ⇒ᶠ
-         ↕ᶠ(ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
+    (hIntersect : ∀ Q ∈ (M.learner reporting₁).quorums,
+      ∀ R ∈ (M.learner reporting₂).quorums, ∃ q, q ∈ Q ∧ q ∈ R)
+    (hSafe : ∀ q, ⟪finalWorld M q⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩)
+    (hLive : ∃ Q ∈ (M.learner reporting₂).quorums,
+      ∀ q ∈ Q, ⟪finalWorld M q⟫ ⊨[M] predicate0 liveSymb)
+    (hDelivered : Occurs M (ofEvent ⟨deliverSymb, [reporting₁, l, v]⟩))
+    (p : P) (hLiveParticipant : ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) :
+    OccursAt M p (ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩) := by
   classical
-  intro p
+  have hIntersect : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ := by
+    intro q
+    apply (sat_diamond_pair_iff M _ reporting₁ reporting₂ ⊤ᶠ).2
+    intro Q hQ R hR
+    obtain ⟨r, hrQ, hrR⟩ := hIntersect Q hQ R hR
+    exact ⟨r, ⟨hrQ, hrR⟩, by intro h; exact h⟩
+  have hLive : ⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb := by
+    intro q
+    exact quorumAt_iff.mp hLive
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hLivep
+  have hDeliver := (occurs_iff_end_diamondPast.mp hDelivered) p
+  have hLivep := hLiveParticipant
+  change ⟪wTop⟫ ⊨[M] ↕ᶠ (ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩)
 
   have hThyLiveTheory : M ⊨ᵀ ThyLive liveSymb :=
     theory_thyLive (M := M) hTheory
@@ -71,16 +78,16 @@ theorem livenessTwo
   -- quorum of votes at the reporting learner.
   have hVoteBoxTop :
       ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l, v]⟩) := by
+        □ᶠ↓[[reporting₁]] (ofEvent ⟨voteSymb, [l, v]⟩) := by
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
           (hDeliverAx := theory_deliverBackward (M := M) hTheory)
-          (reporting := l₁') (learner := l)
+          (reporting := reporting₁) (learner := l)
           (value := v) (p := p)
           (hDeliver := hDeliver)
   have hVoteBoxGlobal :
-      ⊨[M]□ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l, v]⟩) := fun q => by
+      ⊨[M]□ᶠ↓[[reporting₁]] (ofEvent ⟨voteSymb, [l, v]⟩) := fun q => by
     simpa [wTop] using hVoteBoxTop
 
   -- Proposition 5.2.11: the intersecting live quorum exposes a live voter.
@@ -89,7 +96,7 @@ theorem livenessTwo
         ((predicate0 liveSymb) ∧ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
     have h :=
       intertwined_two_quorums (M := M)
-        (liveSymb := liveSymb) (l := l₁') (l₁ := l₂')
+        (liveSymb := liveSymb) (l := reporting₁) (l₁ := reporting₂)
         (φ := ofEvent ⟨voteSymb, [l, v]⟩)
         (hTheory := hThyLiveTheory)
         (hIntersect := by intro q; simpa using hIntersect q)
@@ -157,17 +164,17 @@ theorem livenessTwo
 
   -- Corollary 5.2.9(3): the live quorum eventually knows the echo quorum.
   have hStep4Global :
-      ⊨[M]□ᶠ↓[[l₂']]
+      ⊨[M]□ᶠ↓[[reporting₂]]
         (predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
     have hLiveGlobal :
-        ⊨[M]□ᶠ[id [l₂']] predicate0 liveSymb := by
+        ⊨[M]□ᶠ[id [reporting₂]] predicate0 liveSymb := by
       intro q
       simpa using hLive q
     have hBoxGlobal :=
       live_eventually_knows_quorum
         (M := M) (liveSymb := liveSymb)
-        (l := l₂') (l₁ := l)
+        (l := reporting₂) (l₁ := l)
         (evt := ⟨echoSymb, [v]⟩)
         (hTheory := hThyLiveTheory)
         (hLive := hLiveGlobal)
@@ -178,13 +185,13 @@ theorem livenessTwo
   -- Lemma 6.4.2(2) with (Vote!): the safe learner's quorum eventually votes.
   -- Safety enters through `voteForward_imp`, i.e. Lemma 6.4.1.
   have hVotesGlobal :
-      ⊨[M]□ᶠ↓[[l₂']]
+      ⊨[M]□ᶠ↓[[reporting₂]]
         (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l, v]⟩) :=
     boxPast_live_of_eventual_quorum
       (M := M) (liveSymb := liveSymb)
       (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
       (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
-      (l := l₂')
+      (l := reporting₂)
       (hLiveTheory := hThyLiveTheory)
       (hQuorum := hStep4Global)
       (hImp := voteForward_imp (M := M)
@@ -194,15 +201,15 @@ theorem livenessTwo
   -- knowledge becomes eventual delivery.
   have hDeliverEventually :
       ⊨[M](predicate0 liveSymb ⇒ᶠ
-        ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) :=
+        ↕ᶠ (ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩)) :=
     live_eventually_consequent (M := M)
       (hLiveTheory := hThyLiveTheory)
-      (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩))
-      (ψ := ofEvent ⟨deliverSymb, [l₂', l, v]⟩)
+      (φ := □ᶠ↓[[reporting₂]] (ofEvent ⟨voteSymb, [l, v]⟩))
+      (ψ := ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩)
       (hLive :=
         _root_.ModalDistribution.Examples.live_eventually_knows_box (hAllowed := .event _)
           (M := M) (liveSymb := liveSymb)
-          (l := l₂') (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+          (l := reporting₂) (φ := ofEvent ⟨voteSymb, [l, v]⟩)
           (hTheory := hThyLiveTheory)
           (hQuorum := hVotesGlobal))
       (hImp := HBB.deliverForward_imp (M := M)
@@ -210,28 +217,50 @@ theorem livenessTwo
   exact
     Sat.imp_elim (M := M) (w := wTop)
       (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩))
+      (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩))
       (by simpa [wTop] using hDeliverEventually p) hLivep
 
-/-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(l₁', l)`
-forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
+/-- Paper-facing modal form of livenessTwo. -/
+theorem livenessTwo_modal
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {reporting₁ reporting₂ l : Signature.Value S}
+    {v : Signature.Value S}
+    (hIntersect : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ)
+    (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
+    (hLive : ⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l, v]⟩)) ⇒ᶠ
+         predicate0 liveSymb ⇒ᶠ
+         ↕ᶠ(ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩) := by
+  intro p hObserved hLiveParticipant
+  apply livenessTwo hTheory
+  · intro Q hQ R hR
+    obtain ⟨q, hq, _⟩ := (sat_diamond_pair_iff M _ reporting₁ reporting₂ ⊤ᶠ).mp (hIntersect p) Q hQ R hR
+    exact ⟨q, hq.1, hq.2⟩
+  · exact hSafe
+  · exact quorumAt_iff.mpr (hLive p)
+  · exact observedAt_final_iff.mp (observedAt_iff.mpr hObserved)
+  · exact hLiveParticipant
+
+/-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(reporting₁, l)`
+forces every `reporting₂`-quorum member to know (in the past) that `(reporting₂, l)` was
 delivered. -/
 theorem livenessTwo_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁' l₂' l : Signature.Value S}
+    {reporting₁ reporting₂ l : Signature.Value S}
     {v : Signature.Value S}
-    (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
+    (hIntersect : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ)
     (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
-    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
-    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
-         □ᶠ↓[[l₂']] (ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
+    (hLive : ⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l, v]⟩)) ⇒ᶠ
+         □ᶠ↓[[reporting₂]] (ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩) := by
   classical
   exact
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwo (M := M)
+      livenessTwo_modal (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)
@@ -239,24 +268,24 @@ theorem livenessTwo_boxPast
         (hIntersect := hIntersect)
         (hSafe := hSafe)
         (hLive := hLive))
-/-- Paper: Proposition 6.4.5, second corollary. Corollary: a delivery for `(l₁', l)`
-forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
+/-- Paper: Proposition 6.4.5, second corollary. Corollary: a delivery for `(reporting₁, l)`
+forces a delivery for `(reporting₂, l)` somewhere in the past of the history. -/
 theorem livenessTwo_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁' l₂' l : Signature.Value S}
+    {reporting₁ reporting₂ l : Signature.Value S}
     {v : Signature.Value S}
-    (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
+    (hIntersect : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ)
     (hSafe : ⊨[M]ofPredicate ⟨safeSymb, [l]⟩)
-    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
-    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
-         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l, v]⟩) := by
+    (hLive : ⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l, v]⟩)) ⇒ᶠ
+         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₂, l, v]⟩) := by
   classical
   exact
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwo (M := M)
+      livenessTwo_modal (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)

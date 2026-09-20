@@ -822,5 +822,129 @@ theorem sat_diamondPast_iff_quorum_witness
 
 end DiamondMachinery
 
+
+variable {M : Model S P} {w : World P S.EventType} {φ : Formula S}
+
+theorem observedAt_iff : ObservedAt M w φ ↔ (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] φ) := by
+  simp only [ObservedAt, Formula.diamondPast, Sat.diamond_nil, Sat.past]
+  constructor
+  · rintro ⟨u, hu, hφ⟩
+    exact ⟨u.place, u, hu, rfl, hφ⟩
+  · rintro ⟨p, u, hu, _, hφ⟩
+    exact ⟨u, hu, hφ⟩
+
+theorem quorumAt_iff {l : S.Value} :
+    QuorumAt M w l φ ↔ (⟪w⟫ ⊨[M] □ᶠ[[l]] φ) := by
+  exact (sat_box_singleton_exists M w _ φ).symm
+
+theorem quorum_exists_iff {l : S.Value} :
+    (⟪w⟫ ⊨[M] □ᶠ↓[[l]] φ) ↔
+      ∃ Q ∈ (M.learner l).quorums, ∀ p ∈ Q,
+        ∃ u, u ≪ w ∧ u.place = p ∧ (⟪u⟫ ⊨[M] φ) := by
+  simp only [Formula.boxPast, sat_box_singleton_exists, Sat.past]
+  rfl
+
+theorem occursAt_iff : OccursAt M w.place φ ↔ (⟪w⟫ ⊨[M] ↕ᶠ φ) := by
+  exact (Sat.sometime M w φ).symm
+
+theorem observedAt_final_iff {p : P} :
+    ObservedAt M (finalWorld M p) φ ↔ Occurs M φ := by
+  rfl
+
+theorem occurs_iff_end_diamondPast : Occurs M φ ↔ (⊨[M] ♢ᶠ↓[[]] φ) := by
+  constructor
+  · intro h p
+    exact observedAt_iff.mp (observedAt_final_iff.mpr h)
+  · intro h
+    exact observedAt_final_iff.mp (observedAt_iff.mpr (h (Classical.ofNonempty)))
+
+theorem predecessor_possible {u : World P S.EventType}
+    (hw : w.time ⪯ M.history.val) (hu : u ≪ w) : u.time ⪯ M.history.val := by
+  exact (PreHistory.happensBeforeEq_iff _ _).2
+    (Or.inl (accessible_happensBefore_history hw hu))
+
+/-- Same-participant persistence transfers a correlation held by every final
+participant to every actual event, without cross-participant persistence. -/
+theorem correlated_at_event_of_final {correlationSymb : S.PredSymb} {a b : S.Value}
+    (hpersist : ∀ w : World P S.EventType, w.time ⪯ M.history.val →
+      Correlated M correlationSymb w a b → ∀ e, e ≪ w → e.place = w.place →
+        Correlated M correlationSymb e a b)
+    (hfinal : ∀ p, Correlated M correlationSymb (finalWorld M p) a b)
+    {e : World P S.EventType} (he : e ∈ M.history.val) :
+    Correlated M correlationSymb e a b := by
+  exact hpersist (finalWorld M e.place)
+    (PreHistory.happensBeforeEq_refl M.history.val) (hfinal e.place) e he rfl
+
+/-- Unique occurrence and the paper's unique-observation statement agree. -/
+theorem uniqueOccurrence_iff_end (body : S.Value → Formula S) :
+    UniqueOccurrence M body ↔
+      (⊨[M] Formula.existsUnique (fun v => ♢ᶠ↓[[]] (body v))) := by
+  classical
+  have obs (p : P) (v : S.Value) :
+      (⟪finalWorld M p⟫ ⊨[M] ♢ᶠ↓[[]] (body v)) ↔ Occurs M (body v) :=
+    observedAt_iff.symm.trans observedAt_final_iff
+  constructor
+  · rintro ⟨v, hv, huniq⟩ p
+    apply (Sat.and M (finalWorld M p) _ _).mpr
+    constructor
+    · change ∀ x y, (⟪finalWorld M p⟫ ⊨[M] ♢ᶠ↓[[]] (body x)) →
+        (⟪finalWorld M p⟫ ⊨[M] ♢ᶠ↓[[]] (body y)) → x = y
+      intro x y hx hy
+      exact (huniq x ((obs p x).mp hx)).trans (huniq y ((obs p y).mp hy)).symm
+    · exact (Sat.exists_iff (finalWorld M p) _).mpr ⟨v, (obs p v).mpr hv⟩
+  · intro h
+    let p : P := Classical.ofNonempty
+    have hh := (Sat.and M (finalWorld M p) _ _).mp (h p)
+    obtain ⟨v, hv⟩ := (Sat.exists_iff (finalWorld M p) _).mp hh.2
+    refine ⟨v, (obs p v).mp hv, ?_⟩
+    intro u hu
+    exact hh.1 u v ((obs p u).mpr hu) hv
+
+/-- Global final correlation makes its participant quantifier explicit. -/
+theorem correlated_final_iff_end {correlationSymb : S.PredSymb} {a b : S.Value} :
+    (∀ p, Correlated M correlationSymb (finalWorld M p) a b) ↔
+      (⊨[M] □ᶠ[] (Formula.ofPredicate ⟨correlationSymb, [a, b]⟩)) := by
+  constructor
+  · intro h p
+    exact (Sat.boxEmpty M (finalWorld M p) _).mpr h
+  · intro h p
+    exact (Sat.boxEmpty M (finalWorld M p) _).mp (h p) p
+
+/-- Final quorum validity is the existence of a quorum of final participants. -/
+theorem quorum_final_iff_end {l : S.Value} :
+    (∃ Q ∈ (M.learner l).quorums, ∀ p ∈ Q, ⟪finalWorld M p⟫ ⊨[M] φ) ↔
+      (⊨[M] □ᶠ[[l]] φ) := by
+  constructor
+  · intro h p
+    exact (sat_box_singleton_exists M (finalWorld M p) l φ).mpr h
+  · intro h
+    exact (sat_box_singleton_exists M (finalWorld M (Classical.ofNonempty)) l φ).mp
+      (h (Classical.ofNonempty))
+
+/-- Agreement between actual occurrences is equivalent to the modal statement. -/
+theorem occurrence_agreement_iff {ψ : Formula S} {v u : S.Value} :
+    (Occurs M φ → Occurs M ψ → v = u) ↔
+      (⊨[M] (♢ᶠ↓[[]] φ) ⇒ᶠ (♢ᶠ↓[[]] ψ) ⇒ᶠ (v ≃ᶠ u)) := by
+  constructor
+  · intro h p hφ hψ
+    exact h (observedAt_final_iff.mp (observedAt_iff.mpr hφ))
+      (observedAt_final_iff.mp (observedAt_iff.mpr hψ))
+  · intro h hφ hψ
+    let p : P := Classical.ofNonempty
+    exact h p ((occurs_iff_end_diamondPast.mp hφ) p)
+      ((occurs_iff_end_diamondPast.mp hψ) p)
+
+/-- Occurrence-triggered participant liveness is equivalent to the modal statement. -/
+theorem occurrence_liveness_iff {ante live out : Formula S} :
+    (Occurs M ante → ∀ p, (⟪finalWorld M p⟫ ⊨[M] live) → OccursAt M p out) ↔
+      (⊨[M] (♢ᶠ↓[[]] ante) ⇒ᶠ live ⇒ᶠ ↕ᶠ out) := by
+  constructor
+  · intro h p hante hlive
+    exact (occursAt_iff (w := finalWorld M p)).mp
+      (h (observedAt_final_iff.mp (observedAt_iff.mpr hante)) p hlive)
+  · intro h hante p hlive
+    exact (occursAt_iff (w := finalWorld M p)).mpr
+      (h p ((occurs_iff_end_diamondPast.mp hante) p) hlive)
+
 end Logic
 end ModalDistribution

@@ -40,50 +40,53 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 /-- Paper: Proposition 7.2.1 (Agreement). Agreement property for ThyHBB2.
 
 Sequential quorum intersections between l₁ and l₂ force any deliveries for
-(l₁', l₁) and (l₂', l₂) to agree on the value. This is the agreement property
+(reporting₁, l₁) and (reporting₂, l₂) to agree on the value. This is the agreement property
 for the simplified HBB2 protocol without the safe predicate.
 
-See also: `agreement`, `agreement`. -/
+The paper-facing modal form is `agreement_modal`. -/
 theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁ l₂ l₁' l₂' : Signature.Value S}
+    {l₁ l₂ reporting₁ reporting₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
-    (hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq) :
-    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
-         (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
-         (v₁ ≃ᶠ v₂) := by
+    (hSeq : ∀ Q ∈ (M.learner l₁).quorums,
+      ∀ R ∈ (M.learner l₂).quorums,
+        ∃ p ∈ Q ∩ R, isSequential (Event := S.EventType) p M.history.val)
+    (hDeliver₁ : Occurs M (ofEvent ⟨deliverSymb, [reporting₁, l₁, v₁]⟩))
+    (hDeliver₂ : Occurs M (ofEvent ⟨deliverSymb, [reporting₂, l₂, v₂]⟩)) :
+    v₁ = v₂ := by
   classical
-  intro p
+  let p : P := Classical.choice inferInstance
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
+  have hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq := by
+    intro q
+    exact (sat_diamond_pair_iff M _ l₁ l₂ Formula.seq).2 hSeq
+  have hDeliver₁ := (occurs_iff_end_diamondPast).1 hDeliver₁ p
+  have hDeliver₂ := (occurs_iff_end_diamondPast).1 hDeliver₂ p
   have hSeqTop : ⟪wTop⟫ ⊨[M] ♢ᶠ[[l₁, l₂]]Formula.seq := by
     simpa [wTop] using hSeq p
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₁
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₂
   by_cases hNe : v₁ = v₂
   · simpa [Sat] using hNe
   have hVoteBox₁ :
       ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
+        □ᶠ↓[[reporting₁]] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
     -- Apply `Deliver?` to back out the vote quorum supporting the first delivery.
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
           (hDeliverAx := theory_deliverBackward (M := M) hTheory)
-          (reporting := l₁') (learner := l₁)
+          (reporting := reporting₁) (learner := l₁)
           (value := v₁) (p := p)
           (hDeliver := hDeliver₁)
   have hVoteBox₂ :
       ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
+        □ᶠ↓[[reporting₂]] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
     -- Apply `Deliver?` to back out the vote quorum supporting the second delivery.
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
           (hDeliverAx := theory_deliverBackward (M := M) hTheory)
-          (reporting := l₂') (learner := l₂)
+          (reporting := reporting₂) (learner := l₂)
           (value := v₂) (p := p)
           (hDeliver := hDeliver₂)
   have hVoteDiamond₁ :
@@ -93,7 +96,7 @@ theorem agreement
     simpa [wTop]
       using
         boxPast_singleton_to_diamond_nil
-          (M := M) (w := wTop) (learner := l₁')
+          (M := M) (w := wTop) (learner := reporting₁)
           (φ := ofEvent ⟨voteSymb, [l₁, v₁]⟩)
           hVoteBox₁
   have hVoteDiamond₂ :
@@ -103,7 +106,7 @@ theorem agreement
     simpa [wTop]
       using
         boxPast_singleton_to_diamond_nil
-          (M := M) (w := wTop) (learner := l₂')
+          (M := M) (w := wTop) (learner := reporting₂)
           (φ := ofEvent ⟨voteSymb, [l₂, v₂]⟩)
           hVoteBox₂
   have hEchoBox₁ :
@@ -188,29 +191,23 @@ theorem agreement
         simpa [Sat] using hEq.symm
   simpa [wTop] using hEquality
 
-/-- Paper: Proposition 7.2.1, hypothesis form. When both deliveries for
-`(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
-theorem agreement_of_deliveries
+/-- Paper-facing modal form of agreement. -/
+theorem agreement_modal
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁ l₂ l₁' l₂' : Signature.Value S}
+    {l₁ l₂ reporting₁ reporting₂ : Signature.Value S}
     {v₁ v₂ : Signature.Value S}
-    (hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq)
-    (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
-    (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
-    ⊨[M] v₁ ≃ᶠ v₂ := by
-  classical
-  exact
-    EndValid.imp_elim (M := M)
-      (EndValid.imp_elim (M := M)
-        (agreement (M := M)
-      (hTheory := hTheory)
-      (l₁ := l₁) (l₂ := l₂)
-      (l₁' := l₁') (l₂' := l₂')
-      (v₁ := v₁) (v₂ := v₂)
-      (hSeq := hSeq))
-        hDeliver₁)
-      hDeliver₂
+    (hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq) :
+    ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₁, l₁, v₁]⟩)) ⇒ᶠ
+         (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [reporting₂, l₂, v₂]⟩)) ⇒ᶠ
+         (v₁ ≃ᶠ v₂) := by
+  intro p hDeliver₁ hDeliver₂
+  apply agreement hTheory
+  · exact (sat_diamond_pair_iff M _ l₁ l₂ Formula.seq).1 (hSeq p)
+  · exact observedAt_final_iff.mp (observedAt_iff.mpr hDeliver₁)
+  · exact observedAt_final_iff.mp (observedAt_iff.mpr hDeliver₂)
+
+
 end ThyHBB2
 end Examples
 end ModalDistribution

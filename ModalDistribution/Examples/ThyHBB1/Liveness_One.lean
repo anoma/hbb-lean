@@ -39,30 +39,36 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 6.5.3 (Liveness 1). Liveness One for ThyHBB1 (Liveness property 1).
-
-Under uniqueness of proposals and a live quorum, if a live participant knows
-a proposal for value v, then v will eventually be delivered. This establishes
-that proposals from live participants will eventually propagate to delivery.
-
-See also: `livenessTwo`, `livenessOne_boxPast`. -/
+/-- Paper: Proposition 6.5.3 (Liveness 1). A unique proposed value observed
+at an actual live event is delivered by every participant live at the final
+history, provided learner `l` has a live quorum. The delivery occurs somewhere
+in that participant's history; no future-order condition is asserted. -/
 theorem livenessOne
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
     {v : Signature.Value S}
-    (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
-    (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :
-    ⊨[M](♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
-         predicate0 liveSymb ⇒ᶠ
-         ↕ᶠ(ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
+    (hLiveQuorum : ∃ Q ∈ (M.learner l).quorums,
+      ∀ q ∈ Q, ⟪finalWorld M q⟫ ⊨[M] predicate0 liveSymb)
+    (hUnique : UniqueOccurrence M (fun value => ofEvent ⟨proposeSymb, [value]⟩))
+    (hKnownProposal : ∃ e ∈ M.history.val,
+      (⟪e⟫ ⊨[M] predicate0 liveSymb) ∧
+        ObservedAt M e (ofEvent ⟨proposeSymb, [v]⟩))
+    (p : P) (hLiveParticipant : ⟪finalWorld M p⟫ ⊨[M] predicate0 liveSymb) :
+    OccursAt M p (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
   classical
-  intro p
+  have hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb := by
+    intro q
+    exact quorumAt_iff.mp hLiveQuorum
+  have hUnique := (uniqueOccurrence_iff_end _).mp hUnique
+  have hProposal : ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
+    apply occurs_iff_end_diamondPast.mp
+    obtain ⟨e, he, hLive, hObserved⟩ := hKnownProposal
+    exact ⟨e, he, (Sat.and M e _ _).mpr ⟨hLive, observedAt_iff.mp hObserved⟩⟩
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hPropose
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hLivep
+  have hPropose := hProposal p
+  have hLivep := hLiveParticipant
+  change ⟪wTop⟫ ⊨[M] ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩)
 
   -- Abbreviations for the staged liveness argument.
   let φLivePropose :=
@@ -232,6 +238,26 @@ theorem livenessOne
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
       hDeliverImp hLivep
 
+/-- Paper-facing modal form of livenessOne. -/
+theorem livenessOne_modal
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {l : Signature.Value S}
+    {v : Signature.Value S}
+    (hLiveQuorum : ⊨[M]□ᶠ[[l]]predicate0 liveSymb)
+    (hUnique : ⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) :
+    ⊨[M](♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
+         predicate0 liveSymb ⇒ᶠ
+         ↕ᶠ(ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
+  intro p hObserved hLiveParticipant
+  apply livenessOne hTheory
+  · exact quorumAt_iff.mpr (hLiveQuorum p)
+  · exact (uniqueOccurrence_iff_end _).mpr hUnique
+  · obtain ⟨e, he, hKnowledge⟩ := observedAt_final_iff.mp (observedAt_iff.mpr hObserved)
+    obtain ⟨hLive, hProposal⟩ := (Sat.and M e _ _).mp hKnowledge
+    exact ⟨e, he, hLive, observedAt_iff.mpr hProposal⟩
+  · exact hLiveParticipant
+
 /-- Paper: Proposition 6.5.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
@@ -251,7 +277,7 @@ theorem livenessOne_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOne (M := M)
+      livenessOne_modal (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
@@ -276,7 +302,7 @@ theorem livenessOne_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOne (M := M)
+      livenessOne_modal (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)

@@ -134,17 +134,17 @@ theorem to_echo_box_end
 
 end Vote
 
-/-- Quorum intersections transport a vote witnessed at `l₁'` to some live
-member of the `l₂'` quorum. -/
+/-- Quorum intersections transport a vote witnessed at `reporting₁` to some live
+member of the `reporting₂` quorum. -/
 theorem live_vote_transfer
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₁' l₂' learner : Signature.Value S}
+    {reporting₁ reporting₂ learner : Signature.Value S}
     {value : Signature.Value S}
     {p : P}
-    (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
-    (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb)
+    (hIntersect : ⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ)
+    (hLive : ⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb)
     (hVote :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[l₁']](ofEvent ⟨voteSymb, [learner, value]⟩)) :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[reporting₁]](ofEvent ⟨voteSymb, [learner, value]⟩)) :
     ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ
         ofEvent ⟨voteSymb, [learner, value]⟩) := by
   classical
@@ -153,27 +153,27 @@ theorem live_vote_transfer
     intro ax hAx
     exact hTheory (Or.inl hAx)
   have hIntersectTop :
-      ⟪wTop⟫ ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ := by
+      ⟪wTop⟫ ⊨[M]♢ᶠ[[reporting₁, reporting₂]]⊤ᶠ := by
     simpa [wTop] using hIntersect p
   have hLiveQuorumTop :
-      ⟪wTop⟫ ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb := by
+      ⟪wTop⟫ ⊨[M]□ᶠ[[reporting₂]]predicate0 liveSymb := by
     simpa [wTop] using hLive p
   have hVoteBoxPlain :
-      ⟪wTop⟫ ⊨[M]□ᶠ[[l₁']](↓ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩)) :=
+      ⟪wTop⟫ ⊨[M]□ᶠ[[reporting₁]](↓ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩)) :=
     by simpa [Formula.boxPast] using hVote
   obtain ⟨Ovote, hOvote, hAllVote⟩ :=
     (sat_box_singleton_exists (M := M)
-      (w := wTop) (l := l₁')
+      (w := wTop) (l := reporting₁)
       (φ := ↓ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩))).1
       hVoteBoxPlain
   obtain ⟨Olive, hOlive, hAllLive⟩ :=
     (sat_box_singleton_exists (M := M)
-      (w := wTop) (l := l₂')
+      (w := wTop) (l := reporting₂)
       (φ := predicate0 liveSymb)).1
       hLiveQuorumTop
   have hIntersectWitness :=
     (sat_diamond_pair_iff (M := M)
-      (w := wTop) (l := l₁') (l' := l₂') (φ := ⊤ᶠ)).1
+      (w := wTop) (l := reporting₁) (l' := reporting₂) (φ := ⊤ᶠ)).1
       (by simpa using hIntersectTop)
       Ovote hOvote Olive hOlive
   obtain ⟨q, hqIntersect, -⟩ := hIntersectWitness
@@ -308,11 +308,11 @@ theorem vote_live_to_echo_diamond
 
 theorem live_vote_box_from_echo
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {l₂' learner : Signature.Value S} {value : Signature.Value S} {p : P}
+    {reporting₂ learner : Signature.Value S} {value : Signature.Value S} {p : P}
     (hEchoBox :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[l₂']](predicate0 liveSymb ∧ᶠ
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[reporting₂]](predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩))) :
-    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[l₂']](predicate0 liveSymb ∧ᶠ
+    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[reporting₂]](predicate0 liveSymb ∧ᶠ
         ofEvent ⟨voteSymb, [learner, value]⟩) := by
   classical
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
@@ -322,13 +322,13 @@ theorem live_vote_box_from_echo
     theory_thyLive (M := M) hTheory
   obtain ⟨O, hO, hAll⟩ :=
     (sat_box_singleton_exists (M := M)
-      (w := wTop) (l := l₂')
+      (w := wTop) (l := reporting₂)
       (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
         □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)))).1
       (by simpa [Formula.boxPast] using hEchoBox)
   refine
     (sat_box_singleton_exists (M := M)
-      (w := wTop) (l := l₂')
+      (w := wTop) (l := reporting₂)
       (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
         ofEvent ⟨voteSymb, [learner, value]⟩))).2 ?_
   refine ⟨O, hO, ?_⟩

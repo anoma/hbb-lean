@@ -209,6 +209,31 @@ theorem deliverForward_imp
           ↕ᶠ (ofEvent ⟨deliverSymb, [reporting, learner, value']⟩))
       (v := value) hLearner
 
+/-- With a unique proposed value, a live observer echoes that value. The rules
+are semantic hypotheses so every HBB theory can use the same argument. -/
+theorem echo_of_unique_proposal
+    (hForward : ∀ (w : World P S.EventType), w.time ⪯ M.history.val →
+      ∀ v, (⟪w⟫ ⊨[M] predicate0 liveSymb) →
+        ObservedAt M w (ofEvent ⟨proposeSymb, [v]⟩) →
+        ∃ u, OccursAt M w.place (ofEvent ⟨echoSymb, [u]⟩))
+    (hBackward : ∀ (e : World P S.EventType), e ∈ M.history.val →
+      ∀ u, (⟪e⟫ ⊨[M] ofEvent ⟨echoSymb, [u]⟩) →
+        ObservedAt M e (ofEvent ⟨proposeSymb, [u]⟩))
+    (hUnique : UniqueOccurrence M (fun v => ofEvent ⟨proposeSymb, [v]⟩))
+    {w : World P S.EventType} (hw : w.time ⪯ M.history.val) {v : S.Value}
+    (hLive : ⟪w⟫ ⊨[M] predicate0 liveSymb)
+    (hProposal : ObservedAt M w (ofEvent ⟨proposeSymb, [v]⟩)) :
+    OccursAt M w.place (ofEvent ⟨echoSymb, [v]⟩) := by
+  obtain ⟨unique, _, hUnique⟩ := hUnique
+  obtain ⟨u, e, he, hp, hEcho⟩ := hForward w hw v hLive hProposal
+  obtain ⟨source, hSource, hPropose⟩ := hProposal
+  have hv := hUnique v ⟨source, PreHistory.subset_of_happensBeforeEq (fun {_} h => History.subset_of_happensBefore h) hw source hSource, hPropose⟩
+  obtain ⟨source', hSource', hPropose'⟩ := hBackward e he u hEcho
+  have hu := hUnique u ⟨source',
+    PreHistory.subset_of_happensBeforeEq (fun {_} h => History.subset_of_happensBefore h) (M.time_le_of_mem he) source' hSource', hPropose'⟩
+  have huv : u = v := hu.trans hv.symm
+  exact ⟨e, he, hp, huv ▸ hEcho⟩
+
 end Lemmas
 
 end HBB
