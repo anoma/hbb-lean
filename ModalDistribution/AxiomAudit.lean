@@ -1,6 +1,7 @@
 import ModalDistribution.Examples.ThyHBB1
 import ModalDistribution.Examples.ThyHBB2
 import ModalDistribution.Examples.ThyHBB3
+import ModalDistribution.Examples.ThyHBB4
 import ModalDistribution.Examples.ThyLive.FiniteHistory
 import ModalDistribution.Examples.ThyLive.FiniteModel
 
@@ -71,3 +72,37 @@ If any custom axiom ever enters the proof of one of these theorems, the
  Quot.sound] -/
 #guard_msgs in
 #print axioms ModalDistribution.Examples.FiniteModel.exists_live_event_model
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.maxDepth_attained' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.maxDepth_attained
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.vote_provenance' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.vote_provenance
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.deliver_provenance' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.deliver_provenance
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.conflict_depth' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.conflict_depth
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.agreement
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.livenessOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.livenessOne
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.livenessTwo
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.FiniteModel.finite_protocol_nonvacuous' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms ModalDistribution.Examples.ThyHBB4.FiniteModel.finite_protocol_nonvacuous

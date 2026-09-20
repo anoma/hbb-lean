@@ -236,3 +236,33 @@ through membership, never through equality of prehistories — exactly the
 - **Proposition 8.5.1 (Liveness 1)** — `livenessOne` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
 - **Proposition 8.5.1, first corollary** — `livenessOne_boxPast` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
 - **Proposition 8.5.1, second corollary** — `livenessOne_diamondPast` ([ModalDistribution/Examples/ThyHBB3/Liveness_One.lean](ModalDistribution/Examples/ThyHBB3/Liveness_One.lean))
+
+
+## HBB4: corrected capped CM version
+
+These results implement the CM repair in `hbb4_proofs_revised.pdf`, Sections 3–5,
+with the finite foundation and the restricted shared Knowledge scheme.
+Natural ranks index the vote-symbol family, and legality quantifies over those
+ranks semantically. `Protocol` contains the explicit axiom schemata, not assumed
+correctness properties. Correctness permits arbitrary symbol families; the
+finite witness uses distinct vote symbols for distinct ranks.
+
+| Source claim | Declaration | File |
+| --- | --- | --- |
+| Manuscript MaxDepth, exact maximum | `maxDepth`, `maxDepth_attained`, `le_maxDepth` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
+| Finite-history bound | `maxDepth_bounded` | [Depth.lean](ModalDistribution/Examples/ThyHBB4/Depth.lean) |
+| Revised note §3.3, equations (1)–(16), CM, cap | `Legal`, `Protocol` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
+| Lemma 4.1, conflict-depth lower bound | `conflict_depth` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
+| Corollary 4.2, dominance and legality | `conflicting_rank_lt`, `high_vote_legal` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
+| Lemma 5.1, provenance | `vote_provenance`, `deliver_provenance` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
+| Theorem 5.2, agreement | `agreement` | [Safety.lean](ModalDistribution/Examples/ThyHBB4/Safety.lean) |
+| Lemma 5.4, capped round progression | `capped_round_progress` | [Liveness.lean](ModalDistribution/Examples/ThyHBB4/Liveness.lean) |
+| Theorem 5.5, Liveness 1 | `livenessOne` | [Liveness.lean](ModalDistribution/Examples/ThyHBB4/Liveness.lean) |
+| Theorem 5.6, Liveness 2 | `livenessTwo` | [LivenessTwo.lean](ModalDistribution/Examples/ThyHBB4/LivenessTwo.lean) |
+| Finite nonvacuity of the corrected protocol | `FiniteModel.finite_protocol_nonvacuous` | [FiniteModel.lean](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean) |
+
+The conflict-depth theorem constructs a chain with pairwise-distinct rows, enough
+for the exact MaxDepth bound. Its proof uses CM's strict row expansion at each
+inductive step. The certificate-learning step used by Liveness 2 fixes a source
+before applying Knowledge and then forgets that source existentially. It does
+not assume Knowledge for arbitrary existential-source certificate bodies.

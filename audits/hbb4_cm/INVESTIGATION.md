@@ -1,9 +1,10 @@
 # Finite HBB4 with causal monotonicity
 
-The corrected, capped CM formulation has a concrete finite execution satisfying
-both liveness premises. The executable semantic check passes. The PDF's CM
-conflict-depth argument also survives this paper-level review; its general
-Lean proof and a kernel-checked full-protocol model remain to be constructed.
+The corrected, capped CM formulation is now formalized in
+`ModalDistribution/Examples/ThyHBB4`. Lean checks provenance, conflict-depth,
+agreement, both liveness theorems, and an eight-event full-protocol model
+satisfying both liveness premises. The 52-event executable check below is a
+separate witness with distinct learners and no three-quorum intersection.
 
 ## Formulation examined
 
@@ -128,10 +129,19 @@ The nonempty set of attainable row-chain lengths therefore has a finite maximum,
 even without assuming finitely many learners. A sharper learner-count bound is
 unnecessary for these correctness proofs.
 
-## Remaining formalization work
+## Formalization outcome
 
-Encode the capped CM theory and its model-dependent `MaxDepth` precisely, lift
-the finite witness into Lean, and prove provenance, conflict-depth, agreement,
-and the two liveness statements. These are substantive proof obligations; the
-executable model and source review do not discharge them. No further foundation
-change or expansion of Knowledge was identified as necessary in this investigation.
+`Depth.lean` defines the attained exact maximum and proves its finite bound.
+`Axioms.lean` states every corrected capped CM rule as a semantic schema over
+existing satisfaction. `Safety.lean` proves the causal conflict-depth argument,
+provenance, dominance, legality, and agreement. `Liveness.lean` and
+`LivenessTwo.lean` prove the two liveness implications with restricted Knowledge.
+
+`FiniteModel.finite_protocol_nonvacuous` kernel-checks a separate singleton
+execution: proposal, echo, votes at ranks 0/1/2, delivery, and two silent events.
+Its exact depth is one. It proves the full protocol assumptions and actual
+liveness premises. The larger 52-event witness remains an executable semantic
+audit; the singleton Lean witness does not establish failure of three-quorum
+intersection. The general correctness theorems do not assume that property.
+
+No further foundation change or expansion of Knowledge was needed.

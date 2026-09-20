@@ -5,7 +5,9 @@
 under that restriction. `FiniteModel.exists_live_event_model` proves the shared
 restricted theory admits a finite model with a live performed event. The
 unrestricted obstruction and HBB4 inventory below are historical analysis;
-HBB4 implementation is outside the current task.
+The corrected capped CM version is now implemented in
+`ModalDistribution/Examples/ThyHBB4`; see
+[the CM investigation](audits/hbb4_cm/INVESTIGATION.md).
 
 The manuscript and the Lean formalization both use finite histories. The
 manuscript's definitions and axioms control this formalization; the HBB4 PDFs
@@ -19,8 +21,7 @@ mathematical obstruction. This is a finding to report, not permission to alter
 those assumptions or substitute a different liveness statement.
 
 The obstruction is kernel-checked. The HBB4 progress inventory below is an
-analysis of the supplied proofs, not an alternative axiom system. The three
-HBB4 extension theories and their requested proofs are not yet implemented.
+analysis of the supplied proofs, not an alternative axiom system. The current HBB4 formalization covers the corrected capped CM version.
 
 ## Foundation correspondence
 

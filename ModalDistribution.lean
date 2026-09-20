@@ -15,5 +15,6 @@ import ModalDistribution.Examples.ThyLive.FiniteModel
 import ModalDistribution.Examples.ThyHBB1
 import ModalDistribution.Examples.ThyHBB2
 import ModalDistribution.Examples.ThyHBB3
+import ModalDistribution.Examples.ThyHBB4
 import ModalDistribution.Examples.Counterexamples
 import ModalDistribution.AxiomAudit

@@ -1,6 +1,6 @@
 # Heterogeneous Broadcast in Lean 4
 
-A Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of three broadcast algorithms using history structures and modal logic.
+A Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of four broadcast algorithms using history structures and modal logic.
 
 **Knowledge restriction on this branch:** `ThyLive` permits Knowledge bodies
 exactly `E`, `K E`, and `Q_l E`, where `E` is an event atom. This is an explicit
@@ -12,17 +12,30 @@ event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory
 [The finite-history investigation](HBB4_FINITE_HISTORIES.md) records the obstruction
 for unrestricted Knowledge and its historical provenance.
 
+**HBB4 CM:** The corrected version caps target-learner votes at
+`MaxDepth(l) + 1`, permits self-source advancement, and uses eventual delivery.
+Its agreement and liveness proofs require no three-quorum intersection axiom.
+`MaxDepth` is the attained maximum of distinct-row causal-chain lengths, not a
+separate budget. The rules are semantic schemata over the existing model because
+legality quantifies over natural-number ranks, while the formula syntax quantifies
+over values. Neither histories nor satisfaction semantics change.
+[The finite-model theorem](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean)
+checks an eight-event live execution with both liveness premises. The separate
+[52-event executable audit](audits/hbb4_cm/INVESTIGATION.md) additionally exercises
+distinct learners and failure of three-quorum intersection.
+
 ## What's in this repository?
 
 This formalization includes:
 
 - **Foundations (Section 2-3)**: History structures, prehistories, event-tuples, semifilters, and Kripke-style modal semantics
 - **Modal Logic Framework (Section 4-5)**: Box/diamond modalities, quorum intersection properties, sequentiality, and liveness reasoning
-- **Three Broadcast Algorithms**:
+- **Broadcast Algorithms**:
   - **ThyHBB1** (Section 6): Basic heterogeneous broadcast with unique proposals
   - **ThyHBB2** (Section 7): Improved protocol with non-equivocation
   - **ThyHBB3** (Section 8): Full protocol with correlation axioms
-- **Correctness Proofs**: Agreement, Liveness 1, and Liveness 2 properties for all three algorithms
+  - **ThyHBB4 (CM)**: Capped rounds and causal monotonicity, following the revised HBB4 proof note
+- **Correctness Proofs**: Agreement, Liveness 1, and Liveness 2 properties for all four algorithms
 
 ### Repository structure
 
@@ -39,7 +52,7 @@ ModalDistribution/
 │   ├── Semantics.lean
 │   ├── AxiomSystem.lean
 │   └── Properties/    # Satisfaction machinery, modalities, sequentiality, quorums
-├── Examples/          # The three broadcast algorithms and their proofs
+├── Examples/          # Broadcast algorithms and their proofs
 │   ├── ThyLive.lean            # Liveness (Section 5.2)
 │   ├── HBB.lean                # Axiom schemes shared by the three theories
 │   ├── Counterexamples.lean    # Lemmas 4.2.1(3,4) and 4.2.3(3)
@@ -53,8 +66,16 @@ ModalDistribution/
 │   │   └── Correctness.lean
 │   ├── ThyHBB2/                # Section 7
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
-│   └── ThyHBB3/                # Section 8
-│       └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
+│   ├── ThyHBB3/                # Section 8
+│   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
+│   └── ThyHBB4/                # Corrected capped CM protocol
+│       ├── Depth.lean         # Exact finite MaxDepth
+│       ├── Axioms.lean        # Semantic protocol schemata
+│       ├── Semantics.lean
+│       ├── Safety.lean        # Provenance, conflict-depth, agreement
+│       ├── Liveness.lean      # Capped progress and Liveness 1
+│       ├── LivenessTwo.lean   # Fixed-source transfer and Liveness 2
+│       └── FiniteModel.lean   # Finite live protocol witness
 └── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```
 
