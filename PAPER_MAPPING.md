@@ -21,6 +21,14 @@ written without the `ThyHBB<n>.` prefix; e.g. Proposition 6.3.1 is
 
 ## Representation note
 
+For the revised HBB4 note's Proposition 1.1 (finite-history vacuity), see
+`FiniteHistory.no_live_event`, `FiniteHistory.thyLive_no_live_event`, and
+`FiniteHistory.thyLive_no_live_witness` in
+[FiniteHistory.lean](ModalDistribution/Examples/ThyLive/FiniteHistory.lean).
+These theorems diagnose the current progress assumptions using the existing
+finite semantics. [HBB4_FINITE_HISTORIES.md](HBB4_FINITE_HISTORIES.md) records
+the consequences for HBB4 and the source-proof dependency audit.
+
 `PreHistory` is backed by lists rather than finite sets, so it realises the
 paper's inductive-datatype presentation (Section 2.1) instead of the
 quotiented set-theoretic Definition 2.2.4: distinct terms can denote the same
