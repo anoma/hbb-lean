@@ -12,7 +12,7 @@ variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P} {σ : ProtocolSignature S}
 
 /-- Atomic-vote Knowledge suffices to advance every admitted round. -/
-theorem capped_round_progress (h : Protocol M σ) {l s v : S.Value}
+theorem capped_round_progress (h : BaseProtocol M σ) {l s v : S.Value}
     (hlegal : ∀ p : P, Legal M σ ⟨p, †, M.history.val⟩ l v)
     (hsource : ∀ p : P, l = s ∨ Corr M σ ⟨p, †, M.history.val⟩ l s)
     (hzero : ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.vote l s v 0)) :
@@ -34,7 +34,7 @@ theorem capped_round_progress (h : Protocol M σ) {l s v : S.Value}
     exact h.voteSuccForward hw hn hlive (hlegal w.place) (hsource w.place) hcert
 
 /-- Once rank zero is established, capped progress reaches delivery. -/
-theorem deliver_of_live_zero_quorum (h : Protocol M σ) {l s v : S.Value}
+theorem deliver_of_live_zero_quorum (h : BaseProtocol M σ) {l s v : S.Value}
     (hlegal : ∀ p : P, Legal M σ ⟨p, †, M.history.val⟩ l v)
     (hsource : ∀ p : P, l = s ∨ Corr M σ ⟨p, †, M.history.val⟩ l s)
     (hzero : ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.vote l s v 0)) :
@@ -57,7 +57,7 @@ theorem deliver_of_live_zero_quorum (h : Protocol M σ) {l s v : S.Value}
     (Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩) (φ := σ.live) (ψ := ↕ᶠ (σ.fixedCertificate l s v (maxDepth M (Corr M σ) l + 1))) (hknow p) hlive)
 
 /-- A unique proposal known at a live event initializes the self-sourced round-zero quorum. -/
-theorem live_zero_quorum_of_unique_proposal (h : Protocol M σ) {l v : S.Value}
+theorem live_zero_quorum_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}
     (hlegal : ∀ p : P, Legal M σ ⟨p, †, M.history.val⟩ l v)
     (hLiveQuorum : ⊨[M] □ᶠ[[l]] σ.live)
     (hUnique : ⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u))
@@ -95,7 +95,7 @@ theorem live_zero_quorum_of_unique_proposal (h : Protocol M σ) {l v : S.Value}
   exact h.voteZeroEchoForward hw hlive (hlegal w.place) hcert
 
 /-- Provenance makes every competing vote incompatible with the unique proposal. -/
-theorem legal_of_unique_proposal (h : Protocol M σ) {l v : S.Value}
+theorem legal_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}
     (hUnique : ⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u))
     (hKnown : ⊨[M] ♢ᶠ↓[[]] (σ.propose v)) :
     ∀ p : P, Legal M σ ⟨p, †, M.history.val⟩ l v := by
@@ -110,7 +110,7 @@ theorem legal_of_unique_proposal (h : Protocol M σ) {l v : S.Value}
     (ThyHBB1.uniquePropose_guard_at_history (hUnique p)) hknownu (hKnown p)))
 
 /-- Liveness 1: a uniquely proposed value known by a live participant is eventually delivered. -/
-theorem livenessOne (h : Protocol M σ) {l v : S.Value}
+theorem livenessOne (h : BaseProtocol M σ) {l v : S.Value}
     (hLiveQuorum : ⊨[M] □ᶠ[[l]] σ.live)
     (hUnique : ⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u)) :
     ⊨[M] (♢ᶠ↓[[]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.propose v))) ⇒ᶠ

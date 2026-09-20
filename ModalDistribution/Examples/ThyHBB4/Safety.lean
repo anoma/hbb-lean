@@ -58,7 +58,7 @@ theorem predecessor_possible {w u : World P S.EventType}
     (Or.inl (accessible_happensBefore_history hw hu))
 
 /-- Every vote has a proposal of the same value in its causal past. -/
-theorem vote_provenance (h : Protocol M σ) {w : World P S.EventType}
+theorem vote_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {l s v : S.Value} {n : Nat}
     (hv : ⟪w⟫ ⊨[M] σ.vote l s v n) :
     ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.propose v) := by
@@ -106,7 +106,7 @@ structure MinimalVote (w : World P S.EventType) (a v : S.Value) (r : Nat) where
   minimal : ∀ u, u ≪ event → ∀ b s n, Corr M σ w a b → r ≤ n →
     ¬ (⟪u⟫ ⊨[M] σ.vote b s v n)
 
-theorem minimal_vote (h : Protocol M σ) {w : World P S.EventType}
+theorem minimal_vote (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v : S.Value} {r n : Nat}
     (hb : Corr M σ w a b) (hn : r ≤ n)
     (hv : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.someVote b v n)) :
@@ -135,7 +135,7 @@ theorem minimal_vote (h : Protocol M σ) {w : World P S.EventType}
   subst n
   exact ⟨⟨e, b, s, hew, hb, hv, minimal⟩⟩
 
-theorem quorum_pair (h : Protocol M σ) {w : World P S.EventType}
+theorem quorum_pair (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b : S.Value} {φ ψ : Formula S}
     (hab : Corr M σ w a b)
     (hφ : ⟪w⟫ ⊨[M] □ᶠ↓[[a]] φ) (hψ : ⟪w⟫ ⊨[M] □ᶠ↓[[b]] ψ) :
@@ -151,7 +151,7 @@ theorem quorum_pair (h : Protocol M σ) {w : World P S.EventType}
   obtain ⟨f, hf, hfp, hψ⟩ := hψ p hp.2
   exact ⟨e, f, he, hf, hep.trans hfp.symm, hφ, hψ, hseq e f he hf hep hfp⟩
 
-theorem quorum_pair_before (h : Protocol M σ) {w x y : World P S.EventType}
+theorem quorum_pair_before (h : BaseProtocol M σ) {w x y : World P S.EventType}
     (hw : w.time ⪯ M.history.val) (hx : x ≪ w) (hy : y ≪ w)
     {a b : S.Value} {φ ψ : Formula S} (hab : Corr M σ w a b)
     (hφ : ⟪x⟫ ⊨[M] □ᶠ↓[[a]] φ) (hψ : ⟪y⟫ ⊨[M] □ᶠ↓[[b]] ψ) :
@@ -312,7 +312,7 @@ theorem high_vote_legal (h : Protocol M σ) {w : World P S.EventType}
   exact ⟨b, n, by omega, h.correlationTrans hw (h.correlationSymm hw hb) hc, hv⟩
 
 /-- A delivered value has an actual proposal in the delivery's causal past. -/
-theorem deliver_provenance (h : Protocol M σ) {w : World P S.EventType}
+theorem deliver_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {l v : S.Value}
     (hv : ⟪w⟫ ⊨[M] σ.deliver l v) :
     ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.propose v) := by

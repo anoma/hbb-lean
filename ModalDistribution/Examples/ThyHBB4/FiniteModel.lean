@@ -1,4 +1,5 @@
 import ModalDistribution.Examples.ThyHBB4.Semantics
+import ModalDistribution.Examples.ThyHBB4.Coherence
 
 /-! A finite completed execution for the capped CM protocol. -/
 namespace ModalDistribution.Examples.ThyHBB4.FiniteModel
@@ -288,7 +289,12 @@ private theorem protocol : Protocol model symbols := by
     correlationSeq := ?_
     correlationSymm := ?_
     correlationTrans := ?_
-    causalMonotone := ?_
+    correlationPast := by
+      intro w _ a b _ u _ _
+      exact corr u a b
+    causalMonotone := by
+      intro w _ a b _ u _
+      exact corr u a b
     echoForward := ?_
     voteZeroEchoForward := ?_
     voteZeroTransferForward := ?_
@@ -335,8 +341,6 @@ private theorem protocol : Protocol model symbols := by
     exact corr w b a
   · intro w _ a b c _ _
     exact corr w a c
-  · intro w _ a b _ u _
-    exact corr u a b
   · intro w _ v _ _
     exact ⟨(), sometime_actual w 1 (by omega) echo_actual⟩
   · intro w _ l v _ _ _
@@ -353,11 +357,11 @@ private theorem protocol : Protocol model symbols := by
     cases l; cases v
     exact sometime_actual w 5 (by omega) deliver_actual
 
-/-- The capped CM axioms admit a finite model with both liveness antecedents.
+/-- All three capped theories admit a common finite model with both liveness antecedents.
 The participant, learner, and value sorts here are singletons. -/
 theorem finite_protocol_nonvacuous :
     ∃ (S : Signature) (M : Model S Unit) (σ : ProtocolSignature S) (l v : S.Value),
-      Protocol M σ ∧
+      Protocol M σ ∧ ProtocolSW M σ ∧ ProtocolCW M σ ∧
       (⊨[M] □ᶠ[[l]] σ.live) ∧
       (⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u)) ∧
       (⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.propose v))) ∧
@@ -371,7 +375,7 @@ theorem finite_protocol_nonvacuous :
       ⟨event 0, (mem_time _ 1).mpr ⟨0, by omega, rfl⟩, propose_actual⟩
   have hlive : ∀ w : World Unit signature.EventType, ⟪w⟫ ⊨[model] symbols.live :=
     fun _ => Set.mem_univ _
-  refine ⟨signature, model, symbols, (), (), protocol, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨signature, model, symbols, (), (), protocol, protocol.toSW, protocol.toSW.toCW, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro p
     apply (sat_box_singleton_exists model ⟨p, †, model.history.val⟩ () symbols.live).mpr
     exact ⟨Set.univ, trivial, fun q _ => hlive _⟩

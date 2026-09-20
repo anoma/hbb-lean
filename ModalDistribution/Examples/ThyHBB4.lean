@@ -4,14 +4,18 @@ import ModalDistribution.Examples.ThyHBB4.Semantics
 import ModalDistribution.Examples.ThyHBB4.Safety
 import ModalDistribution.Examples.ThyHBB4.Liveness
 import ModalDistribution.Examples.ThyHBB4.LivenessTwo
+import ModalDistribution.Examples.ThyHBB4.Coherence
+import ModalDistribution.Examples.ThyHBB4.StrictDepth
+import ModalDistribution.Examples.ThyHBB4.WeakSafety
+import ModalDistribution.Examples.ThyHBB4.Variants
 import ModalDistribution.Examples.ThyHBB4.FiniteModel
 
 /-!
-# Capped HBB4 with causal monotonicity
+# Capped HBB4: CM, SW, and CW
 
-The corrected CM protocol uses exact correlation depth, bounded rounds,
-self-source advancement, eventual delivery, and event-restricted Knowledge.
-The existing finite-history foundation is unchanged. `Protocol` states the
-semantic axiom schemata; `agreement`, `livenessOne`, and `livenessTwo` prove
-correctness, and `FiniteModel` supplies a finite live execution.
+The three theories share finite histories, exact correlation depth, bounded
+rounds, self-source advancement, eventual delivery, and restricted Knowledge.
+`Protocol`, `ProtocolSW`, and `ProtocolCW` specify the separate coherence
+conditions over `BaseProtocol`. Agreement and both liveness results are proved
+for all three; `FiniteModel` supplies a common finite live execution.
 -/

@@ -6,6 +6,11 @@ agreement, both liveness theorems, and an eight-event full-protocol model
 satisfying both liveness premises. The 52-event executable check below is a
 separate witness with distinct learners and no three-quorum intersection.
 
+The formalization now also contains separately stated SW and CW theories,
+CM ⇒ SW ⇒ CW proofs, and agreement and both liveness results for each. The
+kernel-checked finite witness satisfies all three. The investigation below
+specifically explains the CM candidate and its finite execution.
+
 ## Formulation examined
 
 The basis is `hbb4_proofs_revised.pdf`, Sections 3–5, adapted to the existing

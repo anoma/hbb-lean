@@ -9,7 +9,7 @@ variable {M : Model S P} {σ : ProtocolSignature S}
 
 /-- A live fixed-source transfer certificate seeds the destination's rank-zero quorum.
 Only `Q_a E` instances of Knowledge are used. -/
-theorem transfer_zero_quorum (h : Protocol M σ) {a b s v : S.Value}
+theorem transfer_zero_quorum (h : BaseProtocol M σ) {a b s v : S.Value}
     (hlegal : ∀ p : P, Legal M σ ⟨p, †, M.history.val⟩ b v)
     (hcorr : ∀ p : P, Corr M σ ⟨p, †, M.history.val⟩ b a)
     (hlive : ⊨[M] □ᶠ[[b]] σ.live)
@@ -30,7 +30,7 @@ theorem transfer_zero_quorum (h : Protocol M σ) {a b s v : S.Value}
 
 /-- A delivery quorum meets the destination's live quorum at a live vote.
 Its backward justification is a fixed-source certificate admissible for Knowledge. -/
-theorem delivery_live_fixed_certificate (h : Protocol M σ) {a b v : S.Value}
+theorem delivery_live_fixed_certificate (h : BaseProtocol M σ) {a b v : S.Value}
     (hcorr : ∀ p : P, Corr M σ ⟨p, †, M.history.val⟩ a b)
     (hlive : ⊨[M] □ᶠ[[b]] σ.live)
     {d : World P S.EventType} (hd : d ∈ M.history.val)
@@ -67,7 +67,11 @@ theorem delivery_live_fixed_certificate (h : Protocol M σ) {a b v : S.Value}
 
 /-- Liveness 2: delivery transfers between permanently correlated learners
 when the destination has a live quorum. -/
-theorem livenessTwo (h : Protocol M σ) {a b v : S.Value}
+theorem livenessTwo_of_delivery_legal (h : BaseProtocol M σ)
+    (hDeliveryLegal : ∀ {w : World P S.EventType}, w.time ⪯ M.history.val →
+      ∀ {a b v : S.Value}, Corr M σ w a b →
+      (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) → Legal M σ w b v)
+    {a b v : S.Value}
     (hCorrelation : ⊨[M] □ᶠ[] (σ.correlation a b))
     (hLiveQuorum : ⊨[M] □ᶠ[[b]] σ.live) :
     ⊨[M] (♢ᶠ↓[[]] (σ.deliver a v)) ⇒ᶠ σ.live ⇒ᶠ ↕ᶠ (σ.deliver b v) := by
@@ -79,16 +83,30 @@ theorem livenessTwo (h : Protocol M σ) {a b v : S.Value}
   obtain ⟨d, hd, hdval⟩ := past_exists_iff.mp hdel
   have hlegal : ∀ q : P, Legal M σ ⟨q, †, M.history.val⟩ b v := by
     intro q
-    have hq : World.time (⟨q, †, M.history.val⟩ : World P S.EventType) ⪯ M.history.val :=
-      PreHistory.happensBeforeEq_refl _
-    have hcert := quorum_lift hq hd (h.deliverBackward (M.time_le_of_mem hd) hdval)
-    have hvote := past_exists_iff.mpr (quorum_witness hcert)
-    have haa := h.correlationTrans hq (hcorr q) (h.correlationSymm hq (hcorr q))
-    exact high_vote_legal h hq haa (hcorr q) (by omega) hvote
+    exact hDeliveryLegal (PreHistory.happensBeforeEq_refl _) (hcorr q)
+      (past_exists_iff.mpr ⟨d, hd, hdval⟩)
   obtain ⟨s, hcert⟩ := delivery_live_fixed_certificate h hcorr hLiveQuorum hd hdval
   have hsource : ∀ q : P, Corr M σ ⟨q, †, M.history.val⟩ b a :=
     fun q => h.correlationSymm (PreHistory.happensBeforeEq_refl _) (hcorr q)
   have hzero := transfer_zero_quorum h hlegal hsource hLiveQuorum hcert
   exact deliver_of_live_zero_quorum h hlegal (fun q => Or.inr (hsource q)) hzero p
+
+/-- Causal monotonicity makes a delivered value legal throughout its correlation row. -/
+theorem delivery_legal (h : Protocol M σ) {w : World P S.EventType}
+    (hw : w.time ⪯ M.history.val) {a b v : S.Value}
+    (hab : Corr M σ w a b)
+    (hdel : ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.deliver a v)) : Legal M σ w b v := by
+  obtain ⟨d, hd, hdval⟩ := past_exists_iff.mp hdel
+  have hcert := quorum_lift hw hd (h.deliverBackward (predecessor_possible hw hd) hdval)
+  have hvote := past_exists_iff.mpr (quorum_witness hcert)
+  have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
+  exact high_vote_legal h hw haa hab (by omega) hvote
+
+/-- Liveness 2 for the causal-monotonicity theory. -/
+theorem livenessTwo (h : Protocol M σ) {a b v : S.Value}
+    (hCorrelation : ⊨[M] □ᶠ[] (σ.correlation a b))
+    (hLiveQuorum : ⊨[M] □ᶠ[[b]] σ.live) :
+    ⊨[M] (♢ᶠ↓[[]] (σ.deliver a v)) ⇒ᶠ σ.live ⇒ᶠ ↕ᶠ (σ.deliver b v) := by
+  exact livenessTwo_of_delivery_legal h (delivery_legal h) hCorrelation hLiveQuorum
 
 end ModalDistribution.Examples.ThyHBB4

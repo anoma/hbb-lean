@@ -12,15 +12,19 @@ event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory
 [The finite-history investigation](HBB4_FINITE_HISTORIES.md) records the obstruction
 for unrestricted Knowledge and its historical provenance.
 
-**HBB4 CM:** The corrected version caps target-learner votes at
+**HBB4 CM, SW, and CW:** All three versions cap target-learner votes at
 `MaxDepth(l) + 1`, permits self-source advancement, and uses eventual delivery.
-Its agreement and liveness proofs require no three-quorum intersection axiom.
+Their agreement and liveness proofs require no three-quorum intersection axiom.
 `MaxDepth` is the attained maximum of distinct-row causal-chain lengths, not a
 separate budget. The rules are semantic schemata over the existing model because
 legality quantifies over natural-number ranks, while the formula syntax quantifies
 over values. Neither histories nor satisfaction semantics change.
 [The finite-model theorem](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean)
-checks an eight-event live execution with both liveness premises. The separate
+checks a common eight-event live execution for CM, SW, and CW with both
+liveness premises. CM implies SW, and SW implies CW by kernel-checked proofs.
+CW uses the weaker conflict-depth bound, which still suffices at the unchanged
+delivery rank. The formalization does not yet include separating models proving
+these coherence implications strict. The separate
 [52-event executable audit](audits/hbb4_cm/INVESTIGATION.md) additionally exercises
 distinct learners and failure of three-quorum intersection.
 
@@ -34,7 +38,7 @@ This formalization includes:
   - **ThyHBB1** (Section 6): Basic heterogeneous broadcast with unique proposals
   - **ThyHBB2** (Section 7): Improved protocol with non-equivocation
   - **ThyHBB3** (Section 8): Full protocol with correlation axioms
-  - **ThyHBB4 (CM)**: Capped rounds and causal monotonicity, following the revised HBB4 proof note
+  - **ThyHBB4 (CM/SW/CW)**: Capped rounds with three separately stated coherence conditions
 - **Correctness Proofs**: Agreement, Liveness 1, and Liveness 2 properties for all four algorithms
 
 ### Repository structure
@@ -68,13 +72,17 @@ ModalDistribution/
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
 │   ├── ThyHBB3/                # Section 8
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
-│   └── ThyHBB4/                # Corrected capped CM protocol
+│   └── ThyHBB4/                # Corrected capped CM/SW/CW protocols
 │       ├── Depth.lean         # Exact finite MaxDepth
-│       ├── Axioms.lean        # Semantic protocol schemata
+│       ├── Axioms.lean        # Shared protocol and CM
+│       ├── Coherence.lean     # SW, CW, and CM ⇒ SW ⇒ CW
 │       ├── Semantics.lean
-│       ├── Safety.lean        # Provenance, conflict-depth, agreement
+│       ├── Safety.lean        # Shared provenance and CM safety
+│       ├── StrictDepth.lean   # Strict row-inclusion chains
+│       ├── WeakSafety.lean    # CW conflict-depth and agreement
 │       ├── Liveness.lean      # Capped progress and Liveness 1
-│       ├── LivenessTwo.lean   # Fixed-source transfer and Liveness 2
+│       ├── LivenessTwo.lean   # Shared fixed-source transfer
+│       ├── Variants.lean      # SW/CW correctness endpoints
 │       └── FiniteModel.lean   # Finite live protocol witness
 └── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```

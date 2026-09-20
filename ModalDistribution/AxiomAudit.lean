@@ -106,3 +106,47 @@ If any custom axiom ever enters the proof of one of these theorems, the
  Quot.sound] -/
 #guard_msgs in
 #print axioms ModalDistribution.Examples.ThyHBB4.FiniteModel.finite_protocol_nonvacuous
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.Protocol.toSW' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.Protocol.toSW
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.ProtocolSW.toCW' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.ProtocolSW.toCW
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CW.conflict_depth_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.CW.conflict_depth_succ
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CW.conflict_depth' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.CW.conflict_depth
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CW.high_vote_legal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.CW.high_vote_legal
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CW.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.CW.agreement
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CW.livenessOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.CW.livenessOne
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CW.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.CW.livenessTwo
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.SW.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.SW.agreement
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.SW.livenessOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.SW.livenessOne
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.SW.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.SW.livenessTwo

@@ -266,3 +266,34 @@ for the exact MaxDepth bound. Its proof uses CM's strict row expansion at each
 inductive step. The certificate-learning step used by Liveness 2 fixes a source
 before applying Knowledge and then forgets that source existentially. It does
 not assume Knowledge for arbitrary existential-source certificate bodies.
+
+
+## HBB4: positive-round switch and comparison-witness coherence
+
+`BaseProtocol` contains the shared capped rules and participant-local correlation
+persistence. `Protocol`, `ProtocolSW`, and `ProtocolCW` extend that base with CM,
+SW, and CW respectively. In particular, SW and CW do not assume CM. These two
+versions follow `hbb4_weaker_coherence.pdf`, Sections 1–4.
+
+| Source claim | Declaration | File |
+| --- | --- | --- |
+| Definition 2.1, SW | `SwitchCoherence`, `ProtocolSW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
+| Definition 2.2, CW | `ComparisonWitness`, `ProtocolCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
+| Proposition 2.3, CM ⇒ SW ⇒ CW | `Protocol.toSW`, `ProtocolSW.toCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
+| Strict nonempty row-chain invariant | `StrictEndingDepthChain` | [StrictDepth.lean](ModalDistribution/Examples/ThyHBB4/StrictDepth.lean) |
+| Lemma 3.1, CW conflict-depth | `CW.conflict_depth` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
+| Corollary 3.2, legality at delivery rank | `CW.high_vote_legal`, `CW.delivery_legal` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
+| Theorem 4.1, CW agreement | `CW.agreement` | [WeakSafety.lean](ModalDistribution/Examples/ThyHBB4/WeakSafety.lean) |
+| Theorem 4.1, SW agreement | `SW.agreement` | [Variants.lean](ModalDistribution/Examples/ThyHBB4/Variants.lean) |
+| Sections 4.4–4.5, SW/CW liveness | `SW.livenessOne`, `SW.livenessTwo`, `CW.livenessOne`, `CW.livenessTwo` | [Variants.lean](ModalDistribution/Examples/ThyHBB4/Variants.lean) |
+| Common finite nonvacuity | `FiniteModel.finite_protocol_nonvacuous` | [FiniteModel.lean](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean) |
+
+CW's induction retains strict row inclusion, yielding a chain of `r` worlds from
+conflicting votes of ranks at least `r ≥ 1`. Legality requires a vote at rank
+`MaxDepth(a)+1`, exactly the existing delivery-certificate rank. SW uses the
+proved implication to CW. Provenance, proposal initialization, bounded round
+progression, and certificate transfer are shared over `BaseProtocol`.
+
+The strictness witnesses from Section 5 and the optional finite-learner counting
+bound from Section 6 are not formalized. They are not premises of correctness:
+exact MaxDepth is already finite by the history-height bound.

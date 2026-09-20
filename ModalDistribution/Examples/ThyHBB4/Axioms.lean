@@ -3,11 +3,11 @@ import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.ThyLive
 
 /-!
-# Capped HBB4 with causal monotonicity
+# Shared capped HBB4 rules and causal monotonicity
 
 These are the semantic axiom schemata of §3.3 of the revised HBB4 argument.
 Natural rounds index event symbols; they are not members of the value sort.
-`Legal` therefore quantifies over natural numbers in Lean, and `Protocol` is a
+`Legal` therefore quantifies over natural numbers in Lean, and `BaseProtocol` is a
 model-dependent semantic theory rather than a `Set (Formula S)`. Every modal
 subexpression uses the existing satisfaction relation. In particular the full,
 restricted `ThyLive` is required, with no additional Knowledge instances.
@@ -86,7 +86,7 @@ def endWorld (M : Model S P) (w : World P S.EventType) : World P S.EventType :=
 
 /-- Exact backward, cap, correlation, legality and forward schemata.
 The structure fields are protocol rules, never correctness conclusions. -/
-structure Protocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
+structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   thyLive : M ⊨ᵀ ThyLive σ.liveSymb
   echoBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {v},
     (⟪w⟫ ⊨[M] σ.echo v) → (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.propose v))
@@ -114,8 +114,8 @@ structure Protocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
     Corr M σ w a b → Corr M σ w b a
   correlationTrans : ∀ {w}, w.time ⪯ M.history.val → ∀ {a b c},
     Corr M σ w a b → Corr M σ w b c → Corr M σ w a c
-  causalMonotone : ∀ {w}, w.time ⪯ M.history.val → ∀ {a b},
-    Corr M σ w a b → ∀ {u}, u ∈ w.time → Corr M σ u a b
+  correlationPast : ∀ {w}, w.time ⪯ M.history.val → ∀ {a b},
+    Corr M σ w a b → ∀ {u}, u ∈ w.time → u.place = w.place → Corr M σ u a b
   echoForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {v},
     (⟪w⟫ ⊨[M] σ.live) → (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.propose v)) →
     ∃ u, (⟪w⟫ ⊨[M] ↕ᶠ (σ.echo u))
@@ -137,5 +137,12 @@ structure Protocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
     (⟪w⟫ ⊨[M] σ.live) →
     (⟪w⟫ ⊨[M] σ.certificate l v (maxDepth M (Corr M σ) l + 1)) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.deliver l v))
+
+/-- The causal-monotonicity theory strengthens the shared protocol. -/
+structure Protocol (M : Model S P) (σ : ProtocolSignature S) : Prop extends BaseProtocol M σ where
+  causalMonotone : ∀ {w}, w.time ⪯ M.history.val → ∀ {a b},
+    Corr M σ w a b → ∀ {u}, u ∈ w.time → Corr M σ u a b
+
+instance {M : Model S P} {σ : ProtocolSignature S} : Coe (Protocol M σ) (BaseProtocol M σ) := ⟨Protocol.toBaseProtocol⟩
 
 end ModalDistribution.Examples.ThyHBB4
