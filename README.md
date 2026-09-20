@@ -6,7 +6,7 @@ A complete Lean 4 formalization of the paper "Heterogeneous trust in reliable br
 current `ThyLive` assumptions exclude every live event in a finite history.
 The liveness implications are verified, but their live-witness antecedents cannot
 occur under those assumptions. See [the HBB4 finite-history investigation](HBB4_FINITE_HISTORIES.md)
-for the proof and the progress assumptions being considered for HBB4.
+for the proof, the manuscript correspondence, and the HBB4 proof audit.
 
 ## What's in this repository?
 

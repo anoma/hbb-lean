@@ -1,13 +1,42 @@
 # HBB4 with finite histories: obstruction and progress assumptions
 
-The existing finite-history foundation can be retained while HBB4's progress
-assumptions are reformulated. Lean now proves that `LiveAlways` and the current
-unrestricted Knowledge scheme exclude every live event. This establishes an
-obstruction in the assumptions, not a necessity to admit infinite histories.
+The manuscript and the Lean formalization both use finite histories. The
+manuscript's definitions and axioms control this formalization; the HBB4 PDFs
+supply proposed results to check within that foundation. Their adoption of
+countably infinite complete runs is a deviation from the manuscript's defined
+model, not an authorized change to this project.
 
-The obstruction is kernel-checked. The HBB4 progress audit below is a mathematical
-analysis of the supplied proofs; a finite HBB4 reformulation and its correctness
-and nonvacuity proofs are not yet implemented.
+Lean proves that `LiveAlways` and the current unrestricted Knowledge scheme
+exclude every live event. The matching manuscript assumptions have the same
+mathematical obstruction. This is a finding to report, not permission to alter
+those assumptions or substitute a different liveness statement.
+
+The obstruction is kernel-checked. The HBB4 progress inventory below is an
+analysis of the supplied proofs, not an alternative axiom system. The three
+HBB4 extension theories and their requested proofs are not yet implemented.
+
+## Foundation correspondence
+
+In the supplied `hbb-disc.tex`, the prehistory definition (source lines
+1515–1531) takes the least set closed under finite sets of event-tuples.
+The remark at line 1609 explicitly states: “we plan to model finite runs of
+distributed algorithms, so finite subsets suffice.” It discusses countable
+subsets as a possible generalization, not the definition adopted in the paper.
+
+Lean's `PreHistory` is an inductive, list-backed representation, and `Model`
+contains one `History`. Both the complete history and each event's past are
+finite. The set-versus-list representation differs; it does not affect the
+height argument establishing this obstruction. The manuscript itself discusses
+a redundant datatype presentation in Section 2.1.
+
+The manuscript's Figure 6 (source lines 4825–4843) gives `LiveAlways` and
+Knowledge for a closed predicate `φ`, without a protocol-specific restriction.
+Its `Sometime` expansion at line 3339 is `EOT Past`, matching Lean. These are
+the assumptions and modalities used by the formal obstruction.
+
+This comparison establishes agreement on the foundation relevant to the
+obstruction. It is not a claim that every part of the formalization has been
+proved equivalent to the manuscript's set-theoretic presentation.
 
 ## What Lean proves
 
@@ -76,7 +105,8 @@ These applications do not require closure of Knowledge under arbitrary formulas
 or arbitrary modal nesting. The causal-depth formulas used in the obstruction
 are therefore not required by these proof arguments. This is a sufficient
 inventory of the displayed proof applications, not a proof of minimality or of
-satisfiability of the proposed restriction.
+satisfiability of a restricted theory. The manuscript still requires the full
+Knowledge scheme; an inventory of proof uses does not authorize narrowing it.
 
 ## Other assumptions used by progress
 
@@ -99,50 +129,27 @@ self-correlation cannot replace equality. Liveness 1's conclusion needs
 `Sometime Deliver(l,v)`: an event atom evaluated at the end-of-time null event
 does not assert an earlier delivery.
 
-## Restricting Knowledge alone is insufficient
+## Consequences for the HBB4 formalization
 
-An uncapped positive-round rule can independently force infinitely many votes.
-Suppose a learner has a live quorum, all live participants cast its rank-zero
-vote with a fixed source and value, and the rule's end-of-time guards hold.
-Quorum Knowledge at each rank supplies the preceding-round certificate, and
-`VoteN!` forces the next rank. Induction requires every rank. A finite history
-cannot contain a vote of every natural-number rank.
+The source definitions remain controlling. In particular, retain finite
+histories, the manuscript's `ThyLive`, and the stated liveness judgements.
+Protocol-specific hypotheses from the PDFs must be identified explicitly as
+extensions and checked against that fixed foundation.
 
-For finite completed executions, the PDFs' cap through `MaxDepth(l) + 1` is a
-candidate stopping rule. It is sufficient for the displayed round-progression
-argument, but its consistency with all other axioms still needs a finite model.
-With distinct natural-number vote ranks, this cap is a substantive protocol
-choice, not merely a representation choice.
+The PDFs' use of countably infinite complete runs cannot serve as a model
+witness in this formalization. Under the current assumptions, the checked
+obstruction also prevents any finite witness containing a live event.
+Consequently a theorem whose premise includes a live event may be formally
+provable while admitting no instance with that premise true. Such a proof
+must not be presented as evidence of actual protocol progress.
 
-Finite completed executions also constrain how many participants can be required
-to act. If one triggered obligation requires every live participant to deliver,
-only finitely many participants can be live in such an execution: each delivery
-event has one participant. The current participant type need not be finite.
-A finite participant set is a simple sufficient assumption; a finite live set
-is weaker. A reformulation must state the intended scope explicitly.
+Restricting Knowledge, adopting an optional round cap, imposing finiteness of
+the live set, or changing liveness to a statement about extensions would each
+require a separate change to the specification. None is the current task.
+The source-proof inventory above remains useful for understanding the arguments,
+but does not resolve the manuscript-level obstruction.
 
-## Recommended next decision
-
-For the finite-completion reading closest to the manuscript's current
-`Sometime` semantics, formulate HBB4-specific progress assumptions using the
-Knowledge instances above, with a delivery-round cap. Preserve the actual
-`MaxDepth`, finite histories, source quantifier order, and CM/SW/CW conditions.
-State an appropriate finiteness condition on the live participants. Before
-claiming meaningful liveness, construct a finite model satisfying all assumptions
-with actual deliveries and with the liveness premises true.
-
-An alternative is to state progress over extensions of finite histories. This
-would retain finite histories but introduce a scheduling/admissibility relation
-and a different liveness statement. Existence of one successful extension is
-only reachability. A liveness claim needs conditions excluding indefinite
-postponement, together with a proof of delivery under those conditions.
-
-Extension-based reasoning also needs to account for changing `MaxDepth` and
-end-of-time legality: both depend on the completed history and cannot be assumed
-stable when that history is extended. No such stability theorem is established
-here. The finite-completion approach avoids that additional extension obligation
-by evaluating them on the selected complete finite history.
-
-Neither approach has yet been proved equivalent to the PDFs' complete-run
-semantics. The evidence presently supports reformulating progress, not changing
-the finite-history foundation.
+The next work must distinguish results provable in the manuscript's foundation
+from claims in the PDFs that depend on a different foundation, and report any
+unachievable nonvacuity claim explicitly. A faithful formalization may expose a
+problem in its source; it must not repair that source by changing its meaning.
