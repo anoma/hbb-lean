@@ -38,6 +38,39 @@ This comparison establishes agreement on the foundation relevant to the
 obstruction. It is not a claim that every part of the formalization has been
 proved equivalent to the manuscript's set-theoretic presentation.
 
+## Historical check: the initial commit already has the obstruction
+
+The same no-live-event result has been kernel-checked against initial commit
+`005103b4e9f6362c5810a2a628b0527655a8544d` (September 29, 2025).
+The historical proof is preserved in
+[FiniteHistoryAudit.lean](audits/005103b/FiniteHistoryAudit.lean).
+It imports the initial commit's `ThyLive` directly and is intended to compile
+against that revision, not the current modules.
+
+Two differences in the initial semantics were checked explicitly. Its theory
+validity requires axioms only at actual events, so the historical proof applies
+Knowledge at the assumed live event, not at an end-of-time world. Its diamond
+modality evaluates the body in a local model. The proof handles this by proving
+the causal-depth bound for every model and using the identity
+`M.localView M.history = M` when constructing the Knowledge antecedent.
+The original closed-formula requirement is also proved for each depth formula.
+
+Validation used an isolated checkout of that exact commit, its unchanged
+`leanprover/lean4:v4.24.0-rc1` toolchain declaration, and all nine dependencies at
+the revisions in its original lockfile. The original sources and dependency
+checkouts have no tracked edits. Building `ModalDistribution.Examples.ThyLive`
+succeeded, and the historical audit file compiled with its axiom guard allowing
+only `propext`, `Classical.choice`, and `Quot.sound`.
+
+The historical check can be reproduced by building that module in a checkout
+of the pinned revision and running `lake env lean` there on the audit file's
+absolute path. The proof's `#guard_msgs` rejects a dependency on `sorryAx` or a
+custom axiom. No modern obstruction theorem is imported into this check.
+
+Thus the obstruction was already present in the earliest repository commit;
+it was not introduced by the later change to event-world semantics or the
+August 2026 generalization of a derived knowledge lemma.
+
 ## What Lean proves
 
 [FiniteHistory.lean](ModalDistribution/Examples/ThyLive/FiniteHistory.lean)
