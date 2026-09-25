@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.ThyHBB4.Semantics
-import ModalDistribution.Examples.ThyHBB4.Coherence
+import ModalDistribution.Examples.ThyHBB4.VM
 
-/-! A common finite completed execution for the capped CM, SW, and CW theories. -/
+/-! A common finite completed execution for the capped CM and VM theories. -/
 namespace ModalDistribution.Examples.ThyHBB4.FiniteModel
 open ModalDistribution.Logic PreHistory History World
 open scoped Formula
@@ -14,10 +14,8 @@ private def atom (s : Symbol) (args : List Unit) : signature.EventType := ⟨s, 
 private def label : Nat → MaybeEvent signature.EventType
   | 0 => .some (atom .propose [()])
   | 1 => .some (atom .echo [()])
-  | 2 => .some (atom (.vote 0) [(), (), ()])
-  | 3 => .some (atom (.vote 1) [(), (), ()])
-  | 4 => .some (atom (.vote 2) [(), (), ()])
-  | 5 => .some (atom .deliver [(), ()])
+  | 2 => .some (atom (.vote 0) [(), ()])
+  | 3 => .some (atom .deliver [(), ()])
   | _ => †
 private def entries : Nat → List (World Unit signature.EventType)
   | 0 => []
@@ -194,13 +192,13 @@ private def symbols : ProtocolSignature signature where
 private theorem corr (w : World Unit signature.EventType) (a b : signature.Value) :
     Correlated model symbols.correlationSymb w a b := Set.mem_univ _
 
-private theorem legal (w : World Unit signature.EventType) (l v : signature.Value) :
-    Legal model symbols w l v := by
+private theorem uod (w : World Unit signature.EventType) (l v : signature.Value) :
+    UncontestedOrDelivered model symbols w l v := by
   intro b u n _ hne _
   exact False.elim (hne (by cases u; cases v; rfl))
 
-private theorem depth (a : signature.Value) : maxDepth model (Correlated model symbols.correlationSymb) a = 1 := by
-  apply maxDepth_eq_one_of_constant
+private theorem depth (a : signature.Value) : maxDepth model (Correlated model symbols.correlationSymb) a = 0 := by
+  apply maxDepth_eq_zero_of_constant
   intro w u
   funext b
   exact propext ⟨fun _ => corr u a b, fun _ => corr w a b⟩
@@ -226,16 +224,16 @@ private theorem echo_world {w : World Unit signature.EventType} {v : signature.V
     simp [symbols, label, atom] at he ⊢
 
 private theorem deliver_world {w : World Unit signature.EventType} {l v : signature.Value}
-    (h : ⟪w⟫ ⊨[model] symbols.deliver l v) : w = event 5 := by
+    (h : ⟪w⟫ ⊨[model] symbols.deliver l v) : w = event 3 := by
   cases l; cases v
   obtain ⟨i, hi, rfl, he⟩ := event_index h
   have hcases : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7 := by omega
   rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
     simp [symbols, label, atom] at he ⊢
 
-private theorem vote_world {w : World Unit signature.EventType} {l s v : signature.Value} {n : Nat}
-    (h : ⟪w⟫ ⊨[model] symbols.vote l s v n) : w = event (n + 2) ∧ n ≤ 2 := by
-  cases l; cases s; cases v
+private theorem vote_world {w : World Unit signature.EventType} {l v : signature.Value} {n : Nat}
+    (h : ⟪w⟫ ⊨[model] symbols.vote l v n) : w = event 2 ∧ n = 0 := by
+  cases l; cases v
   obtain ⟨i, hi, rfl, he⟩ := event_index h
   have hcases : i = 0 ∨ i = 1 ∨ i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 ∨ i = 6 ∨ i = 7 := by omega
   rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
@@ -246,13 +244,10 @@ private theorem propose_actual : ⟪event 0⟫ ⊨[model] symbols.propose () :=
   (event_actual 0 (by omega) _).mpr rfl
 private theorem echo_actual : ⟪event 1⟫ ⊨[model] symbols.echo () :=
   (event_actual 1 (by omega) _).mpr rfl
-private theorem deliver_actual : ⟪event 5⟫ ⊨[model] symbols.deliver () () :=
-  (event_actual 5 (by omega) _).mpr rfl
-private theorem vote_actual (n : Nat) (hn : n ≤ 2) :
-    ⟪event (n + 2)⟫ ⊨[model] symbols.vote () () () n := by
-  apply (event_actual (n + 2) (by omega) _).mpr
-  have hcases : n = 0 ∨ n = 1 ∨ n = 2 := by omega
-  rcases hcases with rfl | rfl | rfl <;> rfl
+private theorem deliver_actual : ⟪event 3⟫ ⊨[model] symbols.deliver () () :=
+  (event_actual 3 (by omega) _).mpr rfl
+private theorem vote_actual : ⟪event 2⟫ ⊨[model] symbols.vote () () 0 :=
+  (event_actual 2 (by omega) _).mpr rfl
 
 private theorem sometime_actual (w : World Unit signature.EventType)
     (i : Nat) (hi : i < 8) {φ : Formula signature} (h : ⟪event i⟫ ⊨[model] φ) :
@@ -260,10 +255,10 @@ private theorem sometime_actual (w : World Unit signature.EventType)
   (Sat.sometime model w φ).mpr
     ⟨event i, (mem_time _ 8).mpr ⟨i, hi, rfl⟩, Subsingleton.elim _ _, h⟩
 
-private theorem fixed_at (n k : Nat) (hn : n ≤ 2) (hk : n + 2 < k) :
-    ⟪event k⟫ ⊨[model] symbols.fixedSourceCertificate () () () n := by
+private theorem cert_at (k : Nat) (hk : 2 < k) :
+    ⟪event k⟫ ⊨[model] symbols.voteCertificate () () 0 := by
   apply (boxPast (event k) [()] _).mpr
-  exact ⟨event (n + 2), (mem_time _ k).mpr ⟨n + 2, hk, rfl⟩, vote_actual n hn⟩
+  exact ⟨event 2, (mem_time _ k).mpr ⟨2, hk, rfl⟩, vote_actual⟩
 
 private theorem protocol : ProtocolCM model symbols := by
   refine {
@@ -273,9 +268,7 @@ private theorem protocol : ProtocolCM model symbols := by
     voteSuccBackward := ?_
     deliverBackward := ?_
     echoNonEquivocation := ?_
-    voteLegal := ?_
-    voteSource := ?_
-    voteCap := ?_
+    voteNonEquivocation := ?_
     correlationSeq := ?_
     correlationSymm := ?_
     correlationTrans := ?_
@@ -295,31 +288,22 @@ private theorem protocol : ProtocolCM model symbols := by
     rw [echo_world hv]
     exact (diamondPast (event 1) [] _).mpr
       ⟨event 0, (mem_time _ 1).mpr ⟨0, by omega, rfl⟩, propose_actual⟩
-  · intro w _ l s v hv
-    cases l; cases s; cases v
+  · intro w _ l v hv
+    cases l; cases v
     left
-    refine ⟨rfl, ?_⟩
     rw [(vote_world hv).1]
     exact (boxPast (event 2) [()] _).mpr
       ⟨event 1, (mem_time _ 2).mpr ⟨1, by omega, rfl⟩, echo_actual⟩
-  · intro w _ l s v n hv
-    cases l; cases s; cases v
-    obtain ⟨hw, hn⟩ := vote_world hv
-    rw [hw]
-    exact fixed_at n (n + 1 + 2) (by omega) (by omega)
+  · intro w _ l v n hv
+    exact absurd (vote_world hv).2 (by omega)
   · intro w _ l v hv
     cases l; cases v
     rw [deliver_world hv, depth]
-    exact fixedSourceCertificate_to_voteCertificate (fixed_at 2 5 (by omega) (by omega))
+    exact cert_at 3 (by omega)
   · intro w _ v u _ _
     cases v; cases u; rfl
-  · intro w _ l s v n _
-    exact legal w l v
-  · intro w _ l s v n _
-    exact Or.inr (corr w l s)
-  · intro w _ l s v n hv
-    rw [depth]
-    exact (vote_world hv).2
+  · intro w _ l b v u n _ _ _ hne
+    exact False.elim (hne (by cases u; cases v; rfl))
   · intro w hw a b _
     change Sat.check model (fun p => isSequential p w.time) [a, b] Set.univ
     apply (check _ _ _).mpr
@@ -335,23 +319,22 @@ private theorem protocol : ProtocolCM model symbols := by
     exact ⟨(), sometime_actual w 1 (by omega) echo_actual⟩
   · intro w _ l v _ _ _
     cases l; cases v
-    exact sometime_actual w 2 (by omega) (vote_actual 0 (by omega))
+    exact sometime_actual w 2 (by omega) vote_actual
   · intro w _ l s v _ _ _ _
-    cases l; cases s; cases v
-    exact sometime_actual w 2 (by omega) (vote_actual 0 (by omega))
-  · intro w _ l s v n hn _ _ _ _
-    cases l; cases s; cases v
+    cases l; cases v
+    exact sometime_actual w 2 (by omega) vote_actual
+  · intro w _ l v n hn _ _ _
     rw [depth] at hn
-    exact sometime_actual w (n + 1 + 2) (by omega) (vote_actual (n + 1) hn)
+    exact absurd hn (by omega)
   · intro w _ l v _ _
     cases l; cases v
-    exact sometime_actual w 5 (by omega) deliver_actual
+    exact sometime_actual w 3 (by omega) deliver_actual
 
-/-- All three capped theories admit a common finite model with both liveness antecedents.
+/-- Both capped theories admit a common finite model with both liveness antecedents.
 The participant, learner, and value sorts here are singletons. -/
 theorem finite_protocol_nonvacuous :
     ∃ (S : Signature) (M : Model S Unit) (σ : ProtocolSignature S) (l v : S.Value),
-      ProtocolCM M σ ∧ ProtocolSW M σ ∧ ProtocolCW M σ ∧
+      ProtocolCM M σ ∧ ProtocolVM M σ ∧
       (⊨[M] □ᶠ[[l]] σ.live) ∧
       (⊨[M] ∃!ᶠ u ↦ ♢ᶠ↓[[]] (σ.propose u)) ∧
       (⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.propose v))) ∧
@@ -365,7 +348,7 @@ theorem finite_protocol_nonvacuous :
       ⟨event 0, (mem_time _ 1).mpr ⟨0, by omega, rfl⟩, propose_actual⟩
   have hlive : ∀ w : World Unit signature.EventType, ⟪w⟫ ⊨[model] symbols.live :=
     fun _ => Set.mem_univ _
-  refine ⟨signature, model, symbols, (), (), protocol, protocol.toSW, protocol.toSW.toCW, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨signature, model, symbols, (), (), protocol, protocol.toVM, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro p
     apply (sat_box_singleton_exists model ⟨p, †, model.history.val⟩ () symbols.live).mpr
     exact ⟨Set.univ, trivial, fun q _ => hlive _⟩
@@ -389,8 +372,8 @@ theorem finite_protocol_nonvacuous :
     exact corr _ () ()
   · intro p
     exact (diamondPast ⟨p, †, model.history.val⟩ [] _).mpr
-      ⟨event 5, (mem_time _ 8).mpr ⟨5, by omega, rfl⟩, deliver_actual⟩
+      ⟨event 3, (mem_time _ 8).mpr ⟨3, by omega, rfl⟩, deliver_actual⟩
   · exact ⟨event 1, (mem_time _ 8).mpr ⟨1, by omega, rfl⟩, hlive _, hknown⟩
-  · exact ⟨event 5, (mem_time _ 8).mpr ⟨5, by omega, rfl⟩, deliver_actual⟩
+  · exact ⟨event 3, (mem_time _ 8).mpr ⟨3, by omega, rfl⟩, deliver_actual⟩
 
 end ModalDistribution.Examples.ThyHBB4.FiniteModel

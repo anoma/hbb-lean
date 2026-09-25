@@ -264,36 +264,97 @@ finite witness uses distinct vote symbols for distinct ranks.
 
 The conflict-depth theorem constructs a chain with pairwise-distinct rows, enough
 for the exact MaxDepth bound. Its proof uses CM's strict row expansion at each
-inductive step. The certificate-learning step used by Liveness 2 fixes a source
-before applying Knowledge and then forgets that source existentially. It does
-not assume Knowledge for arbitrary existential-source certificate bodies.
+inductive step. On this branch votes carry no source learner, so every
+certificate body is an event atom and Knowledge applies to it directly.
 
 
-## HBB4: positive-round switch and comparison-witness coherence
+## HBB4: causal monotonicity and vote monotonicity
 
 `BaseProtocol` contains the shared capped rules and participant-local correlation
-persistence. `ProtocolCM`, `ProtocolSW`, and `ProtocolCW` extend that base with CM,
-SW, and CW respectively. In particular, SW and CW do not assume CM. These two
-versions follow `hbb4_weaker_coherence.pdf`, Sections 1–4.
+persistence. `ProtocolCM` extends it with causal monotonicity and `ProtocolVM`
+with vote monotonicity. The SW and CW theories of `hbb4_weaker_coherence.pdf`
+(Definitions 2.1–2.2) were formalized on this branch for a while and then
+removed: with the lowered decision threshold CW cannot prove agreement and SW
+cannot prove Liveness 2, while VM — switch coherence together with the
+round-zero instance of causal monotonicity — proves everything, so it replaces
+both.
 
 | Source claim | Declaration | File |
 | --- | --- | --- |
-| Definition 2.1, SW | `SwitchCoherence`, `ProtocolSW` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
-| Definition 2.2, CW | `ComparisonWitness`, `ProtocolCW` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
-| Proposition 2.3, CM ⇒ SW ⇒ CW | `ProtocolCM.toSW`, `ProtocolSW.toCW` | [Coherence.lean](ModalDistribution/Examples/ThyHBB4/Coherence.lean) |
+| Vote monotonicity | `VoteMonotonicity`, `ProtocolVM` | [Axioms.lean](ModalDistribution/Examples/ThyHBB4/Axioms.lean) |
+| CM ⇒ VM | `ProtocolCM.toVM` | [VM.lean](ModalDistribution/Examples/ThyHBB4/VM.lean) |
 | Strict nonempty row-chain invariant | `StrictEndingDepthChain` | [StrictDepth.lean](ModalDistribution/Examples/ThyHBB4/StrictDepth.lean) |
-| Lemma 3.1, CW conflict-depth | `CW.conflict_rank_le_depth` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
-| Corollary 3.2, legality at delivery rank | `CW.high_vote_legal`, `CW.delivery_legal` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
-| Theorem 4.1, CW agreement | `CW.agreement` | [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
-| Theorem 4.1, SW agreement | `SW.agreement` | [SW.lean](ModalDistribution/Examples/ThyHBB4/SW.lean) |
-| Sections 4.4–4.5, SW/CW liveness | `SW.livenessOne`, `SW.livenessTwo`, `CW.livenessOne`, `CW.livenessTwo` | [SW.lean](ModalDistribution/Examples/ThyHBB4/SW.lean), [CW.lean](ModalDistribution/Examples/ThyHBB4/CW.lean) |
+| VM conflict-depth | `VM.conflict_yields_strict_depth_chain`, `VM.conflicting_rank_lt` | [VM.lean](ModalDistribution/Examples/ThyHBB4/VM.lean) |
+| VM agreement and liveness | `VM.agreement`, `VM.livenessOne`, `VM.livenessTwo` | [VM.lean](ModalDistribution/Examples/ThyHBB4/VM.lean) |
 | Common finite nonvacuity | `FiniteModel.finite_protocol_nonvacuous` | [FiniteModel.lean](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean) |
 
-CW's induction retains strict row inclusion, yielding a chain of `r` worlds from
-conflicting votes of ranks at least `r ≥ 1`. Legality requires a vote at rank
-`MaxDepth(a)+1`, exactly the existing delivery-certificate rank. SW uses the
-proved implication to CW. Provenance, proposal initialization, bounded round
-progression, and certificate transfer are shared over `BaseProtocol`.
+**Lowered-threshold experiment (branch `test-lower-depth`).** Two changes to
+the rules and one to the depth measure:
+
+1. `maxDepth` (`Depth.lean`) is the maximum number of row *changes* along a
+   causal chain (`DepthChain M R a n` has `n + 1` worlds), i.e. one less than
+   before; it can be `0`. `EndingDepthChain`/`StrictEndingDepthChain` of index
+   `n` now bound `n ≤ maxDepth`.
+2. `Deliver?` and `Deliver!` use `maxDepth(l)` (in the new count). The backward
+   round cap `voteCap` (revised note §3.2) is removed: no proof uses it, and
+   `voteSuccForward`'s `n < maxDepth l` premise is the only bound needed.
+3. `Vote0?` justifies a round-zero transfer by a *single observed vote*
+   `♢↓ Vote(l', v, m)`, at any rank `m`, for some `l'` correlated with the target
+   at the voting world, rather than a quorum one rank below the decision rank.
+   The forward rule `Vote0V!` keeps the decision rank `m = maxDepth(l')` as its
+   premise. This is what makes Liveness 2 work when `maxDepth(l') = 0`, since the
+   delivery certificate itself contains such votes, and it is a
+   `KnowledgeBody.known` body. The proofs never use the rank of the backward
+   justification: CM's base case only needs the observed vote to exist (to
+   contradict minimality when `l'` is in the observer's row) and provenance only
+   needs it to trace back to a proposal.
+4. Votes have no source learner: `vote l v n` (target, value, round). The former
+   Vote-source rule (8) is absorbed into `Vote0?`'s correlation requirement, and
+   `fixedSourceCertificate` collapses into `voteCertificate`. `voteSuccForward`
+   drops its source side condition.
+5. Backward legality (7) is replaced by `voteNonEquivocation`, a *switch rule at the vote's own round*:
+   `Vote(l,v,n) → ↓Vote(b,u,n) → l ⋈ b → u ≠ v → ∃ c ⋈ l, m > n. ♢↓Vote(c,v,m)`.
+   A participant is constrained only by its own earlier same-round vote for a
+   different value and a correlated learner. This is exactly what the
+   depth-chain step consumes (the two predecessor votes come from
+   `quorum_pair_before`, hence share a signer); `Legal` in its original form
+   survives only as the premise of the forward rules, which the liveness proofs
+   establish at final worlds.
+6. The forward-rule side condition `Legal` is replaced by
+   `UncontestedOrDelivered M σ w l v`: either no vote for a value other than `v`
+   has been observed for any learner correlated with `l`, or a delivery of `v`
+   has been observed for some learner `c` correlated with `l` whose decision
+   rank `maxDepth c` exceeds the rank of every such conflicting vote. Since it
+   occurs only as a premise of forward rules, this *strengthening* of the
+   condition weakens the theory. It is exactly what the liveness proofs
+   establish at final worlds: vacuously under a unique proposal (Liveness 1),
+   and from the source delivery together with `conflicting_rank_lt` (Liveness
+   2). The rank bound is kept (rather than the weaker "some delivery observed")
+   so that the obligation is always dischargeable by a participant that votes
+   whenever the backward rules allow: the delivery certificate contains a
+   rank-`maxDepth c` vote for `v`, which outranks any conflicting same-round
+   vote the participant may itself have cast, clearing `voteNonEquivocation`.
+
+Consequences per coherence condition:
+
+* **CM** (`CM.lean`): unchanged proof. Its chain lemma turns conflicting votes of
+  ranks `≥ r` into `r + 1` row changes, using causal monotonicity at round zero
+  for the extra change, so a conflict at rank `maxDepth(a)` is impossible.
+  Agreement, Liveness 1 and Liveness 2 all hold.
+* **VM** (`VM.lean`): `ProtocolVM` assumes the single axiom `VoteMonotonicity`:
+  the target of an observed vote keeps, at the vote event, every correlation it
+  has at the observer, whenever the vote is at round zero or is the later vote
+  of a same-signer, same-round switch between learners the observer correlates.
+  These are exactly the instances of causal monotonicity the CM proofs consume:
+  the switch instance at the inductive step, the round-zero instance at the
+  minimal transfer vote of the base case; the third use in CM (extending a
+  chain) disappears once chains are strict. The CM proof ports verbatim
+  otherwise, so agreement, Liveness 1 and Liveness 2 all hold. `ProtocolCM.toVM`
+  records CM ⇒ VM. VM is strictly weaker than CM: it constrains only vote
+  events, and only the target's row.
+
+Provenance, proposal initialization, bounded round progression, and certificate
+transfer are shared over `BaseProtocol`.
 
 The strictness witnesses from Section 5 and the optional finite-learner counting
 bound from Section 6 are not formalized. They are not premises of correctness:
@@ -304,8 +365,8 @@ exact MaxDepth is already finite by the history-height bound.
 For each `ThyHBB1`, `ThyHBB2`, and `ThyHBB3` namespace, `agreement`,
 `livenessOne`, `livenessTwo`, and `correctness` are semantic proof interfaces;
 the corresponding `_modal` results give the paper formulas in the same files.
-HBB4 uses the same convention in each of `ThyHBB4.CM`, `ThyHBB4.SW`, and
-`ThyHBB4.CW` for its three correctness theorems.
+HBB4 uses the same convention in each of `ThyHBB4.CM` and `ThyHBB4.VM` for its
+three correctness theorems.
 
 The common checked correspondences are `Logic.occurrence_agreement_iff`,
 `Logic.occurrence_liveness_iff`, `Logic.uniqueOccurrence_iff_end`,

@@ -38,68 +38,65 @@ theorem quorum_witness {w : World P S.EventType} {l : S.Value} {φ : Formula S}
 
 /-- Every vote has a proposal of the same value in its causal past. -/
 theorem vote_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
-    (hw : w.time ⪯ M.history.val) {l s v : S.Value} {n : Nat}
-    (hv : ⟪w⟫ ⊨[M] σ.vote l s v n) :
+    (hw : w.time ⪯ M.history.val) {l v : S.Value} {n : Nat}
+    (hv : ⟪w⟫ ⊨[M] σ.vote l v n) :
     ObservedAt M w (σ.propose v) := by
   have go : ∀ k, ∀ w : World P S.EventType, PreHistory.height w.time = k →
-      w.time ⪯ M.history.val → ∀ l s v n,
-      (⟪w⟫ ⊨[M] σ.vote l s v n) →
+      w.time ⪯ M.history.val → ∀ l v n,
+      (⟪w⟫ ⊨[M] σ.vote l v n) →
       (ObservedAt M w (σ.propose v)) := by
     intro k
     induction k using Nat.strongRecOn with
     | ind k ih =>
-      intro w hk hw l s v n hv
+      intro w hk hw l v n hv
       have liftProposal : ∀ u, u ≪ w →
           (ObservedAt M u (σ.propose v)) →
           (ObservedAt M w (σ.propose v)) := by
         intro u hu hp
         obtain ⟨t, ht, hp⟩ := hp
         exact ⟨t, accessible_trans hw ht hu, hp⟩
-      have fromVote : ∀ u, u ≪ w → ∀ l s n,
-          (⟪u⟫ ⊨[M] σ.vote l s v n) →
+      have fromVote : ∀ u, u ≪ w → ∀ l n,
+          (⟪u⟫ ⊨[M] σ.vote l v n) →
           (ObservedAt M w (σ.propose v)) := by
-        intro u hu l s n hv
+        intro u hu l n hv
         exact liftProposal u hu (ih _ (hk ▸ PreHistory.height_lt_of_accessible hu)
-          u rfl (predecessor_possible hw hu) l s v n hv)
+          u rfl (predecessor_possible hw hu) l v n hv)
       cases n with
       | zero =>
-        rcases h.voteZeroBackward hw hv with ⟨_, he⟩ | ht
+        rcases h.voteZeroBackward hw hv with he | ⟨s, _, _, ht⟩
         · obtain ⟨u, hu, he⟩ := quorum_witness he
           exact liftProposal u hu (observedAt_iff.mpr (h.echoBackward (predecessor_possible hw hu) he))
-        · obtain ⟨u, hu, hv⟩ := quorum_witness ht
-          obtain ⟨s', hv⟩ := (Sat.exists_iff _ _).mp hv
-          exact fromVote u hu _ s' _ hv
+        · obtain ⟨u, hu, hv⟩ := observedAt_iff.mpr ht
+          exact fromVote u hu s _ hv
       | succ n =>
         obtain ⟨u, hu, hv⟩ := quorum_witness (h.voteSuccBackward hw hv)
-        exact fromVote u hu l s n hv
-  exact go _ w rfl hw l s v n hv
+        exact fromVote u hu l n hv
+  exact go _ w rfl hw l v n hv
 
 /-- Minimal votes are chosen among every target in the observer's row. -/
 structure MinimalVote (w : World P S.EventType) (a v : S.Value) (r : Nat) where
   event : World P S.EventType
   target : S.Value
-  source : S.Value
   before : event ≪ w
   correlated : Correlated M σ.correlationSymb w a target
-  vote : ⟪event⟫ ⊨[M] σ.vote target source v r
-  minimal : ∀ u, u ≪ event → ∀ b s n, Correlated M σ.correlationSymb w a b → r ≤ n →
-    ¬ (⟪u⟫ ⊨[M] σ.vote b s v n)
+  vote : ⟪event⟫ ⊨[M] σ.vote target v r
+  minimal : ∀ u, u ≪ event → ∀ b n, Correlated M σ.correlationSymb w a b → r ≤ n →
+    ¬ (⟪u⟫ ⊨[M] σ.vote b v n)
 
 theorem minimal_vote (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v : S.Value} {r n : Nat}
     (hb : Correlated M σ.correlationSymb w a b) (hn : r ≤ n)
-    (hv : ObservedAt M w (σ.voteFromSomeSource b v n)) :
+    (hv : ObservedAt M w (σ.vote b v n)) :
     Nonempty (MinimalVote (M := M) (σ := σ) w a v r) := by
   let A := fun e : World P S.EventType => e ≪ w ∧
-    ∃ b s n, Correlated M σ.correlationSymb w a b ∧ r ≤ n ∧ (⟪e⟫ ⊨[M] σ.vote b s v n)
+    ∃ b n, Correlated M σ.correlationSymb w a b ∧ r ≤ n ∧ (⟪e⟫ ⊨[M] σ.vote b v n)
   obtain ⟨e, he, hv⟩ := hv
-  obtain ⟨s, hv⟩ := (Sat.exists_iff _ _).mp hv
-  obtain ⟨e, ⟨hew, b, s, n, hb, hn, hv⟩, hmin⟩ :=
-    exists_causally_minimal A ⟨e, he, b, s, n, hb, hn, hv⟩
-  have minimal : ∀ u, u ≪ e → ∀ b s n, Correlated M σ.correlationSymb w a b → r ≤ n →
-      ¬ (⟪u⟫ ⊨[M] σ.vote b s v n) := by
-    intro u hue b s n hb hn hv
-    exact hmin u hue ⟨accessible_trans hw hue hew, b, s, n, hb, hn, hv⟩
+  obtain ⟨e, ⟨hew, b, n, hb, hn, hv⟩, hmin⟩ :=
+    exists_causally_minimal A ⟨e, he, b, n, hb, hn, hv⟩
+  have minimal : ∀ u, u ≪ e → ∀ b n, Correlated M σ.correlationSymb w a b → r ≤ n →
+      ¬ (⟪u⟫ ⊨[M] σ.vote b v n) := by
+    intro u hue b n hb hn hv
+    exact hmin u hue ⟨accessible_trans hw hue hew, b, n, hb, hn, hv⟩
   have hnr : n = r := by
     by_cases hne : n = r
     · exact hne
@@ -110,9 +107,9 @@ theorem minimal_vote (h : BaseProtocol M σ) {w : World P S.EventType}
     | succ k =>
       obtain ⟨u, hue, hv'⟩ := quorum_witness
         (h.voteSuccBackward (predecessor_possible hw hew) hv)
-      exact minimal u hue b s k hb (by omega) hv'
+      exact minimal u hue b k hb (by omega) hv'
   subst n
-  exact ⟨⟨e, b, s, hew, hb, hv, minimal⟩⟩
+  exact ⟨⟨e, b, hew, hb, hv, minimal⟩⟩
 
 theorem quorum_pair (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b : S.Value} {φ ψ : Formula S}
@@ -160,17 +157,17 @@ theorem quorum_lift {w e : World P S.EventType}
 theorem observed_vote_of_observed_delivery (h : BaseProtocol M σ)
     {w : World P S.EventType} (hw : w.time ⪯ M.history.val) {a v : S.Value}
     (hd : ObservedAt M w (σ.deliver a v)) :
-    ObservedAt M w (σ.voteFromSomeSource a v (maxDepth M (Correlated M σ.correlationSymb) a + 1)) := by
+    ObservedAt M w (σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a)) := by
   obtain ⟨e, he, hdel⟩ := hd
   exact quorum_witness
     (quorum_lift hw he (h.deliverBackward (predecessor_possible hw he) hdel))
 
-theorem vote_value_eq {w : World P S.EventType} {l s v b t u : S.Value} {n k : Nat}
-    (hv : ⟪w⟫ ⊨[M] σ.vote l s v n) (hu : ⟪w⟫ ⊨[M] σ.vote b t u k) : v = u := by
+theorem vote_value_eq {w : World P S.EventType} {l v b u : S.Value} {n k : Nat}
+    (hv : ⟪w⟫ ⊨[M] σ.vote l v n) (hu : ⟪w⟫ ⊨[M] σ.vote b u k) : v = u := by
   have he := ((Sat.ofEvent _ _ _).mp hv).1.symm.trans ((Sat.ofEvent _ _ _).mp hu).1
   have ha := congrArg (fun e : MaybeEvent S.EventType =>
     match e with | .none => [] | .some a => a.args) he
-  exact (List.cons.inj (List.cons.inj (List.cons.inj ha).2).2).1
+  exact (List.cons.inj (List.cons.inj ha).2).1
 
 /-- A delivered value has an actual proposal in the delivery's causal past. -/
 theorem deliver_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
@@ -178,7 +175,6 @@ theorem deliver_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
     (hv : ⟪w⟫ ⊨[M] σ.deliver l v) :
     ObservedAt M w (σ.propose v) := by
   obtain ⟨e, he, hv⟩ := quorum_witness (h.deliverBackward hw hv)
-  obtain ⟨s, hv⟩ := (Sat.exists_iff _ _).mp hv
   obtain ⟨f, hf, hp⟩ := vote_provenance h (predecessor_possible hw he) hv
   exact ⟨f, accessible_trans hw hf he, hp⟩
 

@@ -12,19 +12,29 @@ event. It establishes nonvacuity of `ThyLive`, not of every full protocol theory
 [The finite-history investigation](HBB4_FINITE_HISTORIES.md) records the obstruction
 for unrestricted Knowledge and its historical provenance.
 
-**HBB4 CM, SW, and CW:** All three versions cap target-learner votes at
-`MaxDepth(l) + 1`, permit self-source advancement, and use delivery sometime in the completed history.
-Their agreement and liveness proofs require no three-quorum intersection axiom.
-`MaxDepth` is the attained maximum of distinct-row causal-chain lengths, not a
+**HBB4 CM and VM (branch `test-lower-depth`):** On this branch `MaxDepth(l)`
+counts row *changes* along a causal chain (one less than the chain length of the
+main branch, so it can be `0`). Both theories deliver from a certificate at
+rank `MaxDepth(l)` (there is no separate round cap on votes), and justify a
+round-zero transfer by a single observed vote, at any rank, for some learner
+`l'` correlated with `l` at the voting world (not a quorum). Votes carry
+no source learner (`Vote(l, v, n)`), so the former Vote-source rule is folded into
+`Vote0?`. Compared with the main branch this is two rounds fewer. Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
+monotonicity: the observer's correlations of a learner hold at that learner's
+round-zero votes and same-round switch votes; strictly weaker than CM, and
+exactly what the proofs use). Agreement, Liveness 1 and Liveness 2 are proved
+for both, with no `sorry` anywhere. The earlier SW and CW theories of this
+branch were dropped once VM subsumed them; see PAPER_MAPPING.md.
+The proofs require no three-quorum intersection axiom.
+`MaxDepth` is the attained maximum of row changes along causal chains, not a
 separate budget. The rules are semantic schemata over the existing model because
 legality quantifies over natural-number ranks, while the formula syntax quantifies
 over values. Neither histories nor satisfaction semantics change.
 [The finite-model theorem](ModalDistribution/Examples/ThyHBB4/FiniteModel.lean)
-checks a common eight-event live execution for CM, SW, and CW with both
-liveness premises. CM implies SW, and SW implies CW by kernel-checked proofs.
-CW uses the weaker conflict-depth bound, which still suffices at the unchanged
-delivery rank. The formalization does not yet include separating models proving
-these coherence implications strict. The separate
+checks a common four-event live execution for CM and VM with both liveness
+premises. CM implies VM by a kernel-checked proof (`ProtocolCM.toVM`). The
+formalization does not yet include a separating model proving the implication
+strict. The separate
 [52-event executable audit](audits/hbb4_cm/INVESTIGATION.md) additionally exercises
 distinct learners and failure of three-quorum intersection.
 
@@ -60,7 +70,7 @@ This formalization includes:
   - **ThyHBB1** (Section 6): Basic heterogeneous broadcast with unique proposals
   - **ThyHBB2** (Section 7): Improved protocol with non-equivocation
   - **ThyHBB3** (Section 8): Full protocol with correlation axioms
-  - **ThyHBB4 (CM/SW/CW)**: Capped rounds with three separately stated coherence conditions
+  - **ThyHBB4 (CM/VM)**: Capped rounds with two separately stated coherence conditions
 - **Correctness Proofs**: Agreement, Liveness 1, and Liveness 2 properties for all four algorithms
 
 ### Repository structure
@@ -94,18 +104,16 @@ ModalDistribution/
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
 │   ├── ThyHBB3/                # Section 8
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
-│   └── ThyHBB4/                # Corrected capped CM/SW/CW protocols
+│   └── ThyHBB4/                # Corrected capped CM/VM protocols
 │       ├── Depth.lean         # Exact finite MaxDepth
-│       ├── Axioms.lean        # Shared rules and CM/SW/CW axioms
-│       ├── Coherence.lean     # CM ⇒ SW ⇒ CW proofs
+│       ├── Axioms.lean        # Shared rules and CM/VM axioms
 │       ├── Semantics.lean
 │       ├── Safety.lean        # Shared provenance and quorum lemmas
 │       ├── StrictDepth.lean   # Strict row-inclusion chains
 │       ├── Liveness.lean      # Capped progress and Liveness 1
-│       ├── LivenessTwo.lean   # Shared fixed-source transfer
+│       ├── LivenessTwo.lean   # Shared transfer to a correlated learner
 │       ├── CM.lean            # CM agreement and both liveness results
-│       ├── SW.lean            # SW agreement and both liveness results
-│       ├── CW.lean            # CW agreement and both liveness results
+│       ├── VM.lean            # VM agreement and both liveness results; CM ⇒ VM
 │       └── FiniteModel.lean   # Finite live protocol witness
 └── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```

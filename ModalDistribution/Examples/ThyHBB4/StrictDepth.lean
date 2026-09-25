@@ -34,7 +34,7 @@ theorem strictEndingDepthChain_zero {a : S.Value} {w : World P S.EventType}
     omega
 
 theorem strictEndingDepthChain_le {a : S.Value} {w : World P S.EventType} {n : Nat}
-    (h : StrictEndingDepthChain M R a w n) : n + 1 ≤ maxDepth M R a := by
+    (h : StrictEndingDepthChain M R a w n) : n ≤ maxDepth M R a := by
   obtain ⟨ws, hp, hc, hr, _, _⟩ := h
   apply le_maxDepth
   refine ⟨ws, hp, hc, ?_⟩
