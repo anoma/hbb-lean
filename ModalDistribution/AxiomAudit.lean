@@ -105,7 +105,8 @@ depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.CM.livenessOne
 
-/-- info: 'ModalDistribution.Examples.ThyHBB4.CM.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.ThyHBB4.CM.livenessTwo'
+depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.CM.livenessTwo
 
@@ -114,6 +115,19 @@ depends on axioms: [propext, Classical.choice, Quot.sound] -/
  Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.FiniteModel.finite_protocol_nonvacuous
+
+/-! Fast delivery path: safety rests on echoes from every not-yet-equivocating
+participant, not on depth. -/
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.zero_quorum_of_delivery'
+depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.zero_quorum_of_delivery
+
+/-- info: 'ModalDistribution.Examples.ThyHBB4.value_of_echo_unanimity_at'
+depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ModalDistribution.Examples.ThyHBB4.value_of_echo_unanimity_at
 
 /-! VM: vote monotonicity, the instances of causal monotonicity that the CM
 proofs use. -/
@@ -158,8 +172,7 @@ depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.VM.livenessOne_modal
 
-/-- info: 'ModalDistribution.Examples.ThyHBB4.VM.livenessTwo_modal'
-depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.ThyHBB4.VM.livenessTwo_modal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.VM.livenessTwo_modal
 

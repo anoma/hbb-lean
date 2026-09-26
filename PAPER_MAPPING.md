@@ -335,6 +335,47 @@ the rules and one to the depth measure:
    rank-`maxDepth c` vote for `v`, which outranks any conflicting same-round
    vote the participant may itself have cast, clearing `voteNonEquivocation`.
 
+7. `Deliver?` gains a fast path: a delivery for `l` may instead be backed by
+   (i) an echo for `v` from every participant that is sequential in the
+   delivering world's past (`□[] (seq ⇒ ↓echo v)`), i.e. from everyone the
+   deliverer has not yet seen equivocate — checkable by the deliverer, since
+   sequentiality at a world only concerns events in that world's past — together
+   with (ii) the end-of-time guarantee `⤒(l ⋈ l ⇒ □[[l]] seq)`: if `l` is
+   correlated with itself at the end of time, some `l`-quorum is sequential at
+   the end of time. Clause (ii) is the only thing a deliverer must know about `l`
+   to use the fast path, and participants never reason about it otherwise; it
+   replaces the earlier separate axiom `sequentialQuorum` (and the learner set
+   `sequentialQuorumRequired`). Safety does not use depth. Under vote
+   monotonicity any observed vote for a learner in `l`'s row traces back to an
+   echo quorum `X` of a learner correlated with `l` at the root event; `X` meets
+   the quorum `Q_l` from (ii) (sequential at the end of time, hence at every
+   possible world, `isSequential_of_possible`); the common member is sequential
+   at the observer, hence at the earlier delivery event, hence (by (i)) echoed
+   `v`, and it echoed the other value too, so the values agree
+   (`value_of_echo_unanimity_at`, `FastPath.lean`); two fast deliveries agree
+   because any member of `Q_l` echoed both values. Because (ii) is guarded by
+   correlation at the *end of time*, `agreement_at` and
+   `uncontestedOrDelivered_of_delivery` take the learners' correlation at every
+   final world (as `agreement` and Liveness 2 already do). Liveness 2 from a fast
+   delivery goes through the echo rule: the destination's live quorum is
+   sequential everywhere (`LiveSeq`), hence echoed, giving a live echo quorum
+   (`live_echo_quorum_of_sequentialEchoes`) and a live round-zero quorum by
+   `Vote0!` (`zero_quorum_of_delivery`). `deliver_provenance` assumes the learner
+   is correlated at the deliverer's final world.
+
+   Alternatives examined and rejected (each admits a participant that echoes the
+   other value on a branch the deliverer has not seen, or lets two fast
+   deliveries pick different witnesses): an ordinary echo certificate; a quorum
+   of participants sequential at the delivery event who echoed `v`; a quorum of
+   such echoers for every learner, even with all quorums intersecting; a
+   `v`-echoer in every quorum intersection (sound for agreement, but Liveness 2
+   fails since the destination gets no certificate of its own). Without clause
+   (ii) the present clause is unsound even if all quorums intersect; the
+   alternative assumption that would replace it is intersection *with*
+   sequentiality — every pair of quorums, of any two learners, shares a
+   participant sequential at the world — i.e. `correlationSeq` without its
+   correlation premise.
+
 Consequences per coherence condition:
 
 * **CM** (`CM.lean`): unchanged proof. Its chain lemma turns conflicting votes of

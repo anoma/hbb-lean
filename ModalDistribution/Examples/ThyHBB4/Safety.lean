@@ -153,14 +153,87 @@ theorem quorum_lift {w e : World P S.EventType}
   obtain ⟨f, hf, hfp, hφ⟩ := hφ p hp
   exact ⟨f, accessible_trans hw hf he, hfp, hφ⟩
 
-/-- An observed delivery has an observed vote at the delivery-certificate rank. -/
-theorem observed_vote_of_observed_delivery (h : BaseProtocol M σ)
+/-- Sequentiality in a world's past restricts to the past of any earlier world. -/
+theorem isSequential_of_accessible {w d : World P S.EventType}
+    (hw : w.time ⪯ M.history.val) (hd : d ≪ w) {q : P}
+    (hseq : isSequential (Event := S.EventType) q w.time) :
+    isSequential (Event := S.EventType) q d.time := by
+  intro t₁ t₂ h₁ h₂ hp₁ hp₂
+  have h₁' : t₁ ≪ d := h₁
+  have h₂' : t₂ ≪ d := h₂
+  exact hseq t₁ t₂ (accessible_trans hw h₁' hd) (accessible_trans hw h₂' hd) hp₁ hp₂
+
+/-- The fast-path justification: every participant sequential in the world's past
+has echoed `v` there. -/
+def SequentialEchoes (M : Model S P) (σ : ProtocolSignature S)
+    (w : World P S.EventType) (v : S.Value) : Prop :=
+  ∀ q : P, isSequential (Event := S.EventType) q w.time →
+    ∃ t, t ≪ w ∧ t.place = q ∧ (⟪t⟫ ⊨[M] σ.echo v)
+
+theorem sequentialEchoes_iff {w : World P S.EventType} {v : S.Value} :
+    (⟪w⟫ ⊨[M] □ᶠ[] (Formula.seq ⇒ᶠ ↓ᶠ (σ.echo v))) ↔ SequentialEchoes M σ w v := by
+  rw [Sat.boxEmpty]
+  constructor
+  · intro h q hseq
+    have h' := Sat.imp_elim (M := M) (w := ⟨q, †, w.time⟩) (h q) ((Sat.seq M _).mpr hseq)
+    obtain ⟨t, ht, htq, he⟩ := (Sat.past M _ _).mp h'
+    exact ⟨t, ht, htq, he⟩
+  · intro h q
+    apply Sat.imp_intro
+    intro hseq
+    obtain ⟨t, ht, htq, he⟩ := h q ((Sat.seq M _).mp hseq)
+    exact (Sat.past M _ _).mpr ⟨t, ht, htq, he⟩
+
+/-- The fast-path justification is inherited by later possible worlds: a
+participant sequential later was sequential earlier, and its echo persists. -/
+theorem sequentialEchoes_lift {w e : World P S.EventType}
+    (hw : w.time ⪯ M.history.val) (he : e ≪ w) {v : S.Value}
+    (h : SequentialEchoes M σ e v) : SequentialEchoes M σ w v := by
+  intro q hseq
+  obtain ⟨t, ht, htq, hecho⟩ := h q (isSequential_of_accessible hw he hseq)
+  exact ⟨t, accessible_trans hw ht he, htq, hecho⟩
+
+/-- An `l`-quorum all of whose members are sequential in `w`'s past. -/
+def SequentialQuorumAt (M : Model S P) (l : S.Value) (w : World P S.EventType) : Prop :=
+  ∃ Q ∈ (M.learner l).quorums, ∀ q ∈ Q, isSequential (Event := S.EventType) q w.time
+
+/-- Sequentiality at the end of time restricts to every possible world. -/
+theorem isSequential_of_possible {w : World P S.EventType}
+    (hw : w.time ⪯ M.history.val) {q : P}
+    (hseq : isSequential (Event := S.EventType) q M.history.val) :
+    isSequential (Event := S.EventType) q w.time := by
+  intro t₁ t₂ h₁ h₂ hp₁ hp₂
+  have hsub : w.time ⊆ M.history.val :=
+    PreHistory.subset_of_happensBeforeEq (fun _ hh => History.subset_of_happensBefore hh) hw
+  exact hseq t₁ t₂ (hsub t₁ h₁) (hsub t₂ h₂) hp₁ hp₂
+
+/-- The fast clause's end-of-time guarantee yields, at any possible world, a
+sequential `l`-quorum, provided `l` is correlated with itself at the end of time
+(at the deliverer's final world). -/
+theorem sequentialQuorumAt_of_guarantee {e w : World P S.EventType}
+    (hw : w.time ⪯ M.history.val) {l : S.Value}
+    (hg : ⟪e⟫ ⊨[M] ⤒ᶠ (σ.correlation l l ⇒ᶠ □ᶠ[[l]] Formula.seq))
+    (hll : Correlated M σ.correlationSymb (finalWorld M e.place) l l) :
+    SequentialQuorumAt M l w := by
+  have h1 := (Sat.atEnd M e _).mp hg
+  have h2 := Sat.imp_elim (M := M) (w := ⟨e.place, †, M.history.val⟩) h1 hll
+  obtain ⟨Q, hQ, hQseq⟩ := (sat_box_singleton_exists M _ l Formula.seq).mp h2
+  refine ⟨Q, hQ, fun q hq => ?_⟩
+  exact isSequential_of_possible hw ((Sat.seq M _).mp (hQseq q hq))
+
+/-- The two ways a delivery can be justified, lifted to the observer. The fast
+justification carries the delivery event, whose final world hosts the end-of-time
+guarantee. -/
+theorem delivery_cases (h : BaseProtocol M σ)
     {w : World P S.EventType} (hw : w.time ⪯ M.history.val) {a v : S.Value}
     (hd : ObservedAt M w (σ.deliver a v)) :
-    ObservedAt M w (σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a)) := by
+    (⟪w⟫ ⊨[M] σ.voteCertificate a v (maxDepth M (Correlated M σ.correlationSymb) a)) ∨
+    (SequentialEchoes M σ w v ∧
+      ∃ e, e ≪ w ∧ (⟪e⟫ ⊨[M] ⤒ᶠ (σ.correlation a a ⇒ᶠ □ᶠ[[a]] Formula.seq))) := by
   obtain ⟨e, he, hdel⟩ := hd
-  exact quorum_witness
-    (quorum_lift hw he (h.deliverBackward (predecessor_possible hw he) hdel))
+  rcases h.deliverBackward (predecessor_possible hw he) hdel with hc | ⟨hecho, hg⟩
+  · exact Or.inl (quorum_lift hw he hc)
+  · exact Or.inr ⟨sequentialEchoes_lift hw he (sequentialEchoes_iff.mp hecho), e, he, hg⟩
 
 theorem vote_value_eq {w : World P S.EventType} {l v b u : S.Value} {n k : Nat}
     (hv : ⟪w⟫ ⊨[M] σ.vote l v n) (hu : ⟪w⟫ ⊨[M] σ.vote b u k) : v = u := by
@@ -169,14 +242,43 @@ theorem vote_value_eq {w : World P S.EventType} {l v b u : S.Value} {n k : Nat}
     match e with | .none => [] | .some a => a.args) he
   exact (List.cons.inj (List.cons.inj ha).2).1
 
-/-- A delivered value has an actual proposal in the delivery's causal past. -/
+theorem echo_value_eq {w : World P S.EventType} {v u : S.Value}
+    (hv : ⟪w⟫ ⊨[M] σ.echo v) (hu : ⟪w⟫ ⊨[M] σ.echo u) : v = u := by
+  have he := ((Sat.ofEvent _ _ _).mp hv).1.symm.trans ((Sat.ofEvent _ _ _).mp hu).1
+  have ha := congrArg (fun e : MaybeEvent S.EventType =>
+    match e with | .none => [] | .some a => a.args) he
+  exact (List.cons.inj ha).1
+
+/-- A participant sequential at `w` cannot have echoed two values in `w`'s past. -/
+theorem echo_unique_of_sequential (h : BaseProtocol M σ)
+    {w : World P S.EventType} (hw : w.time ⪯ M.history.val) {q : P}
+    (hseq : isSequential (Event := S.EventType) q w.time)
+    {e f : World P S.EventType} (he : e ≪ w) (hf : f ≪ w)
+    (heq : e.place = q) (hfq : f.place = q) {v u : S.Value}
+    (hv : ⟪e⟫ ⊨[M] σ.echo v) (hu : ⟪f⟫ ⊨[M] σ.echo u) : v = u := by
+  rcases hseq e f he hf heq hfq with hef | hfe | rfl
+  · exact (h.echoNonEquivocation (predecessor_possible hw hf) hu
+      ((Sat.past _ _ _).mpr ⟨e, hef, heq.trans hfq.symm, hv⟩)).symm
+  · exact h.echoNonEquivocation (predecessor_possible hw he) hv
+      ((Sat.past _ _ _).mpr ⟨f, hfe, hfq.trans heq.symm, hu⟩)
+  · exact echo_value_eq hv hu
+
+/-- A delivered value has an actual proposal in the delivery's causal past, for a
+learner correlated (with anything) at the deliverer's final world. On the fast
+path the proposal is found through a member of the learner's sequential quorum. -/
 theorem deliver_provenance (h : BaseProtocol M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {l v : S.Value}
+    (hll : Correlated M σ.correlationSymb (finalWorld M w.place) l l)
     (hv : ⟪w⟫ ⊨[M] σ.deliver l v) :
     ObservedAt M w (σ.propose v) := by
-  obtain ⟨e, he, hv⟩ := quorum_witness (h.deliverBackward hw hv)
-  obtain ⟨f, hf, hp⟩ := vote_provenance h (predecessor_possible hw he) hv
-  exact ⟨f, accessible_trans hw hf he, hp⟩
-
+  rcases h.deliverBackward hw hv with hc | ⟨hecho, hg⟩
+  · obtain ⟨e, he, hv⟩ := quorum_witness hc
+    obtain ⟨f, hf, hp⟩ := vote_provenance h (predecessor_possible hw he) hv
+    exact ⟨f, accessible_trans hw hf he, hp⟩
+  · obtain ⟨Q, hQ, hQseq⟩ := sequentialQuorumAt_of_guarantee hw hg hll
+    obtain ⟨q, hq⟩ := Semifilter.quorum_nonempty hQ
+    obtain ⟨t, ht, _, he⟩ := sequentialEchoes_iff.mp hecho q (hQseq q hq)
+    obtain ⟨f, hf, hp⟩ := observedAt_iff.mpr (h.echoBackward (predecessor_possible hw ht) he)
+    exact ⟨f, accessible_trans hw hf ht, hp⟩
 
 end ModalDistribution.Examples.ThyHBB4

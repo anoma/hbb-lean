@@ -1,5 +1,7 @@
 import ModalDistribution.Examples.ThyHBB4.LivenessTwo
 import ModalDistribution.Examples.ThyHBB4.StrictDepth
+import ModalDistribution.Examples.ThyHBB4.FastPath
+import ModalDistribution.Examples.ThyHBB4.CM
 
 /-!
 # HBB4 correctness under vote monotonicity
@@ -142,31 +144,66 @@ theorem conflicting_rank_lt (h : ProtocolVM M σ) {w : World P S.EventType}
   have hbound := strictEndingDepthChain_le hchain
   omega
 
-/-- Deliveries observed at a correlated world agree, even with unequal depths. -/
+/-- Deliveries observed at a correlated world agree, even with unequal depths. The
+learners must be correlated at every final world so that the fast clause's
+end-of-time guarantee applies. -/
 theorem agreement_at (h : ProtocolVM M σ) {w : World P S.EventType}
     (hw : w.time ⪯ M.history.val) {a b v u : S.Value}
+    (habFinal : ∀ p, Correlated M σ.correlationSymb (finalWorld M p) a b)
     (hab : Correlated M σ.correlationSymb w a b)
     (hv : ObservedAt M w (σ.deliver a v))
     (hu : ObservedAt M w (σ.deliver b u)) : v = u := by
-  have hv' := observed_vote_of_observed_delivery h.toBaseProtocol hw hv
-  have hu' := observed_vote_of_observed_delivery h.toBaseProtocol hw hu
-  by_cases heq : v = u
-  · exact heq
-  apply False.elim
-  by_cases hle : maxDepth M (Correlated M σ.correlationSymb) a ≤ maxDepth M (Correlated M σ.correlationSymb) b
-  · have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
-    have hlt := conflicting_rank_lt h hw haa hab heq (by omega) hv' hu'
-    omega
-  · have hba := h.correlationSymm hw hab
-    have hbb := h.correlationTrans hw hba hab
-    have hlt := conflicting_rank_lt h hw hbb hba (Ne.symm heq) (by omega) hu' hv'
-    omega
+  have hba := h.correlationSymm hw hab
+  have haa := h.correlationTrans hw hab hba
+  have hbb := h.correlationTrans hw hba hab
+  -- Sequential quorums for `a` and `b` at `w`, from the fast clause's guarantee.
+  have hQa : ∀ {e : World P S.EventType},
+      (⟪e⟫ ⊨[M] ⤒ᶠ (σ.correlation a a ⇒ᶠ □ᶠ[[a]] Formula.seq)) → SequentialQuorumAt M a w := by
+    intro e hg
+    have hf := habFinal e.place
+    have hpos : (finalWorld M e.place).time ⪯ M.history.val := PreHistory.happensBeforeEq_refl _
+    exact sequentialQuorumAt_of_guarantee hw hg
+      (h.correlationTrans hpos hf (h.correlationSymm hpos hf))
+  have hQb : ∀ {e : World P S.EventType},
+      (⟪e⟫ ⊨[M] ⤒ᶠ (σ.correlation b b ⇒ᶠ □ᶠ[[b]] Formula.seq)) → SequentialQuorumAt M b w := by
+    intro e hg
+    have hf := habFinal e.place
+    have hpos : (finalWorld M e.place).time ⪯ M.history.val := PreHistory.happensBeforeEq_refl _
+    exact sequentialQuorumAt_of_guarantee hw hg
+      (h.correlationTrans hpos (h.correlationSymm hpos hf) hf)
+  rcases delivery_cases h.toBaseProtocol hw hv with hca | ⟨hechoa, ea, _, hga⟩
+  · rcases delivery_cases h.toBaseProtocol hw hu with hcb | ⟨hechob, eb, _, hgb⟩
+    · -- Both deliveries at the decision rank: the depth argument.
+      have hv' := quorum_witness hca
+      have hu' := quorum_witness hcb
+      by_cases heq : v = u
+      · exact heq
+      apply False.elim
+      by_cases hle : maxDepth M (Correlated M σ.correlationSymb) a ≤ maxDepth M (Correlated M σ.correlationSymb) b
+      · have hlt := conflicting_rank_lt h hw haa hab heq (by omega) hv' hu'
+        omega
+      · have hlt := conflicting_rank_lt h hw hbb hba (Ne.symm heq) (by omega) hu' hv'
+        omega
+    · -- `b` delivered fast, and `a` has an observed `v`-vote.
+      exact value_of_echo_unanimity_at h.toBaseProtocol h.voteMonotone hw (hQb hgb) hechob hba
+        (quorum_witness hca)
+  · rcases delivery_cases h.toBaseProtocol hw hu with hcb | ⟨hechob, _, _, _⟩
+    · -- `a` delivered fast, and `b` has an observed `u`-vote.
+      exact (value_of_echo_unanimity_at h.toBaseProtocol h.voteMonotone hw (hQa hga) hechoa hab
+        (quorum_witness hcb)).symm
+    · -- Both fast: a member of `a`'s sequential quorum echoed both values.
+      obtain ⟨Q, hQ, hQseq⟩ := hQa hga
+      obtain ⟨q, hq⟩ := Semifilter.quorum_nonempty hQ
+      have hseq := hQseq q hq
+      obtain ⟨e, he, heq, hve⟩ := hechoa q hseq
+      obtain ⟨f, hf, hfq, huf⟩ := hechob q hseq
+      exact echo_unique_of_sequential h.toBaseProtocol hw hseq he hf heq hfq hve huf
 
 /-- End-of-time agreement when every final participant correlates the learners. -/
 theorem agreement (h : ProtocolVM M σ) {a b v u : S.Value}
     (hab : ∀ p, Correlated M σ.correlationSymb (finalWorld M p) a b)
     (hv : Occurs M (σ.deliver a v)) (hu : Occurs M (σ.deliver b u)) : v = u := by
-  exact agreement_at h (PreHistory.happensBeforeEq_refl _)
+  exact agreement_at h (PreHistory.happensBeforeEq_refl _) hab
     (hab (Classical.ofNonempty)) hv hu
 
 /-- Liveness 1. -/
@@ -181,16 +218,24 @@ theorem livenessOne (h : ProtocolVM M σ) {l v : S.Value}
   exact ThyHBB4.livenessOne h.toBaseProtocol hLiveQuorum hUnique hObserved p hLive
 
 /-- A delivered value is `UncontestedOrDelivered` throughout its correlation row. -/
-theorem uncontestedOrDelivered_of_delivery (h : ProtocolVM M σ) {w : World P S.EventType}
-    (hw : w.time ⪯ M.history.val) {a b v : S.Value}
-    (hab : Correlated M σ.correlationSymb w a b)
-    (hdel : ObservedAt M w (σ.deliver a v)) : UncontestedOrDelivered M σ w b v := by
-  have hvote := observed_vote_of_observed_delivery h.toBaseProtocol hw hdel
-  have haa := h.correlationTrans hw hab (h.correlationSymm hw hab)
+theorem uncontestedOrDelivered_of_delivery (h : ProtocolVM M σ) {a b v : S.Value}
+    (hab : ∀ p, Correlated M σ.correlationSymb (finalWorld M p) a b) (q : P)
+    (hdel : ObservedAt M (finalWorld M q) (σ.deliver a v)) :
+    UncontestedOrDelivered M σ (finalWorld M q) b v := by
+  have hw : (finalWorld M q).time ⪯ M.history.val := PreHistory.happensBeforeEq_refl _
+  have habq := hab q
+  have haa := h.correlationTrans hw habq (h.correlationSymm hw habq)
   intro d u k hdb huv hu
-  have had := h.correlationTrans hw hab (h.correlationSymm hw hdb)
-  have hlt := conflicting_rank_lt h hw haa had (Ne.symm huv) (Nat.le_refl _) hvote hu
-  exact ⟨a, hlt, hab, hdel⟩
+  have had := h.correlationTrans hw habq (h.correlationSymm hw hdb)
+  rcases delivery_cases h.toBaseProtocol hw hdel with hcert | ⟨hecho, e, _, hg⟩
+  · have hlt := conflicting_rank_lt h hw haa had (Ne.symm huv) (Nat.le_refl _)
+      (quorum_witness hcert) hu
+    exact ⟨a, hlt, habq, hdel⟩
+  · have hf := hab e.place
+    have hpos : (finalWorld M e.place).time ⪯ M.history.val := PreHistory.happensBeforeEq_refl _
+    have hQa := sequentialQuorumAt_of_guarantee hw hg
+      (h.correlationTrans hpos hf (h.correlationSymm hpos hf))
+    exact absurd (value_of_echo_unanimity_at h.toBaseProtocol h.voteMonotone hw hQa hecho had hu) huv
 
 /-- Liveness 2. -/
 theorem livenessTwo (h : ProtocolVM M σ) {a b v : S.Value}
@@ -200,7 +245,7 @@ theorem livenessTwo (h : ProtocolVM M σ) {a b v : S.Value}
     (hDelivered : Occurs M (σ.deliver a v))
     (p : P) (hLive : ⟪finalWorld M p⟫ ⊨[M] σ.live) :
     OccursAt M p (σ.deliver b v) := by
-  exact livenessTwo_of_uncontestedOrDelivered h.toBaseProtocol (uncontestedOrDelivered_of_delivery h) hCorrelation hLiveQuorum hDelivered p hLive
+  exact livenessTwo_of_uncontestedOrDelivered h.toBaseProtocol (uncontestedOrDelivered_of_delivery h hCorrelation) hCorrelation hLiveQuorum hDelivered p hLive
 
 /-- Agreement in the paper's modal notation. -/
 theorem agreement_modal (h : ProtocolVM M σ) {a b v u : S.Value}
@@ -233,11 +278,6 @@ open scoped Formula PreHistory
 
 variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P} {σ : ProtocolSignature S}
-
-/-- Causal monotonicity gives vote monotonicity. -/
-theorem ProtocolCM.voteMonotone (h : ProtocolCM M σ) : VoteMonotonicity M σ := by
-  intro w hw g c v n hg _ _ a ha
-  exact h.causalMonotone hw ha hg
 
 /-- CM ⇒ VM. -/
 def ProtocolCM.toVM (h : ProtocolCM M σ) : ProtocolVM M σ :=

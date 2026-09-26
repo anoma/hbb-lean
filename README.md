@@ -19,7 +19,13 @@ rank `MaxDepth(l)` (there is no separate round cap on votes), and justify a
 round-zero transfer by a single observed vote, at any rank, for some learner
 `l'` correlated with `l` at the voting world (not a quorum). Votes carry
 no source learner (`Vote(l, v, n)`), so the former Vote-source rule is folded into
-`Vote0?`. Compared with the main branch this is two rounds fewer. Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
+`Vote0?`. Compared with the main branch this is two rounds fewer. A delivery may also be justified by the fast path — an echo for `v` from every
+participant not yet seen to equivocate (every participant sequential in the
+delivering world's past), together with the end-of-time guarantee that the
+learner, if then correlated with itself, has a quorum sequential at the end of
+time — whose safety rests on that guarantee rather than on depth. No separate
+axiom is needed: the guarantee is part of the delivery rule.
+Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
 monotonicity: the observer's correlations of a learner hold at that learner's
 round-zero votes and same-round switch votes; strictly weaker than CM, and
 exactly what the proofs use). Agreement, Liveness 1 and Liveness 2 are proved

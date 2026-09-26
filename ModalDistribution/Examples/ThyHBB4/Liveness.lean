@@ -56,6 +56,22 @@ theorem deliver_of_live_zero_quorum (h : BaseProtocol M σ) {l v : S.Value}
       (ψ := ↕ᶠ (σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l)))
       (hknow p) hlive)
 
+/-- A live quorum of echoes for `v` yields, by `Vote0!` from echoes, a live quorum of
+round-zero votes for `v`. -/
+theorem zero_quorum_of_live_echo_quorum (h : BaseProtocol M σ) {l v : S.Value}
+    (huod : ∀ p : P, UncontestedOrDelivered M σ ⟨p, †, M.history.val⟩ l v)
+    (hequorum : ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.echo v)) :
+    ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.vote l v 0) := by
+  apply ThyHBB1.boxPast_live_of_eventual_quorum h.thyLive
+    (σ.echoCertificate l v) (σ.vote l v 0) l
+    (live_boxPast_nests (M := M) (hTheory := h.thyLive)
+      (hAllowed := .event _) (hQuorum := hequorum))
+  intro w hw
+  apply Sat.imp_intro
+  intro hboth
+  obtain ⟨hlive, hcert⟩ := (Sat.and (M := M) (w := w) _ _).1 hboth
+  exact h.voteZeroEchoForward hw hlive (huod w.place) hcert
+
 /-- A unique proposal known at a live event initializes the round-zero quorum. -/
 theorem live_zero_quorum_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}
     (huod : ∀ p : P, UncontestedOrDelivered M σ ⟨p, †, M.history.val⟩ l v)
@@ -80,15 +96,7 @@ theorem live_zero_quorum_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Val
     (hLive := hLiveQuorum) (hEvent := hEvent)
   have hequorum := ThyHBB1.boxPast_live_of_eventual_quorum h.thyLive
     (♢ᶠ↓[[]] (σ.propose v)) (σ.echo v) l hprop heimp
-  apply ThyHBB1.boxPast_live_of_eventual_quorum h.thyLive
-    (σ.echoCertificate l v) (σ.vote l v 0) l
-    (live_boxPast_nests (M := M) (hTheory := h.thyLive)
-      (hAllowed := .event _) (hQuorum := hequorum))
-  intro w hw
-  apply Sat.imp_intro
-  intro hboth
-  obtain ⟨hlive, hcert⟩ := (Sat.and (M := M) (w := w) _ _).1 hboth
-  exact h.voteZeroEchoForward hw hlive (huod w.place) hcert
+  exact zero_quorum_of_live_echo_quorum h huod hequorum
 
 /-- Provenance makes every competing vote incompatible with the unique proposal. -/
 theorem uncontestedOrDelivered_of_unique_proposal (h : BaseProtocol M σ) {l v : S.Value}

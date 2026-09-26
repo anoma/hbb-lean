@@ -299,7 +299,7 @@ private theorem protocol : ProtocolCM model symbols := by
   · intro w _ l v hv
     cases l; cases v
     rw [deliver_world hv, depth]
-    exact cert_at 3 (by omega)
+    exact Or.inl (cert_at 3 (by omega))
   · intro w _ v u _ _
     cases v; cases u; rfl
   · intro w _ l b v u n _ _ _ hne

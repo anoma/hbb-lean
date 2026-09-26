@@ -113,10 +113,25 @@ structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   voteSuccBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v n},
     (⟪w⟫ ⊨[M] σ.vote l v (n + 1)) →
       (⟪w⟫ ⊨[M] σ.voteCertificate l v n)
-  /-- Revised HBB4 note §3.3, (5), Deliver?. -/
+  /-- Revised HBB4 note §3.3, (5), Deliver?, with a fast path: a delivery is
+  backed by a certificate at the decision rank.
+  Alternatively, we allow 'fast delivery' (the second ∨ clause)
+   exclusively for learners who assume one of their quora is entirely
+   sequential.
+  Specifically, this means that (at the end of time) we know that if l
+   correlates with itself, it must have a quorum entirely composed of
+   sequential participants: byzantine behaviour in each quorum means l
+    can disagree with itself.
+  This property is something you must know about `l` in order to
+   deliver: participants never reason about it otherwise.
+  For such a learner, 'fast delivery' of `v` requires that
+   _each participant_ either is known to be non-sequential,
+   or echoed `v`.  -/
   deliverBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v},
     (⟪w⟫ ⊨[M] σ.deliver l v) →
-      (⟪w⟫ ⊨[M] σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l))
+      (⟪w⟫ ⊨[M] σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l)) ∨
+      ((⟪w⟫ ⊨[M] □ᶠ[] (Formula.seq ⇒ᶠ ↓ᶠ (σ.echo v))) ∧
+        (⟪w⟫ ⊨[M] ⤒ᶠ (σ.correlation l l ⇒ᶠ □ᶠ[[l]] Formula.seq)))
   /-- Revised HBB4 note §3.3, (6), EchoNE. -/
   echoNonEquivocation : ∀ {w}, w.time ⪯ M.history.val → ∀ {v u},
     (⟪w⟫ ⊨[M] σ.echo v) → (⟪w⟫ ⊨[M] ↓ᶠ (σ.echo u)) → v = u
