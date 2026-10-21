@@ -156,6 +156,8 @@ theorem agreement_at (h : ProtocolVM M σ) {w : World P S.EventType}
   have hba := h.correlationSymm hw hab
   have haa := h.correlationTrans hw hab hba
   have hbb := h.correlationTrans hw hba hab
+  have hda := h.depthBound_dominates a
+  have hdb := h.depthBound_dominates b
   -- Sequential quorums for `a` and `b` at `w`, from the fast clause's guarantee.
   have hQa : ∀ {e : World P S.EventType},
       (⟪e⟫ ⊨[M] ⤒ᶠ (σ.correlation a a ⇒ᶠ □ᶠ[[a]] Formula.seq)) → SequentialQuorumAt M a w := by
@@ -225,12 +227,13 @@ theorem uncontestedOrDelivered_of_delivery (h : ProtocolVM M σ) {a b v : S.Valu
   have hw : (finalWorld M q).time ⪯ M.history.val := PreHistory.happensBeforeEq_refl _
   have habq := hab q
   have haa := h.correlationTrans hw habq (h.correlationSymm hw habq)
+  have hda := h.depthBound_dominates a
   intro d u k hdb huv hu
   have had := h.correlationTrans hw habq (h.correlationSymm hw hdb)
   rcases delivery_cases h.toBaseProtocol hw hdel with hcert | ⟨hecho, e, _, hg⟩
-  · have hlt := conflicting_rank_lt h hw haa had (Ne.symm huv) (Nat.le_refl _)
+  · have hlt := conflicting_rank_lt h hw haa had (Ne.symm huv) hda
       (quorum_witness hcert) hu
-    exact ⟨a, hlt, habq, hdel⟩
+    exact ⟨a, by omega, habq, hdel⟩
   · have hf := hab e.place
     have hpos : (finalWorld M e.place).time ⪯ M.history.val := PreHistory.happensBeforeEq_refl _
     have hQa := sequentialQuorumAt_of_guarantee hw hg

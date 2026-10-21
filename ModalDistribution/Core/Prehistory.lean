@@ -256,6 +256,25 @@ theorem height_lt_of_happensBefore {P Event}
         _ < heightList l + 1 := this
         _ = height (mk l) := by rfl
 
+private theorem heightList_le_of_forall {P Event}
+    {l : List (World P Event)} {n : Nat}
+    (h : ∀ t ∈ l, height t.2.2 ≤ n) :
+    heightList l ≤ n := by
+  induction l with
+  | nil => rw [heightList]; exact Nat.zero_le _
+  | cons x xs ih =>
+      rw [heightList]
+      exact Nat.max_le.mpr ⟨h x (List.mem_cons_self ..),
+        ih (fun t ht => h t (List.mem_cons_of_mem _ ht))⟩
+
+/-- The height of a prehistory is at most one more than a bound on the heights
+of its members' times. -/
+theorem height_mk_le {P Event}
+    {l : List (World P Event)} {n : Nat}
+    (h : ∀ t ∈ l, height t.2.2 ≤ n) :
+    height (PreHistory.mk l) ≤ n + 1 :=
+  Nat.succ_le_succ (heightList_le_of_forall h)
+
 /-- accessible predecessors have strictly smaller
 times, reflected here by the height measure. -/
 theorem height_lt_of_accessible {t' t : World P Event}

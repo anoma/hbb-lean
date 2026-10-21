@@ -25,13 +25,21 @@ delivering world's past), together with the end-of-time guarantee that the
 learner, if then correlated with itself, has a quorum sequential at the end of
 time — whose safety rests on that guarantee rather than on depth. No separate
 axiom is needed: the guarantee is part of the delivery rule.
-Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
+Decision ranks are a static per-learner budget `depthBound`, tied to the realized
+`maxDepth` by the environment axiom `depthBound_dominates` (so the rules are
+implementable). Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
 monotonicity: the observer's correlations of a learner hold at that learner's
 round-zero votes and same-round switch votes; strictly weaker than CM, and
 exactly what the proofs use). Agreement, Liveness 1 and Liveness 2 are proved
 for both, with no `sorry` anywhere. The earlier SW and CW theories of this
 branch were dropped once VM subsumed them; see PAPER_MAPPING.md.
 The proofs require no three-quorum intersection axiom.
+[`ModalDistribution/LowerBound/`](ModalDistribution/LowerBound/PLAN.md) proves a
+depth lower bound for this HBB4: for every budget `D` there are a topology and
+an exposure-based correlation relation on which `Q`-only `L`-deliveries are at
+least `D + 4` deep in every model, while a causally monotone witness model
+realizes `maxDepth(L) = D` and delivers at exactly `D + 4` (`hbb4_depth_lower_bound`,
+no `sorry`).
 `MaxDepth` is the attained maximum of row changes along causal chains, not a
 separate budget. The rules are semantic schemata over the existing model because
 legality quantifies over natural-number ranks, while the formula syntax quantifies

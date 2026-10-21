@@ -17,4 +17,9 @@ import ModalDistribution.Examples.ThyHBB2
 import ModalDistribution.Examples.ThyHBB3
 import ModalDistribution.Examples.ThyHBB4
 import ModalDistribution.Examples.Counterexamples
+import ModalDistribution.LowerBound.Basic
+import ModalDistribution.LowerBound.Depth
+import ModalDistribution.LowerBound.Vocabulary
+import ModalDistribution.LowerBound.Witness
+import ModalDistribution.LowerBound.HBB4
 import ModalDistribution.AxiomAudit

@@ -15,7 +15,7 @@ variable {M : Model S P} {σ : ProtocolSignature S}
 theorem capped_round_progress (h : BaseProtocol M σ) {l v : S.Value}
     (huod : ∀ p : P, UncontestedOrDelivered M σ ⟨p, †, M.history.val⟩ l v)
     (hzero : ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.vote l v 0)) :
-    ∀ n, n ≤ maxDepth M (Correlated M σ.correlationSymb) l →
+    ∀ n, n ≤ σ.depthBound l →
       ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.vote l v n) := by
   intro n
   induction n with
@@ -38,10 +38,10 @@ theorem deliver_of_live_zero_quorum (h : BaseProtocol M σ) {l v : S.Value}
     (hzero : ⊨[M] □ᶠ↓[[l]] (σ.live ∧ᶠ σ.vote l v 0)) :
     ⊨[M] σ.live ⇒ᶠ ↕ᶠ (σ.deliver l v) := by
   have hlast := capped_round_progress h huod hzero
-    (maxDepth M (Correlated M σ.correlationSymb) l) (Nat.le_refl _)
+    (σ.depthBound l) (Nat.le_refl _)
   have hknow := live_eventually_knows_box (M := M) (hTheory := h.thyLive) (hAllowed := .event _) (hQuorum := hlast)
   have hforward : □W⊨[M]
-      (σ.live ∧ᶠ σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l)) ⇒ᶠ
+      (σ.live ∧ᶠ σ.voteCertificate l v (σ.depthBound l)) ⇒ᶠ
         ↕ᶠ (σ.deliver l v) := by
     intro w hw
     apply Sat.imp_intro
@@ -53,7 +53,7 @@ theorem deliver_of_live_zero_quorum (h : BaseProtocol M σ) {l v : S.Value}
   intro hlive
   exact ThyHBB1.live_sometime_consequent_at h.thyLive hforward hlive
     (Sat.imp_elim (M := M) (w := ⟨p, †, M.history.val⟩) (φ := σ.live)
-      (ψ := ↕ᶠ (σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l)))
+      (ψ := ↕ᶠ (σ.voteCertificate l v (σ.depthBound l)))
       (hknow p) hlive)
 
 /-- A live quorum of echoes for `v` yields, by `Vote0!` from echoes, a live quorum of

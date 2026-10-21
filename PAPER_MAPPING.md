@@ -376,6 +376,29 @@ the rules and one to the depth measure:
    participant sequential at the world — i.e. `correlationSeq` without its
    correlation premise.
 
+8. **Static depth budget.** `ProtocolSignature` carries `depthBound : Value → Nat`,
+   the protocol's decision rank per learner, and `BaseProtocol` has the
+   environment axiom `depthBound_dominates : maxDepth M l ≤ depthBound l`.
+   `Deliver?`, `Deliver!`, `Vote0V!`, `VoteN!` and `UncontestedOrDelivered` use
+   `depthBound` where they used the realized `maxDepth`. The realized `maxDepth`
+   is a quantity of the completed model that no participant can know at decision
+   time; the budget is what an implementation uses, and the dominance axiom is
+   exactly the assumption under which it is sound. The correctness proofs are
+   unchanged in substance: they only ever needed the decision rank to be at least
+   the realized depth (`conflicting_rank_lt` takes `maxDepth ≤ n`). The
+   lower-bound development in `LowerBound/` shows that, on suitable topologies,
+   the adversary can realize `maxDepth = D`, so no budget below `D` is sound.
+
+9. **Depth lower bound (`ModalDistribution/LowerBound/`).** For every `D`,
+   with `depthBound L = D`, there are a topology and an exposure-based
+   correlation relation on which (i) every `BaseProtocol` model's `Q`-only
+   `L`-deliveries are at least `D + 4` deep (`delivery_depth_of_usesOnly`:
+   `propose, echo, vote 0 … vote D, deliver`), and (ii) a causally monotone HBB4
+   model realizes `maxDepth(L) = D` and delivers at exactly `D + 4`
+   (`Witness.hbb4_witness`), so no smaller budget is sound there
+   (`hbb4_depth_lower_bound`). The general version for arbitrary correct
+   protocols is only stated (`Statement.lean`, `sorry`); see `LowerBound/PLAN.md`.
+
 Consequences per coherence condition:
 
 * **CM** (`CM.lean`): unchanged proof. Its chain lemma turns conflicting votes of

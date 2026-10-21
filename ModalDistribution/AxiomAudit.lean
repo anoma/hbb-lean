@@ -4,6 +4,7 @@ import ModalDistribution.Examples.ThyHBB3
 import ModalDistribution.Examples.ThyHBB4
 import ModalDistribution.Examples.ThyLive.FiniteHistory
 import ModalDistribution.Examples.ThyLive.FiniteModel
+import ModalDistribution.LowerBound.HBB4
 
 /-!
 # Axiom audit
@@ -262,3 +263,7 @@ depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms ModalDistribution.Examples.ThyHBB4.CM.livenessTwo_modal
 
+/-! ## Depth lower bound for HBB4 -/
+#print axioms ModalDistribution.LowerBound.delivery_depth_of_usesOnly
+#print axioms ModalDistribution.LowerBound.HBB4.Witness.protocol
+#print axioms ModalDistribution.LowerBound.HBB4.hbb4_depth_lower_bound

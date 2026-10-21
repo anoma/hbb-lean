@@ -13,12 +13,12 @@ theorem transfer_zero_quorum (h : BaseProtocol M σ) {a b v : S.Value}
     (huod : ∀ p : P, UncontestedOrDelivered M σ ⟨p, †, M.history.val⟩ b v)
     (hcorr : ∀ p : P, Correlated M σ.correlationSymb ⟨p, †, M.history.val⟩ b a)
     (hlive : ⊨[M] □ᶠ[[b]] σ.live)
-    (hvote : ⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a))) :
+    (hvote : ⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ σ.vote a v (σ.depthBound a))) :
     ⊨[M] □ᶠ↓[[b]] (σ.live ∧ᶠ σ.vote b v 0) := by
-  have hlearn : ⊨[M] □ᶠ↓[[b]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a))) :=
+  have hlearn : ⊨[M] □ᶠ↓[[b]] (σ.live ∧ᶠ ♢ᶠ↓[[]] (σ.vote a v (σ.depthBound a))) :=
     live_eventually_knows_performed (M := M) (hTheory := h.thyLive) (hLive := hlive) (hEvent := hvote)
   apply ThyHBB1.boxPast_live_of_eventual_quorum h.thyLive
-    (♢ᶠ↓[[]] (σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a))) (σ.vote b v 0) b hlearn
+    (♢ᶠ↓[[]] (σ.vote a v (σ.depthBound a))) (σ.vote b v 0) b hlearn
   intro w hw
   apply Sat.imp_intro
   intro hboth
@@ -44,10 +44,10 @@ theorem delivery_live_vote (h : BaseProtocol M σ) {a b v : S.Value}
     (hcorr : ∀ p : P, Correlated M σ.correlationSymb ⟨p, †, M.history.val⟩ a b)
     (hlive : ⊨[M] □ᶠ[[b]] σ.live)
     {d : World P S.EventType} (hd : d ∈ M.history.val)
-    (hcert : ⟪d⟫ ⊨[M] σ.voteCertificate a v (maxDepth M (Correlated M σ.correlationSymb) a)) :
-    ⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a)) := by
+    (hcert : ⟪d⟫ ⊨[M] σ.voteCertificate a v (σ.depthBound a)) :
+    ⊨[M] ♢ᶠ↓[[]] (σ.live ∧ᶠ σ.vote a v (σ.depthBound a)) := by
   obtain ⟨Q, hQ, hVotes⟩ := (sat_box_singleton_exists (M := M) (w := d)
-    (l := a) (φ := ↓ᶠ (σ.vote a v (maxDepth M (Correlated M σ.correlationSymb) a)))).mp hcert
+    (l := a) (φ := ↓ᶠ (σ.vote a v (σ.depthBound a)))).mp hcert
   let w : World P S.EventType := ⟨d.place, †, M.history.val⟩
   obtain ⟨T, hT, hLives⟩ := live_at_event_of_live_quorum h hlive (q := d.place)
   have hinter := h.correlationSeq (PreHistory.happensBeforeEq_refl _) (hcorr d.place)

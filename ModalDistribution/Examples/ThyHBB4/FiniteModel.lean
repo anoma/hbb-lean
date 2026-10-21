@@ -188,6 +188,7 @@ private def symbols : ProtocolSignature signature where
   echoSymb := .echo
   voteSymb := Symbol.vote
   deliverSymb := .deliver
+  depthBound := fun _ => 0
 
 private theorem corr (w : World Unit signature.EventType) (a b : signature.Value) :
     Correlated model symbols.correlationSymb w a b := Set.mem_univ _
@@ -263,6 +264,7 @@ private theorem cert_at (k : Nat) (hk : 2 < k) :
 private theorem protocol : ProtocolCM model symbols := by
   refine {
     thyLive := live_theory
+    depthBound_dominates := fun a => by rw [depth]; exact Nat.zero_le _
     echoBackward := ?_
     voteZeroBackward := ?_
     voteSuccBackward := ?_
@@ -298,7 +300,7 @@ private theorem protocol : ProtocolCM model symbols := by
     exact absurd (vote_world hv).2 (by omega)
   · intro w _ l v hv
     cases l; cases v
-    rw [deliver_world hv, depth]
+    rw [deliver_world hv]
     exact Or.inl (cert_at 3 (by omega))
   · intro w _ v u _ _
     cases v; cases u; rfl
@@ -324,8 +326,7 @@ private theorem protocol : ProtocolCM model symbols := by
     cases l; cases v
     exact sometime_actual w 2 (by omega) vote_actual
   · intro w _ l v n hn _ _ _
-    rw [depth] at hn
-    exact absurd hn (by omega)
+    exact absurd hn (by simp [symbols])
   · intro w _ l v _ _
     cases l; cases v
     exact sometime_actual w 3 (by omega) deliver_actual
