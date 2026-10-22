@@ -25,21 +25,41 @@ delivering world's past), together with the end-of-time guarantee that the
 learner, if then correlated with itself, has a quorum sequential at the end of
 time — whose safety rests on that guarantee rather than on depth. No separate
 axiom is needed: the guarantee is part of the delivery rule.
-Decision ranks are a static per-learner budget `depthBound`, tied to the realized
-`maxDepth` by the environment axiom `depthBound_dominates` (so the rules are
-implementable). Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
+Decision ranks are the realized `maxDepth` of the completed model (HBB4 is a
+specification; `ThyAgreement` below is the implementable variant with a static
+budget). Two coherence conditions are formalized: CM (causal monotonicity) and VM (vote
 monotonicity: the observer's correlations of a learner hold at that learner's
 round-zero votes and same-round switch votes; strictly weaker than CM, and
 exactly what the proofs use). Agreement, Liveness 1 and Liveness 2 are proved
 for both, with no `sorry` anywhere. The earlier SW and CW theories of this
 branch were dropped once VM subsumed them; see PAPER_MAPPING.md.
 The proofs require no three-quorum intersection axiom.
+**ThyAgreement** ([`Examples/ThyAgreement`](ModalDistribution/Examples/ThyAgreement.lean))
+is a generalization of HBB4 that keeps `ThyLive`, the correlation axioms and a
+static, implementable depth budget `depthBound` (with `depthBound_dominates`),
+assumes agreement, Liveness 1 and Liveness 2 as *axioms*, and assumes none of
+HBB4's event rules (`echo…`, `vote…`, `deliver…`, kept commented out in its
+`Axioms.lean`). `FromHBB4.lean` proves HBB4 (CM or VM) ⇒ ThyAgreement (CM or VM),
+instantiating the budget with the realized depth. The depth lower bound does
+**not** transfer: [`LowerBoundAgreement/`](ModalDistribution/LowerBoundAgreement/Theorem.lean)
+proves the witness half (`agreement_witness`) and refutes the lower-bound half
+(`agreement_depth_lower_bound_fails`) with a model that delivers at depth `1`.
 [`ModalDistribution/LowerBound/`](ModalDistribution/LowerBound/PLAN.md) proves a
-depth lower bound for this HBB4: for every budget `D` there are a topology and
-an exposure-based correlation relation on which `Q`-only `L`-deliveries are at
-least `D + 4` deep in every model, while a causally monotone witness model
-realizes `maxDepth(L) = D` and delivers at exactly `D + 4` (`hbb4_depth_lower_bound`,
-no `sorry`).
+depth lower bound for this HBB4: for every `D` there are a topology and an
+exposure-based correlation relation on which `Q`-only `L`-deliveries are at
+least `D + 4` deep in every model realizing `maxDepth(L) ≥ D`, while a causally
+monotone witness model realizes `maxDepth(L) = D` and delivers at exactly
+`D + 4` (`hbb4_depth_lower_bound`, no `sorry`). The general theorem
+(`depth_lower_bound`, `LowerBound/Theorem.lean`) proves the bound `D` for *every*
+correct protocol — any set of executions closed under locality, free proposals and
+fair completion that satisfies agreement and both liveness properties — for honest
+`Q`-only deliveries, by grafting fairly completed branches; see
+`LowerBound/PLAN.md`. `LowerBound/HBB4Protocol.lean` instantiates the protocol
+notion with budgeted HBB4 (`Examples/ThyHBB4B`, decision rank = static budget) —
+locality, free proposals, fairness properties and correctness are proved; fair
+completion is the remaining assumption — yielding `hbb4_protocol_depth_bound`:
+under fair completion, budget-`B` HBB4 needs depth `≥ B` on honest `Q`-only
+branches.
 `MaxDepth` is the attained maximum of row changes along causal chains, not a
 separate budget. The rules are semantic schemata over the existing model because
 legality quantifies over natural-number ranks, while the formula syntax quantifies

@@ -30,10 +30,6 @@ structure ProtocolSignature (S : Signature) where
   echoSymb : S.EventSymb
   voteSymb : Nat → S.EventSymb
   deliverSymb : S.EventSymb
-  /-- The protocol's static depth budget per learner: the decision rank. It must
-  dominate the realized `maxDepth` of every model (`depthBound_dominates`); unlike
-  `maxDepth` it is known to participants, so the rules below are implementable. -/
-  depthBound : S.Value → Nat
 
 namespace ProtocolSignature
 
@@ -71,19 +67,19 @@ variable {P : Type} [Nonempty P]
 value `v` for learner `l`, judged at a world `w` (in the rules, the voter's
 final world): either no vote for a value other than `v` has been observed for
 any learner correlated with `l`, or a delivery of `v` has been observed for some
-learner `c` correlated with `l` whose decision rank `depthBound c` exceeds the
+learner `c` correlated with `l` whose decision rank `maxDepth c` exceeds the
 rank of every such conflicting vote. It occurs only as a premise of the forward
 rules, and is exactly what the liveness proofs establish (vacuously under a
 unique proposal; from the source delivery, with the rank bound from
 `conflicting_rank_lt`, for Liveness 2). The rank bound is what lets a
 participant discharge the obligation while respecting `voteNonEquivocation`: the delivery
-certificate contains a rank-`depthBound c` vote for `v`, which outranks any
+certificate contains a rank-`maxDepth c` vote for `v`, which outranks any
 conflicting same-round vote it may itself have cast. -/
 def UncontestedOrDelivered (M : Model S P) (σ : ProtocolSignature S)
     (w : World P S.EventType) (l v : S.Value) : Prop :=
   ∀ b u n, Correlated M σ.correlationSymb w b l → u ≠ v →
     (ObservedAt M w (σ.vote b u n)) →
-    ∃ c, n < σ.depthBound c ∧
+    ∃ c, n < maxDepth M (Correlated M σ.correlationSymb) c ∧
       Correlated M σ.correlationSymb w c l ∧ (ObservedAt M w (σ.deliver c v))
 
 /-- Exact backward, correlation, non-equivocation and forward schemata. There is
@@ -93,17 +89,15 @@ source rule, (8), is absorbed into `voteZeroBackward` now that votes carry no
 source.
 Votes are `vote l v n` (target, value, round) with no source learner.
 Each rule is quantified over possible worlds (`w.time ⪯ M.history.val`).
-`depthBound` is the protocol's static decision rank, which `depthBound_dominates`
-ties to the realized `maxDepth` of the completed model; correlation and non-equivocation are
-local to their displayed world. The forward side condition
+`maxDepth` is the realized depth of the completed model (an omniscient quantity:
+the rules are specifications, not an implementation — `ThyAgreement` is the
+implementable variant with a static budget, and `ThyAgreement/FromHBB4` shows
+HBB4 implies it); correlation and non-equivocation are local to their displayed
+world. The forward side condition
 `UncontestedOrDelivered` uses the same participant's final world. Natural ranks in these schemata are Lean quantifiers, outside the
 formula value sort. The structure fields are protocol rules, never correctness conclusions. -/
 structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   thyLive : M ⊨ᵀ ThyLive σ.liveSymb
-  /-- The static depth budget dominates the realized depth: along no causal chain
-  does a learner's correlation row change more than `depthBound` times. This is
-  the environment assumption that makes the budget sound. -/
-  depthBound_dominates : ∀ l, maxDepth M (Correlated M σ.correlationSymb) l ≤ σ.depthBound l
   /-- Revised HBB4 note §3.3, (2), Echo?. -/
   echoBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {v},
     (⟪w⟫ ⊨[M] σ.echo v) → (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.propose v))
@@ -132,7 +126,7 @@ structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   about it otherwise. -/
   deliverBackward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v},
     (⟪w⟫ ⊨[M] σ.deliver l v) →
-      (⟪w⟫ ⊨[M] σ.voteCertificate l v (σ.depthBound l)) ∨
+      (⟪w⟫ ⊨[M] σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l)) ∨
       ((⟪w⟫ ⊨[M] □ᶠ[] (Formula.seq ⇒ᶠ ↓ᶠ (σ.echo v))) ∧
         (⟪w⟫ ⊨[M] ⤒ᶠ (σ.correlation l l ⇒ᶠ □ᶠ[[l]] Formula.seq)))
   /-- Revised HBB4 note §3.3, (6), EchoNE. -/
@@ -173,18 +167,18 @@ structure BaseProtocol (M : Model S P) (σ : ProtocolSignature S) : Prop where
   voteZeroTransferForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l s v},
     (⟪w⟫ ⊨[M] σ.live) → UncontestedOrDelivered M σ (finalWorld M w.place) l v →
     Correlated M σ.correlationSymb (finalWorld M w.place) l s →
-    (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.vote s v (σ.depthBound s))) →
+    (⟪w⟫ ⊨[M] ♢ᶠ↓[[]] (σ.vote s v (maxDepth M (Correlated M σ.correlationSymb) s))) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.vote l v 0))
   /-- Revised HBB4 note §3.3, (15), VoteN! (successor indexing). -/
   voteSuccForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v n},
-    n < σ.depthBound l →
+    n < maxDepth M (Correlated M σ.correlationSymb) l →
     (⟪w⟫ ⊨[M] σ.live) → UncontestedOrDelivered M σ (finalWorld M w.place) l v →
     (⟪w⟫ ⊨[M] σ.voteCertificate l v n) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.vote l v (n + 1)))
   /-- Revised HBB4 note §3.3, (16), Deliver!. -/
   deliverForward : ∀ {w}, w.time ⪯ M.history.val → ∀ {l v},
     (⟪w⟫ ⊨[M] σ.live) →
-    (⟪w⟫ ⊨[M] σ.voteCertificate l v (σ.depthBound l)) →
+    (⟪w⟫ ⊨[M] σ.voteCertificate l v (maxDepth M (Correlated M σ.correlationSymb) l)) →
     (⟪w⟫ ⊨[M] ↕ᶠ (σ.deliver l v))
 
 /-- Correlation at a world holds at every causal predecessor. -/

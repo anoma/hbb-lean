@@ -35,13 +35,12 @@ open ModalDistribution.LowerBound
 open scoped Formula PreHistory
 open PreHistory History World
 
-@[simp] theorem symbols_live (D : Nat) : (symbols D).liveSymb = .live := rfl
-@[simp] theorem symbols_corr (D : Nat) : (symbols D).correlationSymb = .corr := rfl
-@[simp] theorem symbols_propose (D : Nat) : (symbols D).proposeSymb = .propose := rfl
-@[simp] theorem symbols_echo (D : Nat) : (symbols D).echoSymb = .echo := rfl
-@[simp] theorem symbols_vote (D n : Nat) : (symbols D).voteSymb n = .vote n := rfl
-@[simp] theorem symbols_deliver (D : Nat) : (symbols D).deliverSymb = .deliver := rfl
-@[simp] theorem symbols_depthBound (D l : Nat) : (symbols D).depthBound l = D := rfl
+@[simp] theorem symbols_live : symbols.liveSymb = .live := rfl
+@[simp] theorem symbols_corr : symbols.correlationSymb = .corr := rfl
+@[simp] theorem symbols_propose : symbols.proposeSymb = .propose := rfl
+@[simp] theorem symbols_echo : symbols.echoSymb = .echo := rfl
+@[simp] theorem symbols_vote (n : Nat) : symbols.voteSymb n = .vote n := rfl
+@[simp] theorem symbols_deliver : symbols.deliverSymb = .deliver := rfl
 
 /-- Worlds and prehistories of the witness. -/
 abbrev Wd := World Nat sig.EventType
@@ -375,7 +374,7 @@ theorem diamond_iff (D : Nat) (w : Wd) (ls : List Nat) (φ : Formula sig) :
   simp only [Set.mem_univ, true_and]
   exact Iff.rfl
 
-theorem live_iff (D : Nat) (w : Wd) : (⟪w⟫ ⊨[model D] (symbols D).live) ↔ w.place = 0 := by
+theorem live_iff (D : Nat) (w : Wd) : (⟪w⟫ ⊨[model D] symbols.live) ↔ w.place = 0 := by
   change (Pred.live = Pred.live ∧ w.place = 0) ∨
     (Pred.live = Pred.corr ∧ ∃ a b, ([] : List Nat) = [a, b] ∧ corr D w.time a b) ↔ _
   simp
@@ -490,22 +489,22 @@ theorem actual {D k : Nat} (hk : k < N D) {E : sig.EventType} (hE : lab D k = .s
   rw [← hE]
   exact A_mem hk
 
-theorem propose_actual (D : Nat) : ⟪A D 0⟫ ⊨[model D] (symbols D).propose 0 :=
+theorem propose_actual (D : Nat) : ⟪A D 0⟫ ⊨[model D] symbols.propose 0 :=
   actual (by show 0 < 2 * D + 6; omega) rfl
 
-theorem echo_actual (D : Nat) : ⟪A D 1⟫ ⊨[model D] (symbols D).echo 0 :=
+theorem echo_actual (D : Nat) : ⟪A D 1⟫ ⊨[model D] symbols.echo 0 :=
   actual (by show 1 < 2 * D + 6; omega) rfl
 
 theorem vote_actual (D : Nat) {r : Nat} (hr : r ≤ D) :
-    ⟪A D (r + 2)⟫ ⊨[model D] (symbols D).vote 0 0 r :=
+    ⟪A D (r + 2)⟫ ⊨[model D] symbols.vote 0 0 r :=
   actual (by show r + 2 < 2 * D + 6; omega) (by simp [lab, hr])
 
-theorem deliver_actual (D : Nat) : ⟪A D (D + 3)⟫ ⊨[model D] (symbols D).deliver 0 0 :=
+theorem deliver_actual (D : Nat) : ⟪A D (D + 3)⟫ ⊨[model D] symbols.deliver 0 0 :=
   actual (by show D + 3 < 2 * D + 6; omega) (by
     show lab D (D + 1 + 2) = _
     simp [lab])
 
-theorem propose_world {D : Nat} {w : Wd} {v : Nat} (h : ⟪w⟫ ⊨[model D] (symbols D).propose v) :
+theorem propose_world {D : Nat} {w : Wd} {v : Nat} (h : ⟪w⟫ ⊨[model D] symbols.propose v) :
     (w = A D 0 ∧ v = 0) ∨ (∃ i, 1 ≤ i ∧ i ≤ D ∧ v ≤ 1 ∧ w = Ew i v) := by
   obtain ⟨hm, he⟩ := event_index h
   rcases event_mem hm he with ⟨j, _, rfl, hl⟩ | ⟨i, b, h1, h2, hb, rfl, hE⟩
@@ -515,7 +514,7 @@ theorem propose_world {D : Nat} {w : Wd} {v : Nat} (h : ⟪w⟫ ⊨[model D] (sy
     subst hE
     exact Or.inr ⟨i, h1, h2, hb, rfl⟩
 
-theorem echo_world {D : Nat} {w : Wd} {v : Nat} (h : ⟪w⟫ ⊨[model D] (symbols D).echo v) :
+theorem echo_world {D : Nat} {w : Wd} {v : Nat} (h : ⟪w⟫ ⊨[model D] symbols.echo v) :
     w = A D 1 ∧ v = 0 := by
   obtain ⟨hm, he⟩ := event_index h
   rcases event_mem hm he with ⟨j, _, rfl, hl⟩ | ⟨i, b, _, _, _, rfl, hE⟩
@@ -524,7 +523,7 @@ theorem echo_world {D : Nat} {w : Wd} {v : Nat} (h : ⟪w⟫ ⊨[model D] (symbo
   · simp at hE
 
 theorem vote_world {D : Nat} {w : Wd} {l v n : Nat}
-    (h : ⟪w⟫ ⊨[model D] (symbols D).vote l v n) :
+    (h : ⟪w⟫ ⊨[model D] symbols.vote l v n) :
     w = A D (n + 2) ∧ l = 0 ∧ v = 0 ∧ n ≤ D := by
   obtain ⟨hm, he⟩ := event_index h
   rcases event_mem hm he with ⟨j, _, rfl, hl⟩ | ⟨i, b, _, _, _, rfl, hE⟩
@@ -534,7 +533,7 @@ theorem vote_world {D : Nat} {w : Wd} {l v n : Nat}
   · simp at hE
 
 theorem deliver_world {D : Nat} {w : Wd} {l v : Nat}
-    (h : ⟪w⟫ ⊨[model D] (symbols D).deliver l v) :
+    (h : ⟪w⟫ ⊨[model D] symbols.deliver l v) :
     w = A D (D + 3) ∧ l = 0 ∧ v = 0 := by
   obtain ⟨hm, he⟩ := event_index h
   rcases event_mem hm he with ⟨j, _, rfl, hl⟩ | ⟨i, b, _, _, _, rfl, hE⟩
@@ -630,6 +629,9 @@ theorem depthChain_D (D : Nat) : DepthChain (model D) (Correlated (model D) Pred
 theorem maxDepth_eq (D : Nat) : maxDepth (model D) (Correlated (model D) Pred.corr) 0 = D :=
   Nat.le_antisymm (depthChain_le (maxDepth_attained _ _ _)) (le_maxDepth (depthChain_D D))
 
+theorem maxDepth_eq' (D : Nat) :
+    maxDepth (model D) (Correlated (model D) symbols.correlationSymb) 0 = D := maxDepth_eq D
+
 /-! ## The liveness theory -/
 
 /-- Any Knowledge body true at a world of `a₀` is true at a world seen by `A D (2D+5)`. -/
@@ -716,7 +718,7 @@ theorem live_theory (D : Nat) : Theory.Valid (M := model D) (ThyLive Pred.live) 
 /-! ## The protocol rules -/
 
 theorem corr_iff' (D : Nat) (w : Wd) (a b : Nat) :
-    Correlated (model D) (symbols D).correlationSymb w a b ↔ corr D w.time a b :=
+    Correlated (model D) symbols.correlationSymb w a b ↔ corr D w.time a b :=
   corr_iff D w a b
 
 /-- A certificate for learner `l` forces `l = 0`, `v = 0`: participant `l` must have
@@ -733,11 +735,10 @@ theorem cert_intro {D k j : Nat} {w : Wd} (hw : w.time = TA D k) (hj : j < k) {�
   · exact ⟨A D j, by rw [hw]; exact A_mem hj, rfl, h⟩
   · exact ⟨A D j, by rw [hw]; exact A_mem hj, rfl, h⟩
 
-theorem protocol (D : Nat) : ProtocolCM (model D) (symbols D) := by
+theorem protocol (D : Nat) : ProtocolCM (model D) symbols := by
   have hN : ∀ k, k ≤ D + 3 → k < N D := by intro k hk; show k < 2 * D + 6; omega
   refine {
     thyLive := live_theory D
-    depthBound_dominates := fun l => depthChain_le (maxDepth_attained _ _ _)
     echoBackward := ?_
     voteZeroBackward := ?_
     voteSuccBackward := ?_
@@ -767,6 +768,7 @@ theorem protocol (D : Nat) : ProtocolCM (model D) (symbols D) := by
     exact cert_intro rfl (by omega) (vote_actual D (by omega))
   · intro w _ l v hv
     obtain ⟨rfl, rfl, rfl⟩ := deliver_world hv
+    rw [maxDepth_eq']
     exact Or.inl (cert_intro rfl (by show D + 2 < D + 3; omega) (vote_actual D (Nat.le_refl D)))
   · intro w _ v u hv hu
     obtain ⟨rfl, rfl⟩ := echo_world hv
@@ -821,7 +823,7 @@ theorem protocol (D : Nat) : ProtocolCM (model D) (symbols D) := by
   · intro w _ l v n hn hl _ hc
     obtain ⟨t, _, htl, ht⟩ := cert_elim hc
     obtain ⟨rfl, rfl, rfl, _⟩ := vote_world ht
-    have hn' : n < D := hn
+    rw [maxDepth_eq'] at hn
     exact sometime_at ((live_iff D w).mp hl) (hN (n + 1 + 2) (by omega))
       (vote_actual D (by omega))
   · intro w _ l v hl hc
@@ -838,13 +840,13 @@ theorem hbb4_witness (D : Nat) :
     ∃ (P : Type) (_ : Nonempty P) (T : Topology sig P) (κ : Correlation sig P)
       (L : Nat) (Q : Set P),
       Q ∈ (T L).quorums ∧ (∃ q, q ∉ Q) ∧ ExposureBased κ ∧
-      ∃ M' : Model sig P, ProtocolCM M' (symbols D) ∧
-        M'.learner = T ∧ corrOf (symbols D) M' = κ ∧
+      ∃ M' : Model sig P, ProtocolCM M' symbols ∧
+        M'.learner = T ∧ corrOf symbols M' = κ ∧
         maxDepth M' (Correlated M' Pred.corr) L = D ∧
         (∀ w : World P sig.EventType, w.time ⪯ M'.history.val →
           Correlated M' Pred.corr w L L) ∧
         ∃ v : Nat, ∀ p ∈ Q, ∃ d ∈ M'.history.val, d.place = p ∧
-          (⟪d⟫ ⊨[M'] (symbols D).deliver L v) ∧ worldDepth d = D + 4 := by
+          (⟪d⟫ ⊨[M'] symbols.deliver L v) ∧ worldDepth d = D + 4 := by
   refine ⟨Nat, inferInstance, quorums, fun _ h a b => corr D h a b, 0, fun p => p = 0,
     ⟨rfl, rfl⟩, ⟨1, fun h => Nat.one_ne_zero h⟩, ?_, model D, protocol D, rfl, ?_,
     maxDepth_eq D, fun w _ => (corr_iff D w 0 0).mpr (Or.inl rfl), 0, ?_⟩

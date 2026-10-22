@@ -376,28 +376,49 @@ the rules and one to the depth measure:
    participant sequential at the world — i.e. `correlationSeq` without its
    correlation premise.
 
-8. **Static depth budget.** `ProtocolSignature` carries `depthBound : Value → Nat`,
-   the protocol's decision rank per learner, and `BaseProtocol` has the
-   environment axiom `depthBound_dominates : maxDepth M l ≤ depthBound l`.
-   `Deliver?`, `Deliver!`, `Vote0V!`, `VoteN!` and `UncontestedOrDelivered` use
-   `depthBound` where they used the realized `maxDepth`. The realized `maxDepth`
-   is a quantity of the completed model that no participant can know at decision
-   time; the budget is what an implementation uses, and the dominance axiom is
-   exactly the assumption under which it is sound. The correctness proofs are
-   unchanged in substance: they only ever needed the decision rank to be at least
-   the realized depth (`conflicting_rank_lt` takes `maxDepth ≤ n`). The
-   lower-bound development in `LowerBound/` shows that, on suitable topologies,
-   the adversary can realize `maxDepth = D`, so no budget below `D` is sound.
+8. **Realized depth vs. static budget.** HBB4's rules use the realized `maxDepth`
+   of the completed model as the decision rank — an omniscient quantity, so
+   HBB4 is a specification rather than an implementation. The implementable
+   variant lives in `ThyAgreement`: its `ProtocolSignature` carries
+   `depthBound : Value → Nat`, `BaseProtocol` has the environment axiom
+   `depthBound_dominates : maxDepth M l ≤ depthBound l`, and `Deliver?`,
+   `Deliver!`, `Vote0V!`, `VoteN!` and `UncontestedOrDelivered` use the budget.
+   The correctness proofs only ever need the decision rank to be at least the
+   realized depth (`conflicting_rank_lt` takes `maxDepth ≤ n`), so they go
+   through in both. `ThyAgreement/FromHBB4.lean` proves HBB4 ⇒ ThyAgreement by
+   instantiating the budget with the realized depth (`σ.toAgreement M`), under
+   which dominance is reflexivity.
 
-9. **Depth lower bound (`ModalDistribution/LowerBound/`).** For every `D`,
-   with `depthBound L = D`, there are a topology and an exposure-based
-   correlation relation on which (i) every `BaseProtocol` model's `Q`-only
-   `L`-deliveries are at least `D + 4` deep (`delivery_depth_of_usesOnly`:
-   `propose, echo, vote 0 … vote D, deliver`), and (ii) a causally monotone HBB4
-   model realizes `maxDepth(L) = D` and delivers at exactly `D + 4`
-   (`Witness.hbb4_witness`), so no smaller budget is sound there
-   (`hbb4_depth_lower_bound`). The general version for arbitrary correct
-   protocols is only stated (`Statement.lean`, `sorry`); see `LowerBound/PLAN.md`.
+9. **Depth lower bound (`ModalDistribution/LowerBound/`).** For every `D` there
+   are a topology and an exposure-based correlation relation on which (i) in
+   every `BaseProtocol` model, `Q`-only `L`-deliveries are at least
+   `maxDepth(L) + 4` deep (`delivery_depth_of_usesOnly`: `propose, echo,
+   vote 0 … vote maxDepth, deliver`), hence at least `D + 4` deep in models
+   realizing `maxDepth(L) ≥ D`, and (ii) a causally monotone HBB4 model realizes
+   `maxDepth(L) = D` and delivers at exactly `D + 4` (`Witness.hbb4_witness`)
+   (`hbb4_depth_lower_bound`). The `ThyAgreement` version
+   (`LowerBoundAgreement/`, `agreement_depth_lower_bound`) is the same statement
+   with `depthBound L = D`. The general version for arbitrary correct
+   protocols, `depth_lower_bound` (`LowerBound/Theorem.lean`), is proved from
+   agreement and liveness alone for protocols closed under locality, free
+   proposals and fair completion, for honest `Q`-only deliveries; see
+   `LowerBound/PLAN.md`. `LowerBound/HBB4Protocol.lean` instantiates it with
+   the budgeted theory `Examples/ThyHBB4B` (HBB4 with `depthBound` in place of
+   `maxDepth`, plus `depthBound_dominates`), assuming only HBB4's fair-completion
+   property (`Completion`).
+
+10. **ThyAgreement (`Examples/ThyAgreement`, `LowerBoundAgreement/`).** A
+    generalization of HBB4 with the static depth budget of item 8 that assumes
+    agreement, Liveness 1 and Liveness 2 as axioms of `BaseProtocol` and none
+    of HBB4's event rules (those are commented out in `ThyAgreement/Axioms.lean`;
+    `ThyLive`, `depthBound_dominates` and the correlation axioms remain).
+    `ThyAgreement/FromHBB4.lean` shows HBB4 ⇒ ThyAgreement for CM and for VM
+    (`ProtocolCM.toAgreement`, `ProtocolVM.toAgreement`, for the reading
+    `σ.toAgreement M`); the base-rule-only implication is gone since agreement
+    needs a coherence condition. The HBB4 lower bound's witness half holds for
+    ThyAgreement (`agreement_witness`) but its lower-bound half fails
+    (`agreement_depth_lower_bound_fails`): `Counterexample.model D` realizes
+    `maxDepth(L) = D` and delivers with empty past.
 
 Consequences per coherence condition:
 

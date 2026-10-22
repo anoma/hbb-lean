@@ -227,7 +227,7 @@ guarantee. -/
 theorem delivery_cases (h : BaseProtocol M σ)
     {w : World P S.EventType} (hw : w.time ⪯ M.history.val) {a v : S.Value}
     (hd : ObservedAt M w (σ.deliver a v)) :
-    (⟪w⟫ ⊨[M] σ.voteCertificate a v (σ.depthBound a)) ∨
+    (⟪w⟫ ⊨[M] σ.voteCertificate a v (maxDepth M (Correlated M σ.correlationSymb) a)) ∨
     (SequentialEchoes M σ w v ∧
       ∃ e, e ≪ w ∧ (⟪e⟫ ⊨[M] ⤒ᶠ (σ.correlation a a ⇒ᶠ □ᶠ[[a]] Formula.seq))) := by
   obtain ⟨e, he, hdel⟩ := hd

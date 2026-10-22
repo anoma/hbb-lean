@@ -3,24 +3,24 @@
 Two results live here.
 
 * **The HBB4 special case is proved** (`HBB4.lean`, `hbb4_depth_lower_bound`,
-  no `sorry`, standard axioms only — see `AxiomAudit.lean`). For every budget
-  `D`, with the HBB4 vocabulary read at `depthBound L = D` (`Vocabulary.lean`,
-  `symbols D`), there are a topology, an *exposure-based* correlation relation
+  no `sorry`, standard axioms only — see `AxiomAudit.lean`). For every `D`
+  there are a topology, an *exposure-based* correlation relation
   (a function of the pair of learners and of the set of participants exposed as
   non-sequential in the observed prehistory), a learner `L` and a proper
   `L`-quorum `Q` such that
   - (`Depth.lean`, `delivery_depth_of_usesOnly`) in every `BaseProtocol` model —
     on *any* topology and correlation — every `L`-delivery whose causal history
-    lies inside `Q` has `worldDepth ≥ D + 4`: a rank-`r` vote is at least `r+3`
-    deep (`vote_depth`), the certificate clause of `Deliver?` sits above a
-    rank-`D` vote, and the fast path is closed because a participant outside `Q`
-    is vacuously sequential in the delivering world's past without having
-    echoed there (`no_fast_path_of_usesOnly`);
+    lies inside `Q` has `worldDepth ≥ maxDepth(L) + 4`, hence `≥ D + 4` when
+    `maxDepth(L) ≥ D`: a rank-`r` vote is at least `r+3` deep (`vote_depth`),
+    the certificate clause of `Deliver?` sits above a rank-`maxDepth(L)` vote,
+    and the fast path is closed because a participant outside `Q` is vacuously
+    sequential in the delivering world's past without having echoed there
+    (`no_fast_path_of_usesOnly`);
   - (`Witness.lean`, `hbb4_witness`) a causally monotone HBB4 model on that
     topology and correlation realizes `maxDepth(L) = D`, has `L ⋈ L` at every
     possible world, and `Q` `L`-delivers at `worldDepth = D + 4` exactly, so the
-    bound is tight and — by `depthBound_dominates` — no budget below `D` is
-    sound there (`∀ D' < D, ¬ BaseProtocol M' (symbols D')`).
+    bound is tight. (The `ThyAgreement` version, `LowerBoundAgreement/`, reads
+    the vocabulary with the static budget `depthBound L = D`.)
 
   The witness: participants are `ℕ`; `a₀ = 0` is the only live participant and
   `Q = {0}`; `e₁, …, e_D` each have two causally incomparable `propose` events
@@ -37,12 +37,47 @@ Two results live here.
   is what keeps `Vote0!`-by-transfer from obliging `a₀` to vote for other
   learners.
 
-* **The general statement** (`Statement.lean`, `depth_lower_bound`) is stated
-  with a `sorry`; the rest of this file is the plan for it. `Statement.lean` is
-  **not** imported by the main library (so the main build stays `sorry`-free);
-  build it with
+* **The general statement is proved too** (`Theorem.lean`, `depth_lower_bound`,
+  no `sorry`, standard axioms only): for every correct protocol — a set of
+  executions closed under locality (`local_closure`), free proposals
+  (`propose_free`) and fair completion (`fair_completion`), with agreement on
+  `EnvOK` executions and Liveness 1 and 2 on fair `EnvOK` ones — and every
+  `D ≥ 2`, there are a topology and a causally monotone correlation relation on
+  which every honest `Q`-only `L`-delivery (`HonestCone`: no member of `Q` has two
+  incomparable events in the delivery's causal cone) has depth `≥ D`. The
+  honesty hypothesis is necessary (see the docstring of `depth_lower_bound`).
+  The protocol's environment assumptions `env` are abstract; the theorem needs
+  them to follow from `EnvOK ∧ Coherent ∧ DepthLE D` and to imply `EnvOK`
+  (`henv`, `henv'`).
+  The construction (`Topology.lean`): hub `c`, fuses `q₁ … q_D` with
+  `Q = {q₁, …, q_D}`, `Qᵢ = {qᵢ, c}`, `L ⋈ Lᵢ` iff `qᵢ` is sequential,
+  `Lᵢ ⋈ Lⱼ` iff both fuses are; `EnvOK` reduces to "`c` and some fuse are
+  sequential". The argument (`Proof.lean`): stage `1` fairly completes a lone
+  proposal of `v₁ ≠ v` with `{q₁, c}` live, so `c` `L₁`-delivers `v₁`
+  (Liveness 1); stage `j+1` fairly completes `E_j ∪ Y_{j+1}` with `{q_{j+1}, c}`
+  live, where the schedule `Y` (`Schedule.lean`) adds the cone of `d` while never
+  exposing the fuse that just became live, so Liveness 2 transfers `c`'s delivery
+  to `L_{j+1}`; after `n+1 ≤ D` stages (`n` the depth of `d`) the whole cone has
+  been added (an event outside `Y_{t+1}` sits above a chain of `t` fuse events)
+  and `E_{n+1} ∪ d`'s cone is an `EnvOK` execution in which `L` delivers `v`,
+  `L_{n+1}` delivers `v₁`, and `L ⋈ L_{n+1}` — contradicting agreement.
 
-      lake build ModalDistribution.LowerBound.Statement
+* **HBB4 instantiates the protocol notion** (`HBB4Protocol.lean`), up to one
+  assumption. `hbb4Protocol σ hdist hcomp : Protocol S P σ.toBase` takes the
+  budgeted theory `ThyHBB4B` (decision rank = static `depthBound`; `ThyHBB4`'s
+  omniscient `maxDepth` is not local) with `executions` = histories satisfying
+  the local slow-path rules (`LocalRules`: backward rules with certificate
+  delivery, non-equivocation — the fast path's end-of-time guarantee is not
+  local), `env` = `correlationSeq` ∧ coherence of `⋈` ∧ budget dominance, and
+  `fair` = `ThyLive` ∧ forward rules. `local_closure`, `propose_free`,
+  `fair_sequential` and `fair_observes` are proved; `Protocol.Correct` follows
+  from `ThyHBB4B.CM.agreement/livenessOne/livenessTwo` (agreement via
+  `stripLive`, which erases the live designation so that `ThyLive` and the forward
+  rules hold vacuously). The one assumption is `Completion σ` — fair completion of
+  any `env` execution with a prescribed live set, adding no proposals — a
+  nonvacuity theorem about HBB4 still to be proved. Under it,
+  `hbb4_protocol_depth_bound`: budget-`B` HBB4 (`B ≥ 2`) cannot deliver on an
+  honest `Q`-only branch below depth `B`, by `depth_lower_bound` alone.
 
 ## The statement, in words
 

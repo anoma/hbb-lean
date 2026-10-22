@@ -28,6 +28,27 @@ is every world in its causal past. -/
 def UsesOnly (Q : Set P) (w : World P S.EventType) : Prop :=
   w.place ∈ Q ∧ ∀ t ∈ w.time, t.place ∈ Q
 
+/-- The causal cone of a world: the world together with its causal past, as a
+prehistory. -/
+def cone {E : Type} (w : World P E) : PreHistory P E :=
+  match w with
+  | (p, e, .mk l) => .mk ((p, e, .mk l) :: l)
+
+omit [Nonempty P] in
+theorem mem_cone {E : Type} {w t : World P E} : t ∈ cone w ↔ t = w ∨ t ≪ w := by
+  rcases w with ⟨p, e, l⟩
+  cases l with
+  | mk l =>
+    show t ∈ (p, e, PreHistory.mk l) :: l ↔ _
+    rw [List.mem_cons]
+    rfl
+
+/-- An honest branch: every participant is sequential in the world's causal cone.
+(Only the participants that act in the cone matter; the others are vacuously
+sequential.) -/
+def HonestCone (w : World P S.EventType) : Prop :=
+  ∀ p : P, isSequential (Event := S.EventType) p (cone w)
+
 /-! ## Topology, interpretation, causal monotonicity -/
 
 /-- A topology assigns each learner a quorum system. -/
@@ -60,5 +81,26 @@ world. -/
 def EnvOK (σ : ProtocolSignature S) (M : Model S P) : Prop :=
   ∀ {w : World P S.EventType}, w.time ⪯ M.history.val → ∀ {a b : S.Value},
     Correlated M σ.correlationSymb w a b → (⟪w⟫ ⊨[M] ♢ᶠ[[a, b]] Formula.seq)
+
+/-- Coherence of the correlation relation carried by a model: symmetry,
+transitivity, persistence along a participant's own past, and causal
+monotonicity (HBB4's `correlationSymm`, `correlationTrans`, `correlationPast`,
+`CausalMonotonicity`). A property of `κ` as a function of prehistories, not of
+the protocol. -/
+structure Coherent (σ : ProtocolSignature S) (M : Model S P) : Prop where
+  symm : ∀ {w : World P S.EventType}, w.time ⪯ M.history.val → ∀ {a b : S.Value},
+    Correlated M σ.correlationSymb w a b → Correlated M σ.correlationSymb w b a
+  trans : ∀ {w : World P S.EventType}, w.time ⪯ M.history.val → ∀ {a b c : S.Value},
+    Correlated M σ.correlationSymb w a b → Correlated M σ.correlationSymb w b c →
+    Correlated M σ.correlationSymb w a c
+  past : ∀ {w : World P S.EventType}, w.time ⪯ M.history.val → ∀ {a b : S.Value},
+    Correlated M σ.correlationSymb w a b → ∀ {u : World P S.EventType}, u ≪ w →
+    u.place = w.place → Correlated M σ.correlationSymb u a b
+  mono : ModalDistribution.Examples.ThyHBB4.CausalMonotonicity M σ
+
+/-- The realized depth of every learner is bounded by `D`. -/
+def DepthLE (σ : ProtocolSignature S) (M : Model S P) (D : Nat) : Prop :=
+  ∀ l : S.Value,
+    ModalDistribution.Examples.ThyHBB4.maxDepth M (Correlated M σ.correlationSymb) l ≤ D
 
 end ModalDistribution.LowerBound

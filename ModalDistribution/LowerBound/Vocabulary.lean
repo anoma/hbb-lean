@@ -4,8 +4,7 @@ import ModalDistribution.Examples.ThyHBB4.VM
 /-!
 # Vocabulary for the HBB4 depth lower bound
 
-Exposure-based correlation relations, and a concrete HBB4 vocabulary with a
-uniform depth budget `D`, shared by the witness model (`Witness.lean`) and the
+Exposure-based correlation relations, and a concrete HBB4 vocabulary, shared by the witness model (`Witness.lean`) and the
 theorem (`HBB4.lean`).
 -/
 
@@ -44,15 +43,14 @@ inductive Pred where
 `1, …, D` are the `L_i`; two further values serve as broadcast values. -/
 abbrev sig : Signature := ⟨Symbol, Pred, Nat⟩
 
-/-- The protocol's reading of the vocabulary, with a uniform depth budget `D`. -/
-def symbols (D : Nat) : ProtocolSignature sig where
+/-- The protocol's reading of the vocabulary. -/
+def symbols : ProtocolSignature sig where
   liveSymb := .live
   correlationSymb := .corr
   proposeSymb := .propose
   echoSymb := .echo
   voteSymb := Symbol.vote
   deliverSymb := .deliver
-  depthBound := fun _ => D
 
 end HBB4
 end ModalDistribution.LowerBound

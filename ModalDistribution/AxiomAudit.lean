@@ -2,9 +2,14 @@ import ModalDistribution.Examples.ThyHBB1
 import ModalDistribution.Examples.ThyHBB2
 import ModalDistribution.Examples.ThyHBB3
 import ModalDistribution.Examples.ThyHBB4
+import ModalDistribution.Examples.ThyHBB4B
 import ModalDistribution.Examples.ThyLive.FiniteHistory
 import ModalDistribution.Examples.ThyLive.FiniteModel
 import ModalDistribution.LowerBound.HBB4
+import ModalDistribution.LowerBound.Theorem
+import ModalDistribution.LowerBound.HBB4Protocol
+import ModalDistribution.Examples.ThyAgreement
+import ModalDistribution.LowerBoundAgreement.Theorem
 
 /-!
 # Axiom audit
@@ -267,3 +272,41 @@ depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #print axioms ModalDistribution.LowerBound.delivery_depth_of_usesOnly
 #print axioms ModalDistribution.LowerBound.HBB4.Witness.protocol
 #print axioms ModalDistribution.LowerBound.HBB4.hbb4_depth_lower_bound
+
+/-! ## ThyAgreement (initially a verbatim copy of HBB4; every result re-established) -/
+#print axioms ModalDistribution.Examples.ThyAgreement.CM.agreement
+#print axioms ModalDistribution.Examples.ThyAgreement.CM.livenessOne
+#print axioms ModalDistribution.Examples.ThyAgreement.CM.livenessTwo
+#print axioms ModalDistribution.Examples.ThyAgreement.VM.agreement
+#print axioms ModalDistribution.Examples.ThyAgreement.VM.livenessOne
+#print axioms ModalDistribution.Examples.ThyAgreement.VM.livenessTwo
+#print axioms ModalDistribution.Examples.ThyAgreement.VM.agreement_modal
+#print axioms ModalDistribution.Examples.ThyAgreement.VM.livenessOne_modal
+#print axioms ModalDistribution.Examples.ThyAgreement.VM.livenessTwo_modal
+#print axioms ModalDistribution.Examples.ThyAgreement.CM.agreement_modal
+#print axioms ModalDistribution.Examples.ThyAgreement.CM.livenessOne_modal
+#print axioms ModalDistribution.Examples.ThyAgreement.CM.livenessTwo_modal
+#print axioms ModalDistribution.Examples.ThyAgreement.ProtocolCM.toVM
+#print axioms ModalDistribution.Examples.ThyAgreement.FiniteModel.finite_protocol_nonvacuous
+#print axioms ModalDistribution.LowerBoundAgreement.Witness.protocol
+#print axioms ModalDistribution.LowerBoundAgreement.Counterexample.protocol
+#print axioms ModalDistribution.LowerBoundAgreement.agreement_witness
+#print axioms ModalDistribution.LowerBoundAgreement.agreement_depth_lower_bound_fails
+#print axioms ModalDistribution.Examples.ThyHBB4.ProtocolCM.toAgreement
+#print axioms ModalDistribution.Examples.ThyHBB4.ProtocolVM.toAgreement
+
+/-! ## The general depth lower bound (any correct, local, fairly completable protocol) -/
+#print axioms ModalDistribution.LowerBound.depth_lower_bound
+
+/-! ## Budgeted HBB4 (`ThyHBB4B`) -/
+#print axioms ModalDistribution.Examples.ThyHBB4B.CM.agreement
+#print axioms ModalDistribution.Examples.ThyHBB4B.CM.livenessOne
+#print axioms ModalDistribution.Examples.ThyHBB4B.CM.livenessTwo
+#print axioms ModalDistribution.Examples.ThyHBB4B.VM.agreement
+#print axioms ModalDistribution.Examples.ThyHBB4B.VM.livenessOne
+#print axioms ModalDistribution.Examples.ThyHBB4B.VM.livenessTwo
+#print axioms ModalDistribution.Examples.ThyHBB4B.FiniteModel.finite_protocol_nonvacuous
+
+/-! ## HBB4 as a protocol (fair completion assumed as a hypothesis) -/
+#print axioms ModalDistribution.LowerBound.HBB4.hbb4Protocol_correct
+#print axioms ModalDistribution.LowerBound.HBB4.hbb4_protocol_depth_bound

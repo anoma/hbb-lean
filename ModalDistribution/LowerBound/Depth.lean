@@ -96,11 +96,11 @@ theorem no_fast_path_of_usesOnly {Q : Set P} (hQ : ∃ q, q ∉ Q)
 
 /-- **Lower bound.** In any `BaseProtocol` model, a delivery for `l` whose causal
 history lies inside a set `Q` missing some participant is at least
-`depthBound l + 4` deep. -/
+`maxDepth l + 4` deep. -/
 theorem delivery_depth_of_usesOnly (h : BaseProtocol M σ) {Q : Set P}
     (hQ : ∃ q, q ∉ Q) {d : World P S.EventType} (hd : d.time ⪯ M.history.val)
     {l v : S.Value} (hdel : ⟪d⟫ ⊨[M] σ.deliver l v) (hu : UsesOnly Q d) :
-    σ.depthBound l + 4 ≤ worldDepth d := by
+    maxDepth M (Correlated M σ.correlationSymb) l + 4 ≤ worldDepth d := by
   rcases h.deliverBackward hd hdel with hcert | ⟨hfast, _⟩
   · obtain ⟨u, hu', hv⟩ := quorum_witness hcert
     have := vote_depth h (predecessor_possible hd hu') hv
