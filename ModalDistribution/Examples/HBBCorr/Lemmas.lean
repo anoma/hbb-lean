@@ -1,6 +1,6 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB1.Uniqueness
-import ModalDistribution.Examples.ThyHBB3.Axioms
+import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBBCorr.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
@@ -8,7 +8,7 @@ import ModalDistribution.Core.History
 import ModalDistribution.Core.Prehistory
 import ModalDistribution.Core.Semifilter
 /-!
-# ThyHBB3 Helper Lemmas
+# HBBCorr Helper Lemmas
 
 This file records the auxiliary lemmas used throughout Section~8 of the paper.
 Each statement mirrors the corresponding labelled lemma in the text: the
@@ -19,7 +19,7 @@ $\mnta$.
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB3
+namespace HBBCorr
 
 open HBB
 
@@ -553,7 +553,7 @@ theorem echo_quorums_agree
             hEchoCollision_local with
       | inl hLeft =>
           exact
-            ThyHBB1.echoNonEquiv_diamond (M := M)
+            HBBSafe.echoNonEquiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -563,7 +563,7 @@ theorem echo_quorums_agree
               (diamondPast_nil_of_past (M := M) hLeft)
       | inr hRight =>
           have hEq :=
-            ThyHBB1.echoNonEquiv_diamond (M := M)
+            HBBSafe.echoNonEquiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -1151,6 +1151,6 @@ theorem correlationImpliesQuorumIntersection
       (M := M) hTheory hSomeone
 
 
-end ThyHBB3
+end HBBCorr
 end Examples
 end ModalDistribution

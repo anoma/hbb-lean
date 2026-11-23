@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB2.Axioms
-import ModalDistribution.Examples.ThyHBB2.Lemmas
-import ModalDistribution.Examples.ThyHBB1.Safety
+import ModalDistribution.Examples.HBBSimp.Axioms
+import ModalDistribution.Examples.HBBSimp.Lemmas
+import ModalDistribution.Examples.HBBSafe.Safety
 import ModalDistribution.Core.Semifilter
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
@@ -9,17 +9,17 @@ import ModalDistribution.Logic.Properties
 import ModalDistribution.Logic.Properties.Modalities
 
 /-!
-# ThyHBB2 Liveness 1
+# HBBSimp Happy Termination
 
-This file records the Liveness~1 statement for `ThyHBB2`, mirroring
-Liveness property 1 for ThyHBB2. Under a live quorum for learner `l` and a
+This file records the Happy Termination statement for `HBBSimp`, mirroring
+Happy Termination for HBBSimp. Under a live quorum for learner `l` and a
 unique proposed value, any live participant that learns about the proposal will
 eventually deliver it for `(l,l)`.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB2
+namespace HBBSimp
 
 open HBB
 
@@ -38,10 +38,10 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 7.2.3 (Liveness 1). If learner `l` has a live quorum and
+/-- Paper: Proposition 7.3.3 (Happy Termination). If learner `l` has a live quorum and
 there is exactly one proposed value, then any live participant that learns about
 the proposal will eventually deliver it for `(l,l)`. -/
-theorem livenessOne
+theorem happyTermination
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -93,7 +93,7 @@ theorem livenessOne
         (↕ᶠ (predicate0 liveSymb ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩) :=
-    ThyHBB1.uniquePropose_eventually_echo (M := M)
+    HBBSafe.uniquePropose_eventually_echo (M := M)
       (liveSymb := liveSymb)
       (proposeSymb := proposeSymb)
       (echoSymb := echoSymb)
@@ -104,7 +104,7 @@ theorem livenessOne
   -- Lemma 6.6.1: some live participant echoes `v`.
   have hLiveEchoGlobal :
       ⊨[M] ♢ᶠ↓[[]] (predicate0 liveSymb ∧ᶠ ofEvent ⟨echoSymb, [v]⟩) :=
-    ThyHBB1.diamondPast_live_of_eventual (M := M)
+    HBBSafe.diamondPast_live_of_eventual (M := M)
       (hLiveTheory := hThyLive)
       (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
       (ψ := ofEvent ⟨echoSymb, [v]⟩)
@@ -126,7 +126,7 @@ theorem livenessOne
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
-    ThyHBB1.boxPast_live_knowsEcho_knowsPropose (M := M)
+    HBBSafe.boxPast_live_knowsEcho_knowsPropose (M := M)
       (hEchoBack := theory_echoBackward (M := M) hTheory)
       (hQuorum := hKnowsEchoGlobal)
   -- Lemma 6.5.2(2) and Lemma 6.6.1: that quorum echoes `v`.
@@ -135,7 +135,7 @@ theorem livenessOne
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨echoSymb, [v]⟩) :=
-    ThyHBB1.boxPast_live_of_eventual_quorum
+    HBBSafe.boxPast_live_of_eventual_quorum
       (M := M)
       (liveSymb := liveSymb)
       (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -163,7 +163,7 @@ theorem livenessOne
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l, v]⟩) :=
-    ThyHBB1.boxPast_live_of_eventual_quorum
+    HBBSafe.boxPast_live_of_eventual_quorum
       (M := M) (liveSymb := liveSymb)
       (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
       (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
@@ -172,13 +172,13 @@ theorem livenessOne
       (hQuorum := hEchoNestedGlobal)
       (hImp := voteForward_imp (M := M) (hTheory := hTheory))
 
-  -- Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!), concludes
+  -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!), concludes
   -- eventual delivery.
   have hDeliverEventually :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
     have hGlobal :=
-      ThyHBB1.live_eventually_consequent (M := M)
+      HBBSafe.live_eventually_consequent (M := M)
         (hLiveTheory := hThyLive)
         (φ := □ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩))
         (ψ := ofEvent ⟨deliverSymb, [l, l, v]⟩)
@@ -198,10 +198,10 @@ theorem livenessOne
         (by simpa [wTop] using hGlobal p) hLiveHere
   simpa [wTop] using hDeliverEventually
 
-/-- Paper: Proposition 7.2.3, first corollary. When the guarded proposal
+/-- Paper: Proposition 7.3.3, first corollary. When the guarded proposal
 diamond holds, every member of learner `l`'s quorum knows (in the past) that the
 value was delivered. -/
-theorem livenessOne_boxPast
+theorem happyTermination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -217,16 +217,16 @@ theorem livenessOne_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOne (M := M)
+      happyTermination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
         (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum)
         (hUnique := hUnique))
-/-- Paper: Proposition 7.2.3, second corollary. The guarded proposal diamond
+/-- Paper: Proposition 7.3.3, second corollary. The guarded proposal diamond
 ensures the delivery diamond for learner `l`. -/
-theorem livenessOne_diamondPast
+theorem happyTermination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -242,13 +242,13 @@ theorem livenessOne_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOne (M := M)
+      happyTermination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
         (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum)
         (hUnique := hUnique))
-end ThyHBB2
+end HBBSimp
 end Examples
 end ModalDistribution

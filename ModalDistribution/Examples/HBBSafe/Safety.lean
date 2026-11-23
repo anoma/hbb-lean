@@ -1,15 +1,15 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB1.Axioms
+import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Core.History
 
 /-!
-# ThyHBB1 Safety and Liveness Helper Lemmas
+# HBBSafe Safety and Liveness Helper Lemmas
 
 This file contains intermediate lemmas supporting the safety and liveness properties of the
-ThyHBB1 broadcast protocol, organized into several categories:
+HBBSafe broadcast protocol, organized into several categories:
 
 - **Monotonicity lemmas**: Properties about how formulas behave under history restriction
   - `uniquePropose_monotone`: Uniqueness of proposals is preserved in smaller histories
@@ -20,11 +20,11 @@ ThyHBB1 broadcast protocol, organized into several categories:
 
 - **Quorum and liveness lemmas**: Lifting properties through quorums
   - `boxPast_of_eventual_quorum`: Quorum knowledge with global implication lifts to future quorum
-  - `boxPast_live_of_eventual_quorum`: Previous result under ThyLive assumption (Lemma 6.4.2(2))
+  - `boxPast_live_of_eventual_quorum`: Previous result under ThyLive assumption (Lemma 6.5.2(2))
   - `live_sometime_consequent_at`, `live_eventually_consequent`: Composing eventual
-    consequences at the end of time (Lemma 6.4.3 and its per-place core)
+    consequences at the end of time (Lemma 6.5.3 and its per-place core)
 
-- **Safety of a learner** (Lemma 6.4.1):
+- **Safety of a learner** (Lemma 6.5.1):
   - `safe_monotone`: `safe` persists along in-place accessibility
   - `safe_allPast`: `safe` implies it always held in the past
 
@@ -36,7 +36,7 @@ These lemmas serve as building blocks for the main agreement and liveness theore
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB1
+namespace HBBSafe
 
 open HBB
 
@@ -315,7 +315,7 @@ theorem safeFormula_allPast
     Sat.not_elim (M := M) (w := t)
       (φ := safeFormula proposeSymb l) hNotSafe hSafe_t
 
-/-- Paper: Lemma 6.4.2(1). Quorum knowledge of `φ` and a
+/-- Paper: Lemma 6.5.2(1). Quorum knowledge of `φ` and a
 global implication to `ψ` lift `φ` to a future quorum of `ψ`. -/
 theorem boxPast_of_eventual_quorum
     (φ ψ : Formula S)
@@ -378,7 +378,7 @@ theorem boxPast_of_eventual_quorum
     simpa using hPastψ_end
   simpa using hPastψ
 
-/-- Paper: Lemma 6.4.2(2). The previous result under the
+/-- Paper: Lemma 6.5.2(2). The previous result under the
 `ThyLive` assumption. -/
 theorem boxPast_live_of_eventual_quorum
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -565,7 +565,7 @@ theorem diamondPast_live_of_eventual
     sat_diamondEmpty_of_local (M := M) (w := ⟨p, †, M.history.val⟩)
       (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ ψ)) ⟨t'.place, hPast'⟩
 
-/-- The per-place core of Lemma 6.4.3: at a live end-of-time world, an
+/-- The per-place core of Lemma 6.5.3: at a live end-of-time world, an
 eventual `φ` combines with the implication `↕(live ∧ φ) ⇒ ↕ψ` to give an
 eventual `ψ`. -/
 theorem live_sometime_consequent_at
@@ -642,7 +642,7 @@ theorem live_sometime_consequent_at
       (w := wₚ)
       (φ := Formula.past ψ)).2 hPastψ
 
-/-- Paper: Lemma 6.4.3. Composing eventual consequences at the end of
+/-- Paper: Lemma 6.5.3. Composing eventual consequences at the end of
 time. -/
 theorem live_eventually_consequent
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -665,7 +665,7 @@ theorem live_eventually_consequent
         (φ := predicate0 liveSymb) (ψ := ↕ᶠ φ)).1
         (hLive p) hLive_p)
 
-/-- Paper: Lemma 6.4.1(1). Safety of a learner is monotone along in-place accessibility: if `safe(l)`
+/-- Paper: Lemma 6.5.1(1). Safety of a learner is monotone along in-place accessibility: if `safe(l)`
 holds at a world of the model, it holds at every same-place predecessor. -/
 theorem safe_monotone
     (hTheory : M ⊨ᵀ
@@ -701,7 +701,7 @@ theorem safe_monotone
       hSafeF
   exact (safe_iff_safeFormula (M := M) (hTheory := hTheory) (w := w') hW' l).2 hSafeF'
 
-/-- Paper: Lemma 6.4.1(2). Safety of a learner at an event-tuple of the model implies it held at every
+/-- Paper: Lemma 6.5.1(2). Safety of a learner at an event-tuple of the model implies it held at every
 past event at the same place. -/
 theorem safe_allPast
     (hTheory : M ⊨ᵀ
@@ -746,7 +746,7 @@ theorem voteForward_imp_of_everytime
 /-- The instantiated `Vote!` implication used by the liveness proofs: when a
 learner is safe at the end of time, any live participant holding an echo
 quorum eventually votes. Safety persists to every relevant past world by
-`safe_monotone` (Lemma 6.4.1). -/
+`safe_monotone` (Lemma 6.5.1). -/
 theorem voteForward_imp
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -759,7 +759,7 @@ theorem voteForward_imp
   refine voteForward_imp_of_everytime (M := M)
     (hTheory := hTheory) ?_
   intro t _
-  -- Lemma 6.4.1(2) at the end-of-time world of `t.place` gives safety at
+  -- Lemma 6.5.1(2) at the end-of-time world of `t.place` gives safety at
   -- every event of that place, which is exactly `⇕safe` at `t`.
   have hAllPast :
       ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
@@ -780,6 +780,6 @@ theorem voteForward_imp
 end Results
 
 
-end ThyHBB1
+end HBBSafe
 end Examples
 end ModalDistribution

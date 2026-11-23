@@ -1,18 +1,18 @@
-import ModalDistribution.Examples.ThyHBB3.Agreement
-import ModalDistribution.Examples.ThyHBB3.Liveness_One
-import ModalDistribution.Examples.ThyHBB3.Liveness_Two
+import ModalDistribution.Examples.HBBCorr.Agreement
+import ModalDistribution.Examples.HBBCorr.HappyTermination
+import ModalDistribution.Examples.HBBCorr.CascadeTermination
 
 /-!
-# Correctness properties for ThyHBB3
+# Correctness properties for HBBCorr
 
 The paper's Theorem 8.2.3 collects the three correctness properties of
-`ThyHBB3` (Figure 12): Agreement, Liveness 1, and Liveness 2. This file
+`HBBCorr` (Figure 13): Agreement, Happy Termination, and Cascade Termination. This file
 bundles the corresponding Lean theorems into a single statement.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB3
+namespace HBBCorr
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -27,8 +27,8 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- Paper: Theorem 8.2.3 / Figure 12. The correctness properties of `ThyHBB3`, collected: Agreement
-(Proposition 8.3.1), Liveness 1 (Proposition 8.5.1), and Liveness 2
+/-- Paper: Theorem 8.2.3 / Figure 13. The correctness properties of `HBBCorr`, collected: Agreement
+(Proposition 8.3.1), Happy Termination (Proposition 8.5.1), and Cascade Termination
 (Proposition 8.4.5). -/
 theorem correctness
     (hTheory : M ⊨ᵀ
@@ -39,7 +39,7 @@ theorem correctness
       ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v₁]⟩)) ⇒ᶠ
            ((♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂, v₂]⟩)) ⇒ᶠ
              (v₁ ≃ᶠ v₂))) ∧
-    -- Liveness 1
+    -- Happy Termination
     (∀ {l v : Signature.Value S},
       (⊨[M]□ᶠ[[l]]predicate0 liveSymb) →
       (⊨[M]∃!ᶠ w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩)) →
@@ -47,7 +47,7 @@ theorem correctness
               ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
            predicate0 liveSymb ⇒ᶠ
            ↕ᶠ(ofEvent ⟨deliverSymb, [l, v]⟩)) ∧
-    -- Liveness 2
+    -- Cascade Termination
     (∀ {l₁ l₂ v : Signature.Value S},
       (⊨[M]□ᶠ[](ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) →
       (⊨[M]□ᶠ[[l₂]]predicate0 liveSymb) →
@@ -58,12 +58,12 @@ theorem correctness
       agreement (M := M) (hTheory := hTheory)
         (hCorrelation := hCorrelation),
    fun hLiveQuorum hUnique =>
-      livenessOne (M := M) (hTheory := hTheory)
+      happyTermination (M := M) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
    fun hCorrelation hLiveQuorum =>
-      livenessTwo (M := M) (hTheory := hTheory)
+      cascadeTermination (M := M) (hTheory := hTheory)
         (hCorrelation := hCorrelation) (hLiveQuorum := hLiveQuorum)⟩
 
-end ThyHBB3
+end HBBCorr
 end Examples
 end ModalDistribution

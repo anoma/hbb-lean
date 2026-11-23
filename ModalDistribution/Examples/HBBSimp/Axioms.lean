@@ -4,20 +4,20 @@ import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 
 /-!
-# ThyHBB2 Axioms
+# HBBSimp Axioms
 
-This file records the axiom system of the theory `ThyHBB2` (Figure 9 of the
+This file records the axiom system of the theory `HBBSimp` (Figure 10 of the
 paper): backward rules `Echo?`/`Vote?`/`Deliver?`, non-equivocation `EchoNE`,
 and forward rules `Echo!`/`Vote!`/`Deliver!`, over `ThyLive`.
 
-Compared to `ThyHBB1`, the theory has no `safe` predicate: `Vote?` and `Vote!`
+Compared to `HBBSafe`, the theory has no `safe` predicate: `Vote?` and `Vote!`
 are unguarded. The rules shared verbatim with the other theories come from
 `Examples.HBB`.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB2
+namespace HBBSimp
 
 open HBB
 
@@ -32,7 +32,7 @@ variable {S : Signature}
 
 section BackwardAxioms
 
-/-- Paper: Figure 9, rule (Vote?). Backward rule `Vote?`: votes require an `l`-quorum of echoes. -/
+/-- Paper: Figure 10, rule (Vote?). Backward rule `Vote?`: votes require an `l`-quorum of echoes. -/
 @[simp] def voteBackwardAxiom
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
@@ -47,7 +47,7 @@ end NonEquivocation
 
 section ForwardAxioms
 
-/-- Paper: Figure 9, rule (Vote!). Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote. -/
+/-- Paper: Figure 10, rule (Vote!). Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -64,8 +64,8 @@ variable
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- Paper: Definition 7.1.1 (theory ThyHBB2). Theory ThyHBB2 .
-It extends `ThyLive` with the `ThyHBB2`-specific axioms shown in -/
+/-- Paper: Definition 7.1.1 (theory HBBSimp). Theory HBBSimp .
+It extends `ThyLive` with the `HBBSimp`-specific axioms shown in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
@@ -86,7 +86,7 @@ variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- A model of `ThyHBB2` is a model of `ThyLive`. -/
+/-- A model of `HBBSimp` is a model of `ThyLive`. -/
 theorem theory_thyLive
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     M ⊨ᵀ ThyLive liveSymb :=
@@ -206,7 +206,7 @@ theorem voteForward_elim
 
 end Instantiations
 
-end ThyHBB2
+end HBBSimp
 
 end Examples
 end ModalDistribution

@@ -1,15 +1,15 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB2.Axioms
-import ModalDistribution.Examples.ThyHBB1.Uniqueness
+import ModalDistribution.Examples.HBBSimp.Axioms
+import ModalDistribution.Examples.HBBSafe.Uniqueness
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Core.History
 import ModalDistribution.Core.Semifilter
 
 /-!
-# ThyHBB2 Helper Lemmas
+# HBBSimp Helper Lemmas
 
-This file bundles auxiliary lemmas for the ThyHBB2 development: translating
+This file bundles auxiliary lemmas for the HBBSimp development: translating
 deliveries witnessed at end of time into vote quorums (`Deliver?`), tracing
 votes back to echo quorums (`Vote?`), and instantiating `Vote!` in the form
 Lemma 6.5.2(2) consumes.
@@ -17,7 +17,7 @@ Lemma 6.5.2(2) consumes.
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB2
+namespace HBBSimp
 
 open HBB
 
@@ -152,6 +152,6 @@ theorem voteForward_imp
       (hW := ht)
       (hLiveEcho := hLiveEcho)
 
-end ThyHBB2
+end HBBSimp
 end Examples
 end ModalDistribution

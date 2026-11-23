@@ -10,8 +10,8 @@ import ModalDistribution.Core.History
 We formalise the liveness theory.  The theory is
 parametrised by a distinguished predicate symbol `liveSymb`, and contains the
 axioms `LiveAlways` and `LiveSeq`, together with two knowledge axiom
-schemes indexed by events (and, for the quorum scheme, a learner).  This file records the theory and lemmas and
-propositions that depend on it.
+schemes indexed by events (and, for the quorum scheme, a learner).  This file
+records the theory and the lemmas and propositions that depend on it.
 -/
 
 namespace ModalDistribution
@@ -224,7 +224,7 @@ theorem live_at_predecessor
   simpa [Hpre, hHpre]
     using hLivePre
 
-/-- Paper: Lemma 5.2.10(1). Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
+/-- Paper: Lemma 5.2.9(1). Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
  Liveness does not depend on time: a participant is live at a specific world
 if and only if it is live at the end-of-time world for that participant.
 This follows from the liveness-always axiom (live ⇔ ⤒ live).
@@ -290,7 +290,7 @@ theorem alwaysLiveEquivForward
     simpa [Sat, World.place, World.event, World.time]
       using hLocal'
 
-/-- Paper: Lemma 5.2.10(2). Liveness at any two worlds with same participant.
+/-- Paper: Lemma 5.2.9(2). Liveness at any two worlds with same participant.
  Liveness does not depend on time: if two worlds have the same participant (place),
 then liveness holds at one if and only if it holds at the other. This is a direct
 consequence of the forward direction applied twice.
@@ -349,7 +349,7 @@ theorem alwaysLiveEquivBackward
         using this
     exact h_t.2 hGlobal
 
-/-- Paper: Lemma 5.2.10(3). Liveness at an event-tuple of the model implies liveness at every past
+/-- Paper: Lemma 5.2.9(3). Liveness at an event-tuple of the model implies liveness at every past
 event at the same place. -/
 theorem live_allPast
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -492,8 +492,10 @@ private theorem live_boxPast_nests_past
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt)))
     {q : P}
     (hPastLiveE :
-      ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]Formula.past ((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt))) :
-    ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]Formula.past ((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] (Formula.ofEvent evt)) := by
+      ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]
+        Formula.past ((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt))) :
+    ⟪⟨q, †, M.history.val⟩⟫ ⊨[M]
+      Formula.past ((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] (Formula.ofEvent evt)) := by
   classical
   have hKnowledge :
       AllWorldValid M (knowledgeBoxAxiom (S := S) liveSymb l evt) :=
@@ -624,7 +626,7 @@ private theorem live_boxPast_nests_past
       (φ := (Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] (Formula.ofEvent evt))).2
       ⟨tBox, htBox_mem, htBox_place, hConj⟩
 
-/-- Paper: Lemma 5.2.12. Liveness quorum boxes promote to nested
+/-- Paper: Lemma 5.2.11. Liveness quorum boxes promote to nested
 quorum boxes under `ThyLive`. -/
 theorem live_boxPast_nests
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
@@ -735,7 +737,8 @@ theorem live_knows_eventually_past
       (hp := ht_place)
       (hφ := hConjPast)
 
-/-- Paper: Proposition 5.2.8. Live quorums eventually know past facts. -/
+/-- Paper: Proposition 5.2.8. If some live participant performed `E`, then
+an `l`-quorum of live participants eventually knows that `E` occurred. -/
 theorem live_eventually_knows
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
@@ -773,7 +776,7 @@ theorem live_eventually_knows
   simpa [Formula.boxPast]
     using hBoxPast
 
-/-- Paper: Proposition 5.2.11. Live quorum intersections expose live witnesses. -/
+/-- Paper: Proposition 5.2.10. Live quorum intersections expose live witnesses. -/
 theorem intertwined_two_quorums
     (hTheory : M ⊨ᵀ ThyLive liveSymb)
     (hIntersect : ⊨[M]♢ᶠ[id [l, l₁]]⊤ᶠ)

@@ -1,21 +1,21 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB3.Axioms
-import ModalDistribution.Examples.ThyHBB3.Lemmas
+import ModalDistribution.Examples.HBBCorr.Axioms
+import ModalDistribution.Examples.HBBCorr.Lemmas
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 
 /-!
-# ThyHBB3 Agreement Property
+# HBBCorr Agreement Property
 
-This file states the agreement property for `ThyHBB3`, formalising
-Agreement property for ThyHBB3. If two learners are everywhere correlated,
+This file states the agreement property for `HBBCorr`, formalising
+Agreement property for HBBCorr. If two learners are everywhere correlated,
 then any two deliveries for those learners must agree on the value.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB3
+namespace HBBCorr
 
 open HBB
 
@@ -35,11 +35,11 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- Paper: Proposition 8.3.1 (Agreement). Agreement property for ThyHBB3.
+/-- Paper: Proposition 8.3.1 (Agreement). Agreement property for HBBCorr.
 
 Correlation between l₁ and l₂ forces any deliveries for those learners
 to agree on the value. This uses the correlation predicate to establish quorum
-intersection, which is the key innovation of HBB3.
+intersection, which is the key innovation of HBBCorr.
 
 See also: `agreement`, `agreement`, `agreement_of_deliveries`. -/
 theorem agreement
@@ -318,6 +318,6 @@ theorem agreement_of_deliveries
       (hCorrelation := hCorrelation))
         hDeliver₁)
       hDeliver₂
-end ThyHBB3
+end HBBCorr
 end Examples
 end ModalDistribution

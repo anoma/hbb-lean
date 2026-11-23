@@ -1,6 +1,6 @@
-import ModalDistribution.Examples.ThyHBB1
-import ModalDistribution.Examples.ThyHBB2
-import ModalDistribution.Examples.ThyHBB3
+import ModalDistribution.Examples.HBBSafe
+import ModalDistribution.Examples.HBBSimp
+import ModalDistribution.Examples.HBBCorr
 
 /-!
 # Axiom audit
@@ -11,50 +11,50 @@ If any custom axiom ever enters the proof of one of these theorems, the
 `#guard_msgs` below fail and the build breaks.
 -/
 
-/-- info: 'ModalDistribution.Examples.ThyHBB1.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSafe.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB1.agreement
+#print axioms ModalDistribution.Examples.HBBSafe.agreement
 
-/-- info: 'ModalDistribution.Examples.ThyHBB1.livenessOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSafe.happyTermination' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB1.livenessOne
+#print axioms ModalDistribution.Examples.HBBSafe.happyTermination
 
-/-- info: 'ModalDistribution.Examples.ThyHBB1.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSafe.cascadeTermination' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB1.livenessTwo
+#print axioms ModalDistribution.Examples.HBBSafe.cascadeTermination
 
-/-- info: 'ModalDistribution.Examples.ThyHBB2.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSimp.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB2.agreement
+#print axioms ModalDistribution.Examples.HBBSimp.agreement
 
-/-- info: 'ModalDistribution.Examples.ThyHBB2.livenessOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSimp.happyTermination' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB2.livenessOne
+#print axioms ModalDistribution.Examples.HBBSimp.happyTermination
 
-/-- info: 'ModalDistribution.Examples.ThyHBB2.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSimp.cascadeTermination' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB2.livenessTwo
+#print axioms ModalDistribution.Examples.HBBSimp.cascadeTermination
 
-/-- info: 'ModalDistribution.Examples.ThyHBB3.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBCorr.agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB3.agreement
+#print axioms ModalDistribution.Examples.HBBCorr.agreement
 
-/-- info: 'ModalDistribution.Examples.ThyHBB3.livenessOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBCorr.happyTermination' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB3.livenessOne
+#print axioms ModalDistribution.Examples.HBBCorr.happyTermination
 
-/-- info: 'ModalDistribution.Examples.ThyHBB3.livenessTwo' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBCorr.cascadeTermination' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB3.livenessTwo
+#print axioms ModalDistribution.Examples.HBBCorr.cascadeTermination
 
-/-- info: 'ModalDistribution.Examples.ThyHBB1.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSafe.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB1.correctness
+#print axioms ModalDistribution.Examples.HBBSafe.correctness
 
-/-- info: 'ModalDistribution.Examples.ThyHBB2.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBSimp.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB2.correctness
+#print axioms ModalDistribution.Examples.HBBSimp.correctness
 
-/-- info: 'ModalDistribution.Examples.ThyHBB3.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'ModalDistribution.Examples.HBBCorr.correctness' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.ThyHBB3.correctness
+#print axioms ModalDistribution.Examples.HBBCorr.correctness

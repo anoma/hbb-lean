@@ -1,16 +1,16 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB1.Uniqueness
-import ModalDistribution.Examples.ThyHBB1.Axioms
-import ModalDistribution.Examples.ThyHBB1.Safety
+import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBBSafe.Axioms
+import ModalDistribution.Examples.HBBSafe.Safety
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Core.History
 
 /-!
-# ThyHBB1 Agreement Property
+# HBBSafe Agreement Property
 
-This file contains the main agreement theorem for the ThyHBB1 broadcast protocol.
+This file contains the main agreement theorem for the HBBSafe broadcast protocol.
 
 ## Main Result
 
@@ -39,7 +39,7 @@ The proof proceeds by contradiction, assuming v₁ ≠ v₂ and deriving a contr
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB1
+namespace HBBSafe
 
 open HBB
 
@@ -58,7 +58,7 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 6.3.1 (Agreement). Agreement property for ThyHBB1.
+/-- Paper: Proposition 6.4.1 (Agreement). Agreement property for HBBSafe.
 
 Under sequentiality assumptions, if two different values are delivered at different
 learners, they must be equal. This is the fundamental correctness property of the
@@ -67,7 +67,7 @@ broadcast protocol: all processes that deliver a value must deliver the same val
 The proof proceeds by contradiction, deriving a contradiction from the assumption
 that two different values v₁ ≠ v₂ are delivered under sequentiality.
 
-See also: `agreement_of_deliveries`, agreement properties for ThyHBB2 and ThyHBB3. -/
+See also: `agreement_of_deliveries`, agreement properties for HBBSimp and HBBCorr. -/
 theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -341,7 +341,7 @@ theorem agreement
           (fun h => hNe h.symm) hRight
       simpa [Sat] using hEqFinal.symm
 
-/-- Paper: Proposition 6.3.1, hypothesis form. Agreement from deliveries helper for ThyHBB1 (Corollary of agreement property).
+/-- Paper: Proposition 6.4.1, hypothesis form. Agreement from deliveries helper for HBBSafe (Corollary of agreement property).
 
 Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of time,
 the delivered values must coincide. This factors out the core reasoning used in
@@ -368,6 +368,6 @@ theorem agreement_of_deliveries
         hDeliver₁)
       hDeliver₂
 
-end ThyHBB1
+end HBBSafe
 end Examples
 end ModalDistribution

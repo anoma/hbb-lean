@@ -75,17 +75,17 @@ set_option autoImplicit false
 -- This is acceptable since in practice all symbol and value types are finite.
 variable {S : Signature.{0, 0, 0}}
 
-/-- Paper: Figure 2 (event atoms). Event atoms `E(v₁,…,vₙ)`. -/
+/-- Paper: Figure 3 (event atoms). Event atoms `E(v₁,…,vₙ)`. -/
 structure EventAtom (S : Signature.{0, 0, 0}) where
   sym : S.EventSymb
   args : List S.Value
 
-/-- Paper: Figure 2 (predicate atoms). Predicate atoms `P(v₁,…,vₙ)`. -/
+/-- Paper: Figure 3 (predicate atoms). Predicate atoms `P(v₁,…,vₙ)`. -/
 structure PredicateAtom (S : Signature.{0, 0, 0}) where
   sym : S.PredSymb
   args : List S.Value
 
-/-- Paper: Definition 3.1.3 / Figure 2 (syntax of predicates). Modal formulas with HOAS quantifiers. -/
+/-- Paper: Definition 3.1.3 / Figure 3 (syntax of predicates). Modal formulas with HOAS quantifiers. -/
 inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
   | bot : Formula S
   | imp : Formula S → Formula S → Formula S
@@ -100,50 +100,50 @@ inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
 
 namespace Formula
 
-/-- Paper: Figure 4 sugar (⊤). Convenience: the always-true formula `⊤`. -/
+/-- Paper: Figure 5 sugar (⊤). Convenience: the always-true formula `⊤`. -/
 def top : Formula S := .imp .bot .bot
 
-/-- Paper: Figure 4 sugar (¬). -/
+/-- Paper: Figure 5 sugar (¬). -/
 def not (φ : Formula S) : Formula S :=
   .imp φ .bot
 
-/-- Paper: Figure 4 sugar (∧). Conjunction. -/
+/-- Paper: Figure 5 sugar (∧). Conjunction. -/
 def and (φ ψ : Formula S) : Formula S :=
   not (.imp φ (not ψ))
 
-/-- Paper: Figure 4 sugar (∨). Disjunction. -/
+/-- Paper: Figure 5 sugar (∨). Disjunction. -/
 def or (φ ψ : Formula S) : Formula S :=
   .imp (not φ) ψ
 
-/-- Paper: Figure 4 sugar (⇔). Bi-implication. -/
+/-- Paper: Figure 5 sugar (⇔). Bi-implication. -/
 def iff (φ ψ : Formula S) : Formula S :=
   and (.imp φ ψ) (.imp ψ φ)
 
-/-- Paper: Figure 4 sugar (∃). Existential quantification. -/
+/-- Paper: Figure 5 sugar (∃). Existential quantification. -/
 def exists_ (body : S.Value → Formula S) : Formula S :=
   not (.forall (fun v => not (body v)))
 
-/-- Paper: Figure 4 sugar (↕). Sometimes modality (`↕`) specialised to the current participant; sugar for `⤒↓`. -/
+/-- Paper: Figure 5 sugar (↕). Sometimes modality (`↕`) specialised to the current participant; sugar for `⤒↓`. -/
 def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 
-/-- Paper: Figure 4 sugar (⇕). Always in the past (`⇕`). -/
+/-- Paper: Figure 5 sugar (⇕). Always in the past (`⇕`). -/
 def everytime (φ : Formula S) : Formula S :=
   not (sometime (not φ))
 
-/-- Paper: Figure 4 sugar (⇓). Eventually in the past (`⇓`). -/
+/-- Paper: Figure 5 sugar (⇓). Eventually in the past (`⇓`). -/
 def allPast (φ : Formula S) : Formula S :=
   not (.past (not φ))
 
-/-- Paper: Figure 4 sugar (□ l₁…lₙ). Box modality. -/
+/-- Paper: Figure 5 sugar (□ l₁…lₙ). Box modality. -/
 def box (ls : List S.Value) (φ : Formula S) : Formula S :=
   not (.diamond ls (not φ))
 
-/-- Paper: Figure 4 sugar (♢↓). Diamond with past guard. -/
+/-- Paper: Figure 5 sugar (♢↓). Diamond with past guard. -/
 def diamondPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (.past φ)
 
-/-- Paper: Figure 4 sugar (♢⇓). Diamond with eventual past guard. -/
+/-- Paper: Figure 5 sugar (♢⇓). Diamond with eventual past guard. -/
 def diamondAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (allPast φ)
 
@@ -151,11 +151,11 @@ def diamondAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
 @[simp] def diamondEmpty (φ : Formula S) : Formula S :=
   .diamond [] φ
 
-/-- Paper: Figure 4 sugar (□↓). Box with past guard. -/
+/-- Paper: Figure 5 sugar (□↓). Box with past guard. -/
 def boxPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (.past φ)
 
-/-- Paper: Figure 4 sugar (□⇓). Box with eventual past guard. -/
+/-- Paper: Figure 5 sugar (□⇓). Box with eventual past guard. -/
 def boxAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (Formula.allPast φ)
 
@@ -205,14 +205,14 @@ scoped infix:55 " ⇔ᶠ " => Formula.iff
 /-- Helpful notation for existential quantification (HOAS style). -/
 scoped notation "∃ᶠ " body => Formula.exists_ body
 
-/-- Paper: Figure 4 sugar (∃01). At-most-one quantifier `∃≤₁` (HOAS version).
+/-- Paper: Figure 5 sugar (∃≤1). At-most-one quantifier `∃≤₁` (HOAS version).
     ∃≤₁ x. φ(x) means "for all x, y. φ(x) → φ(y) → x = y" -/
 def existsAtMostOne (body : S.Value → Formula S) : Formula S :=
   .forall fun x =>
     .forall fun y =>
       .imp (body x) (.imp (body y) (.eq x y))
 
-/-- Paper: Figure 4 sugar (∃1). Exact-one quantifier `∃!` (HOAS version). -/
+/-- Paper: Figure 5 sugar (∃=1). Exact-one quantifier `∃!` (HOAS version). -/
 def existsUnique (body : S.Value → Formula S) : Formula S :=
   .and
     (existsAtMostOne body)

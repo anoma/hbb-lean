@@ -1,23 +1,23 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB2.Axioms
-import ModalDistribution.Examples.ThyHBB2.Lemmas
-import ModalDistribution.Examples.ThyHBB1.Uniqueness
+import ModalDistribution.Examples.HBBSimp.Axioms
+import ModalDistribution.Examples.HBBSimp.Lemmas
+import ModalDistribution.Examples.HBBSafe.Uniqueness
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 
 /-!
-# ThyHBB2 Agreement Property
+# HBBSimp Agreement Property
 
-This file records the agreement statement for the `ThyHBB2` broadcast theory.
-Agreement property for ThyHBB2: under a
+This file records the agreement statement for the `HBBSimp` broadcast theory.
+Agreement property for HBBSimp: under a
 sequential quorum intersection between the source learners, any two deliveries
 agree on the value.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB2
+namespace HBBSimp
 
 open HBB
 
@@ -37,11 +37,11 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 7.2.1 (Agreement). Agreement property for ThyHBB2.
+/-- Paper: Proposition 7.3.1 (Agreement). Agreement property for HBBSimp.
 
 Sequential quorum intersections between l₁ and l₂ force any deliveries for
 (l₁', l₁) and (l₂', l₂) to agree on the value. This is the agreement property
-for the simplified HBB2 protocol without the safe predicate.
+for the simplified HBBSimp protocol without the safe predicate.
 
 See also: `agreement`, `agreement`. -/
 theorem agreement
@@ -122,7 +122,7 @@ theorem agreement
     -- Use `Vote?` to obtain an echo quorum for `v₂`.
     simpa [wTop]
       using
-        ModalDistribution.Examples.ThyHBB2.Vote.to_echo_box_end (M := M)
+        ModalDistribution.Examples.HBBSimp.Vote.to_echo_box_end (M := M)
           (hTheory := hTheory)
           (learner := l₂) (value := v₂)
           (p := p) (hVote := hVoteDiamond₂)
@@ -170,7 +170,7 @@ theorem agreement
           hEchoCollision with
     | inl hLeft =>
         have hEq :=
-          ThyHBB1.echoNonEquiv_diamond (M := M)
+          HBBSafe.echoNonEquiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)
@@ -179,7 +179,7 @@ theorem agreement
         simpa [Sat] using hEq
     | inr hRight =>
         have hEq :=
-          ThyHBB1.echoNonEquiv_diamond (M := M)
+          HBBSafe.echoNonEquiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)
@@ -188,7 +188,7 @@ theorem agreement
         simpa [Sat] using hEq.symm
   simpa [wTop] using hEquality
 
-/-- Paper: Proposition 7.2.1, hypothesis form. When both deliveries for
+/-- Paper: Proposition 7.3.1, hypothesis form. When both deliveries for
 `(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
 theorem agreement_of_deliveries
     (hTheory : M ⊨ᵀ
@@ -211,6 +211,6 @@ theorem agreement_of_deliveries
       (hSeq := hSeq))
         hDeliver₁)
       hDeliver₂
-end ThyHBB2
+end HBBSimp
 end Examples
 end ModalDistribution

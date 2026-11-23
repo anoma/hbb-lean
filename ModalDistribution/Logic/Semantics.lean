@@ -41,7 +41,7 @@ def Sat.check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
       ∀ O ∈ (M.learner ℓ).quorums,
         Sat.check M Q ls (acc ∩ O)
 
-/-- Paper: Definition 3.4.10(1) / Figure 3 (possible-world validity). Satisfaction relation `p \dx H ⊨[M]φ`. -/
+/-- Paper: Definition 3.4.10(1) / Figure 4 (possible-world validity). Satisfaction relation `p \dx H ⊨[M]φ`. -/
 def Sat (M : Model S P)
     (p : P)
     (evt : MaybeEvent S.EventType)

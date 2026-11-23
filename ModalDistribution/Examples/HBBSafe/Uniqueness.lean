@@ -1,15 +1,15 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB1.Safety
-import ModalDistribution.Examples.ThyHBB1.Axioms
+import ModalDistribution.Examples.HBBSafe.Safety
+import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Core.History
 
 /-!
-# ThyHBB1 Uniqueness of Proposals
+# HBBSafe Uniqueness of Proposals
 
 This file contains lemmas proving the crucial property that at most one value can be proposed
-in the ThyHBB1 broadcast protocol, and derives consequences about echo events.
+in the HBBSafe broadcast protocol, and derives consequences about echo events.
 
 The main results show that:
 - Uniqueness of proposals forces observed proposal diamonds to agree on values
@@ -43,7 +43,7 @@ The file is organized into several categories:
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB1
+namespace HBBSafe
 
 open HBB
 
@@ -776,7 +776,7 @@ theorem uniquePropose_witness_eq_value
     simpa [Sat] using hEq_global
   simp [Sat, hEq_val]
 
-/-- Paper: Lemma 6.5.1. a unique proposal guarantees eventual echoes. -/
+/-- Paper: Lemma 6.6.1. a unique proposal guarantees eventual echoes. -/
 theorem uniquePropose_eventually_echo
     (value : S.Value)
     (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb)
@@ -838,7 +838,7 @@ theorem atMostOnePropose_safeFormula
   simpa [uniqueCond, seqGuard, safeFormula]
     using hOr
 
-/-- Paper: Lemma 6.5.2. If at most one value is proposed, then every learner is everywhere and
+/-- Paper: Lemma 6.6.2. If at most one value is proposed, then every learner is everywhere and
 always safe. -/
 theorem atMostOnePropose_safe
     (hTheory : M ⊨ᵀ
@@ -890,6 +890,6 @@ theorem atMostOnePropose_safe
 
 end Results
 
-end ThyHBB1
+end HBBSafe
 end Examples
 end ModalDistribution

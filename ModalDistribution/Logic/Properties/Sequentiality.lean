@@ -201,20 +201,6 @@ theorem sat_diamondPast_empty_participant_iff
         (w := ⟨p₁, evt₁, H₁⟩)
         (φ := ↓ᶠ φ)).2 ⟨p, hp₂⟩
 
-/-- `↓` implies `♦`: a past event-tuple at the current place is in particular
-a past event-tuple at some place. -/
-theorem diamondPast_nil_of_past
-    {w : World P (Signature.EventType S)}
-    {φ : Formula S}
-    (h : ⟪w⟫ ⊨[M]↓ᶠ φ) :
-    ⟪w⟫ ⊨[M]♢ᶠ↓[[]] φ := by
-  classical
-  obtain ⟨t, ht, hp, hφ⟩ := (Sat.past (M := M) (w := w) (φ := φ)).1 h
-  have hLocal : ⟪⟨w.place, †, w.time⟩⟫ ⊨[M] ↓ᶠ φ :=
-    (Sat.past (M := M) (w := ⟨w.place, †, w.time⟩) (φ := φ)).2 ⟨t, ht, hp, hφ⟩
-  simpa [Formula.diamondPast] using
-    (Sat.diamond_nil (M := M) (w := w) (φ := ↓ᶠ φ)).2 ⟨w.place, hLocal⟩
-
 /-- Paper: Proposition 5.1.5(2). At a sequential world, two distinct past
 events at the current place occur one after the other. -/
 theorem seq_two_quorums_events

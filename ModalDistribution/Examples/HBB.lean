@@ -4,11 +4,11 @@ import ModalDistribution.Logic.Properties
 /-!
 # Shared HBB axiom schemes
 
-Axiom formulas common to the broadcast theories `ThyHBB1`, `ThyHBB2`, and
-`ThyHBB3`. The paper states these once and reuses them across Figures 7, 9,
+Axiom formulas common to the broadcast theories `HBBSafe`, `HBBSimp`, and
+`HBBCorr`. The paper states these once and reuses them across Figures 8, 10,
 and 11: the `Echo?`, `EchoNE`, and `Echo!` rules are identical in all three
-theories, and the `Deliver?`/`Deliver!` rules are identical in `ThyHBB1` and
-`ThyHBB2` (in `ThyHBB3` the deliver event is binary, so it has its own).
+theories, and the `Deliver?`/`Deliver!` rules are identical in `HBBSafe` and
+`HBBSimp` (in `HBBCorr` the deliver event is binary, so it has its own).
 Each theory's `Axioms.lean` assembles its axiom set from these plus its own
 vote rules. The `Lemmas` section holds the shared instantiation lemmas for
 `Deliver?` and `Deliver!`.
@@ -27,14 +27,14 @@ set_option autoImplicit false
 
 variable {S : Signature}
 
-/-- Paper: Figures 7/9/11, rule (Echo?). Backward rule `Echo?`: every `echo(v)` stems from a past `propose(v)`. -/
+/-- Paper: Figures 8/10/12, rule (Echo?). Backward rule `Echo?`: every `echo(v)` stems from a past `propose(v)`. -/
 @[simp] def echoBackwardAxiom
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value =>
     ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
 
-/-- Paper: Figures 7/9/11, axiom (EchoNE). Axiom `EchoNE`: sequential participants echo at most one value. -/
+/-- Paper: Figures 8/10/12, axiom (EchoNE). Axiom `EchoNE`: sequential participants echo at most one value. -/
 @[simp] def echoNonEquivAxiom
     (echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value => ∀ᶠ (fun altValue =>
@@ -42,7 +42,7 @@ variable {S : Signature}
       (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
         (value ≃ᶠ altValue)))
 
-/-- Paper: Figures 7/9/11, rule (Echo!). Forward rule `Echo!`: live knowledge of a proposal eventually triggers an
+/-- Paper: Figures 8/10/12, rule (Echo!). Forward rule `Echo!`: live knowledge of a proposal eventually triggers an
 echo of some (possibly different) value. -/
 @[simp] def echoForwardAxiom
     (liveSymb : Signature.PredSymb S)
@@ -53,7 +53,7 @@ echo of some (possibly different) value. -/
       ∃ᶠ (fun witness =>
         ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
 
-/-- Paper: Figures 7/9, rule (Deliver?). Backward rule `Deliver?` (ternary deliver): deliveries require a
+/-- Paper: Figures 8/10, rule (Deliver?). Backward rule `Deliver?` (ternary deliver): deliveries require a
 reporting-learner quorum of past votes. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -61,7 +61,7 @@ reporting-learner quorum of past votes. -/
     ofEvent ⟨deliverSymb, [reporting, learner, value]⟩ ⇒ᶠ
       □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩))))
 
-/-- Paper: Figures 7/9, rule (Deliver!). Forward rule `Deliver!` (ternary deliver): live knowledge of a vote quorum
+/-- Paper: Figures 8/10, rule (Deliver!). Forward rule `Deliver!` (ternary deliver): live knowledge of a vote quorum
 eventually leads to delivery. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)

@@ -1,24 +1,23 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB1.Agreement
-import ModalDistribution.Examples.ThyHBB1.Uniqueness
-import ModalDistribution.Examples.ThyHBB1.Safety
-import ModalDistribution.Examples.ThyHBB1.Axioms
+import ModalDistribution.Examples.HBBSafe.Agreement
+import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBBSafe.Safety
+import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Properties.Modalities
 
 /-!
-# ThyHBB1 Liveness Properties
+# HBBSafe Happy Termination
 
-This file contains the liveness one theorem for the ThyHBB1 broadcast protocol:
+This file contains the Happy Termination theorem for the HBBSafe broadcast protocol:
 
-- **Liveness 1** (`livenessOne`): Under uniqueness of proposals and a live quorum,
+- **Happy Termination** (`happyTermination`): Under uniqueness of proposals and a live quorum,
   if a live participant knows a proposal, it will eventually be delivered.
-  Liveness property 1: under uniqueness, live proposals are eventually delivered.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB1
+namespace HBBSafe
 
 open HBB
 
@@ -32,21 +31,21 @@ open scoped Formula PreHistory
 
 set_option autoImplicit false
 
-section Liveness_One
+section HappyTermination
 
 variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 6.5.3 (Liveness 1). Liveness One for ThyHBB1 (Liveness property 1).
+/-- Paper: Proposition 6.6.3 (Happy Termination). Happy Termination for HBBSafe.
 
 Under uniqueness of proposals and a live quorum, if a live participant knows
 a proposal for value v, then v will eventually be delivered. This establishes
 that proposals from live participants will eventually propagate to delivery.
 
-See also: `livenessTwo`, `livenessOne_boxPast`. -/
-theorem livenessOne
+See also: `cascadeTermination`, `happyTermination_boxPast`. -/
+theorem happyTermination
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -180,7 +179,7 @@ theorem livenessOne
       (hTheory := hThyLiveTheory)
       (hQuorum := hStep2Global)
 
-  -- Step 4 (Lemma 6.5.2): with at most one proposal, every learner is
+  -- Step 4 (Lemma 6.6.2): with at most one proposal, every learner is
   -- everywhere and always safe.
   have hSafeAlwaysGlobal :
       □W⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
@@ -203,7 +202,7 @@ theorem livenessOne
         (φ := ofPredicate ⟨safeSymb, [l]⟩)).1
         (by simpa using hSafeEnd t.place) st hst (by simpa using hpl)
 
-  -- Step 5 (Lemma 6.4.2(2) with (Vote!)): the live echo quorum becomes a
+  -- Step 5 (Lemma 6.5.2(2) with (Vote!)): the live echo quorum becomes a
   -- live vote quorum.
   have hVotesGlobal :
       ⊨[M]
@@ -221,7 +220,7 @@ theorem livenessOne
         (hTheory := hTheory)
         (hSafeAlways := hSafeAlwaysGlobal))
 
-  -- Step 6 (Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!)):
+  -- Step 6 (Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!)):
   -- eventual vote knowledge becomes eventual delivery.
   have hDeliverImp :
       ⟪wTop⟫ ⊨[M]
@@ -251,10 +250,10 @@ theorem livenessOne
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
       hDeliverImp hLivep
 
-/-- Paper: Proposition 6.5.3, first corollary. Whenever a live learner
+/-- Paper: Proposition 6.6.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
-theorem livenessOne_boxPast
+theorem happyTermination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -270,16 +269,16 @@ theorem livenessOne_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOne (M := M)
+      happyTermination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
         (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum)
         (hUnique := hUnique))
-/-- Paper: Proposition 6.5.3, second corollary. Witnessing the guarded
+/-- Paper: Proposition 6.6.3, second corollary. Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
-theorem livenessOne_diamondPast
+theorem happyTermination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -295,14 +294,14 @@ theorem livenessOne_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      livenessOne (M := M)
+      happyTermination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
         (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum)
         (hUnique := hUnique))
-end Liveness_One
-end ThyHBB1
+end HappyTermination
+end HBBSafe
 end Examples
 end ModalDistribution

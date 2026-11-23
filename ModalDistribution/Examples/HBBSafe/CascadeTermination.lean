@@ -1,24 +1,23 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.ThyHBB1.Agreement
-import ModalDistribution.Examples.ThyHBB1.Uniqueness
-import ModalDistribution.Examples.ThyHBB1.Safety
-import ModalDistribution.Examples.ThyHBB1.Axioms
+import ModalDistribution.Examples.HBBSafe.Agreement
+import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBBSafe.Safety
+import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Properties.Modalities
 
 /-!
-# ThyHBB1 Liveness Properties
+# HBBSafe Cascade Termination
 
-This file contains the two liveness two theorem for the ThyHBB1 broadcast protocol:
+This file contains the Cascade Termination theorem for the HBBSafe broadcast protocol:
 
-- **Liveness 2** (`livenessTwo`): If a value is delivered to one learner and certain
+- **Cascade Termination** (`cascadeTermination`): If a value is delivered to one learner and certain
   liveness/intersection conditions hold, it will eventually be delivered to another learner.
-  Liveness property 2: deliveries propagate across intersecting learner quorums.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB1
+namespace HBBSafe
 
 open HBB
 
@@ -32,20 +31,20 @@ open scoped Formula PreHistory
 
 set_option autoImplicit false
 
-section Liveness_Two
+section CascadeTermination
 
 variable {S : Signature} {P : Type} [Nonempty P]
 variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 6.4.5 (Liveness 2). Liveness property 2 specialised to `ThyHBB1`.
+/-- Paper: Proposition 6.5.5 (Cascade Termination). Cascade Termination specialised to `HBBSafe`.
 If a value is delivered to learner l₁' and:
 - Learners l₁' and l₂' have intersecting quorums
 - The safe condition holds for learner l
 - All of learner l₂'s quorum members are live
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
-theorem livenessTwo
+theorem cascadeTermination
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -67,7 +66,7 @@ theorem livenessTwo
   have hThyLiveTheory : M ⊨ᵀ ThyLive liveSymb :=
     theory_thyLive (M := M) hTheory
 
-  -- (Deliver?) with Lemma 4.2.3(2): the delivery forces an end-of-time
+  -- (Deliver?) with Lemma 4.2.3(1): the delivery forces an end-of-time
   -- quorum of votes at the reporting learner.
   have hVoteBoxTop :
       ⟪wTop⟫ ⊨[M]
@@ -83,7 +82,7 @@ theorem livenessTwo
       ⊨[M]□ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l, v]⟩) := fun q => by
     simpa [wTop] using hVoteBoxTop
 
-  -- Proposition 5.2.11: the intersecting live quorum exposes a live voter.
+  -- Proposition 5.2.10: the intersecting live quorum exposes a live voter.
   have hLiveVote :
       ⊨[M]♢ᶠ↓[[]]
         ((predicate0 liveSymb) ∧ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
@@ -145,8 +144,8 @@ theorem livenessTwo
         ⟨hSplit.1,
           pastDiamondBoxCollapsesToPresentBox (M := M) t l _ ht hKnowsEcho⟩
 
-  -- Lemma 6.4.2(2) with (Vote!): the safe learner's quorum eventually votes.
-  -- Safety enters through `voteForward_imp`, i.e. Lemma 6.4.1.
+  -- Lemma 6.5.2(2) with (Vote!): the safe learner's quorum eventually votes.
+  -- Safety enters through `voteForward_imp`, i.e. Lemma 6.5.1.
   have hVotesGlobal :
       ⊨[M]□ᶠ↓[[l₂']]
         (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l, v]⟩) :=
@@ -160,7 +159,7 @@ theorem livenessTwo
       (hImp := voteForward_imp (M := M)
         (hTheory := hTheory) (hSafe := hSafe))
 
-  -- Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
+  -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
   -- knowledge becomes eventual delivery.
   have hDeliverEventually :
       ⊨[M](predicate0 liveSymb ⇒ᶠ
@@ -183,10 +182,10 @@ theorem livenessTwo
       (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩))
       (by simpa [wTop] using hDeliverEventually p) hLivep
 
-/-- Paper: Proposition 6.4.5, first corollary. Corollary: a delivery for `(l₁', l)`
+/-- Paper: Proposition 6.5.5, first corollary. Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
-theorem livenessTwo_boxPast
+theorem cascadeTermination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -201,7 +200,7 @@ theorem livenessTwo_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwo (M := M)
+      cascadeTermination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)
@@ -209,9 +208,9 @@ theorem livenessTwo_boxPast
         (hIntersect := hIntersect)
         (hSafe := hSafe)
         (hLive := hLive))
-/-- Paper: Proposition 6.4.5, second corollary. Corollary: a delivery for `(l₁', l)`
+/-- Paper: Proposition 6.5.5, second corollary. Corollary: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
-theorem livenessTwo_diamondPast
+theorem cascadeTermination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -226,7 +225,7 @@ theorem livenessTwo_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      livenessTwo (M := M)
+      cascadeTermination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)
@@ -234,7 +233,7 @@ theorem livenessTwo_diamondPast
         (hIntersect := hIntersect)
         (hSafe := hSafe)
         (hLive := hLive))
-end Liveness_Two
-end ThyHBB1
+end CascadeTermination
+end HBBSafe
 end Examples
 end ModalDistribution

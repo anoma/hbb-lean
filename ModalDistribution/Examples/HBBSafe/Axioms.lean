@@ -4,9 +4,9 @@ import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 
 /-!
-# ThyHBB1 Axioms
+# HBBSafe Axioms
 
-This file defines the axiom system of the theory `ThyHBB1` (Figure 7 of the
+This file defines the axiom system of the theory `HBBSafe` (Figure 8 of the
 paper), organized into:
 
 - **Backward rules** (`Echo?`, `Vote?`, `Deliver?`): causal requirements for events
@@ -14,12 +14,12 @@ paper), organized into:
   defining the `safe` predicate
 - **Forward rules** (`Echo!`, `Vote!`, `Deliver!`): liveness guarantees
 
-The rules shared verbatim with `ThyHBB2`/`ThyHBB3` come from `Examples.HBB`.
+The rules shared verbatim with `HBBSimp`/`HBBCorr` come from `Examples.HBB`.
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace ThyHBB1
+namespace HBBSafe
 
 open HBB
 
@@ -34,7 +34,7 @@ variable {S : Signature}
 
 section BackwardAxioms
 
-/-- Paper: Figure 7, right-hand side of axiom (Safe). The right-hand side of axiom `Safe`: either at most one value has been
+/-- Paper: Figure 8, right-hand side of axiom (Safe). The right-hand side of axiom `Safe`: either at most one value has been
 proposed, or the learner has sequential quorum intersections with every
 learner. -/
 @[simp] def safeFormula
@@ -43,14 +43,14 @@ learner. -/
   ((∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
       ∀ᶠ (fun l' => ♢ᶠ[[learner, l']] Formula.seq))
 
-/-- Paper: Figure 7, axiom (Safe). Axiom `Safe`: the `safe` predicate is characterised by `safeFormula`. -/
+/-- Paper: Figure 8, axiom (Safe). Axiom `Safe`: the `safe` predicate is characterised by `safeFormula`. -/
 @[simp] def safeAxiom
     (safeSymb : Signature.PredSymb S)
     (proposeSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner =>
     ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
 
-/-- Paper: Figure 7, rule (Vote?). Backward rule `Vote?`: voting requires safety and prior echoes. -/
+/-- Paper: Figure 8, rule (Vote?). Backward rule `Vote?`: voting requires safety and prior echoes. -/
 @[simp] def voteBackwardAxiom
     (safeSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -67,7 +67,7 @@ end NonEquivalenceAxiom
 
 section ForwardAxioms
 
-/-- Paper: Figure 7, rule (Vote!). Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
+/-- Paper: Figure 8, rule (Vote!). Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb safeSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -85,7 +85,7 @@ variable
     (liveSymb safeSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- Paper: Definition 6.1.2 (theory ThyHBB1). The collection of axioms forming the theory `ThyHBB1`. -/
+/-- Paper: Definition 6.2.2 (theory HBBSafe). The collection of axioms forming the theory `HBBSafe`. -/
 @[simp] def theory : Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
@@ -106,7 +106,7 @@ variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- In any model of `ThyHBB1`, the `safe` predicate coincides with
+/-- In any model of `HBBSafe`, the `safe` predicate coincides with
 `safeFormula` at every world, by axiom `Safe`. -/
 theorem safe_iff_safeFormula
     (hTheory : M ⊨ᵀ
@@ -134,7 +134,7 @@ section Projections
 variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
-/-- A model of `ThyHBB1` is a model of `ThyLive`. -/
+/-- A model of `HBBSafe` is a model of `ThyLive`. -/
 theorem theory_thyLive
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb) : M ⊨ᵀ ThyLive liveSymb :=
@@ -285,6 +285,6 @@ theorem voteForward_elim
 
 end Instantiations
 
-end ThyHBB1
+end HBBSafe
 end Examples
 end ModalDistribution

@@ -10,7 +10,7 @@ import ModalDistribution.Core.History
 The quorum intersection properties of Subsection 4.1 (Lemma 4.1.1 and
 Notation 4.1.2, with their supporting lemmas) and the modal properties of
 Subsection 4.2 (Lemmas 4.2.1-4.2.3), over the satisfaction machinery from
-`Logic.Properties.Satisfaction`. The file ends with Lemma 6.4.4 and the
+`Logic.Properties.Satisfaction`. The file ends with Lemma 6.5.4 and the
 generic derivation lemmas for the boxed and diamond corollaries of the
 liveness theorems.
 -/
@@ -366,7 +366,7 @@ private theorem sat_boxPast_of_predecessor
       (φ := φ) (hSubset := hSubset_t) hPast
   simpa [World.place, World.event, World.time] using hPast'
 
-/-- Paper: Lemma 4.2.2 (the S4 axiom). Quorum box global implies empty diamond.
+/-- Paper: Lemma 4.2.2 (the (4) axiom of S4).
 
 Past diamonds are idempotent: ♢ᶠ↓[[]] (↓ᶠ φ) is equivalent to ♢ᶠ↓[[]] φ.
 This shows that nested past operators collapse, simplifying reasoning about
@@ -417,41 +417,24 @@ theorem diamondPast_idem
     (Sat.diamond_nil (M := M)
       (w := w) (φ := ↓ᶠ φ)).2 ⟨q, hPastFinal⟩
 
-/-- Paper: Lemma 4.2.3(1). Past box collapses to present box).
-
-A past-guarded box ↓ᶠ (□ᶠ↓[[l]] φ) collapses to a present box □ᶠ↓[[l]] φ.
-This idempotency property shows that nested temporal operators can be simplified,
-making proofs about temporal formulas more tractable.
-
-See also: `pastDiamondBoxCollapsesToPresentBox`, `diamondPast_idem`. -/
-theorem pastBoxCollapsesToPresentBox
-    (M : Model S P)
-    (w : World P (Signature.EventType S))
-    (l : Signature.Value S) (φ : Formula S)
-    (hMem : w ∈ M.history.val) :
-    (⟪w⟫ ⊨[M] ↓ᶠ (□ᶠ↓[[l]] φ)) →
-      (⟪w⟫ ⊨[M] □ᶠ↓[[l]] φ) := by
+/-- `↓` implies `♦`: a past event-tuple at the current place is in particular
+a past event-tuple at some place. -/
+theorem diamondPast_nil_of_past
+    {M : Model S P}
+    {w : World P (Signature.EventType S)}
+    {φ : Formula S}
+    (h : ⟪w⟫ ⊨[M]↓ᶠ φ) :
+    ⟪w⟫ ⊨[M]♢ᶠ↓[[]] φ := by
   classical
-  intro hPastBox
-  -- Extract the predecessor world witnessing the past box
-  obtain ⟨t, ht_mem, ht_place, hBox_t⟩ :=
-    (Sat.past (M := M)
-      (w := w) (φ := □ᶠ↓[[l]] φ)).1 hPastBox
-  -- Transport the singleton past box from the predecessor to the current world
-  have hBox :=
-    sat_boxPast_of_predecessor (M := M)
-      (w := w) (l := l) (φ := φ) hMem
-      (t := t) ht_mem
-      (by
-        simpa [World.place, World.event, World.time, Formula.boxPast]
-          using hBox_t)
-  simpa [Formula.boxPast] using hBox
+  obtain ⟨t, ht, hp, hφ⟩ := (Sat.past (M := M) (w := w) (φ := φ)).1 h
+  have hLocal : ⟪⟨w.place, †, w.time⟩⟫ ⊨[M] ↓ᶠ φ :=
+    (Sat.past (M := M) (w := ⟨w.place, †, w.time⟩) (φ := φ)).2 ⟨t, ht, hp, hφ⟩
+  simpa [Formula.diamondPast] using
+    (Sat.diamond_nil (M := M) (w := w) (φ := ↓ᶠ φ)).2 ⟨w.place, hLocal⟩
 
-/-- Paper: Lemma 4.2.3(2). Past diamond-box collapses to present box).
-
-A past-guarded diamond containing a box ♢ᶠ↓[[]] (□ᶠ↓[[l]] φ) collapses to a
-present box □ᶠ↓[[l]] φ. This strengthens the previous collapsing lemma by showing
-that even with an intervening diamond, the box structure is preserved.
+/-- Paper: Lemma 4.2.3(1). If at some past event-tuple an `l`-quorum is known
+to have had `φ` in the past, then an `l`-quorum is known to have had `φ` in the
+past now. This is the analogue of the (5) axiom of modal logic.
 
 See also: `pastBoxCollapsesToPresentBox`, `singletonBoxImpliesDiamond`. -/
 theorem pastDiamondBoxCollapsesToPresentBox
@@ -471,18 +454,32 @@ theorem pastDiamondBoxCollapsesToPresentBox
     (Sat.past (M := M)
       (w := ⟨q, †, w.time⟩)
       (φ := □ᶠ↓[[l]] φ)).1 hPastBox
-  have hBox :=
+  exact
     sat_boxPast_of_predecessor (M := M)
       (w := w) (l := l) (φ := φ) hMem
       (t := t) ht_mem
       (by
         simpa [World.place, World.event, World.time, Formula.boxPast]
           using hBox_t)
-  exact hBox
+
+/-- Paper: Lemma 4.2.3(2). A past-guarded quorum box `↓(□↓[l] φ)` collapses to
+`□↓[l] φ`; it follows from part (1) since `↓` implies `♦`.
+
+See also: `pastDiamondBoxCollapsesToPresentBox`, `diamondPast_idem`. -/
+theorem pastBoxCollapsesToPresentBox
+    (M : Model S P)
+    (w : World P (Signature.EventType S))
+    (l : Signature.Value S) (φ : Formula S)
+    (hMem : w ∈ M.history.val) :
+    (⟪w⟫ ⊨[M] ↓ᶠ (□ᶠ↓[[l]] φ)) →
+      (⟪w⟫ ⊨[M] □ᶠ↓[[l]] φ) :=
+  fun hPastBox =>
+    pastDiamondBoxCollapsesToPresentBox M w l φ hMem
+      (diamondPast_nil_of_past (M := M) hPastBox)
 
 /-! ## Corollary derivation for the liveness theorems -/
 
-/-- Paper: Lemma 6.4.4. `\atd{l}` of `\sometime φ` coincides
+/-- Paper: Lemma 6.5.4. `\atd{l}` of `\sometime φ` coincides
 with `\atddot{l} φ`. -/
 theorem box_sometime_iff_boxPast
     (M : Model S P)
@@ -593,7 +590,7 @@ theorem endValid_boxPast_of_imp_sometime
           (φ := ♢ᶠ↓[[]]ψ) (ψ := G ⇒ᶠ ↕ᶠ D)
           (hMain r) (hAnteGlobal r))
         (hAllG r hrO)
-  -- Lemma 6.4.4 turns the eventualities into a past box.
+  -- Lemma 6.5.4 turns the eventualities into a past box.
   simpa [wTop] using
     (box_sometime_iff_boxPast (M := M) (φ := D) (l := l)).1
       hBoxSometime p

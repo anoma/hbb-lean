@@ -1,6 +1,6 @@
 # Heterogeneous Broadcast in Lean 4
 
-A complete Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures". This repository contains mechanically verified proofs of three broadcast algorithms using history structures and modal logic.
+A complete Lean 4 formalization of the paper "Heterogeneous trust in reliable broadcast via modal logic and history structures" (draft of 2026/11/18). This repository contains mechanically verified proofs of three broadcast algorithms using history structures and modal logic.
 
 ## What's in this repository?
 
@@ -9,10 +9,10 @@ This formalization includes:
 - **Foundations (Section 2-3)**: History structures, prehistories, event-tuples, semifilters, and Kripke-style modal semantics
 - **Modal Logic Framework (Section 4-5)**: Box/diamond modalities, quorum intersection properties, sequentiality, and liveness reasoning
 - **Three Broadcast Algorithms**:
-  - **ThyHBB1** (Section 6): Basic heterogeneous broadcast with unique proposals
-  - **ThyHBB2** (Section 7): Improved protocol with non-equivocation
-  - **ThyHBB3** (Section 8): Full protocol with correlation axioms
-- **Correctness Proofs**: Agreement, Liveness 1, and Liveness 2 properties for all three algorithms
+  - **HBBSafe** (Section 6): votes are guarded by a `safe` predicate on learners
+  - **HBBSimp** (Section 7): the simpler protocol without the `safe` guard
+  - **HBBCorr** (Section 8): learners linked by a correlation relation
+- **Correctness Proofs**: Agreement, Happy Termination, and Cascade Termination properties for all three algorithms
 
 ### Repository structure
 
@@ -33,17 +33,17 @@ ModalDistribution/
 │   ├── ThyLive.lean            # Liveness (Section 5.2)
 │   ├── HBB.lean                # Axiom schemes shared by the three theories
 │   ├── Counterexamples.lean    # Lemmas 4.2.1(3,4) and 4.2.3(3)
-│   ├── ThyHBB1/                # Section 6
+│   ├── HBBSafe/                # Section 6
 │   │   ├── Axioms.lean
 │   │   ├── Safety.lean
 │   │   ├── Uniqueness.lean
 │   │   ├── Agreement.lean
-│   │   ├── Liveness_One.lean
-│   │   ├── Liveness_Two.lean
+│   │   ├── HappyTermination.lean
+│   │   ├── CascadeTermination.lean
 │   │   └── Correctness.lean
-│   ├── ThyHBB2/                # Section 7
+│   ├── HBBSimp/                # Section 7
 │   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
-│   └── ThyHBB3/                # Section 8
+│   └── HBBCorr/                # Section 8
 │       └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
 └── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```
@@ -94,13 +94,13 @@ lake build
 ```
 This builds the project **and verifies all proofs**. It will:
 - Automatically install the correct Lean version (v4.24.0-rc1)
-- Build and verify all formalized correctness proofs for ThyHBB1, ThyHBB2, and ThyHBB3
+- Build and verify all formalized correctness proofs for HBBSafe, HBBSimp, and HBBCorr
 
 **What to expect during the build:**
 - The project has no external dependencies beyond Lean itself, so the first build takes well under a minute on a typical machine
 - You'll see messages like "✔ [13/38] Built ModalDistribution.Logic.Properties.Modalities (842ms)" as modules are being processed
-- The build compiles 39 files total, which can be used to gauge build progress
-- When you see modules from `ModalDistribution.Examples.ThyHBB1`, `ThyHBB2`, and `ThyHBB3` being processed, that's when the correctness properties (Agreement, Liveness 1, and Liveness 2) for each protocol are being verified
+- The build compiles 42 files total, which can be used to gauge build progress
+- When you see modules from `ModalDistribution.Examples.HBBSafe`, `HBBSimp`, and `HBBCorr` being processed, that's when the correctness properties (Agreement, Happy Termination, and Cascade Termination) for each protocol are being verified
 - Subsequent builds are much faster
 
 **If the build completes without errors, all proofs are mechanically verified correct.** This means the correctness properties of all three broadcast protocols have been formally proven.
@@ -129,7 +129,7 @@ If you're reading the paper and want to see how something is formalized:
 2. Find the definition/theorem from the paper (e.g., "Definition 2.3.5")
 3. Follow the file path to see the Lean code
 
-Example: To see the Agreement proof for ThyHBB1 (Proposition 6.3.1), open `ModalDistribution/Examples/ThyHBB1/Agreement.lean`, or you may find the entry for that proposition in PAPER_MAPPING.md and click on its link, which will take you to the same place.
+Example: To see the Agreement proof for HBBSafe (Proposition 6.4.1), open `ModalDistribution/Examples/HBBSafe/Agreement.lean`, or you may find the entry for that proposition in PAPER_MAPPING.md and click on its link, which will take you to the same place.
 
 ### In VS Code
 
