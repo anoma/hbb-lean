@@ -321,7 +321,7 @@ theorem boxPast_of_eventual_quorum
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]φ)
-    (hImp : □W⊨[M](φ ⇒ᶠ ↕ᶠψ)) :
+    (hImp : □W⊨[M]((↕ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
     ⊨[M]□ᶠ↓[[l]] ψ := by
   classical
   refine fun p => ?_
@@ -335,7 +335,7 @@ theorem boxPast_of_eventual_quorum
     (sat_box_singleton_exists (M := M)
         (w := wₚ) (l := l)
         (φ := Formula.past φ)).1 hBox_p
-  have hImp_event : AllWorldValid M (φ ⇒ᶠ ↕ᶠ ψ) := hImp
+  have hImp_event : AllWorldValid M ((↕ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
   refine
     (sat_box_singleton_exists (M := M)
         (w := wₚ) (l := l)
@@ -357,13 +357,14 @@ theorem boxPast_of_eventual_quorum
       using ht_mem
   have hImp_local :=
     AllWorldValid.of_mem_history
-      (M := M) (φ := φ ⇒ᶠ ↕ᶠ ψ)
+      (M := M) (φ := (↕ᶠ φ) ⇒ᶠ ↕ᶠ ψ)
       hImp_event ht_mem_history
   have hSometime :
       ⟪⟨q', evtPast, HPast⟩⟫ ⊨[M] ↕ᶠ ψ :=
     (Sat.imp (M := M)
       (w := ⟨q', evtPast, HPast⟩)
-      (φ := φ) (ψ := ↕ᶠ ψ)).1 hImp_local hφ_t
+      (φ := ↕ᶠ φ) (ψ := ↕ᶠ ψ)).1 hImp_local
+      (Sat.sometime_of_mem (M := M) ht_mem_history hφ_t)
   have hPastψ_end :
       ⟪⟨q', †, M.history.val⟩⟫ ⊨[M] Formula.past ψ :=
     (Sat.atEnd (M := M)
@@ -384,7 +385,7 @@ theorem boxPast_live_of_eventual_quorum
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ φ))
-    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
+    (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ)) :
     ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ ψ) := by
   classical
   refine fun p => ?_
@@ -400,7 +401,7 @@ theorem boxPast_live_of_eventual_quorum
         (w := wₚ) (l := l)
         (φ := Formula.past (predicate0 liveSymb ∧ᶠ φ))).1 hBox_p
   have hImp_event :
-      AllWorldValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
+      AllWorldValid M ((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠ ψ) := hImp
   refine
     (sat_box_singleton_exists (M := M)
         (w := wₚ) (l := l)
@@ -430,14 +431,14 @@ theorem boxPast_live_of_eventual_quorum
   have hImp_local :=
     AllWorldValid.of_mem_history
       (M := M)
-      (φ := (predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ)
+      (φ := (↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠ ψ)
       hImp_event htφ_mem_history
   have hSometime :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] ↕ᶠ ψ :=
     (Sat.imp (M := M)
       (w := ⟨qφ, evtφ, Hφ⟩)
-      (φ := predicate0 liveSymb ∧ᶠ φ) (ψ := ↕ᶠ ψ)).1
-      hImp_local hLiveφ_tφ
+      (φ := ↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) (ψ := ↕ᶠ ψ)).1
+      hImp_local (Sat.sometime_of_mem (M := M) htφ_mem_history hLiveφ_tφ)
   have hPastψ :
       ⟪⟨q, †, M.history.val⟩⟫ ⊨[M] Formula.past ψ := by
     have hPastψ_end :
@@ -500,19 +501,83 @@ theorem boxPast_live_of_eventual_quorum
   simpa [wₚ]
     using hPastLiveψ
 
+/-- `■_l` is monotone along implications that hold at every event-tuple of
+the model: the past event-tuples witnessing a quorum box all lie in `H`. -/
+theorem boxPast_mono_of_history
+    {φ ψ : Formula S} {l : Signature.Value S}
+    (hImp : ∀ t ∈ M.history.val, (⟪t⟫ ⊨[M] φ) → ⟪t⟫ ⊨[M] ψ)
+    (hQuorum : ⊨[M]□ᶠ↓[[l]]φ) :
+    ⊨[M]□ᶠ↓[[l]]ψ := by
+  classical
+  intro p
+  have hBox :
+      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] □ᶠ[[l]] (↓ᶠ φ) := by
+    simpa [Formula.boxPast] using hQuorum p
+  have hBoxψ :=
+    Sat.box_of_imp (M := M) (w := ⟨p, †, M.history.val⟩) [l]
+      (φ := ↓ᶠ φ) (ψ := ↓ᶠ ψ)
+      (fun q hq =>
+        Sat.past_of_imp (M := M) (w := ⟨q, †, M.history.val⟩)
+          (fun t ht _ hφ => hImp t (by simpa [World.time] using ht) hφ) hq)
+      hBox
+  simpa [Formula.boxPast] using hBoxψ
+
+/-- The `♦` counterpart of Lemma 6.5.2(2): if some live participant had `φ`
+at an event-tuple, and `↕(live ∧ φ) ⇒ ↕ψ` is valid, then some live
+participant has `ψ` at an event-tuple. -/
+theorem diamondPast_live_of_eventual
+    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (φ ψ : Formula S)
+    (hDiamond : ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ φ))
+    (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ)) :
+    ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ ψ) := by
+  classical
+  let p₀ : P := Classical.choice inferInstance
+  obtain ⟨q, hPast⟩ :=
+    (Sat.diamond_nil (M := M) (w := ⟨p₀, †, M.history.val⟩)
+      (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ φ))).1
+      (by simpa [Formula.diamondPast] using hDiamond p₀)
+  obtain ⟨t, ht, -, hConj⟩ :=
+    (Sat.past (M := M) (w := ⟨q, †, M.history.val⟩)
+      (φ := predicate0 liveSymb ∧ᶠ φ)).1 hPast
+  have htH : t ∈ M.history.val := by simpa [World.time] using ht
+  have hSome : ⟪t⟫ ⊨[M] ↕ᶠ ψ :=
+    Sat.imp_elim (M := M) (w := t)
+      (AllWorldValid.of_mem_history (M := M) hImp htH)
+      (Sat.sometime_of_mem (M := M) htH hConj)
+  obtain ⟨t', ht', hPlace, hψ⟩ :=
+    (Sat.sometime (M := M) (w := t) (φ := ψ)).1 hSome
+  have hLive' : ⟪t'⟫ ⊨[M] predicate0 liveSymb :=
+    (alwaysLiveEquivBackward (M := M) (hTheory := hLiveTheory)
+      (ht := htH) (ht' := ht') (hplace := hPlace.symm)).1
+      ((Sat.and (M := M) (w := t)
+        (φ := predicate0 liveSymb) (ψ := φ)).1 hConj).1
+  have hPast' :
+      ⟪⟨t'.place, †, M.history.val⟩⟫ ⊨[M]
+        ↓ᶠ (predicate0 liveSymb ∧ᶠ ψ) :=
+    Sat.past_intro_of_prefix (M := M)
+      (w := ⟨t'.place, †, M.history.val⟩) (t := t')
+      (ht := by simpa [World.time] using ht') (hp := rfl)
+      (hφ := (Sat.and (M := M) (w := t')
+        (φ := predicate0 liveSymb) (ψ := ψ)).2 ⟨hLive', hψ⟩)
+  intro p
+  simpa [Formula.diamondPast, Formula.diamondEmpty, id] using
+    sat_diamondEmpty_of_local (M := M) (w := ⟨p, †, M.history.val⟩)
+      (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ ψ)) ⟨t'.place, hPast'⟩
+
 /-- The per-place core of Lemma 6.4.3: at a live end-of-time world, an
-eventual `φ` combines with the implication `(live ∧ φ) ⇒ ↕ψ` to give an
+eventual `φ` combines with the implication `↕(live ∧ φ) ⇒ ↕ψ` to give an
 eventual `ψ`. -/
 theorem live_sometime_consequent_at
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
     {φ ψ : Formula S} {p : P}
-    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ))
+    (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ))
     (hLive_p : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]predicate0 liveSymb)
     (hSometimeφ : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↕ᶠφ) :
     ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]↕ᶠψ := by
   classical
   let wₚ : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hImp_event : AllWorldValid M ((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ) := hImp
+  have hImp_event : AllWorldValid M ((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠ ψ) := hImp
   show ⟪wₚ⟫ ⊨[M] ↕ᶠ ψ
   have hPastφ :
       ⟪wₚ⟫ ⊨[M] Formula.past φ :=
@@ -546,7 +611,7 @@ theorem live_sometime_consequent_at
   have hImp_local :=
     AllWorldValid.of_mem_history
       (M := M)
-      (φ := (predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠ ψ)
+      (φ := (↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠ ψ)
       hImp_event htφ_mem_history
   have hConj :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M]
@@ -558,8 +623,8 @@ theorem live_sometime_consequent_at
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] ↕ᶠ ψ :=
     (Sat.imp (M := M)
       (w := ⟨qφ, evtφ, Hφ⟩)
-      (φ := predicate0 liveSymb ∧ᶠ φ) (ψ := ↕ᶠ ψ)).1
-      hImp_local hConj
+      (φ := ↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) (ψ := ↕ᶠ ψ)).1
+      hImp_local (Sat.sometime_of_mem (M := M) htφ_mem_history hConj)
   have hPastψ_raw :
       ⟪⟨qφ, †, M.history.val⟩⟫ ⊨[M] Formula.past ψ :=
     (Sat.atEnd (M := M)
@@ -583,7 +648,7 @@ theorem live_eventually_consequent
     (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
     (φ ψ : Formula S)
     (hLive : ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠφ))
-    (hImp : □W⊨[M]((predicate0 liveSymb ∧ᶠ φ) ⇒ᶠ ↕ᶠψ)) :
+    (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ)) :
     ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠψ) := by
   intro p
   refine
@@ -664,24 +729,19 @@ theorem voteForward_imp_of_everytime
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l v : Signature.Value S}
     (hSafeAlways : □W⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩)) :
-    □W⊨[M]((predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
+    □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))) ⇒ᶠ
       ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
   classical
   intro t ht
   refine Sat.imp_intro (M := M) (w := t) ?_
-  intro hConj
-  have hSplit :=
-    (Sat.and (M := M) (w := t)
-      (φ := predicate0 liveSymb)
-      (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).1 hConj
+  intro hLiveEcho
   exact
     voteForward_elim (M := M)
       (hAx := theory_voteForward (M := M) hTheory)
       (hW := ht)
       (hSafeAlways := hSafeAlways ht)
-      (hLive := hSplit.1)
-      (hEchoBox := hSplit.2)
+      (hLiveEcho := hLiveEcho)
 
 /-- The instantiated `Vote!` implication used by the liveness proofs: when a
 learner is safe at the end of time, any live participant holding an echo
@@ -692,8 +752,8 @@ theorem voteForward_imp
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l v : Signature.Value S}
     (hSafe : ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) :
-    □W⊨[M]((predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) ⇒ᶠ
+    □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))) ⇒ᶠ
       ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
   classical
   refine voteForward_imp_of_everytime (M := M)

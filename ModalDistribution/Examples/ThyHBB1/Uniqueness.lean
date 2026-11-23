@@ -202,38 +202,38 @@ theorem uniquePropose_eventually_echo_core_world
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hExists :
-      ⟪w⟫ ⊨[M](predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      ⟪w⟫ ⊨[M](↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∃ᶠ (fun witness =>
             ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
     (hEq :
-      ⟪w⟫ ⊨[M](predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      ⟪w⟫ ⊨[M](↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∀ᶠ (fun witness =>
             (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
               (witness ≃ᶠ value))) :
     ⟪w⟫ ⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
   classical
   refine Sat.imp_intro (M := M) (w := w)
-      (φ := predicate0 liveSymb ∧ᶠ
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (φ := ↕ᶠ (predicate0 liveSymb ∧ᶠ
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)))
       (ψ := ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)) ?_
   intro hAnte
   obtain ⟨witness, hEchoWitness⟩ :=
     uniquePropose_exists_witness_at_world
       ((Sat.imp (M := M) (w := w)
-        (φ := predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+        (φ := ↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)))
         (ψ := ∃ᶠ (fun witness =>
           ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))).1
         hExists hAnte)
   have hEq_inst :=
     (Sat.imp (M := M) (w := w)
-      (φ := predicate0 liveSymb ∧ᶠ
-        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (φ := ↕ᶠ (predicate0 liveSymb ∧ᶠ
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)))
       (ψ := ∀ᶠ (fun witness =>
         (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
           (witness ≃ᶠ value)))).1
@@ -253,33 +253,33 @@ theorem uniquePropose_eventually_echo_core_world
 theorem uniquePropose_eventually_echo_core
     (value : S.Value)
     (hExists :
-      □W⊨[M](predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      □W⊨[M](↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∃ᶠ (fun witness =>
             ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
     (hEq :
-      □W⊨[M](predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      □W⊨[M](↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∀ᶠ (fun witness =>
             (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
               (witness ≃ᶠ value))) :
     □W⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
   classical
   intro t ht
   have hExists_loc :
       ⟪t⟫ ⊨[M]
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∃ᶠ fun witness =>
             ↕ᶠ (ofEvent ⟨echoSymb, [witness]⟩) :=
     hExists ht
   have hEq_loc :
       ⟪t⟫ ⊨[M]
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∀ᶠ fun witness =>
             (↕ᶠ (ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
               (witness ≃ᶠ value) :=
@@ -296,8 +296,8 @@ theorem uniquePropose_exists_witness_echo
     (value : S.Value)
     (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb) :
     □W⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
         ∃ᶠ (fun witness =>
           ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) := by
   classical
@@ -309,8 +309,8 @@ theorem uniquePropose_exists_witness_echo
   have hSpecialised :=
     Sat.forall_elim (M := M) (w := t)
       (body := fun v =>
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
           ∃ᶠ (fun witness =>
             ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
       (v := value) hLocal
@@ -380,6 +380,41 @@ theorem echo_backward_diamond_from_sometime
     (φ := ofEvent ⟨echoSymb, [value]⟩)
     (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1
     hImp' hEvent'
+
+/-- (Echo?) and Lemma 4.2.2 under a live quorum: a quorum of live
+participants that know of `echo(v)` know of `propose(v)`. -/
+theorem boxPast_live_knowsEcho_knowsPropose
+    (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
+    {l value : Signature.Value S}
+    (hQuorum : ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ
+      ♢ᶠ↓[[]](ofEvent ⟨echoSymb, [value]⟩))) :
+    ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ
+      ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) := by
+  classical
+  refine boxPast_mono_of_history (M := M) (fun t ht hConj => ?_) hQuorum
+  have hSplit :=
+    (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
+      (ψ := ♢ᶠ↓[[]](ofEvent ⟨echoSymb, [value]⟩))).1 hConj
+  obtain ⟨q, hPastEcho⟩ :=
+    (Sat.diamond_nil (M := M) (w := t)
+      (φ := ↓ᶠ (ofEvent ⟨echoSymb, [value]⟩))).1
+      (by simpa [Formula.diamondPast] using hSplit.2)
+  have hPastKnows :=
+    Sat.past_of_imp (M := M) (w := ⟨q, †, t.time⟩)
+      (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+      (fun t' _ _ hEcho =>
+        echo_backward_diamond_from_sometime (M := M) (w := t') (value := value)
+          (hEchoBack := hEchoBack) hEcho)
+      hPastEcho
+  have hNested :
+      ⟪t⟫ ⊨[M] ♢ᶠ↓[[]] (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) := by
+    simpa [Formula.diamondPast] using
+      (Sat.diamond_nil (M := M) (w := t)
+        (φ := ↓ᶠ (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)))).2 ⟨q, hPastKnows⟩
+  exact
+    (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
+      (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).2
+      ⟨hSplit.1, diamondPast_idem (M := M) t _ ht hNested⟩
 
 theorem boxEcho_to_propose_diamond
     {w : World P (Signature.EventType S)}
@@ -631,8 +666,8 @@ theorem uniquePropose_witness_eq_value
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
         ∀ᶠ (fun witness =>
           (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
             (witness ≃ᶠ value)) := by
@@ -654,17 +689,20 @@ theorem uniquePropose_witness_eq_value
   refine
     Sat.imp_intro (M := M) (w := wPred)
       (φ :=
-        predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
+        ↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)))
       (ψ := ∀ᶠ (fun witness =>
         (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
           (witness ≃ᶠ value))) ?_
   intro hAnte
-  have hConj :=
-    (Sat.and (M := M) (w := wPred)
+  obtain ⟨wProp, hProp_mem, _, hConj_wProp⟩ :=
+    (Sat.sometime (M := M) (w := wPred)
+      (φ := predicate0 liveSymb ∧ᶠ
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1 hAnte
+  have hDiamond_value_loc :=
+    ((Sat.and (M := M) (w := wProp)
       (φ := predicate0 liveSymb)
-      (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1 hAnte
-  have hDiamond_value_loc := hConj.2
+      (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).1 hConj_wProp).2
   refine
     Sat.forall_intro (M := M) (w := wPred)
       (body := fun witness =>
@@ -685,12 +723,12 @@ theorem uniquePropose_witness_eq_value
     echo_backward_diamond_from_sometime
       (M := M) (w := wEcho) (value := witness)
       (hEchoBack := hEchoBack) hEcho_event
-  have hSubset_pred :
-      wPred.time ⊆trn M.history.val :=
-    by
-      simpa [wPred, hwPred_def]
-        using ModalDistribution.Logic.time_subset_trn_history
-          (M := M) (t := t) ht
+  have hSubset_prop :
+      wProp.time ⊆trn M.history.val :=
+    ModalDistribution.Logic.time_subset_trn_history
+      (M := M) (t := wProp)
+      (PreHistory.happensBeforeEq_of_mem
+        (Event := Signature.EventType S) hProp_mem)
   have hDiamond_value_global :
       ⟪wTop⟫ ⊨[M]
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
@@ -699,10 +737,10 @@ theorem uniquePropose_witness_eq_value
         (sat_diamondPast_nil_event_subset
           (M := M)
           (w := wTop)
-          (w' := wPred)
+          (w' := wProp)
           (symb := proposeSymb)
           (args := [value])
-          (hSubset := hSubset_pred)
+          (hSubset := hSubset_prop)
           hDiamond_value_loc)
   have hBefore_wEcho :
       wEcho.time ⪯ M.history.val :=
@@ -746,21 +784,21 @@ theorem uniquePropose_eventually_echo
     (hUnique : ⊨[M]∃!ᶠ v ↦
         ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
     □W⊨[M]
-      (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+      (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩) := by
   classical
   have hExists :
       □W⊨[M]
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∃ᶠ (fun witness =>
             ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) :=
     uniquePropose_exists_witness_echo (value := value) (hEcho := hEcho)
   have hEq :
       □W⊨[M]
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∀ᶠ (fun witness =>
             (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
               (witness ≃ᶠ value)) :=
@@ -772,8 +810,8 @@ theorem uniquePropose_eventually_echo
       (value := value)
       (hExists := hExists) (hEq := hEq) :
         □W⊨[M]
-          (predicate0 liveSymb ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          (↕ᶠ (predicate0 liveSymb ∧ᶠ
+              ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
             ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
 
 /-- at most one proposal implies every learner is safe. -/

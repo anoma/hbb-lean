@@ -67,39 +67,31 @@ theorem livenessOne
   intro hProposeDiamond
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLiveHere
-  have hProposeQuorumGlobal :
+  have hEventGlobal :
       ⊨[M]
-        □ᶠ↓[[l]]
+        ♢ᶠ↓[[]]
           (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
-    live_eventually_knows_event (M := M)
-      (liveSymb := liveSymb)
-      (l := l)
-      (evt := ⟨proposeSymb, [v]⟩)
-      (hTheory := hThyLive)
-      (hLive := hLiveQuorum)
-      (hEvent :=
-        by
-          intro q
-          obtain ⟨q', hPast⟩ :=
-            (Sat.diamond_nil (M := M)
-              (w := wTop)
-              (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-                ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1
-              (by simpa [Formula.diamondPast, wTop]
-                using hProposeDiamond)
-          have hDiamond :=
-            (Sat.diamond_nil (M := M)
-              (w := ⟨q, †, M.history.val⟩)
-              (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-                ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).2
-              ⟨q', by simpa [wTop] using hPast⟩
-          simpa [Formula.diamondPast]
-            using hDiamond)
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
+    intro q
+    obtain ⟨q', hPast⟩ :=
+      (Sat.diamond_nil (M := M)
+        (w := wTop)
+        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1
+        (by simpa [Formula.diamondPast, wTop] using hProposeDiamond)
+    have hDiamond :=
+      (Sat.diamond_nil (M := M)
+        (w := ⟨q, †, M.history.val⟩)
+        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).2
+        ⟨q', by simpa [wTop] using hPast⟩
+    simpa [Formula.diamondPast] using hDiamond
+  -- Lemma 6.6.1 holds verbatim in HBBCorr: (Echo!), (Echo?) and `ThyLive`
+  -- are as in HBBSafe (Remark 8.5.2).
   have hImpEcho :
       □W⊨[M]
-        (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
         ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩) :=
     ThyHBB1.uniquePropose_eventually_echo
       (M := M) (liveSymb := liveSymb)
@@ -109,6 +101,35 @@ theorem livenessOne
       (hEcho := theory_echoForward (M := M) hTheory)
       (hEchoBack := theory_echoBackward (M := M) hTheory)
       (hUnique := hUnique)
+  -- Lemma 6.6.1: some live participant echoes `v`.
+  have hLiveEchoGlobal :
+      ⊨[M] ♢ᶠ↓[[]] (predicate0 liveSymb ∧ᶠ ofEvent ⟨echoSymb, [v]⟩) :=
+    ThyHBB1.diamondPast_live_of_eventual (M := M)
+      (hLiveTheory := hThyLive)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := ofEvent ⟨echoSymb, [v]⟩)
+      (hDiamond := hEventGlobal) (hImp := hImpEcho)
+  -- Proposition 5.2.8: an `l`-quorum of live participants knows of that echo.
+  have hKnowsEchoGlobal :
+      ⊨[M] □ᶠ↓[[l]]
+        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨echoSymb, [v]⟩)) := by
+    have hKE :=
+      live_eventually_knows (P := P) (M := M) (liveSymb := liveSymb)
+        (l := l) (evt := ⟨echoSymb, [v]⟩)
+        (hTheory := hThyLive) (hLive := hLiveQuorum)
+        (hEvent := hLiveEchoGlobal)
+    intro q
+    simpa using hKE q
+  -- (Echo?) and Lemma 4.2.2: that quorum knows of the proposal.
+  have hProposeQuorumGlobal :
+      ⊨[M]
+        □ᶠ↓[[l]]
+          (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
+    ThyHBB1.boxPast_live_knowsEcho_knowsPropose (M := M)
+      (hEchoBack := theory_echoBackward (M := M) hTheory)
+      (hQuorum := hKnowsEchoGlobal)
+  -- Lemma 6.5.2(2) and Lemma 6.6.1: that quorum echoes `v`.
   have hEchoQuorumGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -123,89 +144,41 @@ theorem livenessOne
       (hLiveTheory := hThyLive)
       (hQuorum := hProposeQuorumGlobal)
       (hImp := hImpEcho)
-  -- Lemma 6.4.2(2) with (Vote!) as Lemma 8.4.3(4): the live echo quorum
-  -- becomes a live vote quorum.
-  have hLiveVoteTop :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩) := by
-    have hGlobal :
-        ⊨[M]□ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l, v]⟩) :=
-      ThyHBB1.boxPast_live_of_eventual_quorum (M := M)
-        (hLiveTheory := hThyLive)
-        (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
-        (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
-        (l := l)
-        (hQuorum := live_boxPast_nests (M := M)
-          (liveSymb := liveSymb) (l := l)
-          (φ := ofEvent ⟨echoSymb, [v]⟩)
-          (hTheory := hThyLive)
-          (hQuorum := hEchoQuorumGlobal))
-        (hImp := live_echo_eventually_vote (M := M)
-          (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-          (echoSymb := echoSymb) (voteSymb := voteSymb)
-          (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
-          (hTheory := hTheory) (l := l) (v := v)
-          (hSeq := hLiveSequentialGlobal))
-    simpa [wTop] using hGlobal p
+  -- Lemma 5.2.11, then Lemma 6.5.2(2) with Lemma 8.4.3(4): the quorum votes.
+  have hLiveVoteGlobal :
+      ⊨[M]□ᶠ↓[[l]]
+        (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l, v]⟩) :=
+    ThyHBB1.boxPast_live_of_eventual_quorum (M := M)
+      (hLiveTheory := hThyLive)
+      (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
+      (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
+      (l := l)
+      (hQuorum := live_boxPast_nests (M := M)
+        (liveSymb := liveSymb) (l := l)
+        (evt := ⟨echoSymb, [v]⟩)
+        (hTheory := hThyLive)
+        (hQuorum := hEchoQuorumGlobal))
+      (hImp := live_echo_eventually_vote (M := M)
+        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
+        (echoSymb := echoSymb) (voteSymb := voteSymb)
+        (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
+        (hTheory := hTheory) (l := l) (v := v)
+        (hSeq := hLiveSequentialGlobal))
+  -- (Knowledge□↓): every live participant eventually knows of the vote quorum.
   have hVoteEventuallyTop :
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ
           (□ᶠ↓[[l]]
-            (ofEvent ⟨voteSymb, [l, v]⟩)) := by
-    classical
-    -- Instantiate the knowledge axiom for `l`-quorum votes.
-    have hKnowledgeMem :
-        knowledgeBoxAxiom (S := S)
-          liveSymb [l]
-          (ofEvent ⟨voteSymb, [l, v]⟩) ∈ ThyLive liveSymb := by
-      dsimp [ThyLive]
-      refine Or.inr ?_
-      refine Or.inr ?_
-      refine Or.inr ?_
-      exact ⟨[l], ofEvent ⟨voteSymb, [l, v]⟩, rfl⟩
-    have hKnowledgeEvent :
-        AllWorldValid M
-          (knowledgeBoxAxiom (S := S)
-            liveSymb [l]
             (ofEvent ⟨voteSymb, [l, v]⟩)) :=
-      hThyLive hKnowledgeMem
-
-    -- Evaluate the box hypothesis at the end of time.
-    have hAtEnd :
-        ⟪wTop⟫ ⊨[M]
-          ⤒ᶠ (□ᶠ↓[[l]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l, v]⟩)) :=
-      (Sat.atEnd (M := M)
-        (w := wTop)
-        (φ := □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩))).2
-        (by simpa [wTop, World.place, World.time] using hLiveVoteTop)
-
-    have hImp :=
-      Sat.imp_elim (M := M) (w := wTop)
-        (φ := ⤒ᶠ (□ᶠ↓[[l]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l, v]⟩)))
-        (ψ := predicate0 liveSymb ⇒ᶠ
-            ↕ᶠ (□ᶠ↓[[l]]
-              (ofEvent ⟨voteSymb, [l, v]⟩)))
-        (AllWorldValid.at_end (M := M)
-          (φ := knowledgeBoxAxiom (S := S)
-            liveSymb [l] (ofEvent ⟨voteSymb, [l, v]⟩))
-          hKnowledgeEvent p)
-        hAtEnd
-
-    exact
-      Sat.imp_elim (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l]]
-          (ofEvent ⟨voteSymb, [l, v]⟩)))
-        hImp hLiveHere
+    Sat.imp_elim (M := M) (w := wTop)
+      (φ := predicate0 liveSymb)
+      (ψ := ↕ᶠ (□ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩)))
+      (by
+        simpa [wTop] using
+          live_eventually_knows_box (P := P) (M := M) (liveSymb := liveSymb)
+            (l := l) (evt := ⟨voteSymb, [l, v]⟩)
+            (hTheory := hThyLive) (hQuorum := hLiveVoteGlobal) p)
+      hLiveHere
   exact
     ThyHBB1.live_sometime_consequent_at (M := M)
       (hLiveTheory := hThyLive)

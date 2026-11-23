@@ -116,8 +116,8 @@ section ForwardRules
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun value =>
-    (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+    (↕ᶠ (predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
       ∃ᶠ fun witnessed =>
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
@@ -127,9 +127,9 @@ section ForwardRules
     (voteSymb : Signature.EventSymb S)
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated => ∀ᶠ fun value =>
-    (predicate0 liveSymb ∧ᶠ
+    (↕ᶠ (predicate0 liveSymb ∧ᶠ
         (⇕ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩)) ∧ᶠ
-        ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩)) ⇒ᶠ
+        ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [correlated, value]⟩))) ⇒ᶠ
       ∃ᶠ fun witnessed =>
         ↕ᶠ (ofEvent ⟨voteSymb, [learner, witnessed]⟩)
 
@@ -138,8 +138,8 @@ section ForwardRules
     (liveSymb : Signature.PredSymb S)
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun value =>
-    (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩)) ⇒ᶠ
+    (↕ᶠ (predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩))) ⇒ᶠ
       ↕ᶠ (ofEvent ⟨deliverSymb, [learner, value]⟩)
 
 end ForwardRules
@@ -510,12 +510,12 @@ theorem correlationSymm_elim
       hCorrelated hCorr
 
 /-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
-eventually yields a delivery. This is the form consumed by Lemma 6.4.3. -/
+eventually yields a delivery. This is the form consumed by Lemma 6.5.3. -/
 theorem deliverForward_imp
     (hAx : □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb)
     {learner value : S.Value} :
-    □W⊨[M]((predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩)) ⇒ᶠ
+    □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value]⟩))) ⇒ᶠ
       ↕ᶠ (ofEvent ⟨deliverSymb, [learner, value]⟩)) := by
   classical
   intro t ht
@@ -526,16 +526,16 @@ theorem deliverForward_imp
     Sat.forall_elim (M := M) (w := t)
       (body := fun learner' =>
         ∀ᶠ fun value' =>
-          (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[learner']] (ofEvent ⟨voteSymb, [learner', value']⟩)) ⇒ᶠ
+          (↕ᶠ (predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[learner']] (ofEvent ⟨voteSymb, [learner', value']⟩))) ⇒ᶠ
             ↕ᶠ (ofEvent ⟨deliverSymb, [learner', value']⟩))
       (v := learner)
       (by simpa [deliverForwardAxiom] using hLocal)
   exact
     Sat.forall_elim (M := M) (w := t)
       (body := fun value' =>
-        (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value']⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            □ᶠ↓[[learner]] (ofEvent ⟨voteSymb, [learner, value']⟩))) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨deliverSymb, [learner, value']⟩))
       (v := value) hLearner
 

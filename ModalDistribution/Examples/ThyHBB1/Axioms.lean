@@ -73,8 +73,8 @@ section ForwardAxioms
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner => ∀ᶠ (fun value =>
     (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
-      ((predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+      ((↕ᶠ (predicate0 liveSymb ∧ᶠ
+          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))))
 
 end ForwardAxioms
@@ -236,16 +236,16 @@ theorem voteBackward_elim
       (φ := ofPredicate ⟨safeSymb, [learner]⟩)
       (ψ := □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))).1 hConj
 
-/-- Instantiate `Vote!` at a world of the model: everywhere-safety, liveness,
-and a quorum of past echoes yield an eventual vote. -/
+/-- Instantiate `Vote!` at a world of the model: everywhere-safety and a sometime-live
+quorum of past echoes yield an eventual vote. -/
 theorem voteForward_elim
     (hAx : □W⊨[M] voteForwardAxiom liveSymb safeSymb echoSymb voteSymb)
     {w : World P (Signature.EventType S)}
     (hW : w.time ⪯ M.history.val)
     {learner value : S.Value}
     (hSafeAlways : ⟪w⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩))
-    (hLive : ⟪w⟫ ⊨[M] predicate0 liveSymb)
-    (hEchoBox : ⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) :
+    (hLiveEcho : ⟪w⟫ ⊨[M] (↕ᶠ (predicate0 liveSymb ∧ᶠ
+      □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))) :
     ⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩) := by
   classical
   have hLocal :
@@ -255,8 +255,8 @@ theorem voteForward_elim
     Sat.forall_elim (M := M) (w := w)
       (body := fun learner => ∀ᶠ (fun value =>
         (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
-          ((predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+          ((↕ᶠ (predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
             ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))))
       (v := learner)
       (by simpa [voteForwardAxiom] using hLocal)
@@ -264,27 +264,24 @@ theorem voteForward_elim
     Sat.forall_elim (M := M) (w := w)
       (body := fun value =>
         (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
-          ((predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+          ((↕ᶠ (predicate0 liveSymb ∧ᶠ
+              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
             ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩)))
       (v := value) hLearner
   have hGuarded :=
     Sat.imp_elim (M := M) (w := w)
       (φ := ⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩))
-      (ψ := (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) ⇒ᶠ
+      (ψ := (↕ᶠ (predicate0 liveSymb ∧ᶠ
+          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
         ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
       hValue hSafeAlways
   exact
     Sat.imp_elim (M := M) (w := w)
-      (φ := predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))
+      (φ := (↕ᶠ (predicate0 liveSymb ∧ᶠ
+        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
       (ψ := ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
       hGuarded
-      ((Sat.and (M := M) (w := w)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))).2
-        ⟨hLive, hEchoBox⟩)
+      hLiveEcho
 
 end Instantiations
 

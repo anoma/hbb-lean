@@ -98,82 +98,52 @@ theorem livenessTwo
     intro q
     simpa using h q
 
-  -- (Vote?): each live voter knows an echo quorum.
-  have hLiveEcho :
-      ⊨[M]♢ᶠ↓[[]]
-        ((predicate0 liveSymb) ∧ᶠ
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
+  -- Proposition 5.2.8: the live `l₂'`-quorum eventually knows of that vote.
+  have hKnowsVoteGlobal :
+      ⊨[M]□ᶠ↓[[l₂']]
+        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩)) := by
+    have hKV :=
+      live_eventually_knows (P := P) (M := M) (liveSymb := liveSymb)
+        (l := l₂') (evt := ⟨voteSymb, [l, v]⟩)
+        (hTheory := hThyLiveTheory)
+        (hLive := by intro q; simpa using hLive q)
+        (hEvent := hLiveVote)
     intro q
-    obtain ⟨qVote, hPastConj⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [l, v]⟩))).1
-        (by simpa [Formula.diamondPast] using hLiveVote q)
-    obtain ⟨tVote, ht_mem, ht_place, hConjLocal⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qVote, †, M.history.val⟩)
-        (φ := predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [l, v]⟩)).1 hPastConj
-    have hConjSplit :=
-      (Sat.and (M := M) (w := tVote)
-        (φ := predicate0 liveSymb)
-        (ψ := ofEvent ⟨voteSymb, [l, v]⟩)).1
-        (by simpa using hConjLocal)
-    have ht_mem_history : tVote ∈ M.history.val := by
-      simpa [World.time] using ht_mem
-    have hEchoBox :
-        ⟪tVote⟫ ⊨[M] □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩) :=
-      (voteBackward_elim (M := M)
-        (hAx := theory_voteBackward (M := M) hTheory)
-        (hMem := ht_mem_history)
-        (hVote := hConjSplit.2)).2
-    have hConjTarget :
-        ⟪tVote⟫ ⊨[M]
-          predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩) :=
-      (Sat.and (M := M) (w := tVote)
-        (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).2
-        ⟨hConjSplit.1, hEchoBox⟩
-    have hPastConj' :
-        ⟪⟨qVote, †, M.history.val⟩⟫ ⊨[M]
-          ↓ᶠ (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-      Sat.past_intro_of_prefix (M := M)
-        (w := ⟨qVote, †, M.history.val⟩)
-        (t := tVote)
-        (ht := ht_mem)
-        (hp := ht_place)
-        (hφ := hConjTarget)
-    have hDiamond :=
-      sat_diamondEmpty_of_local (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)))
-        ⟨qVote, hPastConj'⟩
-    simpa [Formula.diamondPast, Formula.diamondEmpty, id]
-      using hDiamond
+    simpa using hKV q
 
-  -- Corollary 5.2.9(3): the live quorum eventually knows the echo quorum.
+  -- (Vote?) with Lemma 4.2.3(1): knowing of the vote, the quorum knows of an
+  -- `l`-quorum of echoes.
   have hStep4Global :
       ⊨[M]□ᶠ↓[[l₂']]
         (predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
-    have hLiveGlobal :
-        ⊨[M]□ᶠ[id [l₂']] predicate0 liveSymb := by
-      intro q
-      simpa using hLive q
-    have hBoxGlobal :=
-      live_eventually_knows_quorum
-        (M := M) (liveSymb := liveSymb)
-        (l := l₂') (l₁ := l)
-        (evt := ⟨echoSymb, [v]⟩)
-        (hTheory := hThyLiveTheory)
-        (hLive := hLiveGlobal)
-        (hQuorum := by intro q; simpa using hLiveEcho q)
-    intro q
-    simpa using hBoxGlobal q
+    refine boxPast_mono_of_history (M := M) (fun t ht hConj => ?_) hKnowsVoteGlobal
+    have hSplit :=
+      (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
+        (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩))).1 hConj
+    obtain ⟨q, hPastVote⟩ :=
+      (Sat.diamond_nil (M := M) (w := t)
+        (φ := ↓ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))).1
+        (by simpa [Formula.diamondPast] using hSplit.2)
+    have hPastEcho :=
+      Sat.past_of_imp (M := M) (w := ⟨q, †, t.time⟩)
+        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
+        (fun t' _ _ hVote =>
+          (voteBackward_elim (M := M)
+            (hAx := theory_voteBackward (M := M) hTheory)
+            (hMem := Sat.mem_of_ofEvent (M := M) hVote)
+            (hVote := hVote)).2)
+        hPastVote
+    have hKnowsEcho :
+        ⟪t⟫ ⊨[M] ♢ᶠ↓[[]] (□ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
+      simpa [Formula.diamondPast] using
+        (Sat.diamond_nil (M := M) (w := t)
+          (φ := ↓ᶠ (□ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)))).2 ⟨q, hPastEcho⟩
+    exact
+      (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
+        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).2
+        ⟨hSplit.1,
+          pastDiamondBoxCollapsesToPresentBox (M := M) t l _ ht hKnowsEcho⟩
 
   -- Lemma 6.4.2(2) with (Vote!): the safe learner's quorum eventually votes.
   -- Safety enters through `voteForward_imp`, i.e. Lemma 6.4.1.
@@ -202,7 +172,7 @@ theorem livenessTwo
       (hLive :=
         _root_.ModalDistribution.Examples.live_eventually_knows_box
           (M := M) (liveSymb := liveSymb)
-          (l := l₂') (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+          (l := l₂') (evt := ⟨voteSymb, [l, v]⟩)
           (hTheory := hThyLiveTheory)
           (hQuorum := hVotesGlobal))
       (hImp := HBB.deliverForward_imp (M := M)

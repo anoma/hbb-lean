@@ -394,6 +394,20 @@ theorem past
   rcases w with ⟨p, evt, H⟩
   simp [Sat]
 
+/-- A world satisfying an event atom is an event-tuple of the model. -/
+theorem mem_of_ofEvent
+    (M : Model S P)
+    {w : World P S.EventType}
+    {E : S.EventType}
+    (h : ⟪w⟫ ⊨[M]Formula.ofEvent E) :
+    w ∈ M.history.val := by
+  classical
+  rcases w with ⟨p, evt, H⟩
+  obtain ⟨hEvt, hMem⟩ := (ofEvent M _ E).1 h
+  simp only [World.event] at hEvt
+  subst hEvt
+  simpa using hMem
+
 /-- Paper: Lemma 3.6.4(1). Sometime (eventually in the future at end of time) unfolds. -/
 theorem sometime
     (M : Model S P)
@@ -404,6 +418,28 @@ theorem sometime
   classical
   rcases w with ⟨p, evt, H⟩
   simp [Formula.sometime, Sat]
+
+/-- An event-tuple of the model that satisfies `φ` sometime satisfies `φ`:
+it is itself the witness for `↕φ`. -/
+theorem sometime_of_mem
+    (M : Model S P)
+    {t : World P S.EventType}
+    {φ : Formula S}
+    (ht : t ∈ M.history.val)
+    (hφ : ⟪t⟫ ⊨[M]φ) :
+    ⟪t⟫ ⊨[M]Formula.sometime φ :=
+  (sometime M t φ).2 ⟨t, ht, rfl, hφ⟩
+
+/-- `↕φ` depends only on the place of a world. -/
+theorem sometime_of_place_eq
+    (M : Model S P)
+    {t w : World P S.EventType}
+    {φ : Formula S}
+    (hPlace : t.place = w.place)
+    (h : ⟪t⟫ ⊨[M]Formula.sometime φ) :
+    ⟪w⟫ ⊨[M]Formula.sometime φ := by
+  obtain ⟨s, hs, hsPlace, hφ⟩ := (sometime M t φ).1 h
+  exact (sometime M w φ).2 ⟨s, hs, hsPlace.trans hPlace, hφ⟩
 
 /-- Paper: Lemma 3.6.4(2). Satisfaction of `⇕` (everytime): the body holds at every event-tuple of the
 model at the current place. -/

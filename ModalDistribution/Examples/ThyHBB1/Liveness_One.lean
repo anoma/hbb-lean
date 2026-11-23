@@ -108,39 +108,58 @@ theorem livenessOne
         hPastWitness
     simpa [Formula.diamondPast] using hDiamond
 
-  have hStep1Global :
-      ⊨[M] □ᶠ↓[[l]] φLivePropose := by
-    intro q
-    have hQuorumBox :=
-      live_eventually_knows_event
-        (M := M) (liveSymb := liveSymb)
-        (l := l) (evt := ⟨proposeSymb, [v]⟩)
-        (hTheory := hThyLiveTheory)
-        (hLive := hLiveBox)
-        (hEvent := hEventGlobal)
-    simpa [φLivePropose] using hQuorumBox q
+  -- Lemma 6.6.1: under a unique proposal, live knowledge of the proposal
+  -- eventually yields an echo of it.
+  have hImpEcho :
+      □W⊨[M]
+        ((↕ᶠ φLivePropose) ⇒ᶠ ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩)) :=
+    uniquePropose_eventually_echo
+      (M := M) (liveSymb := liveSymb)
+      (proposeSymb := proposeSymb) (echoSymb := echoSymb)
+      (value := v)
+      (hEcho := theory_echoForward (M := M) hTheory)
+      (hEchoBack := theory_echoBackward (M := M) hTheory)
+      (hUnique := hUnique)
 
+  -- Step 1 (Lemma 6.6.1): some live participant echoes `v`.
+  have hLiveEchoGlobal :
+      ⊨[M] ♢ᶠ↓[[]] φLiveEcho :=
+    diamondPast_live_of_eventual (M := M)
+      (hLiveTheory := hThyLiveTheory)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := ofEvent ⟨echoSymb, [v]⟩)
+      (hDiamond := hEventGlobal) (hImp := hImpEcho)
+
+  -- Step 2 (Proposition 5.2.8): an `l`-quorum of live participants knows
+  -- of that echo.
+  have hKnowsEchoGlobal :
+      ⊨[M] □ᶠ↓[[l]]
+        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨echoSymb, [v]⟩)) := by
+    intro q
+    simpa using
+      live_eventually_knows (M := M) (liveSymb := liveSymb)
+        (l := l) (evt := ⟨echoSymb, [v]⟩)
+        (hTheory := hThyLiveTheory) (hLive := hLiveBox)
+        (hEvent := hLiveEchoGlobal) (P := P) q
+
+  -- Step 3 ((Echo?) and Lemma 4.2.2): that quorum knows of the proposal.
+  have hStep1Global :
+      ⊨[M] □ᶠ↓[[l]] φLivePropose :=
+    boxPast_live_knowsEcho_knowsPropose (M := M)
+      (hEchoBack := theory_echoBackward (M := M) hTheory)
+      (hQuorum := hKnowsEchoGlobal)
+
+  -- Step 4 (Lemma 6.5.2(2) and Lemma 6.6.1): that quorum echoes `v`.
   have hStep2Global :
-      ⊨[M] □ᶠ↓[[l]] φLiveEcho := by
-    have hImpEcho :
-        □W⊨[M]
-          (φLivePropose ⇒ᶠ ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩)) :=
-      uniquePropose_eventually_echo
-        (M := M) (liveSymb := liveSymb)
-        (proposeSymb := proposeSymb) (echoSymb := echoSymb)
-        (value := v)
-        (hEcho := theory_echoForward (M := M) hTheory)
-        (hEchoBack := theory_echoBackward (M := M) hTheory)
-        (hUnique := hUnique)
-    exact
-      boxPast_live_of_eventual_quorum
-        (M := M) (liveSymb := liveSymb)
-        (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
-        (ψ := ofEvent ⟨echoSymb, [v]⟩)
-        (l := l)
-        (hLiveTheory := hThyLiveTheory)
-        (hQuorum := hStep1Global)
-        (hImp := hImpEcho)
+      ⊨[M] □ᶠ↓[[l]] φLiveEcho :=
+    boxPast_live_of_eventual_quorum
+      (M := M) (liveSymb := liveSymb)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := ofEvent ⟨echoSymb, [v]⟩)
+      (l := l)
+      (hLiveTheory := hThyLiveTheory)
+      (hQuorum := hStep1Global)
+      (hImp := hImpEcho)
 
   -- Global guard: uniqueness of proposals enforces the at-most-one constraint.
   have hGuardGlobal :
@@ -157,7 +176,7 @@ theorem livenessOne
       ⊨[M] □ᶠ↓[[l]] φLiveNestedEcho :=
     _root_.ModalDistribution.Examples.live_boxPast_nests
       (M := M) (liveSymb := liveSymb)
-      (l := l) (φ := ofEvent ⟨echoSymb, [v]⟩)
+      (l := l) (evt := ⟨echoSymb, [v]⟩)
       (hTheory := hThyLiveTheory)
       (hQuorum := hStep2Global)
 
@@ -218,7 +237,7 @@ theorem livenessOne
             (M := M)
             (liveSymb := liveSymb)
             (l := l)
-            (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+            (evt := ⟨voteSymb, [l, v]⟩)
             (hTheory := hThyLiveTheory)
             (hQuorum := hVotesGlobal))
         (hImp := HBB.deliverForward_imp (M := M)

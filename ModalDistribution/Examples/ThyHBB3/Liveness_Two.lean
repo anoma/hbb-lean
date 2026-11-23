@@ -236,7 +236,7 @@ theorem livenessTwo
       live_eventually_knows (M := M)
         (liveSymb := liveSymb)
         (l := l₂)
-        (φ := ofEvent ⟨voteSymb, [l₁, v]⟩)
+        (evt := ⟨voteSymb, [l₁, v]⟩)
         (hTheory := hThyLive)
         (hLive := hLiveQuorum)
         (hEvent := hEventGlobal)
@@ -251,9 +251,9 @@ theorem livenessTwo
     classical
     have hVotePropagation :
         □W⊨[M]
-          (((predicate0 liveSymb ∧ᶠ
+          ((↕ᶠ ((predicate0 liveSymb ∧ᶠ
                 ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
+              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))) ⇒ᶠ
             ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
       correlated_vote_eventually
         (M := M)
@@ -269,35 +269,40 @@ theorem livenessTwo
         (l₂ := l₂)
         (v := v)
         (hSeq := hLiveSequentialGlobal)
-    -- Fold the always-correlated fact into `Vote'!` to obtain the
-    -- implication shape consumed by Lemma 6.4.2(2).
+    -- Fold the always-correlated fact into Lemma 8.4.3(3) to obtain the
+    -- implication shape consumed by Lemma 6.5.2(2).
     have hImp :
-        □W⊨[M]((predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) ⇒ᶠ
+        □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩)) := by
       intro t ht
       refine Sat.imp_intro (M := M) (w := t) ?_
-      intro hAnte
+      intro hSometimeAnte
+      obtain ⟨s, hs, hsPlace, hAnte⟩ :=
+        (Sat.sometime (M := M) (w := t)
+          (φ := predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).1 hSometimeAnte
       have hSplit :=
-        (Sat.and (M := M) (w := t)
+        (Sat.and (M := M) (w := s)
           (φ := predicate0 liveSymb)
           (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).1 hAnte
-      refine
-        Sat.imp_elim (M := M) (w := t)
-          (φ := (predicate0 liveSymb ∧ᶠ
+      have hTriple :
+          ⟪s⟫ ⊨[M] (predicate0 liveSymb ∧ᶠ
               ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)) ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))
-          (ψ := ↕ᶠ (ofEvent ⟨voteSymb, [l₂, v]⟩))
-          (hVotePropagation ht) ?_
-      exact
-        (Sat.and (M := M) (w := t)
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩) :=
+        (Sat.and (M := M) (w := s)
           (φ := predicate0 liveSymb ∧ᶠ
             ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))
           (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))).2
-          ⟨(Sat.and (M := M) (w := t)
+          ⟨(Sat.and (M := M) (w := s)
             (φ := predicate0 liveSymb)
             (ψ := ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩))).2
-            ⟨hSplit.1, hCorrelationAlways ht⟩, hSplit.2⟩
+            ⟨hSplit.1, hCorrelationAlways (M.time_le_of_mem hs)⟩, hSplit.2⟩
+      exact
+        Sat.imp_elim (M := M) (w := t)
+          (hVotePropagation ht)
+          (Sat.sometime_of_place_eq (M := M) hsPlace
+            (Sat.sometime_of_mem (M := M) hs hTriple))
     have hGlobal :
         ⊨[M]□ᶠ↓[[l₂]]
           (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l₂, v]⟩) :=
@@ -309,62 +314,17 @@ theorem livenessTwo
         (hQuorum := hLiveVoteBoxGlobal_l₂)
         (hImp := hImp)
     simpa [wTop] using hGlobal p
-  -- Knowledge$\atddot{}$: persistent `l₂` votes become eventual knowledge.
+  -- (Knowledge□↓): every live participant eventually knows of the `l₂` vote quorum.
   have hVotesEventuallyBox :
       ⟪wTop⟫ ⊨[M]
         (predicate0 liveSymb ⇒ᶠ
           ↕ᶠ (□ᶠ↓[[l₂]]
             (ofEvent ⟨voteSymb, [l₂, v]⟩))) := by
-    classical
-    refine Sat.imp_intro (M := M) (w := wTop) ?_
-    intro hLiveTop
-    -- Instantiate the knowledge axiom for `[l₂]` vote quorums.
-    have hKnowledgeMem :
-        knowledgeBoxAxiom (S := S)
-          liveSymb [l₂]
-          (ofEvent ⟨voteSymb, [l₂, v]⟩) ∈ ThyLive liveSymb := by
-      dsimp [ThyLive]
-      refine Or.inr ?_
-      refine Or.inr ?_
-      refine Or.inr ?_
-      exact ⟨[l₂], ofEvent ⟨voteSymb, [l₂, v]⟩, rfl⟩
-    have hKnowledgeEvent :
-        AllWorldValid M
-          (knowledgeBoxAxiom (S := S)
-            liveSymb [l₂]
-            (ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      hThyLive hKnowledgeMem
-    -- Evaluate the box hypothesis at the end of time.
-    have hAtEnd :
-        ⟪wTop⟫ ⊨[M]
-          ⤒ᶠ (□ᶠ↓[[l₂]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩)) :=
-      (Sat.atEnd (M := M)
-        (w := wTop)
-        (φ := □ᶠ↓[[l₂]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₂, v]⟩))).2
-        (by simpa [wTop, World.place, World.time] using hVotesBox_l₂)
-    have hImp :=
-      Sat.imp_elim (M := M) (w := wTop)
-        (φ := ⤒ᶠ (□ᶠ↓[[l₂]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₂, v]⟩)))
-        (ψ := predicate0 liveSymb ⇒ᶠ
-            ↕ᶠ (□ᶠ↓[[l₂]]
-              (ofEvent ⟨voteSymb, [l₂, v]⟩)))
-        (AllWorldValid.at_end (M := M)
-          (φ := knowledgeBoxAxiom (S := S)
-            liveSymb [l₂] (ofEvent ⟨voteSymb, [l₂, v]⟩))
-          hKnowledgeEvent p)
-        hAtEnd
-    exact
-      Sat.imp_elim (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (□ᶠ↓[[l₂]]
-          (ofEvent ⟨voteSymb, [l₂, v]⟩)))
-        hImp hLiveTop
+    simpa [wTop] using
+      live_eventually_knows_box (P := P) (M := M) (liveSymb := liveSymb)
+        (l := l₂) (evt := ⟨voteSymb, [l₂, v]⟩)
+        (hTheory := hThyLive)
+        (hQuorum := fun q => by simpa [wTop] using hVotesBox_l₂) p
   -- Votes for `l₂` lead to deliveries for `l₂`; see `ThyHBB3.deliverForwardAxiom`.
   have hLiveToDeliver :
       ⟪wTop⟫ ⊨[M]

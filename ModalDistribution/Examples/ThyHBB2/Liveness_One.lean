@@ -67,38 +67,31 @@ theorem livenessOne
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
     -- Restate the antecedent: beginning of Step 1.
     simpa [wTop] using hSeenPropose
-  have hProposeQuorumGlobal :
+  have hEventGlobal :
       ⊨[M]
-        □ᶠ↓[[l]]
+        ♢ᶠ↓[[]]
           (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
-    live_eventually_knows_event (M := M)
-      (liveSymb := liveSymb)
-      (l := l)
-      (evt := ⟨proposeSymb, [v]⟩)
-      (hTheory := hThyLive)
-      (hLive := hLiveQuorum)
-      (hEvent :=
-        by
-          intro q
-          obtain ⟨q', hPast⟩ :=
-            (Sat.diamond_nil (M := M)
-              (w := wTop)
-              (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-                ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1
-              (by simpa [Formula.diamondPast] using hProposeWitness)
-          have hDiamond :=
-            (Sat.diamond_nil (M := M)
-              (w := ⟨q, †, M.history.val⟩)
-              (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-                ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).2
-              ⟨q', by simpa [wTop] using hPast⟩
-          simpa [Formula.diamondPast]
-            using hDiamond)
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
+    intro q
+    obtain ⟨q', hPast⟩ :=
+      (Sat.diamond_nil (M := M)
+        (w := wTop)
+        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1
+        (by simpa [Formula.diamondPast] using hProposeWitness)
+    have hDiamond :=
+      (Sat.diamond_nil (M := M)
+        (w := ⟨q, †, M.history.val⟩)
+        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).2
+        ⟨q', by simpa [wTop] using hPast⟩
+    simpa [Formula.diamondPast] using hDiamond
+  -- Lemma 6.6.1 holds verbatim in HBBSimp: it uses only (Echo!), (Echo?)
+  -- and `ThyLive`, which HBBSimp shares with HBBSafe.
   have hImpEcho :
       □W⊨[M]
-        (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+        (↕ᶠ (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩) :=
     ThyHBB1.uniquePropose_eventually_echo (M := M)
       (liveSymb := liveSymb)
@@ -108,6 +101,35 @@ theorem livenessOne
       (hEcho := theory_echoForward (M := M) hTheory)
       (hEchoBack := theory_echoBackward (M := M) hTheory)
       (hUnique := hUnique)
+  -- Lemma 6.6.1: some live participant echoes `v`.
+  have hLiveEchoGlobal :
+      ⊨[M] ♢ᶠ↓[[]] (predicate0 liveSymb ∧ᶠ ofEvent ⟨echoSymb, [v]⟩) :=
+    ThyHBB1.diamondPast_live_of_eventual (M := M)
+      (hLiveTheory := hThyLive)
+      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := ofEvent ⟨echoSymb, [v]⟩)
+      (hDiamond := hEventGlobal) (hImp := hImpEcho)
+  -- Proposition 5.2.8: an `l`-quorum of live participants knows of that echo.
+  have hKnowsEchoGlobal :
+      ⊨[M] □ᶠ↓[[l]]
+        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨echoSymb, [v]⟩)) := by
+    have hKE :=
+      live_eventually_knows (P := P) (M := M) (liveSymb := liveSymb)
+        (l := l) (evt := ⟨echoSymb, [v]⟩)
+        (hTheory := hThyLive) (hLive := hLiveQuorum)
+        (hEvent := hLiveEchoGlobal)
+    intro q
+    simpa using hKE q
+  -- (Echo?) and Lemma 4.2.2: that quorum knows of the proposal.
+  have hProposeQuorumGlobal :
+      ⊨[M]
+        □ᶠ↓[[l]]
+          (predicate0 liveSymb ∧ᶠ
+            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
+    ThyHBB1.boxPast_live_knowsEcho_knowsPropose (M := M)
+      (hEchoBack := theory_echoBackward (M := M) hTheory)
+      (hQuorum := hKnowsEchoGlobal)
+  -- Lemma 6.5.2(2) and Lemma 6.6.1: that quorum echoes `v`.
   have hEchoQuorumGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -122,6 +144,7 @@ theorem livenessOne
       (hLiveTheory := hThyLive)
       (hQuorum := hProposeQuorumGlobal)
       (hImp := hImpEcho)
+  -- Lemma 5.2.11: the quorum knows of an `l`-quorum of echoes.
   have hEchoNestedGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
@@ -131,24 +154,23 @@ theorem livenessOne
       (M := M)
       (liveSymb := liveSymb)
       (l := l)
-      (φ := ofEvent ⟨echoSymb, [v]⟩)
+      (evt := ⟨echoSymb, [v]⟩)
       (hTheory := hThyLive)
       (hQuorum := hEchoQuorumGlobal)
+  -- Lemma 6.5.2(2) with (Vote!): the quorum votes.
   have hVotesGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩) := by
-    intro q
-    have hEchoBox := hEchoNestedGlobal q
-    have hVoteBox :=
-      live_vote_box_from_echo (M := M)
-        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb) (hTheory := hTheory)
-        (l₂' := l) (learner := l) (value := v) (p := q)
-        (hEchoBox := hEchoBox)
-    exact hVoteBox
+            ofEvent ⟨voteSymb, [l, v]⟩) :=
+    ThyHBB1.boxPast_live_of_eventual_quorum
+      (M := M) (liveSymb := liveSymb)
+      (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
+      (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
+      (l := l)
+      (hLiveTheory := hThyLive)
+      (hQuorum := hEchoNestedGlobal)
+      (hImp := voteForward_imp (M := M) (hTheory := hTheory))
 
   -- Lemma 6.4.3, applied to (Knowledge□↓) and (Deliver!), concludes
   -- eventual delivery.
@@ -164,7 +186,7 @@ theorem livenessOne
           live_eventually_knows_box (M := M)
             (liveSymb := liveSymb)
             (l := l)
-            (φ := ofEvent ⟨voteSymb, [l, v]⟩)
+            (evt := ⟨voteSymb, [l, v]⟩)
             (hTheory := hThyLive)
             (hQuorum := hVotesGlobal))
         (hImp := HBB.deliverForward_imp (M := M)
