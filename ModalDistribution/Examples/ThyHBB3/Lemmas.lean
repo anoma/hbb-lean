@@ -521,10 +521,10 @@ theorem echo_quorums_agree
     -- Sequential order yields a collision diamond in one of the two directions.
     have hEchoCollision_local :
         ⟪wEcho⟫ ⊨[M]
-          ((♢ᶠ↓[[]]
+          ((↓ᶠ
               ((ofEvent ⟨echoSymb, [v₁]⟩) ∧ᶠ
                 ↓ᶠ (ofEvent ⟨echoSymb, [v₂]⟩))) ∨ᶠ
-            (♢ᶠ↓[[]]
+            (↓ᶠ
               ((ofEvent ⟨echoSymb, [v₂]⟩) ∧ᶠ
                 ↓ᶠ (ofEvent ⟨echoSymb, [v₁]⟩)))) :=
       seq_two_quorums_events (M := M)
@@ -544,10 +544,10 @@ theorem echo_quorums_agree
     have hEquality : v₁ = v₂ := by
       cases
           sat_or_cases (M := M) (w := wEcho)
-            (φ := ♢ᶠ↓[[]]
+            (φ := ↓ᶠ
                 ((ofEvent ⟨echoSymb, [v₁]⟩) ∧ᶠ
                   ↓ᶠ (ofEvent ⟨echoSymb, [v₂]⟩)))
-            (ψ := ♢ᶠ↓[[]]
+            (ψ := ↓ᶠ
                 ((ofEvent ⟨echoSymb, [v₂]⟩) ∧ᶠ
                   ↓ᶠ (ofEvent ⟨echoSymb, [v₁]⟩)))
             hEchoCollision_local with
@@ -560,7 +560,7 @@ theorem echo_quorums_agree
               (hSubset := hSubset)
               (valNow := v₁)
               (valPast := v₂)
-              hLeft
+              (diamondPast_nil_of_past (M := M) hLeft)
       | inr hRight =>
           have hEq :=
             ThyHBB1.echoNonEquiv_diamond (M := M)
@@ -570,7 +570,7 @@ theorem echo_quorums_agree
               (hSubset := hSubset)
               (valNow := v₂)
               (valPast := v₁)
-              hRight
+              (diamondPast_nil_of_past (M := M) hRight)
           exact hEq.symm
     exact hEquality
 

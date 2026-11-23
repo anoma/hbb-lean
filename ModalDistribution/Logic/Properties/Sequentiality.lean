@@ -201,8 +201,22 @@ theorem sat_diamondPast_empty_participant_iff
         (w := ⟨p₁, evt₁, H₁⟩)
         (φ := ↓ᶠ φ)).2 ⟨p, hp₂⟩
 
-/-- Paper: Proposition 5.1.5(2). Specialized to local witnesses: sequential world with two distinct local events
-implies temporal ordering. -/
+/-- `↓` implies `♦`: a past event-tuple at the current place is in particular
+a past event-tuple at some place. -/
+theorem diamondPast_nil_of_past
+    {w : World P (Signature.EventType S)}
+    {φ : Formula S}
+    (h : ⟪w⟫ ⊨[M]↓ᶠ φ) :
+    ⟪w⟫ ⊨[M]♢ᶠ↓[[]] φ := by
+  classical
+  obtain ⟨t, ht, hp, hφ⟩ := (Sat.past (M := M) (w := w) (φ := φ)).1 h
+  have hLocal : ⟪⟨w.place, †, w.time⟩⟫ ⊨[M] ↓ᶠ φ :=
+    (Sat.past (M := M) (w := ⟨w.place, †, w.time⟩) (φ := φ)).2 ⟨t, ht, hp, hφ⟩
+  simpa [Formula.diamondPast] using
+    (Sat.diamond_nil (M := M) (w := w) (φ := ↓ᶠ φ)).2 ⟨w.place, hLocal⟩
+
+/-- Paper: Proposition 5.1.5(2). At a sequential world, two distinct past
+events at the current place occur one after the other. -/
 theorem seq_two_quorums_events
     {w : World P (Signature.EventType S)}
     {evt evt' : Signature.EventType S}
@@ -211,8 +225,8 @@ theorem seq_two_quorums_events
     (hEvt'_local : ⟪w⟫ ⊨[M]↓ᶠ (Formula.ofEvent evt'))
     (hDistinct : evt ≠ evt') :
     ⟪w⟫ ⊨[M]
-      ((♢ᶠ↓[[]] ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt'))) ∨ᶠ
-        (♢ᶠ↓[[]] ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))) := by
+      ((↓ᶠ ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt'))) ∨ᶠ
+        (↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))) := by
   classical
   have hSeqTime :
       isSequential (P := P) (Event := Signature.EventType S)
@@ -222,107 +236,49 @@ theorem seq_two_quorums_events
     (Sat.past (M := M) (w := w) (φ := Formula.ofEvent evt)).1 hEvt_local
   obtain ⟨t₂, ht₂_mem, ht₂_place, ht₂_event⟩ :=
     (Sat.past (M := M) (w := w) (φ := Formula.ofEvent evt')).1 hEvt'_local
-  have hp₁ : t₁.place = w.place := ht₁_place
-  have hp₂ : t₂.place = w.place := ht₂_place
   have hOrder :=
-    hSeqTime t₁ t₂ ht₁_mem ht₂_mem hp₁ hp₂
-  obtain ⟨hEvt₁_eq, hEvt₁_mem⟩ :=
-    (Sat.ofEvent (M := M) (w := t₁) (E := evt)).1 ht₁_event
-  obtain ⟨hEvt₂_eq, hEvt₂_mem⟩ :=
-    (Sat.ofEvent (M := M) (w := t₂) (E := evt')).1 ht₂_event
-  have hEvt₁_place : t₁.event = MaybeEvent.some evt := hEvt₁_eq
-  have hEvt₂_place : t₂.event = MaybeEvent.some evt' := hEvt₂_eq
-  have hp_eq : t₁.place = t₂.place := by
-    calc
-      t₁.place = w.place := hp₁
-      _ = t₂.place := hp₂.symm
+    hSeqTime t₁ t₂ ht₁_mem ht₂_mem ht₁_place ht₂_place
+  have hEvt₁_place : t₁.event = MaybeEvent.some evt :=
+    ((Sat.ofEvent (M := M) (w := t₁) (E := evt)).1 ht₁_event).1
+  have hEvt₂_place : t₂.event = MaybeEvent.some evt' :=
+    ((Sat.ofEvent (M := M) (w := t₂) (E := evt')).1 ht₂_event).1
+  have hp_eq : t₁.place = t₂.place := ht₁_place.trans ht₂_place.symm
   cases hOrder with
   | inl hIn =>
-      have ht₁_in_t₂ : t₁ ∈ t₂.time := by
-        simpa [World.accessible] using hIn
-      have hDown_evt :
-          ⟪t₂⟫ ⊨[M] ↓ᶠ (Formula.ofEvent evt) :=
-        Sat.past_intro_of_prefix (M := M)
-          (w := t₂) (t := t₁)
-          (ht := ht₁_in_t₂)
-          (hp := hp_eq)
-          (hφ := ht₁_event)
+      -- `t₁` precedes `t₂`: `evt'` happened after `evt`.
       have hConj :
           ⟪t₂⟫ ⊨[M]
             ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)) :=
         (Sat.and (M := M) (w := t₂)
           (φ := Formula.ofEvent evt') (ψ := ↓ᶠ (Formula.ofEvent evt))).2
-          ⟨ht₂_event, hDown_evt⟩
-      have hPastWitness :
-          ⟪⟨w.place, †, w.time⟩⟫ ⊨[M]
-            ↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)) :=
-        (Sat.past (M := M)
-          (w := ⟨w.place, †, w.time⟩)
-          (φ := (Formula.ofEvent evt' ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))).2
-          ⟨t₂, by simpa using ht₂_mem,
-            by simpa [hp₂], hConj⟩
-      have hDiamond' :
-          ⟪w⟫ ⊨[M]
-            ♢ᶠ↓[[]]
-              ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)) :=
-        (Sat.diamond_nil (M := M)
-          (w := w)
-          (φ := ↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))).2
-          ⟨w.place, hPastWitness⟩
-      exact
-        sat_or_of_right (M := M) (w := w)
-          (φ := ♢ᶠ↓[[]]
-                    ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))
-          (ψ := ♢ᶠ↓[[]]
-                    ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))
-          hDiamond'
+          ⟨ht₂_event,
+            Sat.past_intro_of_prefix (M := M) (w := t₂) (t := t₁)
+              (ht := by simpa [World.accessible] using hIn)
+              (hp := hp_eq) (hφ := ht₁_event)⟩
+      exact sat_or_of_right (M := M) (w := w)
+        (Sat.past_intro_of_prefix (M := M) (w := w) (t := t₂)
+          (ht := ht₂_mem) (hp := ht₂_place) (hφ := hConj))
   | inr hInOrEq =>
       cases hInOrEq with
       | inl hIn =>
-          have ht₂_in_t₁ : t₂ ∈ t₁.time := by
-            simpa [World.accessible] using hIn
-          have hDown_evt' :
-              ⟪t₁⟫ ⊨[M] ↓ᶠ (Formula.ofEvent evt') :=
-            Sat.past_intro_of_prefix (M := M)
-              (w := t₁) (t := t₂)
-              (ht := ht₂_in_t₁)
-              (hp := hp_eq.symm)
-              (hφ := ht₂_event)
+          -- `t₂` precedes `t₁`: `evt` happened after `evt'`.
           have hConj :
               ⟪t₁⟫ ⊨[M]
                 ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')) :=
             (Sat.and (M := M) (w := t₁)
               (φ := Formula.ofEvent evt) (ψ := ↓ᶠ (Formula.ofEvent evt'))).2
-              ⟨ht₁_event, hDown_evt'⟩
-          have hPastWitness :
-              ⟪⟨w.place, †, w.time⟩⟫ ⊨[M]
-                ↓ᶠ ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')) :=
-            (Sat.past (M := M)
-              (w := ⟨w.place, †, w.time⟩)
-              (φ := (Formula.ofEvent evt ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))).2
-              ⟨t₁, by simpa using ht₁_mem,
-                by simpa [hp₁], hConj⟩
-          have hDiamond' :
-              ⟪w⟫ ⊨[M]
-                ♢ᶠ↓[[]]
-                  ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')) :=
-            (Sat.diamond_nil (M := M)
-              (w := w)
-              (φ := ↓ᶠ ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))).2
-              ⟨w.place, hPastWitness⟩
-          exact
-            sat_or_of_left (M := M) (w := w)
-              (φ := ♢ᶠ↓[[]]
-                        ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))
-              (ψ := ♢ᶠ↓[[]]
-                        ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))
-              hDiamond'
+              ⟨ht₁_event,
+                Sat.past_intro_of_prefix (M := M) (w := t₁) (t := t₂)
+                  (ht := by simpa [World.accessible] using hIn)
+                  (hp := hp_eq.symm) (hφ := ht₂_event)⟩
+          exact sat_or_of_left (M := M) (w := w)
+            (Sat.past_intro_of_prefix (M := M) (w := w) (t := t₁)
+              (ht := ht₁_mem) (hp := ht₁_place) (hφ := hConj))
       | inr hEq =>
           cases hEq
           have hMaybe : MaybeEvent.some evt = MaybeEvent.some evt' :=
             (Eq.trans hEvt₂_place.symm hEvt₁_place).symm
-          have hEqual : evt = evt' := MaybeEvent.some.inj hMaybe
-          exact (hDistinct hEqual).elim
+          exact (hDistinct (MaybeEvent.some.inj hMaybe)).elim
 
 /-- Paper: Proposition 5.1.5(3). Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
 theorem seq_two_quorums_eventually
@@ -402,9 +358,11 @@ theorem seq_two_quorums_eventually
     with hφ₂
   have hCases :=
     sat_or_cases (M := M) (w := w_q)
-      (φ := φ₁) (ψ := φ₂) hDisj_q
+      (φ := ↓ᶠ ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))
+      (ψ := ↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt))) hDisj_q
   cases hCases with
-  | inl hφ₁_q =>
+  | inl hPast₁_q =>
+      have hφ₁_q : ⟪w_q⟫ ⊨[M] φ₁ := diamondPast_nil_of_past (M := M) hPast₁_q
       have hφ₁_w : ⟪w⟫ ⊨[M] φ₁ := by
         have :=
           (sat_diamondPast_empty_participant_iff
@@ -417,7 +375,8 @@ theorem seq_two_quorums_eventually
         simpa [hφ₁]
       exact sat_or_of_left (M := M) (w := w)
         (φ := φ₁) (ψ := φ₂) hφ₁_w
-  | inr hφ₂_q =>
+  | inr hPast₂_q =>
+      have hφ₂_q : ⟪w_q⟫ ⊨[M] φ₂ := diamondPast_nil_of_past (M := M) hPast₂_q
       have hφ₂_w : ⟪w⟫ ⊨[M] φ₂ := by
         have :=
           (sat_diamondPast_empty_participant_iff
