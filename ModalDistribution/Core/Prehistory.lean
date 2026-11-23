@@ -83,9 +83,6 @@ def mk (p : P) (e : MaybeEvent Event) (h : PreHistory P Event) : World P Event :
 
 -- Simp lemmas for projections on constructed tuples
 
-
-
-
 end World
 namespace PreHistory
 def empty : PreHistory P Event := mk []
@@ -132,11 +129,13 @@ We expose that relation directly on event tuples so that worlds can be modelled
 without introducing additional wrappers.
 -/
 
-/-- Paper: Definition 3.4.2(3) (accessibility, ≪). Strict accessibility: `t' ≪ t` when `t'` belongs to the time component of `t`. -/
+/-- Paper: Definition 3.4.2(3) (accessibility, ≪). Strict accessibility: `t' ≪ t` when `t'` belongs
+to the time component of `t`. -/
 def accessible (t' t : World P Event) : Prop :=
   t' ∈ World.time t
 
-/-- Paper: Definition 3.4.2(4) (in-place accessibility, ≪⁻). Same-place accessibility (`≪^{-}` in Accessibility(4)). -/
+/-- Paper: Definition 3.4.2(4) (in-place accessibility, ≪⁻). Same-place accessibility (`≪^{-}` in
+Accessibility(4)). -/
 def accessibleLe (t' t : World P Event) : Prop :=
   accessible t' t ∧ World.place t' = World.place t
 

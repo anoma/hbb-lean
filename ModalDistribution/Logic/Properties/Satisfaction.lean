@@ -782,9 +782,9 @@ theorem lift_boxPast_to_end
   simpa [Formula.boxPast]
     using hBoxPast_top
 
-/-- Paper: Lemma 3.6.4(3). Characterisation of the `♢↓` modality: `♢↓[ls]φ` holds at `w` exactly when
-every choice of one quorum per learner admits an accessible world whose place
-lies in the intersection and which satisfies `φ`. -/
+/-- Paper: Lemma 3.6.4(3). Characterisation of the `♢↓` modality: `♢↓[ls]φ` holds at `w` exactly
+when every choice of one quorum per learner admits an accessible world whose place lies in the
+intersection and which satisfies `φ`. -/
 theorem sat_diamondPast_iff_quorum_witness
     (M : Model S P)
     (w : World P (Signature.EventType S))

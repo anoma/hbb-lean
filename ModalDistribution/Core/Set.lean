@@ -68,11 +68,9 @@ instance : Inter (Set α) := ⟨Set.inter⟩
 /-- A set is nonempty when it has a member. -/
 protected def Nonempty (s : Set α) : Prop := ∃ x, x ∈ s
 
-
 theorem mem_of_mem_inter_left {a : α} {s t : Set α} (h : a ∈ s ∩ t) : a ∈ s := h.1
 
 theorem mem_of_mem_inter_right {a : α} {s t : Set α} (h : a ∈ s ∩ t) : a ∈ t := h.2
-
 
 @[simp] theorem inter_self (s : Set α) : s ∩ s = s :=
   Set.ext fun _ => ⟨fun h => h.1, fun h => ⟨h, h⟩⟩
@@ -82,7 +80,6 @@ theorem inter_assoc (s t u : Set α) : s ∩ t ∩ u = s ∩ (t ∩ u) :=
 
 theorem inter_left_comm (s t u : Set α) : s ∩ (t ∩ u) = t ∩ (s ∩ u) :=
   Set.ext fun _ => ⟨fun h => ⟨h.2.1, h.1, h.2.2⟩, fun h => ⟨h.2.1, h.1, h.2.2⟩⟩
-
 
 -- Note: no proof names this lemma, but it is load-bearing through the default
 -- simp set (removing it changes simp normal forms in Modalities.lean).

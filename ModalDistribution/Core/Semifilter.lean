@@ -28,7 +28,8 @@ namespace Semifilter
 
 variable {P : Type u}
 
-/-- Paper: Notation 3.3.1 (≬). Quorum intersection: `O ≬ O'` when two quorums intersect (their intersection is nonempty). -/
+/-- Paper: Notation 3.3.1 (≬). Quorum intersection: `O ≬ O'` when two quorums intersect (their
+intersection is nonempty). -/
 @[simp] def intersects (O O' : Set P) : Prop := (O ∩ O').Nonempty
 
 scoped infix:50 " ≬ " => Semifilter.intersects
@@ -37,8 +38,8 @@ end Semifilter
 
 open scoped Semifilter
 
-/-- Paper: Definition 3.3.2 (semifilters). A semifilter is: A semifilter is a nonempty up-closed family of pairwise
-intersecting quorums over a participant set `P`. -/
+/-- Paper: Definition 3.3.2 (semifilters). A semifilter is: A semifilter is a nonempty up-closed
+family of pairwise intersecting quorums over a participant set `P`. -/
 structure Semifilter (P : Type u) where
   /-- Carrier set of quorums. -/
   quorums : Set (Set P)
@@ -76,7 +77,6 @@ theorem intersects_iff {O O' : Set P} :
     exact ⟨p, hp.1, hp.2⟩
   · rintro ⟨p, hpO, hpO'⟩
     exact intersects_of_mem (P := P) hpO hpO'
-
 
 theorem quorum_nonempty {L : Semifilter P} {O : Set P}
     (hO : O ∈ L.quorums) :

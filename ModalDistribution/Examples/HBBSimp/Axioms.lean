@@ -47,7 +47,8 @@ end NonEquivocation
 
 section ForwardAxioms
 
-/-- Paper: Figure 10, rule (Vote!). Forward rule `Vote!`: a live quorum of echoes eventually leads to a vote. -/
+/-- Paper: Figure 10, rule (Vote!). Forward rule `Vote!`: a live quorum of echoes eventually leads
+to a vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -78,7 +79,6 @@ It extends `ThyLive` with the `HBBSimp`-specific axioms shown in -/
       ax = deliverForwardAxiom liveSymb voteSymb deliverSymb }
 
 end Theory
-
 
 section Projections
 

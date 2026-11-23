@@ -1150,7 +1150,6 @@ theorem correlationImpliesQuorumIntersection
     correlationImpliesPairwiseQuorumIntersection
       (M := M) hTheory hSomeone
 
-
 end HBBCorr
 end Examples
 end ModalDistribution

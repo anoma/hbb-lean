@@ -28,7 +28,6 @@ variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
 section DiamondSection
 
-
 /-! ## Quorum intersection properties (paper Subsection 4.1) -/
 
 /-- Paper: Lemma 4.1.1(1). N-way quorum intersection witness).

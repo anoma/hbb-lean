@@ -665,8 +665,8 @@ theorem live_eventually_consequent
         (φ := predicate0 liveSymb) (ψ := ↕ᶠ φ)).1
         (hLive p) hLive_p)
 
-/-- Paper: Lemma 6.5.1(1). Safety of a learner is monotone along in-place accessibility: if `safe(l)`
-holds at a world of the model, it holds at every same-place predecessor. -/
+/-- Paper: Lemma 6.5.1(1). Safety of a learner is monotone along in-place accessibility: if
+`safe(l)` holds at a world of the model, it holds at every same-place predecessor. -/
 theorem safe_monotone
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -701,8 +701,8 @@ theorem safe_monotone
       hSafeF
   exact (safe_iff_safeFormula (M := M) (hTheory := hTheory) (w := w') hW' l).2 hSafeF'
 
-/-- Paper: Lemma 6.5.1(2). Safety of a learner at an event-tuple of the model implies it held at every
-past event at the same place. -/
+/-- Paper: Lemma 6.5.1(2). Safety of a learner at an event-tuple of the model implies it held at
+every past event at the same place. -/
 theorem safe_allPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -720,7 +720,6 @@ theorem safe_allPast
       (hW := hW)
       (hAcc := ⟨by simpa [World.accessible] using ht_mem, ht_place⟩)
       hSafe
-
 
 /-- The instantiated `Vote!` implication, taking the everywhere-always safety
 guard in the form axiom `Vote!` demands it. -/
@@ -778,7 +777,6 @@ theorem voteForward_imp
       (by simpa [World.place] using hplace)
 
 end Results
-
 
 end HBBSafe
 end Examples

@@ -34,8 +34,8 @@ variable {S : Signature}
 
 section BackwardAxioms
 
-/-- Paper: Figure 8, right-hand side of axiom (Safe). The right-hand side of axiom `Safe`: either at most one value has been
-proposed, or the learner has sequential quorum intersections with every
+/-- Paper: Figure 8, right-hand side of axiom (Safe). The right-hand side of axiom `Safe`: either at
+most one value has been proposed, or the learner has sequential quorum intersections with every
 learner. -/
 @[simp] def safeFormula
     (proposeSymb : Signature.EventSymb S)
@@ -43,14 +43,16 @@ learner. -/
   ((∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) ∨ᶠ
       ∀ᶠ (fun l' => ♢ᶠ[[learner, l']] Formula.seq))
 
-/-- Paper: Figure 8, axiom (Safe). Axiom `Safe`: the `safe` predicate is characterised by `safeFormula`. -/
+/-- Paper: Figure 8, axiom (Safe). Axiom `Safe`: the `safe` predicate is characterised by
+`safeFormula`. -/
 @[simp] def safeAxiom
     (safeSymb : Signature.PredSymb S)
     (proposeSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun learner =>
     ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
 
-/-- Paper: Figure 8, rule (Vote?). Backward rule `Vote?`: voting requires safety and prior echoes. -/
+/-- Paper: Figure 8, rule (Vote?). Backward rule `Vote?`: voting requires safety and prior
+echoes. -/
 @[simp] def voteBackwardAxiom
     (safeSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -67,7 +69,8 @@ end NonEquivalenceAxiom
 
 section ForwardAxioms
 
-/-- Paper: Figure 8, rule (Vote!). Forward rule `Vote!`: persistent safety and echoes lead to a vote. -/
+/-- Paper: Figure 8, rule (Vote!). Forward rule `Vote!`: persistent safety and echoes lead to a
+vote. -/
 @[simp] def voteForwardAxiom
     (liveSymb safeSymb : Signature.PredSymb S)
     (echoSymb voteSymb : Signature.EventSymb S) : Formula S :=
@@ -85,7 +88,8 @@ variable
     (liveSymb safeSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- Paper: Definition 6.2.2 (theory HBBSafe). The collection of axioms forming the theory `HBBSafe`. -/
+/-- Paper: Definition 6.2.2 (theory HBBSafe). The collection of axioms forming the theory
+`HBBSafe`. -/
 @[simp] def theory : Theory S :=
   { ax |
       ax ∈ ThyLive liveSymb ∨
@@ -127,7 +131,6 @@ theorem safe_iff_safeFormula
     Sat.iff_mpr (M := M) (w := w) hInst⟩
 
 end SafePredicate
-
 
 section Projections
 

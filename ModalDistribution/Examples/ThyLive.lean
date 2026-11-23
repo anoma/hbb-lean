@@ -68,7 +68,8 @@ every live participant eventually knows that an `l`-quorum performed `E`. -/
     ((Formula.predicate0 liveSymb) ⇒ᶠ
       ↕ᶠ (□ᶠ↓[[l]] (Formula.ofEvent evt)))
 
-/-- Paper: Definition 5.2.4 (the theory of liveness). The collection of liveness axioms (`ThyLive`). -/
+/-- Paper: Definition 5.2.4 (the theory of liveness). The collection of liveness axioms
+(`ThyLive`). -/
 @[simp] def ThyLive
     (liveSymb : Signature.PredSymb S) :
     Set (Formula S) :=
@@ -107,7 +108,6 @@ theorem thyLive_knowledgeBox (hTheory : M ⊨ᵀ ThyLive liveSymb)
   hTheory (Or.inr (Or.inr (Or.inr ⟨l, evt, rfl⟩)))
 
 end Projections
-
 
 section Results
 
@@ -224,10 +224,10 @@ theorem live_at_predecessor
   simpa [Hpre, hHpre]
     using hLivePre
 
-/-- Paper: Lemma 5.2.9(1). Liveness at world equivalent to liveness at end-of-time (Liveness equivalence).
- Liveness does not depend on time: a participant is live at a specific world
-if and only if it is live at the end-of-time world for that participant.
-This follows from the liveness-always axiom (live ⇔ ⤒ live).
+/-- Paper: Lemma 5.2.9(1). Liveness at world equivalent to liveness at end-of-time (Liveness
+equivalence). Liveness does not depend on time: a participant is live at a specific world if and
+only if it is live at the end-of-time world for that participant. This follows from the
+liveness-always axiom (live ⇔ ⤒ live).
 
 See also: `alwaysLiveEquivBackward`, liveness-always axiom. -/
 theorem alwaysLiveEquivForward
@@ -376,7 +376,6 @@ theorem live_allPast
   exact
     Sat.not_elim (M := M) (w := t')
       (φ := Formula.predicate0 liveSymb) hNot hLive_t'
-
 
 /-- A quorum of live participants is a quorum of sequential participants,
 by the `(LiveSeq)` axiom. -/

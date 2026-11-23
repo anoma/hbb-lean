@@ -27,14 +27,16 @@ set_option autoImplicit false
 
 variable {S : Signature}
 
-/-- Paper: Figures 8/10/12, rule (Echo?). Backward rule `Echo?`: every `echo(v)` stems from a past `propose(v)`. -/
+/-- Paper: Figures 8/10/12, rule (Echo?). Backward rule `Echo?`: every `echo(v)` stems from a past
+`propose(v)`. -/
 @[simp] def echoBackwardAxiom
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value =>
     ofEvent ⟨echoSymb, [value]⟩ ⇒ᶠ
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))
 
-/-- Paper: Figures 8/10/12, axiom (EchoNE). Axiom `EchoNE`: sequential participants echo at most one value. -/
+/-- Paper: Figures 8/10/12, axiom (EchoNE). Axiom `EchoNE`: sequential participants echo at most one
+value. -/
 @[simp] def echoNonEquivAxiom
     (echoSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun value => ∀ᶠ (fun altValue =>
@@ -42,8 +44,8 @@ variable {S : Signature}
       (↓ᶠ (ofEvent ⟨echoSymb, [altValue]⟩)) ⇒ᶠ
         (value ≃ᶠ altValue)))
 
-/-- Paper: Figures 8/10/12, rule (Echo!). Forward rule `Echo!`: live knowledge of a proposal eventually triggers an
-echo of some (possibly different) value. -/
+/-- Paper: Figures 8/10/12, rule (Echo!). Forward rule `Echo!`: live knowledge of a proposal
+eventually triggers an echo of some (possibly different) value. -/
 @[simp] def echoForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb : Signature.EventSymb S) : Formula S :=
@@ -53,16 +55,16 @@ echo of some (possibly different) value. -/
       ∃ᶠ (fun witness =>
         ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)))
 
-/-- Paper: Figures 8/10, rule (Deliver?). Backward rule `Deliver?` (ternary deliver): deliveries require a
-reporting-learner quorum of past votes. -/
+/-- Paper: Figures 8/10, rule (Deliver?). Backward rule `Deliver?` (ternary deliver): deliveries
+require a reporting-learner quorum of past votes. -/
 @[simp] def deliverBackwardAxiom
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
   ∀ᶠ (fun reporting => ∀ᶠ (fun learner => ∀ᶠ (fun value =>
     ofEvent ⟨deliverSymb, [reporting, learner, value]⟩ ⇒ᶠ
       □ᶠ↓[[reporting]] (ofEvent ⟨voteSymb, [learner, value]⟩))))
 
-/-- Paper: Figures 8/10, rule (Deliver!). Forward rule `Deliver!` (ternary deliver): live knowledge of a vote quorum
-eventually leads to delivery. -/
+/-- Paper: Figures 8/10, rule (Deliver!). Forward rule `Deliver!` (ternary deliver): live knowledge
+of a vote quorum eventually leads to delivery. -/
 @[simp] def deliverForwardAxiom
     (liveSymb : Signature.PredSymb S)
     (voteSymb deliverSymb : Signature.EventSymb S) : Formula S :=
@@ -147,7 +149,6 @@ theorem deliver_box_witness
     History.subset_of_happensBefore (H := M.history) hBefore_history
   exact ⟨tDeliver, ht_mem_history, hSubset_history, hBox_at_event⟩
 
-
 /-- A delivery observed at the end of time yields a reporting-learner quorum of
 votes at the end of time, by `Deliver?` and box lifting. -/
 theorem deliver_to_vote_box_end
@@ -169,7 +170,6 @@ theorem deliver_to_vote_box_end
     lift_boxPast_to_end (M := M)
       (t := tDeliver)
       (hSubset := hSubset) (hBox := hBox) p
-
 
 /-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
 eventually yields a delivery. This is the form consumed by Lemma 6.5.3. -/

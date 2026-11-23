@@ -136,7 +136,6 @@ theorem sat_not_implies_diamond :
     rw [hTrue] at hFalse
     cases hFalse
 
-
 /-! ## Lemma 4.2.3(3): the collapsing implications do not reverse
 
 The paper's model: one participant, three events `E₁, E₂, F`, one learner

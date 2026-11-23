@@ -85,7 +85,8 @@ structure PredicateAtom (S : Signature.{0, 0, 0}) where
   sym : S.PredSymb
   args : List S.Value
 
-/-- Paper: Definition 3.1.3 / Figure 3 (syntax of predicates). Modal formulas with HOAS quantifiers. -/
+/-- Paper: Definition 3.1.3 / Figure 3 (syntax of predicates). Modal formulas with HOAS
+quantifiers. -/
 inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
   | bot : Formula S
   | imp : Formula S → Formula S → Formula S
@@ -123,7 +124,8 @@ def iff (φ ψ : Formula S) : Formula S :=
 def exists_ (body : S.Value → Formula S) : Formula S :=
   not (.forall (fun v => not (body v)))
 
-/-- Paper: Figure 5 sugar (↕). Sometimes modality (`↕`) specialised to the current participant; sugar for `⤒↓`. -/
+/-- Paper: Figure 5 sugar (↕). Sometimes modality (`↕`) specialised to the current participant;
+sugar for `⤒↓`. -/
 def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 

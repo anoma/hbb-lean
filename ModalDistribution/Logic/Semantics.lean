@@ -41,7 +41,8 @@ def Sat.check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
       ∀ O ∈ (M.learner ℓ).quorums,
         Sat.check M Q ls (acc ∩ O)
 
-/-- Paper: Definition 3.4.10(1) / Figure 4 (possible-world validity). Satisfaction relation `p \dx H ⊨[M]φ`. -/
+/-- Paper: Definition 3.4.10(1) / Figure 4 (possible-world validity). Satisfaction relation
+`p \dx H ⊨[M]φ`. -/
 def Sat (M : Model S P)
     (p : P)
     (evt : MaybeEvent S.EventType)
@@ -441,8 +442,8 @@ theorem sometime_of_place_eq
   obtain ⟨s, hs, hsPlace, hφ⟩ := (sometime M t φ).1 h
   exact (sometime M w φ).2 ⟨s, hs, hsPlace.trans hPlace, hφ⟩
 
-/-- Paper: Lemma 3.6.4(2). Satisfaction of `⇕` (everytime): the body holds at every event-tuple of the
-model at the current place. -/
+/-- Paper: Lemma 3.6.4(2). Satisfaction of `⇕` (everytime): the body holds at every event-tuple of
+the model at the current place. -/
 theorem everytime
     (M : Model S P)
     (w : World P S.EventType)
@@ -529,7 +530,6 @@ theorem allPast
       using
         exists_intro (M := M) (w := w)
           (body := fun v => body v) hWitness
-
 
 /-- Conjunction satisfaction unfolds to both conjuncts. -/
 @[simp] theorem and
@@ -805,7 +805,6 @@ theorem active_iff_past_top
     obtain ⟨t, htMem, htPlace, -⟩ :=
       (Sat.past (M := M) (w := ⟨p, †, M.history.val⟩) (φ := ⊤ᶠ)).1 hPast
     exact ⟨t, htMem, htPlace⟩
-
 
 /-! ### Case analysis helpers for `∨ᶠ` and `∧ᶠ` -/
 

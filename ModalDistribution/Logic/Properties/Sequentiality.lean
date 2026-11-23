@@ -266,7 +266,8 @@ theorem seq_two_quorums_events
             (Eq.trans hEvt₂_place.symm hEvt₁_place).symm
           exact (hDistinct (MaybeEvent.some.inj hMaybe)).elim
 
-/-- Paper: Proposition 5.1.5(3). Sequential eventual ordering: distinct events from two quorums are temporally ordered. -/
+/-- Paper: Proposition 5.1.5(3). Sequential eventual ordering: distinct events from two quorums are
+temporally ordered. -/
 theorem seq_two_quorums_eventually
     {w : World P (Signature.EventType S)}
     {l l' : Signature.Value S}

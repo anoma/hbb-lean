@@ -341,7 +341,8 @@ theorem agreement
           (fun h => hNe h.symm) hRight
       simpa [Sat] using hEqFinal.symm
 
-/-- Paper: Proposition 6.4.1, hypothesis form. Agreement from deliveries helper for HBBSafe (Corollary of agreement property).
+/-- Paper: Proposition 6.4.1, hypothesis form. Agreement from deliveries helper for HBBSafe
+(Corollary of agreement property).
 
 Whenever both deliveries for (l₁', l₁) and (l₂', l₂) occur at the end of time,
 the delivered values must coincide. This factors out the core reasoning used in

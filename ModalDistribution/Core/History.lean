@@ -26,13 +26,14 @@ universe u v
 
 variable {P : Type u} {Event : Type v}
 
-/-- Paper: Definition 2.3.2 (transitive prehistories). A prehistory is transitive when every strict predecessor is a subset. -/
+/-- Paper: Definition 2.3.2 (transitive prehistories). A prehistory is transitive when every strict
+predecessor is a subset. -/
 def isTransitive (h : PreHistory P Event) : Prop :=
   ∀ h' : PreHistory P Event, h' ≺− h → h' ⊆ h
 
-/-- Paper: Definition 2.3.5. Hereditary transitivity demands every predecessor be transitive and itself
-    satisfy hereditary transitivity. We construct this predicate by well-founded
-    recursion on ≺−. -/
+/-- Paper: Definition 2.3.5. Hereditary transitivity demands every predecessor be transitive and
+itself satisfy hereditary transitivity. We construct this predicate by well-founded recursion on
+≺−. -/
 noncomputable def isHereditarilyTransitive : PreHistory P Event → Prop :=
   PreHistory.happensBefore_wellFounded.fix
     (fun h rec =>
@@ -71,8 +72,9 @@ theorem isHereditarilyTransitive.desc
   have := (isHereditarilyTransitive_unfold h).mp hh
   exact this.2 h' hb
 
-/-- Paper: Definition 2.3.5 (history structures). Histories are the prehistories that are hereditarily transitive.
-    The transitivity of the history follows from the hereditary property itself. -/
+/-- Paper: Definition 2.3.5 (history structures). Histories are the prehistories that are
+hereditarily transitive. The transitivity of the history follows from the hereditary property
+itself. -/
 structure History (P : Type u) (Event : Type v) where
   val : PreHistory P Event
   hered : isHereditarilyTransitive val
@@ -140,8 +142,8 @@ end History
 
 end HistoryAt
 
-/-- Paper: Definition 3.4.9(1) (p sequential at H). Participant `p` is sequential in `h` when its event-tuples are linearly
-    ordered by accessibility. -/
+/-- Paper: Definition 3.4.9(1) (p sequential at H). Participant `p` is sequential in `h` when its
+event-tuples are linearly ordered by accessibility. -/
 def isSequential (p : P) (h : PreHistory P Event) : Prop :=
   ∀ t₁ t₂ : World P Event,
     t₁ ∈ h →
@@ -292,8 +294,8 @@ end History
 
 /-! ## Element-transitivity (paper Definition 2.3.11 and Lemma 2.3.12) -/
 
-/-- Paper: Definition 2.3.11 (element-transitive). A prehistory is element-transitive when `≺−` is transitive into it. This is
-an alternative, strictly weaker notion than `isTransitive`. -/
+/-- Paper: Definition 2.3.11 (element-transitive). A prehistory is element-transitive when `≺−` is
+transitive into it. This is an alternative, strictly weaker notion than `isTransitive`. -/
 def isElementTransitive (h : PreHistory P Event) : Prop :=
   ∀ h'' h' : PreHistory P Event, h'' ≺− h' → h' ≺− h → h'' ≺− h
 
@@ -309,9 +311,8 @@ theorem History.isElementTransitive (H : History P Event) :
     isElementTransitive H.val :=
   (History.transitive H).isElementTransitive
 
-/-- Paper: Lemma 2.3.12(2). The reverse implication fails: an element-transitive prehistory need not be
-transitive. The witness is the paper's `H₂ = {(p, †, H₁), (q, †, ∅)}` with
-`H₁ = {(p, †, ∅)}`. -/
+/-- Paper: Lemma 2.3.12(2). The reverse implication fails: an element-transitive prehistory need not
+be transitive. The witness is the paper's `H₂ = {(p, †, H₁), (q, †, ∅)}` with `H₁ = {(p, †, ∅)}`. -/
 theorem exists_elementTransitive_not_transitive :
     ∃ h : PreHistory Bool Empty,
       isElementTransitive h ∧ ¬ isTransitive h := by
@@ -390,8 +391,8 @@ theorem accessible_happensBefore_history
   · rw [heq] at hstep
     exact hstep
 
-/-- Paper: Proposition 3.4.5 (transitivity). Accessibility is transitive on the worlds of a history. Together with
-`PreHistory.accessible_irrefl` this is the paper's Proposition 3.4.5. -/
+/-- Paper: Proposition 3.4.5 (transitivity). Accessibility is transitive on the worlds of a history.
+Together with `PreHistory.accessible_irrefl` this is the paper's Proposition 3.4.5. -/
 theorem accessible_trans
     {H : History P Event} {w w' w'' : World P Event}
     (hW : World.time w ⪯ H.val)
@@ -411,8 +412,8 @@ theorem accessible_trans
   have hmem' : w'' ∈ World.time w := hsub _ hmem
   simpa [World.accessible] using hmem'
 
-/-- Paper: Definition 3.4.9(2) (H sequential). A whole time is sequential when all of its event-tuples are linearly
-ordered by accessibility, regardless of place. -/
+/-- Paper: Definition 3.4.9(2) (H sequential). A whole time is sequential when all of its
+event-tuples are linearly ordered by accessibility, regardless of place. -/
 def isSequentialAll (h : PreHistory P Event) : Prop :=
   ∀ t₁ t₂ : World P Event,
     t₁ ∈ h → t₂ ∈ h →
