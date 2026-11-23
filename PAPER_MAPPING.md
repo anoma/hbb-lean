@@ -19,6 +19,15 @@ Proposition 6.4.1 is `HBBSafe.agreement`.
 - Definitions 1.1.4 and 1.1.5: informal introductory definitions.
 - The paper's illustrative Examples (2.2.5, 2.3.8-2.3.10, 3.3.5, 3.3.6, 5.1.1).
 
+## Beyond the paper
+
+- `NonVacuity.hbbSafe_nonvacuous`, `NonVacuity.hbbSimp_nonvacuous` and
+  `NonVacuity.hbbCorr_nonvacuous`
+  ([ModalDistribution/Examples/NonVacuity.lean](ModalDistribution/Examples/NonVacuity.lean)):
+  each theory has a finite model in which the hypotheses of its three
+  correctness properties hold at once and a live participant delivers, so the
+  correctness theorems are not vacuously true. The paper does not state this.
+
 ## Representation note
 
 `PreHistory` is backed by lists rather than finite sets, so it realises the

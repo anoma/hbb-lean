@@ -13,5 +13,6 @@ import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Examples.HBBSafe
 import ModalDistribution.Examples.HBBSimp
 import ModalDistribution.Examples.HBBCorr
+import ModalDistribution.Examples.NonVacuity
 import ModalDistribution.Examples.Counterexamples
 import ModalDistribution.AxiomAudit

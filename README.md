@@ -13,6 +13,7 @@ This formalization includes:
   - **HBBSimp** (Section 7): the simpler protocol without the `safe` guard
   - **HBBCorr** (Section 8): learners linked by a correlation relation
 - **Correctness Proofs**: Agreement, Happy Termination, and Cascade Termination properties for all three algorithms
+- **Non-vacuity**: for each theory, a finite model in which the hypotheses of all three correctness properties hold and a live participant delivers, so the correctness theorems are not vacuously true
 
 ### Repository structure
 
@@ -33,6 +34,7 @@ ModalDistribution/
 │   ├── ThyLive.lean            # Liveness (Section 5.2)
 │   ├── HBB.lean                # Axiom schemes shared by the three theories
 │   ├── Counterexamples.lean    # Lemmas 4.2.1(3,4) and 4.2.3(3)
+│   ├── NonVacuity.lean         # Finite models of the three theories
 │   ├── HBBSafe/                # Section 6
 │   │   ├── Axioms.lean
 │   │   ├── Safety.lean
@@ -99,7 +101,7 @@ This builds the project **and verifies all proofs**. It will:
 **What to expect during the build:**
 - The project has no external dependencies beyond Lean itself, so the first build takes well under a minute on a typical machine
 - You'll see messages like "✔ [13/38] Built ModalDistribution.Logic.Properties.Modalities (842ms)" as modules are being processed
-- The build compiles 42 files total, which can be used to gauge build progress
+- The build compiles 43 files total, which can be used to gauge build progress
 - When you see modules from `ModalDistribution.Examples.HBBSafe`, `HBBSimp`, and `HBBCorr` being processed, that's when the correctness properties (Agreement, Happy Termination, and Cascade Termination) for each protocol are being verified
 - Subsequent builds are much faster
 
