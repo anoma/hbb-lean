@@ -1,6 +1,6 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.HBBSimp.Axioms
-import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBB.Uniqueness
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Core.History

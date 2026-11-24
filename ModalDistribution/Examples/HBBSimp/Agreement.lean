@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.HBBSimp.Axioms
 import ModalDistribution.Examples.HBBSimp.Lemmas
-import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBB.Uniqueness
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
@@ -170,7 +170,7 @@ theorem agreement
           hEchoCollision with
     | inl hLeft =>
         have hEq :=
-          HBBSafe.echoNonEquiv_diamond (M := M)
+          HBB.echoNonEquiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)
@@ -179,7 +179,7 @@ theorem agreement
         simpa [Sat] using hEq
     | inr hRight =>
         have hEq :=
-          HBBSafe.echoNonEquiv_diamond (M := M)
+          HBB.echoNonEquiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)

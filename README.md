@@ -33,20 +33,23 @@ ModalDistribution/
 ├── Examples/          # The three broadcast algorithms and their proofs
 │   ├── ThyLive.lean            # Liveness (Section 5.2)
 │   ├── HBB.lean                # Axiom schemes shared by the three theories
+│   ├── HBB/                    # Results shared by the three theories
+│   │   ├── Liveness.lean       # Lemmas 6.5.2 and 6.5.3
+│   │   ├── Uniqueness.lean     # Lemma 6.6.1 and the echo lemmas
+│   │   └── Termination.lean    # Steps shared by the termination proofs
 │   ├── Counterexamples.lean    # Lemmas 4.2.1(3,4) and 4.2.3(3)
 │   ├── NonVacuity.lean         # Finite models of the three theories
 │   ├── HBBSafe/                # Section 6
 │   │   ├── Axioms.lean
 │   │   ├── Safety.lean
-│   │   ├── Uniqueness.lean
 │   │   ├── Agreement.lean
 │   │   ├── HappyTermination.lean
 │   │   ├── CascadeTermination.lean
 │   │   └── Correctness.lean
 │   ├── HBBSimp/                # Section 7
-│   │   └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
+│   │   └── [similar, with Lemmas.lean in place of Safety]
 │   └── HBBCorr/                # Section 8
-│       └── [similar, with Lemmas.lean in place of Safety/Uniqueness]
+│       └── [similar, with Lemmas.lean in place of Safety]
 └── AxiomAudit.lean    # Build-enforced axiom hygiene for the main theorems
 ```
 

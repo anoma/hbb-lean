@@ -1,6 +1,6 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.HBBSafe.Agreement
-import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBB.Termination
 import ModalDistribution.Examples.HBBSafe.Safety
 import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.ThyLive
@@ -82,67 +82,28 @@ theorem cascadeTermination
       ⊨[M]□ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l, v]⟩) := fun q => by
     simpa [wTop] using hVoteBoxTop
 
-  -- Proposition 5.2.10: the intersecting live quorum exposes a live voter.
-  have hLiveVote :
-      ⊨[M]♢ᶠ↓[[]]
-        ((predicate0 liveSymb) ∧ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
-    have h :=
-      intertwined_two_quorums (M := M)
-        (liveSymb := liveSymb) (l := l₁') (l₁ := l₂')
-        (φ := ofEvent ⟨voteSymb, [l, v]⟩)
-        (hTheory := hThyLiveTheory)
-        (hIntersect := by intro q; simpa using hIntersect q)
-        (hLiveQuorum := by intro q; simpa using hLive q)
-        (hWitness := by intro q; simpa using hVoteBoxGlobal q)
-    intro q
-    simpa using h q
-
-  -- Proposition 5.2.8: the live `l₂'`-quorum eventually knows of that vote.
+  -- Propositions 5.2.10 and 5.2.8: the live `l₂'`-quorum eventually knows of
+  -- a vote of the intersecting `l₁'`-quorum.
   have hKnowsVoteGlobal :
       ⊨[M]□ᶠ↓[[l₂']]
-        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩)) := by
-    have hKV :=
-      live_eventually_knows (P := P) (M := M) (liveSymb := liveSymb)
-        (l := l₂') (evt := ⟨voteSymb, [l, v]⟩)
-        (hTheory := hThyLiveTheory)
-        (hLive := by intro q; simpa using hLive q)
-        (hEvent := hLiveVote)
-    intro q
-    simpa using hKV q
+        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩)) :=
+    boxPast_live_knows_of_intersecting (M := M)
+      (hLiveTheory := hThyLiveTheory)
+      (hIntersect := hIntersect) (hLive := hLive)
+      (hQuorum := hVoteBoxGlobal)
 
   -- (Vote?) with Lemma 4.2.3(1): knowing of the vote, the quorum knows of an
   -- `l`-quorum of echoes.
   have hStep4Global :
       ⊨[M]□ᶠ↓[[l₂']]
         (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
-    refine boxPast_mono_of_history (M := M) (fun t ht hConj => ?_) hKnowsVoteGlobal
-    have hSplit :=
-      (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
-        (ψ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l, v]⟩))).1 hConj
-    obtain ⟨q, hPastVote⟩ :=
-      (Sat.diamond_nil (M := M) (w := t)
-        (φ := ↓ᶠ (ofEvent ⟨voteSymb, [l, v]⟩))).1
-        (by simpa [Formula.diamondPast] using hSplit.2)
-    have hPastEcho :=
-      Sat.past_of_imp (M := M) (w := ⟨q, †, t.time⟩)
-        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
-        (fun t' _ _ hVote =>
-          (voteBackward_elim (M := M)
-            (hAx := theory_voteBackward (M := M) hTheory)
-            (hMem := Sat.mem_of_ofEvent (M := M) hVote)
-            (hVote := hVote)).2)
-        hPastVote
-    have hKnowsEcho :
-        ⟪t⟫ ⊨[M] ♢ᶠ↓[[]] (□ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) := by
-      simpa [Formula.diamondPast] using
-        (Sat.diamond_nil (M := M) (w := t)
-          (φ := ↓ᶠ (□ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)))).2 ⟨q, hPastEcho⟩
-    exact
-      (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
-        (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).2
-        ⟨hSplit.1,
-          pastDiamondBoxCollapsesToPresentBox (M := M) t l _ ht hKnowsEcho⟩
+          □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
+    boxPast_live_knowsVote_knowsEchoQuorum (M := M)
+      (hVoteEcho := fun _ ht hVote =>
+        (voteBackward_elim (M := M)
+          (hAx := theory_voteBackward (M := M) hTheory)
+          (hMem := ht) (hVote := hVote)).2)
+      (hQuorum := hKnowsVoteGlobal)
 
   -- Lemma 6.5.2(2) with (Vote!): the safe learner's quorum eventually votes.
   -- Safety enters through `voteForward_imp`, i.e. Lemma 6.5.1.
@@ -164,16 +125,9 @@ theorem cascadeTermination
   have hDeliverEventually :
       ⊨[M](predicate0 liveSymb ⇒ᶠ
         ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) :=
-    live_eventually_consequent (M := M)
+    live_quorum_eventually_consequent (M := M)
       (hLiveTheory := hThyLiveTheory)
-      (φ := □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l, v]⟩))
-      (ψ := ofEvent ⟨deliverSymb, [l₂', l, v]⟩)
-      (hLive :=
-        _root_.ModalDistribution.Examples.live_eventually_knows_box
-          (M := M) (liveSymb := liveSymb)
-          (l := l₂') (evt := ⟨voteSymb, [l, v]⟩)
-          (hTheory := hThyLiveTheory)
-          (hQuorum := hVotesGlobal))
+      (hQuorum := hVotesGlobal)
       (hImp := HBB.deliverForward_imp (M := M)
         (theory_deliverForward (M := M) hTheory))
   exact

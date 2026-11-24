@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.HBBCorr.Axioms
 import ModalDistribution.Examples.HBBCorr.Lemmas
-import ModalDistribution.Examples.HBBSafe.Safety
+import ModalDistribution.Examples.HBB.Termination
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
@@ -107,140 +107,17 @@ theorem cascadeTermination
       (value := v)
       (p := p)
       (hDeliver := hDeliverDiamond)
-  have hVotesBoxGlobal_l₁ :
-      ⊨[M]
-        □ᶠ↓[[l₁]] (ofEvent ⟨voteSymb, [l₁, v]⟩) := by
-    have hBoxTop :
-        ⟪wTop⟫ ⊨[M]
-          □ᶠ[[l₁]] (↓ᶠ (ofEvent ⟨voteSymb, [l₁, v]⟩)) :=
-      by simpa [Formula.boxPast]
-        using hVotesBox_l₁
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := M)
-        (w := wTop) (l := l₁)
-        (φ := ↓ᶠ (ofEvent ⟨voteSymb, [l₁, v]⟩))).1
-        hBoxTop
-    intro q
-    have hAllGlobal :
-        ∀ q' ∈ O,
-          ⟪⟨q', †, M.history.val⟩⟫ ⊨[M]
-            ↓ᶠ (ofEvent ⟨voteSymb, [l₁, v]⟩) := by
-      intro q' hqO
-      simpa [wTop, World.time]
-        using hAll q' hqO
-    refine
-      (sat_box_singleton_exists (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (l := l₁)
-        (φ := ↓ᶠ (ofEvent ⟨voteSymb, [l₁, v]⟩))).2
-        ⟨O, hO, ?_⟩
-    intro q' hqO
-    exact hAllGlobal q' hqO
-  -- The vote quorum meets a live witness.
-  have hLiveVoteDiamond :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩) := by
-    classical
-    have hLiveVoteDiamondGlobal :=
-      intertwined_two_quorums (M := M)
-        (liveSymb := liveSymb)
-        (l := l₁)
-        (l₁ := l₂)
-        (φ := ofEvent ⟨voteSymb, [l₁, v]⟩)
-        (hTheory := hThyLive)
-        (hIntersect := hIntersectGlobal)
-        (hLiveQuorum := hLiveQuorum)
-        (hWitness := hVotesBoxGlobal_l₁)
-    simpa [wTop]
-      using hLiveVoteDiamondGlobal p
-  -- Knowledge$\atddot{}$: live participants eventually learn about the `l₁` vote.
+  -- Propositions 5.2.10 and 5.2.8: the live `l₂`-quorum eventually knows of
+  -- a vote of the intersecting `l₁`-quorum.
   have hLiveVoteBoxGlobal_l₂ :
       ⊨[M]
         □ᶠ↓[[l₂]]
           (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) := by
-    classical
-    -- Extract a concrete history point witnessing the `l₁` vote.
-    have hDiamondNil :
-        ⟪wTop⟫ ⊨[M]
-          ♢ᶠ[[]]
-            (↓ᶠ (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₁, v]⟩)) :=
-      by
-        simpa [Formula.diamondPast]
-          using hLiveVoteDiamond
-    obtain ⟨qVote, hPastLiveVote⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩))).1
-        hDiamondNil
-    obtain ⟨tVote, ht_mem, ht_place, hLiveVoteLocal⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qVote, †, wTop.time⟩)
-        (φ := predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩)).1
-        hPastLiveVote
-    have ht_mem_history : tVote ∈ M.history.val :=
-      by simpa [wTop, World.time] using ht_mem
-    have hLiveVoteSplit :=
-      (Sat.and (M := M) (w := tVote)
-        (φ := predicate0 liveSymb)
-        (ψ := ofEvent ⟨voteSymb, [l₁, v]⟩)).1
-        hLiveVoteLocal
-    have hLive_t : ⟪tVote⟫ ⊨[M] predicate0 liveSymb := hLiveVoteSplit.1
-    -- The vote event occurs at `tVote`.
-    have hVote_t :
-        ⟪tVote⟫ ⊨[M] ofEvent ⟨voteSymb, [l₁, v]⟩ :=
-      hLiveVoteSplit.2
-    -- Record the conjunction directly at `tVote`.
-    have hConj_t :
-        ⟪tVote⟫ ⊨[M]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩) :=
-      (Sat.and (M := M) (w := tVote)
-        (φ := predicate0 liveSymb)
-        (ψ := ofEvent ⟨voteSymb, [l₁, v]⟩)).2
-        ⟨hLive_t, hVote_t⟩
-    -- Promote the local witness to the end-of-time perspective.
-    have hPastConjEnd :
-        ⟪⟨tVote.place, †, M.history.val⟩⟫ ⊨[M]
-          ↓ᶠ (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩) :=
-      (Sat.past (M := M)
-        (w := ⟨tVote.place, †, M.history.val⟩)
-        (φ := predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩)).2
-        ⟨tVote, ht_mem_history, rfl, hConj_t⟩
-    -- Any participant can reference the witnessed vote in the global history.
-    have hEventGlobal :
-        ⊨[M]
-          ♢ᶠ↓[[]]
-            (predicate0 liveSymb ∧ᶠ
-              ofEvent ⟨voteSymb, [l₁, v]⟩) := by
-      intro q
-      exact
-        (Sat.diamond_nil (M := M)
-          (w := ⟨q, †, M.history.val⟩)
-          (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l₁, v]⟩))).2
-          ⟨tVote.place, hPastConjEnd⟩
-    -- Instantiate eventual knowledge for learner `l₂`.
-    have hLiveVoteBoxGlobal :
-        ⊨[M]
-          □ᶠ↓[[l₂]]
-            (predicate0 liveSymb ∧ᶠ
-              ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) :=
-      live_eventually_knows (M := M)
-        (liveSymb := liveSymb)
-        (l := l₂)
-        (evt := ⟨voteSymb, [l₁, v]⟩)
-        (hTheory := hThyLive)
-        (hLive := hLiveQuorum)
-        (hEvent := hEventGlobal)
-    exact hLiveVoteBoxGlobal
+            ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩)) :=
+    HBB.boxPast_live_knows_of_intersecting (M := M)
+      (hLiveTheory := hThyLive)
+      (hIntersect := hIntersectGlobal) (hLive := hLiveQuorum)
+      (hQuorum := fun q => by simpa [wTop] using hVotesBox_l₁)
   -- Lemma 6.5.2(2) with (Vote'!) as Lemma 8.4.3(3): correlated votes
   -- propagate the value to `l₂`.
   have hVotesBox_l₂ :
@@ -306,7 +183,7 @@ theorem cascadeTermination
     have hGlobal :
         ⊨[M]□ᶠ↓[[l₂]]
           (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l₂, v]⟩) :=
-      HBBSafe.boxPast_live_of_eventual_quorum (M := M)
+      HBB.boxPast_live_of_eventual_quorum (M := M)
         (hLiveTheory := hThyLive)
         (φ := ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v]⟩))
         (ψ := ofEvent ⟨voteSymb, [l₂, v]⟩)
@@ -314,46 +191,20 @@ theorem cascadeTermination
         (hQuorum := hLiveVoteBoxGlobal_l₂)
         (hImp := hImp)
     simpa [wTop] using hGlobal p
-  -- (Knowledge□↓): every live participant eventually knows of the `l₂` vote quorum.
-  have hVotesEventuallyBox :
-      ⟪wTop⟫ ⊨[M]
-        (predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (□ᶠ↓[[l₂]]
-            (ofEvent ⟨voteSymb, [l₂, v]⟩))) := by
-    simpa [wTop] using
-      live_eventually_knows_box (P := P) (M := M) (liveSymb := liveSymb)
-        (l := l₂) (evt := ⟨voteSymb, [l₂, v]⟩)
-        (hTheory := hThyLive)
-        (hQuorum := fun q => by simpa [wTop] using hVotesBox_l₂) p
-  -- Votes for `l₂` lead to deliveries for `l₂`; see `HBBCorr.deliverForwardAxiom`.
-  have hLiveToDeliver :
-      ⟪wTop⟫ ⊨[M]
-        (predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩)) := by
-    refine Sat.imp_intro (M := M) (w := wTop) ?_
-    intro hLiveTop
-    exact
-      HBBSafe.live_sometime_consequent_at (M := M)
-        (hLiveTheory := hThyLive)
-        (hImp := deliverForward_imp (M := M)
-          (theory_deliverForward (M := M) hTheory))
-        hLiveTop
-        ((Sat.imp (M := M) (w := wTop)
-          (φ := predicate0 liveSymb)
-          (ψ := ↕ᶠ (□ᶠ↓[[l₂]] (ofEvent ⟨voteSymb, [l₂, v]⟩)))).1
-          hVotesEventuallyBox hLiveTop)
-
-  -- Apply the live guard to obtain eventual `l₂` votes.
-
-  have hDeliverEventually :
-      ⟪wTop⟫ ⊨[M]
-        ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩) :=
-    (Sat.imp (M := M) (w := wTop)
+  -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!), concludes
+  -- eventual delivery.
+  exact
+    Sat.imp_elim (M := M) (w := wTop)
       (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩))).1
-      hLiveToDeliver hLiveHere
-
-  exact hDeliverEventually
+      (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂, v]⟩))
+      (by
+        simpa [wTop] using
+          HBB.live_quorum_eventually_consequent (M := M)
+            (hLiveTheory := hThyLive)
+            (hQuorum := fun q => by simpa [wTop] using hVotesBox_l₂)
+            (hImp := deliverForward_imp (M := M)
+              (theory_deliverForward (M := M) hTheory)) p)
+      hLiveHere
 
 /-- Paper: Proposition 8.4.5, first corollary. A delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
