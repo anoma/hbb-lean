@@ -8,10 +8,9 @@ open scoped Semifilter
 /-!
 # Model structures
 
-This file sets up the model structures for HBB.
-We package the signature components, introduce the generated event and
-atomic predicate types, and formalise models together with their local
-view operations.
+Signatures, the events and atomic predicates they generate, and models: a
+history structure together with interpretations of predicates and learners
+(paper Sections 3.1 and 3.3).
 
 ## Main definitions
 
@@ -61,7 +60,8 @@ abbrev AtomicPredType (S : Signature) : Type _ := AtomicPred S
 
 end Signature
 
-/-- Paper: Definition 3.3.3 (models). Models combine histories and interpretations. -/
+/-- Paper: Definition 3.3.3 (models). A model `(P, H, ϱ, ς)`: a history structure, a predicate
+interpretation and a learner interpretation. -/
 structure Model (S : Signature) (P : Type u₅) [Nonempty P] where
   /-- History structure `H`. -/
   history : History P (Signature.EventType S)
@@ -72,11 +72,4 @@ structure Model (S : Signature) (P : Type u₅) [Nonempty P] where
       Set (Signature.AtomicPredType S)
   /-- Learner interpretation `ς`. -/
   learner : Signature.Value S → Semifilter P
-
-namespace Model
-
-variable {S : Signature} {P : Type u₅} [Nonempty P]
-variable (M : Model S P)
-
-end Model
 end ModalDistribution

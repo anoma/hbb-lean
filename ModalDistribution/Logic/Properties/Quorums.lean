@@ -5,8 +5,9 @@ import ModalDistribution.Core.History
 /-!
 # Quorum families
 
-This file defines quorum families and operations on them for reasoning about
-multiple learners and their quorum intersections.
+A `QuorumFamily` chooses one quorum per learner in a list. The `♢` clause of
+`Sat` quantifies over exactly these choices; `head`, `tail` and `cons` take
+them apart and build them up one learner at a time.
 -/
 
 namespace ModalDistribution
@@ -19,175 +20,68 @@ set_option autoImplicit false
 
 variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
-section QuorumFamilySection
-
-/-! ## Auxiliaries for quorum families -/
-
-/-- Index a family of quorums against a sequence of learner values. -/
+/-- A choice of one quorum for each learner in `learners`: the tuples
+`(O₁, …, Oₙ) ∈ ς(l₁) × ⋯ × ς(lₙ)` over which the `♢` clause quantifies. -/
 structure QuorumFamily (M : Model S P)
     (learners : List S.Value) where
+  /-- The quorum chosen for the `i`-th learner. -/
   choose : Fin learners.length → Set P
+  /-- Each chosen quorum is a quorum of its learner. -/
   valid : ∀ i, choose i ∈ (M.learner (learners.get i)).quorums
 
 namespace QuorumFamily
 
 variable {M : Model S P} {ls : List S.Value}
 
-/-- Nonemptiness of the intersection. -/
+/-- The chosen quorums have a common member. -/
 @[simp] def IntersectionNonempty (F : QuorumFamily M ls) : Prop :=
   ∃ p, ∀ i, p ∈ F.choose i
 
-/-- Trivial quorum family over the empty learner list. -/
+/-- The quorum family over the empty learner list. -/
 @[simp] def nil (M : Model S P) : QuorumFamily M [] where
-  choose i := Fin.elim0 i
-  valid := by
-    intro i
-    have : False := Nat.not_lt_zero _ i.isLt
-    exact this.elim
+  choose := Fin.elim0
+  valid i := i.elim0
 
 variable {l : Signature.Value S} {ls' : List S.Value}
 
-/-- Head quorum of a non-empty quorum family. -/
+/-- The quorum chosen for the first learner. -/
 @[simp] def head (F : QuorumFamily M (l :: ls')) : Set P :=
   F.choose ⟨0, Nat.succ_pos _⟩
 
+/-- The head of a family is a quorum of the first learner. -/
 theorem head_mem (F : QuorumFamily M (l :: ls')) :
-    head (M := M) F ∈ (M.learner l).quorums := by
-  classical
-  simpa [head, List.get_cons_zero] using F.valid ⟨0, Nat.succ_pos _⟩
+    head (M := M) F ∈ (M.learner l).quorums :=
+  F.valid ⟨0, Nat.succ_pos _⟩
 
-/-- Tail quorum family obtained by discarding the first learner. -/
+/-- The family with the first learner's quorum dropped. -/
 @[simp] def tail (F : QuorumFamily M (l :: ls')) :
     QuorumFamily M ls' where
-  choose i := F.choose (Fin.succ i)
-  valid i := by
-    classical
-    simpa [List.get_cons_succ] using F.valid (Fin.succ i)
+  choose i := F.choose i.succ
+  valid i := F.valid i.succ
 
-@[simp] theorem tail_choose
-    (F : QuorumFamily M (l :: ls')) (i : Fin ls'.length) :
-    (tail (M := M) F).choose i = F.choose (Fin.succ i) := rfl
-
-/-- Extend a quorum family by prepending a quorum. -/
+/-- The family that chooses `O` for `l` and then follows `F`. -/
 @[simp] def cons
     (O : Set P) (hO : O ∈ (M.learner l).quorums)
     (F : QuorumFamily M ls') :
     QuorumFamily M (l :: ls') where
-  choose i := Fin.cases O (fun j => F.choose j) i
-  valid i := by
-    classical
-    refine Fin.cases ?_ ?_ i
-    · simpa using hO
-    · intro j
-      simpa [List.get_cons_succ] using F.valid j
+  choose := Fin.cases O F.choose
+  valid := Fin.cases hO F.valid
 
 @[simp] theorem cons_choose_zero
     {O : Set P} {hO : O ∈ (M.learner l).quorums}
     {F : QuorumFamily M ls'} :
     (cons (M := M) (l := l) O hO F).choose ⟨0, Nat.succ_pos _⟩ = O := rfl
 
-@[simp] theorem cons_choose_succ
-    {O : Set P} {hO : O ∈ (M.learner l).quorums}
-    {F : QuorumFamily M ls'} (i : Fin ls'.length) :
-    (cons (M := M) (l := l) O hO F).choose (Fin.succ i) = F.choose i := rfl
-
+/-- A common member of a family over `l :: ls'` is a member of its head and a
+common member of its tail. -/
 @[simp] theorem forall_choose_cons
     (F : QuorumFamily M (l :: ls')) (p : P) :
     (∀ i, p ∈ F.choose i) ↔
-      p ∈ F.head ∧ ∀ i, p ∈ (F.tail).choose i := by
-  classical
-  constructor
-  · intro h
-    refine ⟨?_, ?_⟩
-    · simpa [QuorumFamily.head] using h ⟨0, Nat.succ_pos _⟩
-    · intro i
-      simpa [QuorumFamily.tail_choose] using h (Fin.succ i)
-  · rintro ⟨hpHead, hpTail⟩ i
-    classical
-    refine Fin.cases ?_ ?_ i
-    · simpa [QuorumFamily.head] using hpHead
-    · intro j
-      simpa [QuorumFamily.tail_choose] using hpTail j
-
-@[simp] theorem cons_forall_choose
-    {O : Set P} {hO : O ∈ (M.learner l).quorums}
-    {F : QuorumFamily M ls'} {p : P} :
-    (∀ i, p ∈ (cons (M := M) (l := l) O hO F).choose i) ↔
-      p ∈ O ∧ ∀ i, p ∈ F.choose i := by
-  classical
-  constructor
-  · intro h
-    refine ⟨?_, ?_⟩
-    · simpa [cons_choose_zero] using h ⟨0, Nat.succ_pos _⟩
-    · intro i
-      simpa [cons_choose_succ] using h (Fin.succ i)
-  · rintro ⟨hpO, hpAll⟩ i
-    refine Fin.cases ?_ ?_ i
-    · simpa [cons_choose_zero] using hpO
-    · intro j
-      simpa [cons_choose_succ] using hpAll j
-
-theorem exists_forall_choose_cons
-    (F : QuorumFamily M (l :: ls'))
-    {acc : Set P} {R : P → Prop} :
-    (∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧ R p) ↔
-      ∃ p, p ∈ acc ∧ p ∈ F.head ∧ (∀ i, p ∈ (F.tail).choose i) ∧ R p := by
-  classical
-  constructor
-  · rintro ⟨p, hpAcc, hpAll, hR⟩
-    obtain ⟨hpHead, hpTail⟩ :=
-      (QuorumFamily.forall_choose_cons (F := F) (p := p)).1 hpAll
-    exact ⟨p, hpAcc, hpHead, hpTail, hR⟩
-  · rintro ⟨p, hpAcc, hpHead, hpTail, hR⟩
-    refine ⟨p, hpAcc, ?_, hR⟩
-    exact (QuorumFamily.forall_choose_cons (F := F) (p := p)).2
-      ⟨hpHead, hpTail⟩
-
-theorem exists_forall_choose_cons_cons
-    {O : Set P} {hO : O ∈ (M.learner l).quorums}
-    {F : QuorumFamily M ls'}
-    {acc : Set P} {R : P → Prop} :
-    (∃ p, p ∈ acc ∧ (∀ i, p ∈
-        (cons (M := M) (l := l) O hO F).choose i) ∧ R p) ↔
-      ∃ p, p ∈ acc ∧ p ∈ O ∧ (∀ i, p ∈ F.choose i) ∧ R p := by
-  classical
-  constructor
-  · rintro ⟨p, hpAcc, hpAll, hR⟩
-    obtain ⟨hpO, hpTail⟩ :=
-      (QuorumFamily.cons_forall_choose
-        (M := M) (l := l) (ls' := ls') (F := F)
-        (O := O) (p := p) (hO := hO)).1 hpAll
-    exact ⟨p, hpAcc, hpO, hpTail, hR⟩
-  · rintro ⟨p, hpAcc, hpO, hpTail, hR⟩
-    refine ⟨p, hpAcc, ?_, hR⟩
-    exact (QuorumFamily.cons_forall_choose
-        (M := M) (l := l) (ls' := ls') (F := F)
-        (O := O) (p := p) (hO := hO)).2 ⟨hpO, hpTail⟩
-
-@[simp] theorem exists_forall_choose_cons_inter
-    (F : QuorumFamily M (l :: ls'))
-    {acc : Set P} {R : P → Prop} :
-    (∃ p, p ∈ acc ∧ (∀ i, p ∈ F.choose i) ∧ R p) ↔
-      ∃ p ∈ acc ∩ F.head, (∀ i, p ∈ (F.tail).choose i) ∧ R p := by
-  classical
-  constructor
-  · intro h
-    obtain ⟨p, hpAcc, hpHead, hpTail, hR⟩ :=
-      (QuorumFamily.exists_forall_choose_cons
-        (M := M) (ls' := ls') (F := F)
-        (acc := acc) (R := R)).1 h
-    exact ⟨p, ⟨hpAcc, hpHead⟩, hpTail, hR⟩
-  · rintro ⟨p, hpAccHead, hpTail, hR⟩
-    obtain ⟨hpAcc, hpHead⟩ := hpAccHead
-    exact
-      (QuorumFamily.exists_forall_choose_cons
-        (M := M) (ls' := ls') (F := F)
-        (acc := acc) (R := R)).2
-        ⟨p, hpAcc, hpHead, hpTail, hR⟩
+      p ∈ F.head ∧ ∀ i, p ∈ (F.tail).choose i :=
+  ⟨fun h => ⟨h ⟨0, Nat.succ_pos _⟩, fun i => h i.succ⟩,
+    fun ⟨hHead, hTail⟩ i => Fin.cases hHead hTail i⟩
 
 end QuorumFamily
-
-end QuorumFamilySection
 
 end Logic
 end ModalDistribution

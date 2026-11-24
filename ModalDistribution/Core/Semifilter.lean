@@ -53,60 +53,11 @@ namespace Semifilter
 
 variable {P : Type u}
 
-theorem intersects_self_iff_nonempty {O : Set P} :
-    (O ≬ O) ↔ O.Nonempty := by
-  classical
-  simp [Semifilter.Intersects, inter_self]
-
-/-- Intersections distribute over a shared witness. -/
-theorem intersects_of_mem {p : P} {O O' : Set P}
-    (hpO : p ∈ O) (hpO' : p ∈ O') :
-    O ≬ O' := by
-  classical
-  refine ⟨p, ?_⟩
-  exact ⟨hpO, hpO'⟩
-
-/-- Intersections are witnessed precisely by shared members. -/
-theorem intersects_iff {O O' : Set P} :
-    (O ≬ O') ↔ ∃ p, p ∈ O ∧ p ∈ O' := by
-  classical
-  constructor
-  · intro hint
-    rcases hint with ⟨p, hp⟩
-    exact ⟨p, hp.1, hp.2⟩
-  · rintro ⟨p, hpO, hpO'⟩
-    exact intersects_of_mem (P := P) hpO hpO'
-
+/-- Every quorum of a semifilter is nonempty: it intersects itself. -/
 theorem quorum_nonempty {L : Semifilter P} {O : Set P}
     (hO : O ∈ L.quorums) :
-    O.Nonempty := by
-  have := L.pairwise_inter hO hO
-  simpa [intersects_self_iff_nonempty] using this
-
-/-- Any two quorums in a semifilter intersect. -/
-theorem intersects_of_mem_quorums {L : Semifilter P} {O₁ O₂ : Set P}
-    (h₁ : O₁ ∈ L.quorums) (h₂ : O₂ ∈ L.quorums) :
-    O₁ ≬ O₂ :=
-  L.pairwise_inter h₁ h₂
-
-@[ext] theorem ext {L₁ L₂ : Semifilter P}
-    (h : ∀ O : Set P, O ∈ L₁.quorums ↔ O ∈ L₂.quorums) :
-    L₁ = L₂ := by
-  classical
-  cases L₁ with
-  | mk Q₁ n₁ u₁ p₁ =>
-    cases L₂ with
-    | mk Q₂ n₂ u₂ p₂ =>
-      have hQ : Q₁ = Q₂ := by
-        ext O
-        exact (h O)
-      subst hQ
-      have : n₁ = n₂ := Subsingleton.elim _ _
-      subst this
-      have : u₁ = u₂ := Subsingleton.elim _ _
-      subst this
-      have : p₁ = p₂ := Subsingleton.elim _ _
-      subst this
-      rfl
+    O.Nonempty :=
+  let ⟨p, hp, _⟩ := L.pairwise_inter hO hO
+  ⟨p, hp⟩
 
 end Semifilter

@@ -99,10 +99,10 @@ inductive Formula (S : Signature.{0, 0, 0}) : Type 1 where
 
 namespace Formula
 
-/-- Paper: Figure 5 sugar (⊤). Convenience: the always-true formula `⊤`. -/
+/-- Paper: Figure 5 sugar (⊤). The always-true formula `⊥ ⇒ ⊥`. -/
 def top : Formula S := .imp .bot .bot
 
-/-- Paper: Figure 5 sugar (¬). -/
+/-- Paper: Figure 5 sugar (¬). Negation `φ ⇒ ⊥`. -/
 def not (φ : Formula S) : Formula S :=
   .imp φ .bot
 
@@ -122,28 +122,30 @@ def iff (φ ψ : Formula S) : Formula S :=
 def exists_ (body : S.Value → Formula S) : Formula S :=
   not (.forall (fun v => not (body v)))
 
-/-- Paper: Figure 5 sugar (↕). Sometimes modality (`↕`) specialised to the current participant;
+/-- Paper: Figure 5 sugar (↕). Sometime: `φ` holds at some event of the current participant;
 sugar for `⤒↓`. -/
 def sometime (φ : Formula S) : Formula S :=
   .atEnd (.past φ)
 
-/-- Paper: Figure 5 sugar (⇕). Always in the past (`⇕`). -/
+/-- Paper: Figure 5 sugar (⇕). Everytime: `φ` holds at every event of the current
+participant; sugar for `¬↕¬`. -/
 def everytime (φ : Formula S) : Formula S :=
   not (sometime (not φ))
 
-/-- Paper: Figure 5 sugar (⇓). Eventually in the past (`⇓`). -/
+/-- Paper: Figure 5 sugar (⇓). At every past event of the current participant; sugar for
+`¬↓¬`. -/
 def allPast (φ : Formula S) : Formula S :=
   not (.past (not φ))
 
-/-- Paper: Figure 5 sugar (□ l₁…lₙ). Box modality. -/
+/-- Paper: Figure 5 sugar (□ l₁…lₙ). Box modality; sugar for `¬♢¬`. -/
 def box (ls : List S.Value) (φ : Formula S) : Formula S :=
   not (.diamond ls (not φ))
 
-/-- Paper: Figure 5 sugar (♢↓). Diamond with past guard. -/
+/-- Paper: Figure 5 sugar (♢↓). `♢(↓φ)`. -/
 def diamondPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (.past φ)
 
-/-- Paper: Figure 5 sugar (♢⇓). Diamond with eventual past guard. -/
+/-- Paper: Figure 5 sugar (♢⇓). `♢(⇓φ)`. -/
 def diamondAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   .diamond ls (allPast φ)
 
@@ -151,11 +153,11 @@ def diamondAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
 @[simp] def diamondEmpty (φ : Formula S) : Formula S :=
   .diamond [] φ
 
-/-- Paper: Figure 5 sugar (□↓). Box with past guard. -/
+/-- Paper: Figure 5 sugar (□↓). `□(↓φ)`. -/
 def boxPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (.past φ)
 
-/-- Paper: Figure 5 sugar (□⇓). Box with eventual past guard. -/
+/-- Paper: Figure 5 sugar (□⇓). `□(⇓φ)`. -/
 def boxAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
   box ls (Formula.allPast φ)
 
@@ -163,46 +165,46 @@ def boxAllPast (ls : List S.Value) (φ : Formula S) : Formula S :=
 @[simp] def boxEmpty (φ : Formula S) : Formula S :=
   box [] φ
 
-/-- Helpful notation for implication in modal formulas. -/
+/-- Notation for implication in modal formulas. -/
 scoped infixr:60 " ⇒ᶠ " => Formula.imp
 
-/-- Helpful notation for bottom in modal formulas. -/
+/-- Notation for bottom in modal formulas. -/
 scoped notation "⊥ᶠ" => Formula.bot
 
-/-- Helpful notation for top in modal formulas. -/
+/-- Notation for top in modal formulas. -/
 scoped notation "⊤ᶠ" => Formula.top
 
-/-- Helpful notation for equality in modal formulas. -/
+/-- Notation for equality in modal formulas. -/
 scoped infix:55 " ≃ᶠ " => Formula.eq
 
-/-- Helpful notation for universal quantification in modal formulas (HOAS style). -/
+/-- Notation for universal quantification in modal formulas (HOAS style). -/
 scoped notation "∀ᶠ " body => Formula.forall body
 
-/-- Helpful notation for the past modality. -/
+/-- Notation for the past modality. -/
 scoped notation "↓ᶠ " φ => Formula.past φ
 
-/-- Helpful notation for the end-of-time modality. -/
+/-- Notation for the end-of-time modality. -/
 scoped notation "⤒ᶠ" φ => Formula.atEnd φ
 
-/-- Helpful notation for the quorum intersection modality. -/
+/-- Notation for the quorum intersection modality. -/
 scoped notation "♢ᶠ[" ls "]" φ => Formula.diamond ls φ
 
-/-- Helpful notation for the box modality. -/
+/-- Notation for the box modality. -/
 scoped notation "□ᶠ[" ls "]" φ => Formula.box ls φ
 
-/-- Helpful notation for logical negation. -/
+/-- Notation for logical negation. -/
 scoped notation "¬ᶠ" φ => Formula.not φ
 
-/-- Helpful notation for conjunction. -/
+/-- Notation for conjunction. -/
 scoped infixl:65 " ∧ᶠ " => Formula.and
 
-/-- Helpful notation for disjunction. -/
+/-- Notation for disjunction. -/
 scoped infixl:60 " ∨ᶠ " => Formula.or
 
-/-- Helpful notation for bi-implication. -/
+/-- Notation for bi-implication. -/
 scoped infix:55 " ⇔ᶠ " => Formula.iff
 
-/-- Helpful notation for existential quantification (HOAS style). -/
+/-- Notation for existential quantification (HOAS style). -/
 scoped notation "∃ᶠ " body => Formula.exists_ body
 
 /-- Paper: Figure 5 sugar (∃≤1). At-most-one quantifier `∃≤₁` (HOAS version).
@@ -218,7 +220,7 @@ def existsUnique (body : S.Value → Formula S) : Formula S :=
     (existsAtMostOne body)
     (.exists_ body)
 
-/-- Notation `∃≤ᶠ1` (simplified - single binder). -/
+/-- Notation `∃≤ᶠ1 x ↦ φ` for `Formula.existsAtMostOne` (one binder). -/
 scoped syntax (name := existsAtMostOneNotation)
   "∃≤ᶠ1 " ident " ↦ " term : term
 
@@ -226,7 +228,7 @@ macro_rules
   | `(∃≤ᶠ1 $boundVar ↦ $body) =>
       `(Formula.existsAtMostOne (fun $boundVar => $body))
 
-/-- Notation `∃!ᶠ` (simplified - single binder). -/
+/-- Notation `∃!ᶠ x ↦ φ` for `Formula.existsUnique` (one binder). -/
 scoped syntax (name := existsUniqueNotation)
   "∃!ᶠ " ident " ↦ " term : term
 
@@ -234,37 +236,38 @@ macro_rules
   | `(∃!ᶠ $boundVar ↦ $body) =>
       `(Formula.existsUnique (fun $boundVar => $body))
 
-/-- Helpful notation for the past-eventually modality. -/
+/-- Notation for `Formula.allPast` (at every past event). -/
 scoped notation "⇓ᶠ" φ => Formula.allPast φ
 
-/-- Helpful notation for the always-in-the-past modality. -/
+/-- Notation for `Formula.everytime`. -/
 scoped notation "⇕ᶠ" φ => Formula.everytime φ
 
-/-- Helpful notation for the sometime modality. -/
+/-- Notation for `Formula.sometime`. -/
 scoped notation "↕ᶠ" φ => Formula.sometime φ
 
-/-- Helpful notation for the past diamond. -/
+/-- Notation for the past diamond. -/
 scoped notation "♢ᶠ↓[" ls "]" φ => Formula.diamondPast ls φ
 
-/-- Helpful notation for the eventual past diamond. -/
+/-- Notation for `Formula.diamondAllPast`. -/
 scoped notation "♢ᶠ⇓[" ls "]" φ => Formula.diamondAllPast ls φ
 
-/-- Helpful notation for the empty diamond. -/
+/-- Notation for the empty diamond. -/
 scoped notation "♢ᶠ[]" φ => Formula.diamondEmpty φ
 
-/-- Helpful notation for the past box. -/
+/-- Notation for the past box. -/
 scoped notation "□ᶠ↓[" ls "]" φ => Formula.boxPast ls φ
 
-/-- Helpful notation for the eventual past box. -/
+/-- Notation for `Formula.boxAllPast`. -/
 scoped notation "□ᶠ⇓[" ls "]" φ => Formula.boxAllPast ls φ
 
-/-- Helpful notation for the empty box. -/
+/-- Notation for the empty box. -/
 scoped notation "□ᶠ[]" φ => Formula.boxEmpty φ
 
 /-- Convenience for nullary predicates. -/
 @[simp] def predicate0 (sym : S.PredSymb) : Formula S :=
   .predicate ⟨sym, []⟩
 
+/-- Promote an event from the signature to an event atom. -/
 def ofEvent (E : Signature.EventType S) : Formula S :=
   .event ⟨E.sym, E.args⟩
 
