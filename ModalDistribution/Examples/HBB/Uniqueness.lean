@@ -9,21 +9,21 @@ Consequences of the uniqueness of proposals and of the shared echo axioms
 `HBBSimp`, and `HBBCorr`.
 
 - **Uniqueness guard lemmas**:
-  - `uniquePropose_monotone`: at most one proposal persists in smaller histories
-  - `uniquePropose_guard_at_history`: uniqueness yields the at-most-one guard
-  - `uniquePropose_equal_values`: forces observed proposals to agree
+  - `unique_propose_monotone`: at most one proposal persists in smaller histories
+  - `unique_propose_guard_at_history`: uniqueness yields the at-most-one guard
+  - `unique_propose_equal_values`: forces observed proposals to agree
 
-- **Lemma 6.6.1** (`uniquePropose_eventually_echo`): a unique proposal
+- **Lemma 6.6.1** (`unique_propose_eventually_echo`): a unique proposal
   guarantees eventual echoes of it, assembled from
-  `uniquePropose_exists_witness_echo`, `uniquePropose_witness_eq_value`, and
-  `uniquePropose_eventually_echo_core`
+  `unique_propose_exists_witness_echo`, `unique_propose_witness_eq_value`, and
+  `unique_propose_eventually_echo_core`
 
 - **Echo lemmas**:
   - `sometime_echo_event_exists`: witness explicit echo events
   - `echo_backward_diamond_from_sometime`: convert echoes to proposal diamonds
-  - `boxPast_live_knowsEcho_knowsPropose`: (Echo?) under a live quorum
-  - `boxEcho_to_propose_diamond`: echo quorums imply proposal diamonds
-  - `echoNonEquiv_diamond`: one-sided application of `EchoNE`
+  - `boxPast_live_knows_echo_knows_propose`: (Echo?) under a live quorum
+  - `box_echo_to_propose_diamond`: echo quorums imply proposal diamonds
+  - `echo_non_equiv_diamond`: one-sided application of `EchoNE`
 -/
 
 namespace ModalDistribution
@@ -51,7 +51,7 @@ variable {proposeSymb echoSymb : Signature.EventSymb S}
 variable {w w' t : World P (Signature.EventType S)}
 
 /-- Monotonicity of the at-most-one proposal condition. -/
-theorem uniquePropose_monotone
+theorem unique_propose_monotone
     (hSubset : w'.time ⊆trn w.time)
     (hUnique :
       ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦
@@ -133,7 +133,7 @@ theorem uniquePropose_monotone
     (Sat.eq (M := M) (w := w') (v₁ := v) (v₂ := v')).2 hEq''
 
 /-- Auxiliary: uniqueness at a fixed world yields the guarded at-most-one witness. -/
-theorem uniquePropose_guard_at_history
+theorem unique_propose_guard_at_history
     {w : World P (Signature.EventType S)}
     (hUnique :
       ⟪w⟫ ⊨[M]∃!ᶠ v ↦
@@ -154,7 +154,7 @@ theorem uniquePropose_guard_at_history
   exact hAnd.1
 
 /-- Auxiliary: uniqueness of proposals forces observed proposal diamonds to agree. -/
-theorem uniquePropose_equal_values
+theorem unique_propose_equal_values
     {w : World P (Signature.EventType S)}
     (value altValue : S.Value)
     (hAtMost : ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
@@ -192,7 +192,7 @@ theorem uniquePropose_equal_values
   simpa [Sat] using hEq
 
 /-- Helper: extract a concrete witness from a modal existential at a fixed world. -/
-theorem uniquePropose_exists_witness_at_world
+theorem unique_propose_exists_witness_at_world
     {w : World P (Signature.EventType S)}
     (hExists :
       ⟪w⟫ ⊨[M]∃ᶠ (fun witness =>
@@ -225,7 +225,7 @@ theorem uniquePropose_exists_witness_at_world
         hNeg hForallNot
 
 /-- Helper: equality implication yields value equality under a witness substitution. -/
-theorem uniquePropose_witness_eq_at_world
+theorem unique_propose_witness_eq_at_world
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hEq :
@@ -251,7 +251,7 @@ theorem uniquePropose_witness_eq_at_world
   simpa [Sat] using hEqFormula
 
 /-- Helper: transport sometime from a witness value back to the target value. -/
-theorem uniquePropose_sometime_rewrite_value
+theorem unique_propose_sometime_rewrite_value
     {w : World P (Signature.EventType S)}
     (value witness : Signature.Value S)
     (hEcho :
@@ -263,7 +263,7 @@ theorem uniquePropose_sometime_rewrite_value
   subst hVal
   simpa using hEcho
 
-theorem uniquePropose_eventually_echo_core_world
+theorem unique_propose_eventually_echo_core_world
     {w : World P (Signature.EventType S)}
     (value : S.Value)
     (hExists :
@@ -288,7 +288,7 @@ theorem uniquePropose_eventually_echo_core_world
       (ψ := ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩)) ?_
   intro hAnte
   obtain ⟨witness, hEchoWitness⟩ :=
-    uniquePropose_exists_witness_at_world
+    unique_propose_exists_witness_at_world
       ((Sat.imp (M := M) (w := w)
         (φ := ↕ᶠ (predicate0 liveSymb ∧ᶠ
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩)))
@@ -304,18 +304,18 @@ theorem uniquePropose_eventually_echo_core_world
           (witness ≃ᶠ value)))).1
       hEq hAnte
   have hWitnessEq :=
-    uniquePropose_witness_eq_at_world
+    unique_propose_witness_eq_at_world
       (w := w) (value := value)
       (hEq := hEq_inst) (witness := witness)
       (hEcho := hEchoWitness)
   exact
-    uniquePropose_sometime_rewrite_value
+    unique_propose_sometime_rewrite_value
       (w := w) (value := value)
       (witness := witness)
       hEchoWitness hWitnessEq
 
 /-- Auxiliary: combining existence and equality of echoes yields the target echo. -/
-theorem uniquePropose_eventually_echo_core
+theorem unique_propose_eventually_echo_core
     (value : S.Value)
     (hExists :
       □W⊨[M](↕ᶠ (predicate0 liveSymb ∧ᶠ
@@ -350,14 +350,14 @@ theorem uniquePropose_eventually_echo_core
               (witness ≃ᶠ value) :=
     hEq ht
   exact
-    uniquePropose_eventually_echo_core_world
+    unique_propose_eventually_echo_core_world
       (w := t)
       (value := value)
       (hExists := hExists_loc)
       (hEq := hEq_loc)
 
 /-- Auxiliary: the antecedent ensures echoes exist for some witness value. -/
-theorem uniquePropose_exists_witness_echo
+theorem unique_propose_exists_witness_echo
     (value : S.Value)
     (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb) :
     □W⊨[M]
@@ -448,7 +448,7 @@ theorem echo_backward_diamond_from_sometime
 
 /-- (Echo?) and Lemma 4.2.2 under a live quorum: a quorum of live
 participants that know of `echo(v)` know of `propose(v)`. -/
-theorem boxPast_live_knowsEcho_knowsPropose
+theorem boxPast_live_knows_echo_knows_propose
     (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
     {l value : Signature.Value S}
     (hQuorum : ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ
@@ -481,7 +481,7 @@ theorem boxPast_live_knowsEcho_knowsPropose
       (ψ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))).2
       ⟨hSplit.1, diamondPast_idem (M := M) t _ ht hNested⟩
 
-theorem boxEcho_to_propose_diamond
+theorem box_echo_to_propose_diamond
     {w : World P (Signature.EventType S)}
     (hSubset : w.time ⊆trn M.history.val)
     (hEchoBack :
@@ -494,7 +494,7 @@ theorem boxEcho_to_propose_diamond
       ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩) := by
   classical
   rcases w with ⟨p, evt, Hw⟩
-  have hHerHw : isHereditarilyTransitive Hw := hSubset.2
+  have hHerHw : IsHereditarilyTransitive Hw := hSubset.2
 
   -- Expand the guarded box to obtain a quorum and corresponding witnesses.
   have hBoxPast :
@@ -558,7 +558,7 @@ theorem boxEcho_to_propose_diamond
   -- Show the witnessed proposal lies inside the base history `Hw`.
   have hAccEcho : wEcho ≪ ⟨qEcho, †, Hw⟩ :=
     by
-      simpa [World.accessible] using hEcho_memHw
+      simpa [World.Accessible] using hEcho_memHw
   have hBeforeEcho : wEcho.time ≺− Hw :=
     PreHistory.happensBefore_of_accessible
       (P := P) (Event := Signature.EventType S) hAccEcho
@@ -602,7 +602,7 @@ theorem boxEcho_to_propose_diamond
 
 /-- One-sided application of `EchoNE`: an echo followed by a past echo must
 share the same value. -/
-theorem echoNonEquiv_diamond
+theorem echo_non_equiv_diamond
     (hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb))
     {w : World P (Signature.EventType S)}
     (hSubset : w.time ⊆trn M.history.val)
@@ -680,7 +680,7 @@ theorem echoNonEquiv_diamond
       (v₁ := valNow) (v₂ := valPast)).1 hEqFormula
   simpa [Sat] using hEq
 
-theorem uniquePropose_guard_implies_eq
+theorem unique_propose_guard_implies_eq
     {w : World P (Signature.EventType S)}
     (value witness : S.Value)
     (hGuard :
@@ -725,7 +725,7 @@ theorem uniquePropose_guard_implies_eq
       (v₁ := value) (v₂ := witness)).1 hEqVal
   simpa [Sat] using hEq.symm
 
-theorem uniquePropose_witness_eq_value
+theorem unique_propose_witness_eq_value
     (value : S.Value)
     (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
     (hUnique : ⊨[M]∃!ᶠ v ↦
@@ -750,7 +750,7 @@ theorem uniquePropose_witness_eq_value
       ⟪wTop⟫ ⊨[M]
         ∃≤ᶠ1 v ↦
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    uniquePropose_guard_at_history (M := M) (w := wTop) hUnique_global
+    unique_propose_guard_at_history (M := M) (w := wTop) hUnique_global
   refine
     Sat.imp_intro (M := M) (w := wPred)
       (φ :=
@@ -831,7 +831,7 @@ theorem uniquePropose_witness_eq_value
           hDiamond_witness_wEcho)
   have hEq_global :
       ⟪wTop⟫ ⊨[M] witness ≃ᶠ value :=
-    uniquePropose_guard_implies_eq
+    unique_propose_guard_implies_eq
       (M := M) (w := wTop)
       (value := value) (witness := witness)
       (hGuard := hGuard_global)
@@ -842,7 +842,7 @@ theorem uniquePropose_witness_eq_value
   simp [Sat, hEq_val]
 
 /-- Paper: Lemma 6.6.1. a unique proposal guarantees eventual echoes. -/
-theorem uniquePropose_eventually_echo
+theorem unique_propose_eventually_echo
     (value : S.Value)
     (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb)
     (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
@@ -859,7 +859,7 @@ theorem uniquePropose_eventually_echo
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
           ∃ᶠ (fun witness =>
             ↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) :=
-    uniquePropose_exists_witness_echo (value := value) (hEcho := hEcho)
+    unique_propose_exists_witness_echo (value := value) (hEcho := hEcho)
   have hEq :
       □W⊨[M]
         (↕ᶠ (predicate0 liveSymb ∧ᶠ
@@ -867,11 +867,11 @@ theorem uniquePropose_eventually_echo
           ∀ᶠ (fun witness =>
             (↕ᶠ(ofEvent ⟨echoSymb, [witness]⟩)) ⇒ᶠ
               (witness ≃ᶠ value)) :=
-    uniquePropose_witness_eq_value
+    unique_propose_witness_eq_value
       (value := value)
       (hEchoBack := hEchoBack) (hUnique := hUnique)
   exact
-    (uniquePropose_eventually_echo_core
+    (unique_propose_eventually_echo_core
       (value := value)
       (hExists := hExists) (hEq := hEq) :
         □W⊨[M]

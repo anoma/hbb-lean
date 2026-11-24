@@ -95,7 +95,7 @@ theorem box_witness
     simpa [wTop, World.time] using ht_mem
   have hBox_at_event :
       ⟪tVote⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) :=
-    voteBackward_elim (M := M)
+    vote_backward_elim (M := M)
       (hAx := hVoteAx)
       (hMem := ht_mem_history)
       (hVote := hVote_at)
@@ -118,7 +118,7 @@ theorem to_echo_box_end
     ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) := by
   classical
   have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) :=
-    theory_voteBackward (M := M) hTheory
+    theory_vote_backward (M := M) hTheory
   obtain ⟨tVote, ht_mem, hSubset, hBox⟩ :=
     Vote.box_witness (M := M)
       (echoSymb := echoSymb) (voteSymb := voteSymb)
@@ -136,7 +136,7 @@ end Vote
 
 /-- The instantiated `Vote!` implication: a sometime-live quorum of past
 echoes yields an eventual vote. This is the form consumed by Lemma 6.5.2(2). -/
-theorem voteForward_imp
+theorem vote_forward_imp
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l v : Signature.Value S} :
     □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ
@@ -147,8 +147,8 @@ theorem voteForward_imp
   refine Sat.imp_intro (M := M) (w := t) ?_
   intro hLiveEcho
   exact
-    voteForward_elim (M := M)
-      (hAx := theory_voteForward (M := M) hTheory)
+    vote_forward_elim (M := M)
+      (hAx := theory_vote_forward (M := M) hTheory)
       (hW := ht)
       (hLiveEcho := hLiveEcho)
 

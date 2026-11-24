@@ -34,7 +34,7 @@ namespace QuorumFamily
 variable {M : Model S P} {ls : List S.Value}
 
 /-- Nonemptiness of the intersection. -/
-@[simp] def intersectionNonempty (F : QuorumFamily M ls) : Prop :=
+@[simp] def IntersectionNonempty (F : QuorumFamily M ls) : Prop :=
   ∃ p, ∀ i, p ∈ F.choose i
 
 /-- Trivial quorum family over the empty learner list. -/

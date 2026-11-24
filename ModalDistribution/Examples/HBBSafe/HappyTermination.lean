@@ -11,7 +11,7 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This file contains the Happy Termination theorem for the HBBSafe broadcast protocol:
 
-- **Happy Termination** (`happyTermination`): Under uniqueness of proposals and a live quorum,
+- **Happy Termination** (`happy_termination`): Under uniqueness of proposals and a live quorum,
   if a live participant knows a proposal, it will eventually be delivered.
 -/
 
@@ -44,8 +44,8 @@ Under uniqueness of proposals and a live quorum, if a live participant knows
 a proposal for value v, then v will eventually be delivered. This establishes
 that proposals from live participants will eventually propagate to delivery.
 
-See also: `cascadeTermination`, `happyTermination_boxPast`. -/
-theorem happyTermination
+See also: `cascade_termination`, `happy_termination_boxPast`. -/
+theorem happy_termination
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -63,8 +63,8 @@ theorem happyTermination
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLivep
 
-  -- Fragments of `ThyLive` used throughout the derivation.
-  have hThyLiveTheory : M ⊨ᵀ ThyLive liveSymb :=
+  -- Fragments of `thyLive` used throughout the derivation.
+  have hThyLiveTheory : M ⊨ᵀ thyLive liveSymb :=
     theory_thyLive (M := M) hTheory
 
   -- Lemma 6.6.1, Proposition 5.2.8, (Echo?) with Lemma 4.2.2,
@@ -73,10 +73,10 @@ theorem happyTermination
   have hStep3Global :
       ⊨[M]□ᶠ↓[[l]]
         (predicate0 liveSymb ∧ᶠ □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    uniquePropose_live_nestedEcho_quorum (M := M)
+    unique_propose_live_nested_echo_quorum (M := M)
       (hLiveTheory := hThyLiveTheory)
-      (hEcho := theory_echoForward (M := M) hTheory)
-      (hEchoBack := theory_echoBackward (M := M) hTheory)
+      (hEcho := theory_echo_forward (M := M) hTheory)
+      (hEchoBack := theory_echo_backward (M := M) hTheory)
       (hLiveQuorum := hLiveQuorum) (hUnique := hUnique)
       (hKnown := diamondPast_nil_valid_of_end (M := M)
         (by simpa [wTop] using hPropose))
@@ -86,7 +86,7 @@ theorem happyTermination
       ⊨[M] ∃≤ᶠ1 w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩) := by
     intro q
     exact
-      uniquePropose_guard_at_history
+      unique_propose_guard_at_history
         (M := M) (proposeSymb := proposeSymb)
         (w := ⟨q, †, M.history.val⟩)
         (hUnique := hUnique q)
@@ -101,7 +101,7 @@ theorem happyTermination
         Sat.imp_elim (M := M) (w := ⟨q, †, M.history.val⟩)
           (φ := ∃≤ᶠ1 w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩))
           (ψ := ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩))
-          (atMostOnePropose_safe (M := M)
+          (at_most_one_propose_safe (M := M)
             (hTheory := hTheory) (l := l) q)
           (hGuardGlobal q)
     intro t _
@@ -128,7 +128,7 @@ theorem happyTermination
       (l := l)
       (hLiveTheory := hThyLiveTheory)
       (hQuorum := hStep3Global)
-      (hImp := voteForward_imp_of_everytime (M := M)
+      (hImp := vote_forward_imp_of_everytime (M := M)
         (hTheory := hTheory)
         (hSafeAlways := hSafeAlwaysGlobal))
 
@@ -142,8 +142,8 @@ theorem happyTermination
       live_quorum_eventually_consequent (M := M)
         (hLiveTheory := hThyLiveTheory)
         (hQuorum := hVotesGlobal)
-        (hImp := HBB.deliverForward_imp (M := M)
-          (theory_deliverForward (M := M) hTheory))
+        (hImp := HBB.deliver_forward_imp (M := M)
+          (theory_deliver_forward (M := M) hTheory))
     simpa [wTop] using hDeliverEventually p
 
   -- Final application of the implication at participant `p`.
@@ -156,7 +156,7 @@ theorem happyTermination
 /-- Paper: Proposition 6.6.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
 past) that the corresponding value was delivered. -/
-theorem happyTermination_boxPast
+theorem happy_termination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -172,7 +172,7 @@ theorem happyTermination_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      happyTermination (M := M)
+      happy_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)
@@ -181,7 +181,7 @@ theorem happyTermination_boxPast
         (hUnique := hUnique))
 /-- Paper: Proposition 6.6.3, second corollary. Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
-theorem happyTermination_diamondPast
+theorem happy_termination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l : Signature.Value S}
@@ -197,7 +197,7 @@ theorem happyTermination_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      happyTermination (M := M)
+      happy_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (l := l) (v := v)

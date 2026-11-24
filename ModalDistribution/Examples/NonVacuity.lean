@@ -16,7 +16,7 @@ a single chain of that participant's events
   `propose(v)`, `echo(v)`, `vote(l, v)`, `deliver(…)`, `†`.
 
 The final `†` tuple records knowledge of every event before it, which is what
-the Knowledge axioms of `ThyLive` require of a history ending in a live
+the Knowledge axioms of `thyLive` require of a history ending in a live
 participant. Every predicate (`live`, `safe`, `≐`) holds everywhere.
 -/
 
@@ -70,20 +70,20 @@ def h5 : PreHistory Unit sig.EventType := .mk [e0, e1, e2, e3 dargs, e4 dargs]
 
 private theorem extend_hered (h : PreHistory Unit sig.EventType)
     (hs : ∀ t ∈ h, t.time ⊆ h)
-    (hh : ∀ t ∈ h, isHereditarilyTransitive t.time) :
-    isHereditarilyTransitive h := by
+    (hh : ∀ t ∈ h, IsHereditarilyTransitive t.time) :
+    IsHereditarilyTransitive h := by
   rw [isHereditarilyTransitive_unfold]
   exact ⟨fun h' ⟨p, e, ht⟩ => hs (p, e, h') ht,
     fun h' ⟨p, e, ht⟩ => hh (p, e, h') ht⟩
 
-private theorem hered5 : isHereditarilyTransitive (h5 dargs) := by
-  have hered0 : isHereditarilyTransitive h0 := by
+private theorem hered5 : IsHereditarilyTransitive (h5 dargs) := by
+  have hered0 : IsHereditarilyTransitive h0 := by
     rw [isHereditarilyTransitive_unfold]
-    simp [isTransitive, happensBefore, h0]
-  have hered1 : isHereditarilyTransitive h1 :=
+    simp [IsTransitive, HappensBefore, h0]
+  have hered1 : IsHereditarilyTransitive h1 :=
     extend_hered _ (by intro t ht; simp_all [h1, e0, h0] )
       (by intro t ht; simp only [h1, mem_mk, List.mem_singleton] at ht; subst ht; exact hered0)
-  have hered2 : isHereditarilyTransitive h2 :=
+  have hered2 : IsHereditarilyTransitive h2 :=
     extend_hered _
       (by intro t ht; simp only [h2, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
           rcases ht with rfl | rfl <;> simp [e0, e1, h0, h1, h2] )
@@ -91,7 +91,7 @@ private theorem hered5 : isHereditarilyTransitive (h5 dargs) := by
           rcases ht with rfl | rfl
           · exact hered0
           · exact hered1)
-  have hered3 : isHereditarilyTransitive h3 :=
+  have hered3 : IsHereditarilyTransitive h3 :=
     extend_hered _
       (by intro t ht; simp only [h3, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
           rcases ht with rfl | rfl | rfl <;> simp [e0, e1, e2, h0, h1, h2, h3] )
@@ -100,7 +100,7 @@ private theorem hered5 : isHereditarilyTransitive (h5 dargs) := by
           · exact hered0
           · exact hered1
           · exact hered2)
-  have hered4 : isHereditarilyTransitive (h4 dargs) :=
+  have hered4 : IsHereditarilyTransitive (h4 dargs) :=
     extend_hered _
       (by intro t ht; simp only [h4, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
           rcases ht with rfl | rfl | rfl | rfl <;>
@@ -127,8 +127,8 @@ private theorem hered5 : isHereditarilyTransitive (h5 dargs) := by
 def learner : Semifilter Unit where
   quorums := {O | () ∈ O}
   nonempty := ⟨Set.univ, trivial⟩
-  upwardClosed := fun {_ _} hO hsub => hsub hO
-  pairwiseInter := fun {_ _} hO hO' => ⟨(), hO, hO'⟩
+  upward_closed := fun {_ _} hO hsub => hsub hO
+  pairwise_inter := fun {_ _} hO hO' => ⟨(), hO, hO'⟩
 
 /-- The model: the chain history, every predicate true everywhere. -/
 def model : Model sig Unit where
@@ -156,11 +156,11 @@ theorem time_cases {T : PreHistory Unit sig.EventType} (hT : T ⪯ h5 dargs) :
 /-- Quorum checks in the model: every learner's only quorum is the whole
 participant set, so a quorum condition holds exactly when it holds at `()`. -/
 @[local simp] theorem check (Q : Unit → Prop) (ls : List sig.Value) (acc : Set Unit) :
-    Sat.check (model dargs) Q ls acc ↔ (() ∈ acc ∧ Q ()) := by
+    Sat.Check (model dargs) Q ls acc ↔ (() ∈ acc ∧ Q ()) := by
   induction ls generalizing acc with
   | nil => exact ⟨fun ⟨u, hu, hq⟩ => by cases u; exact ⟨hu, hq⟩, fun ⟨hu, hq⟩ => ⟨(), hu, hq⟩⟩
   | cons l ls ih =>
-    simp only [Sat.check, ih]
+    simp only [Sat.Check, ih]
     constructor
     · intro h
       exact ⟨(h Set.univ trivial).1.1, (h Set.univ trivial).2⟩
@@ -183,15 +183,15 @@ theorem mem_h4_of_event {t : World Unit sig.EventType} {E : sig.EventType}
   · simp [e4] at hE
 
 /-- The chain is sequential. -/
-theorem seq_h5 : isSequential () (h5 dargs) := by
+theorem seq_h5 : IsSequential () (h5 dargs) := by
   intro t₁ t₂ h₁ h₂ _ _
   rcases (mem_h5 dargs).1 h₁ with rfl | rfl | rfl | rfl | rfl <;>
     rcases (mem_h5 dargs).1 h₂ with rfl | rfl | rfl | rfl | rfl <;>
-    simp [World.accessible, e0, e1, e2, e3, e4, h0, h1, h2, h3, h4]
+    simp [World.Accessible, e0, e1, e2, e3, e4, h0, h1, h2, h3, h4]
 
 /-- The chain is sequential at every time of the model. -/
 theorem seq_of_time {T : PreHistory Unit sig.EventType} (hT : T ⪯ h5 dargs) :
-    isSequential () T := by
+    IsSequential () T := by
   rcases hT with hT | rfl
   · exact History.sequentiality_of_predecessor (H := (model dargs).history) hT (seq_h5 dargs)
   · exact seq_h5 dargs
@@ -217,8 +217,8 @@ theorem final_knows_quorum {t : World Unit sig.EventType} {E : sig.EventType}
       ⟨t, mem_h4_of_event dargs ht hEvt, rfl, hE⟩⟩
   simpa [Formula.boxPast] using hBox
 
-/-- `ThyLive` holds in the model. -/
-theorem thyLive_valid : model dargs ⊨ᵀ ThyLive (S := sig) .live := by
+/-- `thyLive` holds in the model. -/
+theorem thyLive_valid : model dargs ⊨ᵀ thyLive (S := sig) .live := by
   rintro ax (rfl | rfl | ⟨E, rfl⟩ | ⟨l, E, rfl⟩) w hw
   · -- (LiveAlways): `live` holds everywhere.
     simp [liveAlwaysAxiom, Formula.iff, Formula.and, Formula.not, Sat]
@@ -256,7 +256,7 @@ sequentiality, so they are checked by evaluating them at each time of the
 model, knowing that the chain is sequential at that time. -/
 theorem valid_by_eval {φ : Formula sig}
     (h : ∀ (x : MaybeEvent sig.EventType) (T : PreHistory Unit sig.EventType),
-      isSequential () T →
+      IsSequential () T →
       (T = h0 ∨ T = h1 ∨ T = h2 ∨ T = h3 ∨ T = h4 dargs ∨ T = h5 dargs) →
       Sat (model dargs) () x T φ) :
     □W⊨[model dargs] φ := by

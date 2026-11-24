@@ -13,7 +13,7 @@ quorums on a set of participants.
 
 ## Main definitions
 
-* `Semifilter.intersects` (`≬`): quorum-intersection predicate.
+* `Semifilter.Intersects` (`≬`): quorum-intersection predicate.
 * `Semifilter`: structure of nonempty up-closed pairwise-intersecting families of quorums.
 
 ## References
@@ -29,9 +29,9 @@ variable {P : Type u}
 
 /-- Paper: Notation 3.3.1 (≬). Quorum intersection: `O ≬ O'` when two quorums intersect (their
 intersection is nonempty). -/
-@[simp] def intersects (O O' : Set P) : Prop := (O ∩ O').Nonempty
+@[simp] def Intersects (O O' : Set P) : Prop := (O ∩ O').Nonempty
 
-scoped infix:50 " ≬ " => Semifilter.intersects
+scoped infix:50 " ≬ " => Semifilter.Intersects
 
 end Semifilter
 
@@ -45,9 +45,9 @@ structure Semifilter (P : Type u) where
   /-- Property 1: the family of quorums is nonempty. -/
   nonempty : quorums.Nonempty
   /-- Property 2: the family is up-closed under supersets inside `P`. -/
-  upwardClosed : ∀ ⦃O O' : Set P⦄, O ∈ quorums → O ⊆ O' → O' ∈ quorums
+  upward_closed : ∀ ⦃O O' : Set P⦄, O ∈ quorums → O ⊆ O' → O' ∈ quorums
   /-- Property 3: quorums pairwise intersect. -/
-  pairwiseInter : ∀ ⦃O O' : Set P⦄, O ∈ quorums → O' ∈ quorums → O ≬ O'
+  pairwise_inter : ∀ ⦃O O' : Set P⦄, O ∈ quorums → O' ∈ quorums → O ≬ O'
 
 namespace Semifilter
 
@@ -56,7 +56,7 @@ variable {P : Type u}
 theorem intersects_self_iff_nonempty {O : Set P} :
     (O ≬ O) ↔ O.Nonempty := by
   classical
-  simp [Semifilter.intersects, inter_self]
+  simp [Semifilter.Intersects, inter_self]
 
 /-- Intersections distribute over a shared witness. -/
 theorem intersects_of_mem {p : P} {O O' : Set P}
@@ -80,14 +80,14 @@ theorem intersects_iff {O O' : Set P} :
 theorem quorum_nonempty {L : Semifilter P} {O : Set P}
     (hO : O ∈ L.quorums) :
     O.Nonempty := by
-  have := L.pairwiseInter hO hO
+  have := L.pairwise_inter hO hO
   simpa [intersects_self_iff_nonempty] using this
 
 /-- Any two quorums in a semifilter intersect. -/
 theorem intersects_of_mem_quorums {L : Semifilter P} {O₁ O₂ : Set P}
     (h₁ : O₁ ∈ L.quorums) (h₂ : O₂ ∈ L.quorums) :
     O₁ ≬ O₂ :=
-  L.pairwiseInter h₁ h₂
+  L.pairwise_inter h₁ h₂
 
 @[ext] theorem ext {L₁ L₂ : Semifilter P}
     (h : ∀ O : Set P, O ∈ L₁.quorums ↔ O ∈ L₂.quorums) :

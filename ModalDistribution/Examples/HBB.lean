@@ -16,7 +16,7 @@ vote rules. The `Lemmas` section holds the shared instantiation lemmas for
 The theory-independent results built on these axioms live in the `HBB`
 submodules:
 
-- **`HBB.Liveness`**: Lemmas 6.5.2 and 6.5.3, which need only `ThyLive`
+- **`HBB.Liveness`**: Lemmas 6.5.2 and 6.5.3, which need only `thyLive`
 - **`HBB.Uniqueness`**: Lemma 6.6.1 and the echo lemmas built on `Echo?`,
   `EchoNE`, and `Echo!`
 - **`HBB.Termination`**: the steps shared by the Happy and Cascade
@@ -182,7 +182,7 @@ theorem deliver_to_vote_box_end
 
 /-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
 eventually yields a delivery. This is the form consumed by Lemma 6.5.3. -/
-theorem deliverForward_imp
+theorem deliver_forward_imp
     (hAx : AllWorldValid M (deliverForwardAxiom liveSymb voteSymb deliverSymb))
     {reporting learner value : S.Value} :
     □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ

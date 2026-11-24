@@ -30,15 +30,15 @@ variable {S : Signature.{0, 0, 0}} {P : Type} [Nonempty P]
 
 /-- Quorum-intersection check for the `♢` clause of `Sat`.
 
-`Sat.check M Q ls acc` holds when every choice of one quorum per learner in
+`Sat.Check M Q ls acc` holds when every choice of one quorum per learner in
 `ls` leaves a participant in the accumulated intersection `acc ∩ O₁ ∩ ⋯ ∩ Oₙ`
 satisfying `Q`. The recursion is on the learner list only; the satisfaction
 predicate `Q` is abstract, which keeps `Sat` itself structurally recursive. -/
-def Sat.check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
+def Sat.Check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
   | [], acc => ∃ p' ∈ acc, Q p'
   | ℓ :: ls, acc =>
       ∀ O ∈ (M.learner ℓ).quorums,
-        Sat.check M Q ls (acc ∩ O)
+        Sat.Check M Q ls (acc ∩ O)
 
 /-- Paper: Definition 3.4.10(1) / Figure 4 (possible-world validity). Satisfaction relation
 `p, x, H ⊨ φ`. -/
@@ -61,9 +61,9 @@ def Sat (M : Model S P)
           Sat M (t.place) (World.event t) (World.time t) φ
   | .atEnd φ => Sat M p † M.history.val φ
   | .diamond learners φ =>
-      Sat.check M (fun p' => Sat M p' † H φ) learners Set.univ
+      Sat.Check M (fun p' => Sat M p' † H φ) learners Set.univ
   | .seq =>
-      isSequential (Event := S.EventType) p H
+      IsSequential (Event := S.EventType) p H
 
 notation:65 "⟪" w "⟫" " ⊨[" M "]" φ =>
   Sat M (place w) (event w) (time w) φ
@@ -135,19 +135,19 @@ theorem exists_intro
     (not (M := M) (w := w) (φ := body v)).1 hnot hv
   exact hneg
 
-/-- Simp lemma: `Sat.check` for the empty learner list. -/
+/-- Simp lemma: `Sat.Check` for the empty learner list. -/
 @[simp] theorem check_nil (M : Model S P)
     (Q : P → Prop) (acc : Set P) :
-    Sat.check M Q [] acc ↔ ∃ p' ∈ acc, Q p' := by
-  simp [Sat.check]
+    Sat.Check M Q [] acc ↔ ∃ p' ∈ acc, Q p' := by
+  simp [Sat.Check]
 
-/-- Simp lemma: `Sat.check` for the inductive step. -/
+/-- Simp lemma: `Sat.Check` for the inductive step. -/
 @[simp] theorem check_cons (M : Model S P)
     (Q : P → Prop)
     (v : S.Value) (vs : List S.Value) (acc : Set P) :
-    Sat.check M Q (v :: vs) acc ↔
-      ∀ O ∈ (M.learner v).quorums, Sat.check M Q vs (acc ∩ O) := by
-  simp [Sat.check]
+    Sat.Check M Q (v :: vs) acc ↔
+      ∀ O ∈ (M.learner v).quorums, Sat.Check M Q vs (acc ∩ O) := by
+  simp [Sat.Check]
 
 /-- Diamonds over the empty learner list are witnessed by some participant.
     This is the unfolded base case of the quorum recursion. -/
@@ -243,7 +243,7 @@ theorem and_intro
 @[simp] theorem seq
     (M : Model S P) (w : World P S.EventType) :
     (⟪w⟫ ⊨[M]Formula.seq (S := S)) ↔
-      isSequential (Event := S.EventType) (World.place w) (World.time w) := by
+      IsSequential (Event := S.EventType) (World.place w) (World.time w) := by
   simp [Sat]
 
 /-- Satisfaction of the truth constant holds unconditionally. -/
@@ -562,17 +562,17 @@ theorem allPast
 
 theorem check_of_imp {ts : List S.Value} {acc : Set P} {Q Q' : P → Prop}
     (h : ∀ q, Q q → Q' q) :
-    Sat.check M Q ts acc → Sat.check M Q' ts acc := by
+    Sat.Check M Q ts acc → Sat.Check M Q' ts acc := by
   classical
   induction ts generalizing acc with
   | nil =>
       intro hCheck
-      simp only [Sat.check] at hCheck ⊢
+      simp only [Sat.Check] at hCheck ⊢
       rcases hCheck with ⟨q, hacc, hSat⟩
       exact ⟨q, hacc, h q hSat⟩
   | cons v vs ih =>
       intro hCheck
-      simp only [Sat.check] at hCheck ⊢
+      simp only [Sat.Check] at hCheck ⊢
       intro O hO
       exact ih (hCheck O hO)
 

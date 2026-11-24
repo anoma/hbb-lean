@@ -56,10 +56,10 @@ theorem correctness
   ⟨fun hSeq =>
       agreement (M := M) (hTheory := hTheory) (hSeq := hSeq),
    fun hLiveQuorum hUnique =>
-      happyTermination (M := M) (hTheory := hTheory)
+      happy_termination (M := M) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
    fun hIntersect hLive =>
-      cascadeTermination (M := M) (hTheory := hTheory)
+      cascade_termination (M := M) (hTheory := hTheory)
         (hIntersect := hIntersect) (hLive := hLive)⟩
 
 end HBBSimp

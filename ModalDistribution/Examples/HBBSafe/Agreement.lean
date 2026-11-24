@@ -135,14 +135,14 @@ theorem agreement
 
   have hVoteAx : AllWorldValid M
       (voteBackwardAxiom safeSymb echoSymb voteSymb) :=
-    theory_voteBackward (M := M) hTheory
+    theory_vote_backward (M := M) hTheory
 
   have hEchoBack :
       □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
-    theory_echoBackward (M := M) hTheory
+    theory_echo_backward (M := M) hTheory
 
   have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-    theory_echoNonEquiv (M := M) hTheory
+    theory_echo_non_equiv (M := M) hTheory
 
   have derive_contradiction :
       ∀ {la lb : Signature.Value S} {va vb : Signature.Value S},
@@ -201,7 +201,7 @@ theorem agreement
       hVotes_split.2
 
     have hSafeEcho_now_split :=
-      voteBackward_elim (M := M)
+      vote_backward_elim (M := M)
         (hAx := hVoteAx)
         (hMem := hNow_mem_history)
         (hVote := hVote_now)
@@ -223,7 +223,7 @@ theorem agreement
     have hPast_mem_history : wPast ∈ M.history.val :=
       hSubset_plain_now _ hPast_mem
     have hEcho_lb_local :=
-      (voteBackward_elim (M := M)
+      (vote_backward_elim (M := M)
         (hAx := hVoteAx)
         (hMem := hPast_mem_history)
         (hVote := hVotePast)).2
@@ -238,7 +238,7 @@ theorem agreement
     have hEcho_lb_box :
         ⟪wNow⟫ ⊨[M]
           □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩) :=
-      pastBoxCollapsesToPresentBox (M := M) (w := wNow)
+      past_box_collapses_to_present_box (M := M) (w := wNow)
         (l := lb) (φ := ofEvent ⟨echoSymb, [vb]⟩)
         (hMem := hNow_mem_history) hPastBox_lb
 
@@ -261,20 +261,20 @@ theorem agreement
             (v := lb) hSeqGuard
       | inl hUniqueCond =>
           have hDiamond_va :=
-            boxEcho_to_propose_diamond (M := M)
+            box_echo_to_propose_diamond (M := M)
               (w := wNow)
               (hSubset := hSubset_trn_now)
               (hEchoBack := hEchoBack)
               (learner := la) (value := va) hEcho_la_box
           have hDiamond_vb :=
-            boxEcho_to_propose_diamond (M := M)
+            box_echo_to_propose_diamond (M := M)
               (w := wNow)
               (hSubset := hSubset_trn_now)
               (hEchoBack := hEchoBack)
               (learner := lb) (value := vb) hEcho_lb_box
           exact False.elim
             (hDistinct
-              (uniquePropose_equal_values (M := M)
+              (unique_propose_equal_values (M := M)
                 (w := wNow)
                 (value := va) (altValue := vb)
                 hUniqueCond hDiamond_va hDiamond_vb))
@@ -308,13 +308,13 @@ theorem agreement
             ↓ᶠ (ofEvent ⟨echoSymb, [va]⟩))) hEq_disj with
     | inl hLeft =>
         exact
-          echoNonEquiv_diamond (M := M)
+          echo_non_equiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE) (hSubset := hSubset_trn_now)
             (valNow := va) (valPast := vb) hLeft
     | inr hRight =>
         exact
-          (echoNonEquiv_diamond (M := M)
+          (echo_non_equiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE) (hSubset := hSubset_trn_now)
             (valNow := vb) (valPast := va) hRight).symm

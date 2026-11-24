@@ -46,8 +46,8 @@ symbols used throughout the paper.
 * `Formula.boxAllPast ls φ` / notation `□ᶠ⇓[ls] φ` ↔ `□⇓_{l₁…lₙ} φ`.
 * `Formula.boxEmpty φ` / notation `□ᶠ[] φ` ↔ `□ φ` (no learners).
 * `Formula.seq` ↔ the distinguished predicate `seq`.
-* `World.accessible` / notation `t' ≪ t` ↔ `t' ≪ t`.
-* `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `t' ≪⁻ t`.
+* `World.Accessible` / notation `t' ≪ t` ↔ `t' ≪ t`.
+* `World.AccessibleLe` / notation `t' ≪⁻ t` ↔ `t' ≪⁻ t`.
 
 > **Validity notation warning.**  The paper uses three related validity
 > judgements (`w ⊨ φ`, `⊨ φ`, `□W ⊨ φ`).  In this

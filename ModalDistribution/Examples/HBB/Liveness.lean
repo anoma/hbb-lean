@@ -5,7 +5,7 @@ import ModalDistribution.Logic.Properties
 # Shared liveness lemmas
 
 Lemmas 6.5.2 and 6.5.3 and their supporting lemmas. They depend only on
-`ThyLive`, so the three broadcast theories `HBBSafe`, `HBBSimp`, and `HBBCorr`
+`thyLive`, so the three broadcast theories `HBBSafe`, `HBBSimp`, and `HBBCorr`
 all use them.
 
 - `boxPast_of_eventual_quorum`, `boxPast_live_of_eventual_quorum`:
@@ -103,9 +103,9 @@ theorem boxPast_of_eventual_quorum
   simpa using hPastψ
 
 /-- Paper: Lemma 6.5.2(2). The previous result under the
-`ThyLive` assumption. -/
+`thyLive` assumption. -/
 theorem boxPast_live_of_eventual_quorum
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     (φ ψ : Formula S)
     (l : Signature.Value S)
     (hQuorum : ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ φ))
@@ -181,7 +181,7 @@ theorem boxPast_live_of_eventual_quorum
   rcases tψ with ⟨qψ, evtψ, Hψ⟩
   have htψ_place' : qψ = q := htψ_place
   have hEquiv :=
-      alwaysLiveEquivForward (M := M)
+      always_live_equiv_forward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hLiveTheory)
         (t := ⟨qφ, evtφ, Hφ⟩)
@@ -201,7 +201,7 @@ theorem boxPast_live_of_eventual_quorum
     simpa using hLive_global
   have hLive_tψ :
       ⟪⟨qψ, evtψ, Hψ⟩⟫ ⊨[M] predicate0 liveSymb :=
-    (alwaysLiveEquivForward (M := M)
+    (always_live_equiv_forward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hLiveTheory)
         (t := ⟨qψ, evtψ, Hψ⟩)
@@ -250,7 +250,7 @@ theorem boxPast_mono_of_history
 at an event-tuple, and `↕(live ∧ φ) ⇒ ↕ψ` is valid, then some live
 participant has `ψ` at an event-tuple. -/
 theorem diamondPast_live_of_eventual
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     (φ ψ : Formula S)
     (hDiamond : ⊨[M]♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ φ))
     (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ)) :
@@ -272,7 +272,7 @@ theorem diamondPast_live_of_eventual
   obtain ⟨t', ht', hPlace, hψ⟩ :=
     (Sat.sometime (M := M) (w := t) (φ := ψ)).1 hSome
   have hLive' : ⟪t'⟫ ⊨[M] predicate0 liveSymb :=
-    (alwaysLiveEquivBackward (M := M) (hTheory := hLiveTheory)
+    (always_live_equiv_backward (M := M) (hTheory := hLiveTheory)
       (ht := htH) (ht' := ht') (hplace := hPlace.symm)).1
       ((Sat.and (M := M) (w := t)
         (φ := predicate0 liveSymb) (ψ := φ)).1 hConj).1
@@ -293,7 +293,7 @@ theorem diamondPast_live_of_eventual
 eventual `φ` combines with the implication `↕(live ∧ φ) ⇒ ↕ψ` to give an
 eventual `ψ`. -/
 theorem live_sometime_consequent_at
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     {φ ψ : Formula S} {p : P}
     (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ))
     (hLive_p : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]predicate0 liveSymb)
@@ -320,7 +320,7 @@ theorem live_sometime_consequent_at
   have htφ_place_copy2 := htφ_place'
   have hLive_local :
       ⟪⟨qφ, evtφ, Hφ⟩⟫ ⊨[M] predicate0 liveSymb :=
-    (alwaysLiveEquivForward (M := M)
+    (always_live_equiv_forward (M := M)
         (liveSymb := liveSymb)
         (hTheory := hLiveTheory)
       (t := ⟨qφ, evtφ, Hφ⟩)
@@ -369,7 +369,7 @@ theorem live_sometime_consequent_at
 /-- Paper: Lemma 6.5.3. Composing eventual consequences at the end of
 time. -/
 theorem live_eventually_consequent
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     (φ ψ : Formula S)
     (hLive : ⊨[M](predicate0 liveSymb ⇒ᶠ ↕ᶠφ))
     (hImp : □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ φ)) ⇒ᶠ ↕ᶠψ)) :

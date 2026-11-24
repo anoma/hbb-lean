@@ -8,7 +8,7 @@ import ModalDistribution.Logic.Properties
 
 This file records the axiom system of the theory `HBBSimp` (Figure 10 of the
 paper): backward rules `Echo?`/`Vote?`/`Deliver?`, non-equivocation `EchoNE`,
-and forward rules `Echo!`/`Vote!`/`Deliver!`, over `ThyLive`.
+and forward rules `Echo!`/`Vote!`/`Deliver!`, over `thyLive`.
 
 Compared to `HBBSafe`, the theory has no `safe` predicate: `Vote?` and `Vote!`
 are unguarded. The rules shared verbatim with the other theories come from
@@ -66,10 +66,10 @@ variable
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
 /-- Paper: Definition 7.1.1 (theory HBBSimp). Theory HBBSimp .
-It extends `ThyLive` with the `HBBSimp`-specific axioms shown in -/
+It extends `thyLive` with the `HBBSimp`-specific axioms shown in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
-      ax ∈ ThyLive liveSymb ∨
+      ax ∈ thyLive liveSymb ∨
       ax = echoBackwardAxiom proposeSymb echoSymb ∨
       ax = voteBackwardAxiom echoSymb voteSymb ∨
       ax = deliverBackwardAxiom voteSymb deliverSymb ∨
@@ -86,43 +86,43 @@ variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- A model of `HBBSimp` is a model of `ThyLive`. -/
+/-- A model of `HBBSimp` is a model of `thyLive`. -/
 theorem theory_thyLive
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
-    M ⊨ᵀ ThyLive liveSymb :=
+    M ⊨ᵀ thyLive liveSymb :=
   fun _ hAx => hTheory (Or.inl hAx)
 
-theorem theory_echoBackward
+theorem theory_echo_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
   hTheory (by simp [theory])
 
-theorem theory_voteBackward
+theorem theory_vote_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] voteBackwardAxiom echoSymb voteSymb :=
   hTheory (by simp [theory])
 
-theorem theory_deliverBackward
+theorem theory_deliver_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
   hTheory (by simp [theory])
 
-theorem theory_echoNonEquiv
+theorem theory_echo_non_equiv
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] echoNonEquivAxiom echoSymb :=
   hTheory (by simp [theory])
 
-theorem theory_echoForward
+theorem theory_echo_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] echoForwardAxiom liveSymb proposeSymb echoSymb :=
   hTheory (by simp [theory])
 
-theorem theory_voteForward
+theorem theory_vote_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb :=
   hTheory (by simp [theory])
 
-theorem theory_deliverForward
+theorem theory_deliver_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
   hTheory (by simp [theory])
@@ -137,7 +137,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
 /-- Instantiate `Vote?` at a world of the model: a vote yields a quorum of
 past echoes. -/
-theorem voteBackward_elim
+theorem vote_backward_elim
     (hAx : □W⊨[M] voteBackwardAxiom echoSymb voteSymb)
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
@@ -169,7 +169,7 @@ theorem voteBackward_elim
 
 /-- Instantiate `Vote!` at a world of the model: a sometime-live quorum of past
 echoes yields an eventual vote. -/
-theorem voteForward_elim
+theorem vote_forward_elim
     (hAx : □W⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb)
     {w : World P (Signature.EventType S)}
     (hW : w.time ⪯ M.history.val)

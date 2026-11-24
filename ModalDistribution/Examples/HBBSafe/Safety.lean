@@ -19,10 +19,10 @@ Lemmas about the `safe` predicate of `HBBSafe` and the `Vote!` rule it guards:
   - `safe_monotone`: `safe` persists along in-place accessibility
   - `safe_allPast`: `safe` implies it always held in the past
 
-- **Uniqueness implies safety** (Lemma 6.6.2): `atMostOnePropose_safeFormula`
-  and `atMostOnePropose_safe`
+- **Uniqueness implies safety** (Lemma 6.6.2): `at_most_one_propose_safeFormula`
+  and `at_most_one_propose_safe`
 
-- **`Vote!` instantiations**: `voteForward_imp_of_everytime` and `voteForward_imp`
+- **`Vote!` instantiations**: `vote_forward_imp_of_everytime` and `vote_forward_imp`
   package the axiom together with its safety guard for the liveness proofs
 
 The theory-independent lemmas these build on live in `HBB.Liveness` and
@@ -83,10 +83,10 @@ theorem safe_seq_guard_monotone
   intro O hO O' hO'
   obtain ⟨q, hqInter, hSeq_local⟩ := hGuard_data O hO O' hO'
   have hSeq_global :
-      isSequential (P := P) (Event := Signature.EventType S) q w.time :=
+      IsSequential (P := P) (Event := Signature.EventType S) q w.time :=
     (Sat.seq (M := M) (w := ⟨q, †, w.time⟩)).1 hSeq_local
   have hSeq_restrict :
-      isSequential (P := P) (Event := Signature.EventType S) q w'.time := by
+      IsSequential (P := P) (Event := Signature.EventType S) q w'.time := by
     intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
     exact hSeq_global t₁ t₂ (hSubset_subset _ ht₁) (hSubset_subset _ ht₂) hp₁ hp₂
   have hSeq_local' :
@@ -125,7 +125,7 @@ theorem safe_axiom_body_monotone
     intro hUnique
     have hUnique' :
         ⟪w'⟫ ⊨[M] uniqueCond :=
-      uniquePropose_monotone (M := M)
+      unique_propose_monotone (M := M)
         (w := w) (w' := w') hSubset hUnique
     exact
       Sat.not_elim (M := M) (w := w') (φ := uniqueCond)
@@ -153,11 +153,11 @@ theorem safeFormula_monotone_subset
     ⟪w'⟫ ⊨[M]safeFormula proposeSymb l := by
   classical
   -- hereditary transitivity for the larger history ensures all predecessors stay inside it
-  have hHer_w : isHereditarilyTransitive (P := P) (Event := Signature.EventType S) w.time :=
+  have hHer_w : IsHereditarilyTransitive (P := P) (Event := Signature.EventType S) w.time :=
     hSubset.2
   have hTrans_w :
       ∀ ⦃h⦄, h ≺− w.time → h ⊆ w.time :=
-    (isHereditarilyTransitive.trans (P := P) (Event := Signature.EventType S)
+    (IsHereditarilyTransitive.trans (P := P) (Event := Signature.EventType S)
       hHer_w)
   have hSubset' :
       w'.time ⊆ w.time :=
@@ -165,7 +165,7 @@ theorem safeFormula_monotone_subset
       (P := P) (Event := Signature.EventType S)
       (htrans := hTrans_w) hBefore
   have hHer_w' :
-      isHereditarilyTransitive (P := P) (Event := Signature.EventType S) w'.time :=
+      IsHereditarilyTransitive (P := P) (Event := Signature.EventType S) w'.time :=
     by
       rcases
           (PreHistory.happensBeforeEq_iff
@@ -173,7 +173,7 @@ theorem safeFormula_monotone_subset
             w'.time w.time).1 hBefore with
         hBefore' | hEq
       · exact
-          isHereditarilyTransitive.desc
+          IsHereditarilyTransitive.desc
             (P := P) (Event := Signature.EventType S)
             hHer_w hBefore'
       · exact Eq.subst hEq.symm hHer_w
@@ -277,11 +277,11 @@ theorem safe_allPast
   exact
     safe_monotone (M := M) (hTheory := hTheory) (l := l)
       (hW := hW)
-      (hAcc := ⟨by simpa [World.accessible] using ht_mem, ht_place⟩)
+      (hAcc := ⟨by simpa [World.Accessible] using ht_mem, ht_place⟩)
       hSafe
 
 /-- at most one proposal implies every learner is safe. -/
-theorem atMostOnePropose_safeFormula
+theorem at_most_one_propose_safeFormula
     (l : Signature.Value S) :
     ⊨[M](∃≤ᶠ1 v ↦
         (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
@@ -306,7 +306,7 @@ theorem atMostOnePropose_safeFormula
 
 /-- Paper: Lemma 6.6.2. If at most one value is proposed, then every learner is everywhere and
 always safe. -/
-theorem atMostOnePropose_safe
+theorem at_most_one_propose_safe
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     (l : Signature.Value S) :
@@ -334,7 +334,7 @@ theorem atMostOnePropose_safe
   have hUnique_s :
       ⟪s⟫ ⊨[M]∃≤ᶠ1 v ↦
           ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    uniquePropose_monotone (M := M)
+    unique_propose_monotone (M := M)
       (w := wTop) (w' := s)
       (hSubset := by
         simpa [wTop, World.time] using
@@ -356,7 +356,7 @@ theorem atMostOnePropose_safe
 
 /-- The instantiated `Vote!` implication, taking the everywhere-always safety
 guard in the form axiom `Vote!` demands it. -/
-theorem voteForward_imp_of_everytime
+theorem vote_forward_imp_of_everytime
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l v : Signature.Value S}
@@ -369,8 +369,8 @@ theorem voteForward_imp_of_everytime
   refine Sat.imp_intro (M := M) (w := t) ?_
   intro hLiveEcho
   exact
-    voteForward_elim (M := M)
-      (hAx := theory_voteForward (M := M) hTheory)
+    vote_forward_elim (M := M)
+      (hAx := theory_vote_forward (M := M) hTheory)
       (hW := ht)
       (hSafeAlways := hSafeAlways ht)
       (hLiveEcho := hLiveEcho)
@@ -379,7 +379,7 @@ theorem voteForward_imp_of_everytime
 learner is safe at the end of time, any live participant holding an echo
 quorum eventually votes. Safety persists to every relevant past world by
 `safe_monotone` (Lemma 6.5.1). -/
-theorem voteForward_imp
+theorem vote_forward_imp
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l v : Signature.Value S}
@@ -388,7 +388,7 @@ theorem voteForward_imp
         □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))) ⇒ᶠ
       ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
   classical
-  refine voteForward_imp_of_everytime (M := M)
+  refine vote_forward_imp_of_everytime (M := M)
     (hTheory := hTheory) ?_
   intro t _
   -- Lemma 6.5.1(2) at the end-of-time world of `t.place` gives safety at

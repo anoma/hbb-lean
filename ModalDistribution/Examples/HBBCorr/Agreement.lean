@@ -57,7 +57,7 @@ theorem agreement
   -- Instances of key axioms.
   have hVoteNE :
       AllWorldValid M (voteNonEquivAxiom voteSymb correlationSymb) :=
-    theory_voteNonEquiv (M := M) hTheory
+    theory_vote_non_equiv (M := M) hTheory
   -- Correlation supplies sequential intersections and persistence.
   have hSeqGlobal :
       ⊨[M]♢ᶠ[[l₁, l₂]] Formula.seq :=
@@ -204,7 +204,7 @@ theorem agreement
           hw_mem hCorrAlways
       have hEqVotes :
           v₁ = v₂ :=
-        voteNonEquiv_local
+        vote_non_equiv_local
           (M := M)
           (voteSymb := voteSymb)
           (correlationSymb := correlationSymb)
@@ -281,7 +281,7 @@ theorem agreement
           hw_mem hCorrSymmAlways
       have hEqVotes :
           v₂ = v₁ :=
-        voteNonEquiv_local
+        vote_non_equiv_local
           (M := M)
           (voteSymb := voteSymb)
           (correlationSymb := correlationSymb)
