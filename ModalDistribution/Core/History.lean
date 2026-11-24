@@ -79,14 +79,6 @@ namespace History
 
 instance : Coe (History P Event) (PreHistory P Event) := ⟨History.val⟩
 
-/-- Histories with the same prehistory are equal. -/
-@[ext] theorem ext {h₁ h₂ : History P Event}
-    (hval : h₁.val = h₂.val) : h₁ = h₂ := by
-  cases h₁
-  cases h₂
-  cases hval
-  rfl
-
 /-- A history is transitive. -/
 theorem transitive (h : History P Event) : IsTransitive h.val :=
   h.hered.trans

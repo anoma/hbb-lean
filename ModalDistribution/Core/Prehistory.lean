@@ -161,7 +161,7 @@ private theorem heightList_ge_of_mem {P Event}
 /-- `≺−` strictly decreases `height`. -/
 theorem height_lt_of_happensBefore {P Event}
     {h₁ h₂ : PreHistory P Event}
-    (h : HappensBefore (P := P) (Event := Event) h₁ h₂) :
+    (h : h₁ ≺− h₂) :
     height h₁ < height h₂ := by
   obtain ⟨p, e, hin⟩ := h
   cases h₂ with

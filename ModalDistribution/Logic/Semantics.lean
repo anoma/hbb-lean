@@ -5,12 +5,17 @@ import ModalDistribution.Core.Model
 import ModalDistribution.Logic.Syntax
 
 /-!
-# Modal logic semantics
+# Satisfaction
 
-We formalise the satisfaction relation of the paper's validity judgements
-(Definition 3.4.10).  Satisfaction is defined for a model, a participant, a
-maybe-event, and a history.  We also introduce end-of-time validity,
-event-driven validity, and the notion of active participants.
+The satisfaction relation `p, x, H ⊨ φ` of paper Definition 3.4.10 and
+Figure 4, written `⟪w⟫ ⊨[M] φ` for a world `w = (p, x, H)`, together with
+end-of-time validity `⊨[M] φ`, all-world validity `□W⊨[M] φ`, and active
+participants (Definition 3.5.1).
+
+The `Sat` namespace states each clause of Figure 4, and of the derived
+connectives of Figure 5, as an `iff` lemma (`Sat.and`, `Sat.past`, `Sat.box`,
+`Sat.diamondPast_nil`, …); proofs move between formulas and Lean propositions
+through these lemmas.
 -/
 
 namespace ModalDistribution

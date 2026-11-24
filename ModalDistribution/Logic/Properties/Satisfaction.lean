@@ -45,18 +45,6 @@ common member satisfying `φ`. -/
     ∃ p, (∀ i, p ∈ F.choose i) ∧
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] φ
 
-/-- `HasQuorumWitness` is monotone in the formula. -/
-theorem HasQuorumWitness.of_imp
-    (M : Model S P)
-    (ls : List S.Value) {φ ψ : Formula S}
-    (h : ∀ p,
-        (⟪⟨p, †, M.history.val⟩⟫ ⊨[M]φ) →
-          ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]ψ) :
-    HasQuorumWitness (M := M) ls φ →
-      HasQuorumWitness (M := M) ls ψ := fun hWitness F =>
-  let ⟨p, hpAll, hφ⟩ := hWitness F
-  ⟨p, hpAll, h p hφ⟩
-
 /-- Every choice of one quorum per learner in `ls` has a common member. -/
 @[simp] def HasQuorumNonempty
     (M : Model S P)

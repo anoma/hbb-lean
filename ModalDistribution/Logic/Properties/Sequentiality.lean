@@ -45,8 +45,7 @@ theorem accessible_subset_of_accessible
     {t : World P (Signature.EventType S) | t ≪⁻ w'} ⊆
       {t : World P (Signature.EventType S) | t ≪⁻ w} := fun _ ht =>
   -- Transitivity of `≪` (Proposition 3.4.5) and of equality of places.
-  ⟨accessible_trans (H := M.history) (hW := hW) (h₂ := ht.1) (h₁ := hAcc.1),
-    ht.2.trans hAcc.2⟩
+  ⟨accessible_trans hW ht.1 hAcc.1, ht.2.trans hAcc.2⟩
 
 /-- Paper: Proposition 5.1.4(1). If `w' ≪⁻ w` then `w ⊨ seq` implies
 `w' ⊨ seq`. -/
