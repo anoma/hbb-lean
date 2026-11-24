@@ -8,13 +8,13 @@ import ModalDistribution.Examples.HBBSimp.Correctness
 /-!
 # Theory `HBBSimp`
 
-This module re-exports the components of the `HBBSimp` formalisation. The
-arrangement mirrors the theory structure:
+This module re-exports the components of the `HBBSimp` formalisation
+(Section 7 of the paper):
 
-- **`HBBSimp.Axioms`**: Axiom schemes
-- **`HBBSimp.Lemmas`**: Helper lemmas
-- **`HBBSimp.HappyTermination`**: Happy Termination
-- **`HBBSimp.CascadeTermination`**: Cascade Termination
-- **`HBBSimp.Agreement`**: Agreement property
-- **`HBBSimp.Correctness`**: The three properties collected (Theorem 7.1.3)
+- **`HBBSimp.Axioms`**: the theory (Definition 7.1.1, Figure 10)
+- **`HBBSimp.Lemmas`**: the vote rules in the forms the correctness proofs use
+- **`HBBSimp.Agreement`**: Agreement (Proposition 7.3.1)
+- **`HBBSimp.CascadeTermination`**: Cascade Termination (Proposition 7.3.2)
+- **`HBBSimp.HappyTermination`**: Happy Termination (Proposition 7.3.3)
+- **`HBBSimp.Correctness`**: the three properties collected (Theorem 7.1.3)
 -/

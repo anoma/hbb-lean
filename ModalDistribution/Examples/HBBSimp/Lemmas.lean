@@ -1,32 +1,24 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.HBBSimp.Axioms
-import ModalDistribution.Examples.HBB.Uniqueness
-import ModalDistribution.Logic.Semantics
-import ModalDistribution.Logic.Properties
-import ModalDistribution.Core.History
-import ModalDistribution.Core.Semifilter
 
 /-!
 # HBBSimp Helper Lemmas
 
-This file bundles auxiliary lemmas for the HBBSimp development: translating
-deliveries witnessed at end of time into vote quorums (`Deliver?`), tracing
-votes back to echo quorums (`Vote?`), and instantiating `Vote!` in the form
-Lemma 6.5.2(2) consumes.
+The two ways the HBBSimp correctness proofs use the vote rules:
+
+- `boxPast_end_of_diamondPast_end`: a backward rule read at end of time, which
+  is how `(Vote?)` turns a past vote into an echo quorum in the Agreement proof;
+- `vote_forward_imp`: `(Vote!)` in the form Lemma 6.5.2(2) consumes, used by
+  both termination proofs.
 -/
 
 namespace ModalDistribution
 namespace Examples
 namespace HBBSimp
 
-open HBB
-
 open ModalDistribution
 open ModalDistribution.Logic
 open ModalDistribution.Logic.Formula
-open History
-open PreHistory
-open World
 open scoped Formula PreHistory
 
 set_option autoImplicit false
@@ -36,121 +28,28 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Singleton past boxes yield a witness for the corresponding past diamond. -/
-theorem boxPast_singleton_to_diamond_nil
-    {w : World P (Signature.EventType S)}
-    {learner : Signature.Value S}
-    {φ : Formula S}
-    (hBox : ⟪w⟫ ⊨[M]□ᶠ↓[[learner]]φ) :
-    ⟪w⟫ ⊨[M]♢ᶠ↓[[]]φ := by
-  classical
-  have hBoxPlain :
-      ⟪w⟫ ⊨[M]□ᶠ[[learner]](↓ᶠ φ) :=
-    by simpa [Formula.boxPast] using hBox
-  obtain ⟨O, hO, hAll⟩ :=
-    (sat_box_singleton_exists (M := M)
-      (w := w) (l := learner) (φ := ↓ᶠ φ)).1 hBoxPlain
-  obtain ⟨q, hq⟩ :=
-    (M.learner learner).quorum_nonempty hO
-  have hPast :
-      ⟪⟨q, †, w.time⟩⟫ ⊨[M] ↓ᶠ φ := hAll q hq
-  have hDiamond :
-      ⟪w⟫ ⊨[M]♢ᶠ[[]](↓ᶠ φ) :=
-    (Sat.diamond_nil (M := M)
-      (w := w)
-      (φ := ↓ᶠ φ)).2 ⟨q, hPast⟩
-  simpa [Formula.diamondPast]
-    using hDiamond
+/-- A backward rule `φ ⇒ □↓[l] ψ`, valid at every event of the history, holds
+at end of time in the form `♢↓ φ ⇒ □↓[l] ψ`: the past `φ`-event knows of an
+`l`-quorum of `ψ`, and end of time knows everything that event knows
+(Lemma 4.2.3(1) at end of time). -/
+theorem boxPast_end_of_diamondPast_end
+    {p : P} {l : Signature.Value S} {φ ψ : Formula S}
+    (hRule : ∀ t ∈ M.history.val, (⟪t⟫ ⊨[M] φ) → ⟪t⟫ ⊨[M] □ᶠ↓[[l]] ψ)
+    (h : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ↓[[]] φ) :
+    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] □ᶠ↓[[l]] ψ := by
+  obtain ⟨q, hq⟩ := (Sat.diamond_nil M _ (↓ᶠ φ)).1 h
+  obtain ⟨t, ht, -, hφ⟩ := (Sat.past _ _ _).1 hq
+  exact lift_boxPast_to_end M
+    (History.subset_of_happensBefore (History.happensBefore_of_mem ht)) (hRule t ht hφ) p
 
-namespace Vote
-
-/-- Instantiates `Vote?` to extract echo quorums supporting a vote. -/
-theorem box_witness
-    {p : P}
-    {learner value : Signature.Value S}
-    (hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb))
-    (hVote :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [learner, value]⟩)) :
-    ∃ t : World P (Signature.EventType S),
-      t ∈ M.history.val ∧
-        t.time ⊆ M.history.val ∧
-        ⟪t⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) := by
-  classical
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hDiamond_nil :
-      ⟪wTop⟫ ⊨[M]♢ᶠ[[]]
-          (↓ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩)) := by
-    simpa [Formula.diamondPast, wTop] using hVote
-  obtain ⟨qVote, hPastVote⟩ :=
-    (Sat.diamond_nil (M := M)
-      (w := wTop)
-      (φ := ↓ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩))).1
-      hDiamond_nil
-  obtain ⟨tVote, ht_mem, ht_place, hVote_at⟩ :=
-    (Sat.past (M := M)
-      (w := ⟨qVote, †, wTop.time⟩)
-      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)).1
-      hPastVote
-  have ht_mem_history : tVote ∈ M.history.val := by
-    simpa [wTop, World.time] using ht_mem
-  have hBox_at_event :
-      ⟪tVote⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) :=
-    vote_backward_elim (M := M)
-      (hAx := hVoteAx)
-      (hMem := ht_mem_history)
-      (hVote := hVote_at)
-  have hBefore_history : tVote.time ≺− M.history.val :=
-    happensBefore_of_mem (P := P) (Event := Signature.EventType S)
-      ht_mem_history
-  have hSubset_history : tVote.time ⊆ M.history.val :=
-    History.subset_of_happensBefore (H := M.history) hBefore_history
-  exact ⟨tVote, ht_mem_history, hSubset_history, hBox_at_event⟩
-
-/-- At end of time, a vote for `(learner, value)` requires an `learner`-quorum of
-echoes backing it. -/
-theorem to_echo_box_end
-    (hTheory : M ⊨ᵀ
-      theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
-    {learner value : Signature.Value S}
-    {p : P}
-    (hVote :
-      ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]](ofEvent ⟨voteSymb, [learner, value]⟩)) :
-    ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]□ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩) := by
-  classical
-  have hVoteAx : AllWorldValid M (voteBackwardAxiom echoSymb voteSymb) :=
-    theory_vote_backward (M := M) hTheory
-  obtain ⟨tVote, ht_mem, hSubset, hBox⟩ :=
-    Vote.box_witness (M := M)
-      (echoSymb := echoSymb) (voteSymb := voteSymb)
-      (hVoteAx := hVoteAx)
-      (learner := learner) (value := value)
-      (p := p) (hVote := hVote)
-  exact
-    lift_boxPast_to_end (M := M)
-      (learner := learner)
-      (φ := ofEvent ⟨echoSymb, [value]⟩)
-      (t := tVote)
-      (hSubset := hSubset) (hBox := hBox) p
-
-end Vote
-
-/-- The instantiated `Vote!` implication: a sometime-live quorum of past
-echoes yields an eventual vote. This is the form consumed by Lemma 6.5.2(2). -/
+/-- `(Vote!)` instantiated at every world: a sometime-live quorum of past echoes
+yields an eventual vote. This is the form consumed by Lemma 6.5.2(2). -/
 theorem vote_forward_imp
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l v : Signature.Value S} :
-    □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))) ⇒ᶠ
-      ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
-  classical
-  intro t ht
-  refine Sat.imp_intro (M := M) (w := t) ?_
-  intro hLiveEcho
-  exact
-    vote_forward_elim (M := M)
-      (hAx := theory_vote_forward (M := M) hTheory)
-      (hW := ht)
-      (hLiveEcho := hLiveEcho)
+    □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))) ⇒ᶠ
+      ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) :=
+  fun ht => Sat.imp_intro _ _ (vote_forward_elim (theory_vote_forward hTheory) ht)
 
 end HBBSimp
 end Examples

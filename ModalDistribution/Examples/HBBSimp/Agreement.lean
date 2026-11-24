@@ -1,18 +1,14 @@
-import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.HBBSimp.Axioms
-import ModalDistribution.Examples.HBBSimp.Lemmas
 import ModalDistribution.Examples.HBB.Uniqueness
-import ModalDistribution.Examples.ThyLive
-import ModalDistribution.Logic.Semantics
-import ModalDistribution.Logic.Properties
+import ModalDistribution.Examples.HBBSimp.Lemmas
+import ModalDistribution.Logic.Properties.Modalities
+import ModalDistribution.Logic.Properties.Sequentiality
 
 /-!
-# HBBSimp Agreement Property
+# HBBSimp Agreement
 
-This file records the agreement statement for the `HBBSimp` broadcast theory.
-Agreement property for HBBSimp: under a
-sequential quorum intersection between the source learners, any two deliveries
-agree on the value.
+Proposition 7.3.1: if learners `l₁` and `l₂` have sequential quorum
+intersections, then any delivery for `(l₁', l₁)` and any delivery for
+`(l₂', l₂)` carry the same value.
 -/
 
 namespace ModalDistribution
@@ -24,9 +20,6 @@ open HBB
 open ModalDistribution
 open ModalDistribution.Logic
 open ModalDistribution.Logic.Formula
-open History
-open PreHistory
-open World
 open scoped Formula PreHistory
 
 set_option autoImplicit false
@@ -37,13 +30,9 @@ variable {M : Model S P}
 variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Paper: Proposition 7.3.1 (Agreement). Agreement property for HBBSimp.
-
-Sequential quorum intersections between l₁ and l₂ force any deliveries for
-(l₁', l₁) and (l₂', l₂) to agree on the value. This is the agreement property
-for the simplified HBBSimp protocol without the safe predicate.
-
-See also: `agreement`, `agreement`. -/
+/-- Paper: Proposition 7.3.1 (Agreement). Sequential quorum intersections
+between `l₁` and `l₂` force any deliveries for `(l₁', l₁)` and `(l₂', l₂)` to
+agree on the value. -/
 theorem agreement
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
@@ -53,140 +42,31 @@ theorem agreement
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
          (♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
          (v₁ ≃ᶠ v₂) := by
-  classical
   intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hSeqTop : ⟪wTop⟫ ⊨[M] ♢ᶠ[[l₁, l₂]]Formula.seq := by
-    simpa [wTop] using hSeq p
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₁
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₂
-  by_cases hNe : v₁ = v₂
-  · simpa [Sat] using hNe
-  have hVoteBox₁ :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
-    -- Apply `Deliver?` to back out the vote quorum supporting the first delivery.
-    simpa [wTop]
-      using
-        HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
-          (reporting := l₁') (learner := l₁)
-          (value := v₁) (p := p)
-          (hDeliver := hDeliver₁)
-  have hVoteBox₂ :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
-    -- Apply `Deliver?` to back out the vote quorum supporting the second delivery.
-    simpa [wTop]
-      using
-        HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
-          (reporting := l₂') (learner := l₂)
-          (value := v₂) (p := p)
-          (hDeliver := hDeliver₂)
-  have hVoteDiamond₁ :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
-    -- Turn the first vote box into a concrete past vote witness.
-    simpa [wTop]
-      using
-        boxPast_singleton_to_diamond_nil
-          (M := M) (w := wTop) (learner := l₁')
-          (φ := ofEvent ⟨voteSymb, [l₁, v₁]⟩)
-          hVoteBox₁
-  have hVoteDiamond₂ :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
-    -- Turn the second vote box into a concrete past vote witness.
-    simpa [wTop]
-      using
-        boxPast_singleton_to_diamond_nil
-          (M := M) (w := wTop) (learner := l₂')
-          (φ := ofEvent ⟨voteSymb, [l₂, v₂]⟩)
-          hVoteBox₂
-  have hEchoBox₁ :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁]] (ofEvent ⟨echoSymb, [v₁]⟩) := by
-    -- Use `Vote?` to obtain an echo quorum for `v₁`.
-    simpa [wTop]
-      using
-        Vote.to_echo_box_end (M := M)
-          (hTheory := hTheory)
-          (learner := l₁) (value := v₁)
-          (p := p) (hVote := hVoteDiamond₁)
-  have hEchoBox₂ :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂]] (ofEvent ⟨echoSymb, [v₂]⟩) := by
-    -- Use `Vote?` to obtain an echo quorum for `v₂`.
-    simpa [wTop]
-      using
-        ModalDistribution.Examples.HBBSimp.Vote.to_echo_box_end (M := M)
-          (hTheory := hTheory)
-          (learner := l₂) (value := v₂)
-          (p := p) (hVote := hVoteDiamond₂)
-  have hEchoCollision :
-      ⟪wTop⟫ ⊨[M]
-        (♢ᶠ↓[[]]
-            ((ofEvent ⟨echoSymb, [v₁]⟩) ∧ᶠ
-              ↓ᶠ (ofEvent ⟨echoSymb, [v₂]⟩))) ∨ᶠ
-        (♢ᶠ↓[[]]
-            ((ofEvent ⟨echoSymb, [v₂]⟩) ∧ᶠ
-              ↓ᶠ (ofEvent ⟨echoSymb, [v₁]⟩))) := by
-    -- Use sequentiality between learners to order the two echo events.
-    have hDistinct :
-        (⟨echoSymb, [v₁]⟩ : Signature.Event S) ≠
-          ⟨echoSymb, [v₂]⟩ := by
-      intro h
-      injection h with _ hArgs
-      cases hArgs
-      exact hNe rfl
-    exact
-      seq_two_quorums_eventually
-        (M := M) (w := wTop)
-        (l := l₁) (l' := l₂)
-        (evt := ⟨echoSymb, [v₁]⟩)
-        (evt' := ⟨echoSymb, [v₂]⟩)
-        (hSeq := hSeqTop)
-        (hEvt := hEchoBox₁)
-        (hEvt' := hEchoBox₂)
-        (hDistinct := hDistinct)
-  have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-    theory_echo_non_equiv (M := M) hTheory
-  have hEquality :
-      ⟪wTop⟫ ⊨[M] v₁ ≃ᶠ v₂ := by
-    -- Combining the ordered echoes with `EchoNE` forces the values to coincide.
-    have hSubset : wTop.time ⊆trn M.history.val := by
-      simpa [wTop] using History.transitiveSubset_refl (H := M.history)
-    cases
-        sat_or_cases (M := M) (w := wTop)
-          (φ := ♢ᶠ↓[[]]
-              ((ofEvent ⟨echoSymb, [v₁]⟩) ∧ᶠ
-                ↓ᶠ (ofEvent ⟨echoSymb, [v₂]⟩)))
-          (ψ := ♢ᶠ↓[[]]
-              ((ofEvent ⟨echoSymb, [v₂]⟩) ∧ᶠ
-                ↓ᶠ (ofEvent ⟨echoSymb, [v₁]⟩)))
-          hEchoCollision with
-    | inl hLeft =>
-        have hEq :=
-          HBB.echo_non_equiv_diamond (M := M)
-            (echoSymb := echoSymb)
-            (hEchoNE := hEchoNE)
-            (hSubset := hSubset)
-            (valNow := v₁) (valPast := v₂)
-            hLeft
-        simpa [Sat] using hEq
-    | inr hRight =>
-        have hEq :=
-          HBB.echo_non_equiv_diamond (M := M)
-            (echoSymb := echoSymb)
-            (hEchoNE := hEchoNE)
-            (hSubset := hSubset)
-            (valNow := v₂) (valPast := v₁)
-            hRight
-        simpa [Sat] using hEq.symm
-  simpa [wTop] using hEquality
+  refine Sat.imp_intro _ _ fun hDeliver₁ => Sat.imp_intro _ _ fun hDeliver₂ => ?_
+  -- If `v₁ = v₂` we are done, so suppose `v₁ ≠ v₂`.
+  by_cases hEq : v₁ = v₂
+  · simpa [Sat] using hEq
+  -- (Deliver?), Lemma 4.2.3(1): `□↓[l₁'] vote(l₁, v₁)` and `□↓[l₂'] vote(l₂, v₂)`.
+  have hVotes₁ := deliver_to_vote_box_end (theory_deliver_backward hTheory) hDeliver₁
+  have hVotes₂ := deliver_to_vote_box_end (theory_deliver_backward hTheory) hDeliver₂
+  -- Lemma 4.2.1(1): `♢↓ vote(l₁, v₁)` and `♢↓ vote(l₂, v₂)`.
+  have hVote₁ := singleton_box_implies_diamond _ _ _ _ hVotes₁
+  have hVote₂ := singleton_box_implies_diamond _ _ _ _ hVotes₂
+  -- (Vote?): `□↓[l₁] echo(v₁)` and `□↓[l₂] echo(v₂)`.
+  have hEchoes₁ := boxPast_end_of_diamondPast_end
+    (fun _ ht => vote_backward_elim (theory_vote_backward hTheory) ht) hVote₁
+  have hEchoes₂ := boxPast_end_of_diamondPast_end
+    (fun _ ht => vote_backward_elim (theory_vote_backward hTheory) ht) hVote₂
+  -- Proposition 5.1.5(3), `v₁ ≠ v₂`, `⊨ ♢[l₁ l₂] seq`: one participant echoed
+  -- both values, one after the other; (EchoNE) then forces `v₁ = v₂`.
+  have hEchoNE := fun {a b : Signature.Value S} =>
+    echo_non_equiv_diamond (theory_echo_non_equiv hTheory) (w := ⟨p, †, M.history.val⟩)
+      (valNow := a) (valPast := b) (History.transitiveSubset_refl M.history)
+  rcases sat_or_cases (seq_two_quorums_eventually (hSeq p) hEchoes₁ hEchoes₂
+      (by simpa using hEq)) with h | h
+  · exact absurd (hEchoNE h) hEq
+  · exact absurd (hEchoNE h).symm hEq
 
 /-- Paper: Proposition 7.3.1, hypothesis form. When both deliveries for
 `(l₁', l₁)` and `(l₂', l₂)` occur, their values coincide. -/
@@ -198,19 +78,9 @@ theorem agreement_of_deliveries
     (hSeq : ⊨[M]♢ᶠ[[l₁, l₂]]Formula.seq)
     (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
     (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
-    ⊨[M] v₁ ≃ᶠ v₂ := by
-  classical
-  exact
-    EndValid.imp_elim (M := M)
-      (EndValid.imp_elim (M := M)
-        (agreement (M := M)
-      (hTheory := hTheory)
-      (l₁ := l₁) (l₂ := l₂)
-      (l₁' := l₁') (l₂' := l₂')
-      (v₁ := v₁) (v₂ := v₂)
-      (hSeq := hSeq))
-        hDeliver₁)
-      hDeliver₂
+    ⊨[M] v₁ ≃ᶠ v₂ :=
+  EndValid.imp_elim M (EndValid.imp_elim M (agreement hTheory hSeq) hDeliver₁) hDeliver₂
+
 end HBBSimp
 end Examples
 end ModalDistribution

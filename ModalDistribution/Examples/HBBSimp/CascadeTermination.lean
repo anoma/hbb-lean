@@ -1,18 +1,13 @@
-import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.HBBSimp.Axioms
-import ModalDistribution.Examples.HBBSimp.Lemmas
-import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Examples.HBB.Termination
-import ModalDistribution.Logic.Semantics
-import ModalDistribution.Logic.Properties
+import ModalDistribution.Examples.HBBSimp.Lemmas
 import ModalDistribution.Logic.Properties.Modalities
 
 /-!
 # HBBSimp Cascade Termination
 
-This file records the Cascade Termination statement for `HBBSimp`.
-Intersecting reporting quorums together with a live quorum for `l₂'` ensure
-that deliveries for `(l₁', ℓ)` propagate to `(l₂', ℓ)`.
+Proposition 7.3.2: if reporting learners `l₁'` and `l₂'` have intersecting
+quorums and `l₂'` has a live quorum, then a delivery for `(l₁', ℓ)` leads every
+live participant to deliver for `(l₂', ℓ)`.
 -/
 
 namespace ModalDistribution
@@ -24,9 +19,6 @@ open HBB
 open ModalDistribution
 open ModalDistribution.Logic
 open ModalDistribution.Logic.Formula
-open History
-open PreHistory
-open World
 open scoped Formula PreHistory
 
 set_option autoImplicit false
@@ -49,81 +41,25 @@ theorem cascade_termination
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩)) ⇒ᶠ
          predicate0 liveSymb ⇒ᶠ
          ↕ᶠ(ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
-  classical
   intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliverSource
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hLiveHere
-  have hVoteBox :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [ℓ, v]⟩) := by
-    -- Use `Deliver?` to extract the votes that justify the source delivery.
-    simpa [wTop]
-      using
-        HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
-          (reporting := l₁') (learner := ℓ)
-          (value := v) (p := p)
-          (hDeliver := hDeliverSource)
-  have hThyLive : M ⊨ᵀ thyLive liveSymb :=
-    theory_thyLive (M := M) hTheory
-  -- Propositions 5.2.10 and 5.2.8: the live `l₂'`-quorum eventually knows of
-  -- a vote of the intersecting `l₁'`-quorum.
-  have hKnowsVoteGlobal :
-      ⊨[M]□ᶠ↓[[l₂']]
-        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨voteSymb, [ℓ, v]⟩)) :=
-    HBB.boxPast_live_knows_of_intersecting (M := M)
-      (hLiveTheory := hThyLive)
-      (hIntersect := hIntersect) (hLive := hLive)
-      (hQuorum := fun q => by simpa [wTop] using hVoteBox)
-  -- (Vote?) with Lemma 4.2.3(1): knowing of the vote, the quorum knows of an
-  -- `ℓ`-quorum of echoes.
-  have hLiveEchoBoxGlobal :
-      ⊨[M]□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[ℓ]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    HBB.boxPast_live_knows_vote_knows_echo_quorum (M := M)
-      (hVoteEcho := fun _ ht hVote =>
-        vote_backward_elim (M := M)
-          (hAx := theory_vote_backward (M := M) hTheory)
-          (hMem := ht) (hVote := hVote))
-      (hQuorum := hKnowsVoteGlobal)
-  -- Lemma 6.5.2(2) with (Vote!): the quorum votes.
-  have hVoteBoxGlobal :
-      ⊨[M]□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
-          ofEvent ⟨voteSymb, [ℓ, v]⟩) :=
-    HBB.boxPast_live_of_eventual_quorum
-      (M := M) (liveSymb := liveSymb)
-      (φ := □ᶠ↓[[ℓ]] (ofEvent ⟨echoSymb, [v]⟩))
-      (ψ := ofEvent ⟨voteSymb, [ℓ, v]⟩)
-      (l := l₂')
-      (hLiveTheory := hThyLive)
-      (hQuorum := hLiveEchoBoxGlobal)
-      (hImp := vote_forward_imp (M := M) (hTheory := hTheory))
-  -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
-  -- knowledge becomes eventual delivery.
-  have hDeliverEventually :
-      ⟪wTop⟫ ⊨[M]
-        predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
-    have hGlobal :=
-      HBB.live_quorum_eventually_consequent (M := M)
-        (hLiveTheory := hThyLive)
-        (hQuorum := hVoteBoxGlobal)
-        (hImp := HBB.deliver_forward_imp (M := M)
-          (theory_deliver_forward (M := M) hTheory))
-    simpa [wTop] using hGlobal p
-  have hGoal :
-      ⟪wTop⟫ ⊨[M]
-        ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
-    -- Combine the eventual delivery implication with the local `live` hypothesis.
-    exact
-      (Sat.imp (M := M) (w := wTop)
-        (φ := predicate0 liveSymb)
-        (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩))).1
-        hDeliverEventually hLiveHere
-  simpa [wTop] using hGoal
+  refine Sat.imp_intro _ _ fun hDeliver => ?_
+  have hThyLive := theory_thyLive hTheory
+  -- (Deliver?), Lemma 4.2.3(1): `⊨ □↓[l₁'] vote(ℓ, v)`.
+  have hVotes : ⊨[M]□ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [ℓ, v]⟩) := fun q =>
+    deliver_to_vote_box_end (theory_deliver_backward hTheory)
+      (diamondPast_nil_valid_of_end hDeliver q)
+  -- Propositions 5.2.10 and 5.2.8, `⊨ ♢[l₁' l₂'] ⊤`, `⊨ □[l₂'] live`:
+  -- `⊨ □↓[l₂'] (live ∧ ♢↓ vote(ℓ, v))`.
+  have hKnowVote := boxPast_live_knows_of_intersecting hThyLive hIntersect hLive hVotes
+  -- (Vote?), Lemma 4.2.3(1): `⊨ □↓[l₂'] (live ∧ □↓[ℓ] echo(v))`.
+  have hKnowEchoes := boxPast_live_knows_vote_knows_echo_quorum
+    (fun _ ht => vote_backward_elim (theory_vote_backward hTheory) ht) hKnowVote
+  -- Lemma 6.5.2(2), (Vote!): `⊨ □↓[l₂'] (live ∧ vote(ℓ, v))`.
+  have hVotes' := boxPast_live_of_eventual_quorum hThyLive _ _ l₂' hKnowEchoes
+    (vote_forward_imp hTheory)
+  -- (Knowledge□↓), Lemma 6.5.3, (Deliver!): `⊨ live ⇒ ↕ deliver(l₂', ℓ, v)`.
+  exact live_quorum_eventually_consequent hThyLive hVotes'
+    (deliver_forward_imp (theory_deliver_forward hTheory)) p
 
 /-- Paper: Proposition 7.3.2, first corollary. A delivery for `(l₁', ℓ)`
 forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)` was
@@ -136,20 +72,9 @@ theorem cascade_termination_boxPast
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
     (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩)) ⇒ᶠ
-         □ᶠ↓[[l₂']] (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
-  classical
-  exact
-    endValid_boxPast_of_imp_sometime (M := M)
-      (hGuard := hLive)
-      (hMain :=
-      cascade_termination (M := M)
-        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb)
-        (l₁' := l₁') (l₂' := l₂') (ℓ := ℓ) (v := v)
-        (hTheory := hTheory)
-        (hIntersect := hIntersect)
-        (hLive := hLive))
+         □ᶠ↓[[l₂']] (ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) :=
+  endValid_boxPast_of_imp_sometime M hLive (cascade_termination hTheory hIntersect hLive)
+
 /-- Paper: Proposition 7.3.2, second corollary. A delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
 theorem cascade_termination_diamondPast
@@ -160,20 +85,9 @@ theorem cascade_termination_diamondPast
     (hIntersect : ⊨[M]♢ᶠ[[l₁', l₂']]⊤ᶠ)
     (hLive : ⊨[M]□ᶠ[[l₂']]predicate0 liveSymb) :
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', ℓ, v]⟩)) ⇒ᶠ
-         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) := by
-  classical
-  exact
-    endValid_diamondPast_of_imp_sometime (M := M)
-      (hGuard := hLive)
-      (hMain :=
-      cascade_termination (M := M)
-        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb)
-        (l₁' := l₁') (l₂' := l₂') (ℓ := ℓ) (v := v)
-        (hTheory := hTheory)
-        (hIntersect := hIntersect)
-        (hLive := hLive))
+         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', ℓ, v]⟩) :=
+  endValid_diamondPast_of_imp_sometime M hLive (cascade_termination hTheory hIntersect hLive)
+
 end HBBSimp
 end Examples
 end ModalDistribution

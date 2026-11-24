@@ -41,10 +41,6 @@ section BackwardAxioms
 
 end BackwardAxioms
 
-section NonEquivocation
-
-end NonEquivocation
-
 section ForwardAxioms
 
 /-- Paper: Figure 10, rule (Vote!). Forward rule `Vote!`: a live quorum of echoes eventually leads
@@ -65,8 +61,8 @@ variable
     (liveSymb : Signature.PredSymb S)
     (proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S)
 
-/-- Paper: Definition 7.1.1 (theory HBBSimp). Theory HBBSimp .
-It extends `thyLive` with the `HBBSimp`-specific axioms shown in -/
+/-- Paper: Definition 7.1.1 (theory HBBSimp). The theory `HBBSimp`: the axioms
+of `thyLive` together with the rules of Figure 10. -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
       ax ∈ thyLive liveSymb ∨
@@ -92,36 +88,43 @@ theorem theory_thyLive
     M ⊨ᵀ thyLive liveSymb :=
   fun _ hAx => hTheory (Or.inl hAx)
 
+/-- A model of `HBBSimp` validates `(Echo?)`. -/
 theorem theory_echo_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
   hTheory (by simp [theory])
 
+/-- A model of `HBBSimp` validates `(Vote?)`. -/
 theorem theory_vote_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] voteBackwardAxiom echoSymb voteSymb :=
   hTheory (by simp [theory])
 
+/-- A model of `HBBSimp` validates `(Deliver?)`. -/
 theorem theory_deliver_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
   hTheory (by simp [theory])
 
+/-- A model of `HBBSimp` validates `(EchoNE)`. -/
 theorem theory_echo_non_equiv
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] echoNonEquivAxiom echoSymb :=
   hTheory (by simp [theory])
 
+/-- A model of `HBBSimp` validates `(Echo!)`. -/
 theorem theory_echo_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] echoForwardAxiom liveSymb proposeSymb echoSymb :=
   hTheory (by simp [theory])
 
+/-- A model of `HBBSimp` validates `(Vote!)`. -/
 theorem theory_vote_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb :=
   hTheory (by simp [theory])
 
+/-- A model of `HBBSimp` validates `(Deliver!)`. -/
 theorem theory_deliver_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb) :
     □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
@@ -143,29 +146,9 @@ theorem vote_backward_elim
     (hMem : w ∈ M.history.val)
     {learner value : S.Value}
     (hVote : ⟪w⟫ ⊨[M] ofEvent ⟨voteSymb, [learner, value]⟩) :
-    ⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩) := by
-  classical
-  have hLocal :
-      ⟪w⟫ ⊨[M] voteBackwardAxiom echoSymb voteSymb :=
-    AllWorldValid.of_mem_history (M := M) hAx hMem
-  have hLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner => ∀ᶠ (fun value =>
-        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-      (v := learner)
-      (by simpa [voteBackwardAxiom] using hLocal)
-  have hValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))
-      (v := value) hLearner
-  exact
-    Sat.imp_elim (M := M) (w := w)
-      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
-      (ψ := □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))
-      hValue hVote
+    ⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩) :=
+  Sat.imp_elim _ _ (Sat.forall_elim _ _ _ value
+    (Sat.forall_elim _ _ _ learner (AllWorldValid.of_mem_history M hAx hMem))) hVote
 
 /-- Instantiate `Vote!` at a world of the model: a sometime-live quorum of past
 echoes yields an eventual vote. -/
@@ -176,33 +159,9 @@ theorem vote_forward_elim
     {learner value : S.Value}
     (hLiveEcho : ⟪w⟫ ⊨[M] (↕ᶠ (predicate0 liveSymb ∧ᶠ
       □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))) :
-    ⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩) := by
-  classical
-  have hLocal :
-      ⟪w⟫ ⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb :=
-    hAx hW
-  have hLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner => ∀ᶠ (fun value =>
-        (↕ᶠ (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
-          ↕ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩)))
-      (v := learner)
-      (by simpa [voteForwardAxiom] using hLocal)
-  have hValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        (↕ᶠ (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
-          ↕ᶠ (ofEvent ⟨voteSymb, [learner, value]⟩))
-      (v := value) hLearner
-  exact
-    Sat.imp_elim (M := M) (w := w)
-      (φ := (↕ᶠ (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
-      (ψ := ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
-      hValue
-      hLiveEcho
+    ⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩) :=
+  Sat.imp_elim _ _ (Sat.forall_elim _ _ _ value
+    (Sat.forall_elim _ _ _ learner (hAx hW))) hLiveEcho
 
 end Instantiations
 
