@@ -26,15 +26,21 @@ assumptions, all processes that deliver a value must deliver the same value.
 
 ## Proof Structure
 
-The proof proceeds by contradiction, assuming v₁ ≠ v₂ and deriving a contradiction:
+The paper assumes `v₁ ≠ v₂` and derives a contradiction:
 
-1. **Step 1**: Apply the Deliver? axiom to obtain vote quorums for both values
-2. **Step 2**: Use sequentiality to show one vote must happen before the other
-3. **Step 3**: Extract witnesses from the diamond-past operator
-4. **Step 4**: Apply Vote? and Echo? axioms to get echo quorums with safe predicate
-5. **Step 5**: Use the safe predicate definition to derive sequentiality between learners
-6. **Step 6**: Apply sequentiality again with EchoNE to force v₁ = v₂ (contradiction)
+1. (Deliver?), Lemma 4.2.3(1): an `l₁'`-quorum voted `(l₁, v₁)` and an `l₂'`-quorum
+   voted `(l₂, v₂)`.
+2. Proposition 5.1.5(3), `v₁ ≠ v₂`, `⊨ ♢_{l₁' l₂'} seq`: some participant cast one of the
+   votes after the other. The two cases are symmetric (step (∗) of the paper).
+3. That participant, at some event-tuple `w`, votes `(la, va)` having voted `(lb, vb)`.
+4. (Vote?), Lemma 4.2.3(2): at `w`, `la` is safe and there are an `la`-quorum of
+   `echo(va)` and an `lb`-quorum of `echo(vb)`.
+5. (Safe), `va ≠ vb`: the first disjunct of (Safe) fails, because by (Echo?) both `va`
+   and `vb` were proposed (step (∗∗)); so `♢_{la lb} seq`.
+6. Proposition 5.1.5(3), (EchoNE): one echo precedes the other at a sequential
+   participant, so `va = vb`, a contradiction.
 
+Steps 3–6 are `eq_of_vote_after_vote`.
 -/
 
 namespace ModalDistribution
@@ -58,6 +64,47 @@ variable {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
+/-- Steps 3–6 of Proposition 6.4.1: if some participant votes `(la, va)` after having
+voted `(lb, vb)`, then `va = vb`. -/
+theorem eq_of_vote_after_vote
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    {p : P} {la lb va vb : S.Value}
+    (hVotes : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M] ♢ᶠ↓[[]]
+      (ofEvent ⟨voteSymb, [la, va]⟩ ∧ᶠ ↓ᶠ ofEvent ⟨voteSymb, [lb, vb]⟩)) :
+    va = vb := by
+  refine Classical.byContradiction fun hNe => ?_
+  -- Step 3: an event-tuple `w` of the history votes `(la, va)` after voting `(lb, vb)`.
+  obtain ⟨_, hPast⟩ := (Sat.diamond_nil ..).1 hVotes
+  obtain ⟨w, hw, -, hVotesW⟩ := (Sat.past ..).1 hPast
+  obtain ⟨hVoteA, hPastVoteB⟩ := (Sat.and ..).1 hVotesW
+  have hSub : w.time ⊆trn M.history.val := time_subset_trn_history M (M.time_le_of_mem hw)
+  -- Step 4, (Vote?) at `w`: `la` is safe and an `la`-quorum echoed `va`.
+  obtain ⟨hSafe, hEchoA⟩ := vote_backward_elim (theory_vote_backward hTheory) hw hVoteA
+  -- Step 4, (Vote?) at the earlier vote and Lemma 4.2.3(2): an `lb`-quorum echoed `vb`.
+  obtain ⟨u, hu, huPlace, hVoteB⟩ := (Sat.past ..).1 hPastVoteB
+  have hEchoB : ⟪w⟫ ⊨[M] □ᶠ↓[[lb]] ofEvent ⟨echoSymb, [vb]⟩ :=
+    past_box_collapses_to_present_box M w lb _ hw <| Sat.past_intro_of_prefix hu huPlace
+      (vote_backward_elim (theory_vote_backward hTheory) (hSub.1 _ hu) hVoteB).2
+  -- Step 5, (Safe): by (Echo?) both `va` and `vb` were proposed, so the first disjunct
+  -- would force `va = vb`; hence `la` and `lb` have sequential quorum intersections.
+  have hSeq : ⟪w⟫ ⊨[M] ♢ᶠ[[la, lb]] Formula.seq := by
+    rcases (Sat.or ..).1 ((safe_iff_safeFormula hTheory w (M.time_le_of_mem hw) la).1 hSafe)
+      with hUnique | hSeqAll
+    · have hEchoBack : □W⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
+        theory_echo_backward hTheory
+      exact absurd (unique_propose_equal_values va vb hUnique
+        (box_echo_to_propose_diamond hSub hEchoBack hEchoA)
+        (box_echo_to_propose_diamond hSub hEchoBack hEchoB)) hNe
+    · exact hSeqAll lb
+  -- Step 6, Proposition 5.1.5(3) and (EchoNE): one echo precedes the other at a
+  -- sequential participant, so `va = vb`.
+  have hEchoNE : □W⊨[M] echoNonEquivAxiom echoSymb := theory_echo_non_equiv hTheory
+  rcases (Sat.or ..).1 (seq_two_quorums_eventually hSeq hEchoA hEchoB (by simpa using hNe))
+    with h | h
+  · exact hNe (echo_non_equiv_diamond hEchoNE hSub h)
+  · exact hNe (echo_non_equiv_diamond hEchoNE hSub h).symm
+
 /-- Paper: Proposition 6.4.1 (Agreement). Agreement property for HBBSafe.
 
 Under sequentiality assumptions, if two different values are delivered at different
@@ -77,269 +124,20 @@ theorem agreement
     ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩)) ⇒ᶠ
          (♢ᶠ↓[[]] (ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) ⇒ᶠ
          (v₁ ≃ᶠ v₂) := by
-  classical
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hSeqTop : ⟪wTop⟫ ⊨[M] ♢ᶠ[[l₁', l₂']]Formula.seq := hSeq p
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₁
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hDeliver₂
-  by_cases hNe : v₁ = v₂
-  · simpa [Sat] using hNe
-
-  have hVoteBox₁ :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₁']] (ofEvent ⟨voteSymb, [l₁, v₁]⟩) := by
-    simpa [wTop]
-      using
-        HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := by apply hTheory; simp [theory])
-          (reporting := l₁') (learner := l₁)
-          (value := v₁) (p := p)
-          (hDeliver := hDeliver₁)
-  have hVoteBox₂ :
-      ⟪wTop⟫ ⊨[M]
-        □ᶠ↓[[l₂']] (ofEvent ⟨voteSymb, [l₂, v₂]⟩) := by
-    simpa [wTop]
-      using
-        HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := by apply hTheory; simp [theory])
-          (reporting := l₂') (learner := l₂)
-          (value := v₂) (p := p)
-          (hDeliver := hDeliver₂)
-
-  have step2 :
-      ⟪wTop⟫ ⊨[M]
-        (♢ᶠ↓[[]] ((ofEvent ⟨voteSymb, [l₁, v₁]⟩) ∧ᶠ
-                    ↓ᶠ (ofEvent ⟨voteSymb, [l₂, v₂]⟩))) ∨ᶠ
-        (♢ᶠ↓[[]] ((ofEvent ⟨voteSymb, [l₂, v₂]⟩) ∧ᶠ
-                    ↓ᶠ (ofEvent ⟨voteSymb, [l₁, v₁]⟩))) := by
-    have hDistinct :
-        (⟨voteSymb, [l₁, v₁]⟩ : Signature.Event S) ≠
-          ⟨voteSymb, [l₂, v₂]⟩ := by
-      intro h
-      injection h with _ hArgs
-      cases hArgs
-      exact hNe rfl
-    exact
-      seq_two_quorums_eventually
-        (M := M) (w := wTop)
-        (l := l₁') (l' := l₂')
-        (evt := ⟨voteSymb, [l₁, v₁]⟩)
-        (evt' := ⟨voteSymb, [l₂, v₂]⟩)
-        (hSeq := hSeqTop)
-        (hEvt := hVoteBox₁)
-        (hEvt' := hVoteBox₂)
-        (hDistinct := hDistinct)
-
-  have hVoteAx : AllWorldValid M
-      (voteBackwardAxiom safeSymb echoSymb voteSymb) :=
-    theory_vote_backward (M := M) hTheory
-
-  have hEchoBack :
-      □W⊨[M]echoBackwardAxiom proposeSymb echoSymb :=
-    theory_echo_backward (M := M) hTheory
-
-  have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-    theory_echo_non_equiv (M := M) hTheory
-
-  have derive_contradiction :
-      ∀ {la lb : Signature.Value S} {va vb : Signature.Value S},
-        va ≠ vb →
-        (⟪wTop⟫ ⊨[M] ♢ᶠ↓[[]]
-            ((ofEvent ⟨voteSymb, [la, va]⟩) ∧ᶠ
-              ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩))) →
-        va = vb := by
-    intro la lb va vb hDistinct hDiamond
-    have hDiamondBase :
-        ⟪wTop⟫ ⊨[M]
-          ♢ᶠ[[]]
-            (↓ᶠ ((ofEvent ⟨voteSymb, [la, va]⟩) ∧ᶠ
-              ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩))) := by
-      simpa [Formula.diamondPast] using hDiamond
-    obtain ⟨qVote, hPastVotes⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ ((ofEvent ⟨voteSymb, [la, va]⟩) ∧ᶠ
-          ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩)))).1 hDiamondBase
-    obtain ⟨wNow, hNow_mem, hNow_place, hVotes⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨qVote, †, wTop.time⟩)
-        (φ := (ofEvent ⟨voteSymb, [la, va]⟩) ∧ᶠ
-          ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩))).1 hPastVotes
-    have hNow_mem_history : wNow ∈ M.history.val := by
-      simpa [wTop] using hNow_mem
-    have hBefore_now : wNow.time ≺− M.history.val :=
-      happensBefore_of_mem (P := P)
-        (Event := Signature.EventType S) hNow_mem_history
-    let Hpred : History P (Signature.EventType S) :=
-      History.predecessorHistory (H := M.history)
-        (h' := wNow.time) hBefore_now
-    have hSubset_trn_now :
-        wNow.time ⊆trn M.history.val := by
-      have hSubset :=
-        History.happensBefore_implies_transitiveSubset
-          Hpred M.history
-          (by simpa [Hpred, History.predecessorHistory]
-            using hBefore_now)
-      simpa [Hpred, History.predecessorHistory] using hSubset
-    have hSubset_plain_now :
-        wNow.time ⊆ M.history.val :=
-      History.transitiveSubset_subset
-        (P := P) (Event := Signature.EventType S) hSubset_trn_now
-
-    have hVotes_split :=
-      (Sat.and (M := M) (w := wNow)
-        (φ := ofEvent ⟨voteSymb, [la, va]⟩)
-        (ψ := ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩))).1
-        (by simpa using hVotes)
-    have hVote_now :
-        ⟪wNow⟫ ⊨[M] ofEvent ⟨voteSymb, [la, va]⟩ := hVotes_split.1
-    have hPast_vote_other :
-        ⟪wNow⟫ ⊨[M] ↓ᶠ (ofEvent ⟨voteSymb, [lb, vb]⟩) :=
-      hVotes_split.2
-
-    have hSafeEcho_now_split :=
-      vote_backward_elim (M := M)
-        (hAx := hVoteAx)
-        (hMem := hNow_mem_history)
-        (hVote := hVote_now)
-    have hNow_le : wNow.time ⪯ M.history.val :=
-      PreHistory.happensBeforeEq_of_mem
-        (P := P) (Event := Signature.EventType S)
-        (hmem := by
-          simpa [World.place, World.event, World.time] using hNow_mem_history)
-    have hSafe_la :=
-      (safe_iff_safeFormula (M := M) (hTheory := hTheory)
-        (w := wNow) hNow_le la).1 hSafeEcho_now_split.1
-    have hEcho_la_box := hSafeEcho_now_split.2
-
-    obtain ⟨wPast, hPast_mem, hPast_place, hVotePast⟩ :=
-      (Sat.past (M := M)
-        (w := wNow)
-        (φ := ofEvent ⟨voteSymb, [lb, vb]⟩)).1
-        hPast_vote_other
-    have hPast_mem_history : wPast ∈ M.history.val :=
-      hSubset_plain_now _ hPast_mem
-    have hEcho_lb_local :=
-      (vote_backward_elim (M := M)
-        (hAx := hVoteAx)
-        (hMem := hPast_mem_history)
-        (hVote := hVotePast)).2
-
-    have hPastBox_lb :
-        ⟪wNow⟫ ⊨[M]
-          ↓ᶠ (□ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩)) :=
-      Sat.past_intro_of_prefix (M := M)
-        (w := wNow) (t := wPast)
-        (ht := hPast_mem) (hp := hPast_place)
-        (hφ := hEcho_lb_local)
-    have hEcho_lb_box :
-        ⟪wNow⟫ ⊨[M]
-          □ᶠ↓[[lb]] (ofEvent ⟨echoSymb, [vb]⟩) :=
-      past_box_collapses_to_present_box (M := M) (w := wNow)
-        (l := lb) (φ := ofEvent ⟨echoSymb, [vb]⟩)
-        (hMem := hNow_mem_history) hPastBox_lb
-
-    have step5 :
-        ⟪wNow⟫ ⊨[M] ♢ᶠ[[la, lb]] Formula.seq := by
-      let uniqueCond : Formula S :=
-        ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
-      let seqGuard : Formula S :=
-        ∀ᶠ fun l' => ♢ᶠ[[la, l']] Formula.seq
-      have hSafe_disj :
-          ⟪wNow⟫ ⊨[M]
-            uniqueCond ∨ᶠ seqGuard := by
-        simpa [safeFormula, uniqueCond, seqGuard, Formula.or]
-          using hSafe_la
-      cases sat_or_cases (M := M) (w := wNow)
-          (φ := uniqueCond) (ψ := seqGuard) hSafe_disj with
-      | inr hSeqGuard =>
-          simpa using Sat.forall_elim (M := M) (w := wNow)
-            (body := fun l' => ♢ᶠ[[la, l']] Formula.seq)
-            (v := lb) hSeqGuard
-      | inl hUniqueCond =>
-          have hDiamond_va :=
-            box_echo_to_propose_diamond (M := M)
-              (w := wNow)
-              (hSubset := hSubset_trn_now)
-              (hEchoBack := hEchoBack)
-              (learner := la) (value := va) hEcho_la_box
-          have hDiamond_vb :=
-            box_echo_to_propose_diamond (M := M)
-              (w := wNow)
-              (hSubset := hSubset_trn_now)
-              (hEchoBack := hEchoBack)
-              (learner := lb) (value := vb) hEcho_lb_box
-          exact False.elim
-            (hDistinct
-              (unique_propose_equal_values (M := M)
-                (w := wNow)
-                (value := va) (altValue := vb)
-                hUniqueCond hDiamond_va hDiamond_vb))
-
-    have hEq_disj :
-        ⟪wNow⟫ ⊨[M]
-          (♢ᶠ↓[[]]
-              ((ofEvent ⟨echoSymb, [va]⟩) ∧ᶠ
-                ↓ᶠ (ofEvent ⟨echoSymb, [vb]⟩))) ∨ᶠ
-          (♢ᶠ↓[[]]
-              ((ofEvent ⟨echoSymb, [vb]⟩) ∧ᶠ
-                ↓ᶠ (ofEvent ⟨echoSymb, [va]⟩))) :=
-      seq_two_quorums_eventually
-        (M := M) (w := wNow)
-        (l := la) (l' := lb)
-        (evt := ⟨echoSymb, [va]⟩)
-        (evt' := ⟨echoSymb, [vb]⟩)
-        (hSeq := step5) (hEvt := hEcho_la_box)
-        (hEvt' := hEcho_lb_box)
-        (hDistinct := by
-          intro h
-          have hArgs := congrArg Signature.Event.args h
-          cases hArgs
-          exact hDistinct rfl)
-    cases sat_or_cases (M := M) (w := wNow)
-        (φ := ♢ᶠ↓[[]]
-          ((ofEvent ⟨echoSymb, [va]⟩) ∧ᶠ
-            ↓ᶠ (ofEvent ⟨echoSymb, [vb]⟩)))
-        (ψ := ♢ᶠ↓[[]]
-          ((ofEvent ⟨echoSymb, [vb]⟩) ∧ᶠ
-            ↓ᶠ (ofEvent ⟨echoSymb, [va]⟩))) hEq_disj with
-    | inl hLeft =>
-        exact
-          echo_non_equiv_diamond (M := M)
-            (echoSymb := echoSymb)
-            (hEchoNE := hEchoNE) (hSubset := hSubset_trn_now)
-            (valNow := va) (valPast := vb) hLeft
-    | inr hRight =>
-        exact
-          (echo_non_equiv_diamond (M := M)
-            (echoSymb := echoSymb)
-            (hEchoNE := hEchoNE) (hSubset := hSubset_trn_now)
-            (valNow := vb) (valPast := va) hRight).symm
-
-  cases sat_or_cases (M := M) (w := wTop)
-      (φ := ♢ᶠ↓[[]]
-        ((ofEvent ⟨voteSymb, [l₁, v₁]⟩) ∧ᶠ
-          ↓ᶠ (ofEvent ⟨voteSymb, [l₂, v₂]⟩)))
-      (ψ := ♢ᶠ↓[[]]
-        ((ofEvent ⟨voteSymb, [l₂, v₂]⟩) ∧ᶠ
-          ↓ᶠ (ofEvent ⟨voteSymb, [l₁, v₁]⟩))) step2 with
-  | inl hLeft =>
-      have hEqFinal :=
-        derive_contradiction
-          (la := l₁) (lb := l₂)
-          (va := v₁) (vb := v₂)
-          hNe hLeft
-      simpa [Sat] using hEqFinal
-  | inr hRight =>
-      have hEqFinal :=
-        derive_contradiction
-          (la := l₂) (lb := l₁)
-          (va := v₂) (vb := v₁)
-          (fun h => hNe h.symm) hRight
-      simpa [Sat] using hEqFinal.symm
+  intro p hDeliver₁ hDeliver₂
+  show v₁ = v₂
+  refine Classical.byContradiction fun hNe => ?_
+  -- Step 1, (Deliver?) and Lemma 4.2.3(1): quorums of votes for both deliveries.
+  have hDeliverAx : □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
+    theory_deliver_backward hTheory
+  have hVotes₁ := deliver_to_vote_box_end hDeliverAx hDeliver₁
+  have hVotes₂ := deliver_to_vote_box_end hDeliverAx hDeliver₂
+  -- Step 2, Proposition 5.1.5(3), `v₁ ≠ v₂`, `⊨ ♢_{l₁' l₂'} seq`: one vote came after the
+  -- other. The cases are symmetric; steps 3–6 are `eq_of_vote_after_vote`.
+  rcases (Sat.or ..).1 (seq_two_quorums_eventually (hSeq p) hVotes₁ hVotes₂ (by simp [hNe]))
+    with h | h
+  · exact hNe (eq_of_vote_after_vote hTheory h)
+  · exact hNe (eq_of_vote_after_vote hTheory h).symm
 
 /-- Paper: Proposition 6.4.1, hypothesis form. Agreement from deliveries helper for HBBSafe
 (Corollary of agreement property).
@@ -357,17 +155,8 @@ theorem agreement_of_deliveries
     (hSeq : ⊨[M]♢ᶠ[[l₁', l₂']]Formula.seq)
     (hDeliver₁ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l₁, v₁]⟩))
     (hDeliver₂ : ⊨[M]♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₂', l₂, v₂]⟩)) :
-    ⊨[M] v₁ ≃ᶠ v₂ := by
-  classical
-  exact
-    EndValid.imp_elim (M := M)
-      (EndValid.imp_elim (M := M)
-        (agreement (M := M)
-          (hTheory := hTheory) (l₁ := l₁) (l₂ := l₂)
-          (l₁' := l₁') (l₂' := l₂') (v₁ := v₁) (v₂ := v₂)
-          (hSeq := hSeq))
-        hDeliver₁)
-      hDeliver₂
+    ⊨[M] v₁ ≃ᶠ v₂ :=
+  fun p => agreement hTheory hSeq p (hDeliver₁ p) (hDeliver₂ p)
 
 end HBBSafe
 end Examples

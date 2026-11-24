@@ -54,14 +54,9 @@ theorem correctness
       ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁', l, v]⟩)) ⇒ᶠ
            predicate0 liveSymb ⇒ᶠ
            ↕ᶠ(ofEvent ⟨deliverSymb, [l₂', l, v]⟩)) :=
-  ⟨fun hSeq =>
-      agreement (M := M) (hTheory := hTheory) (hSeq := hSeq),
-   fun hLiveQuorum hUnique =>
-      happy_termination (M := M) (hTheory := hTheory)
-        (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
-   fun hIntersect hSafe hLive =>
-      cascade_termination (M := M) (hTheory := hTheory)
-        (hIntersect := hIntersect) (hSafe := hSafe) (hLive := hLive)⟩
+  ⟨fun hSeq => agreement hTheory hSeq,
+   fun hLiveQuorum hUnique => happy_termination hTheory hLiveQuorum hUnique,
+   fun hIntersect hSafe hLive => cascade_termination hTheory hIntersect hSafe hLive⟩
 
 end HBBSafe
 end Examples

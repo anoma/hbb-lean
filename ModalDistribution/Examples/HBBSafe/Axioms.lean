@@ -63,10 +63,6 @@ echoes. -/
 
 end BackwardAxioms
 
-section NonEquivalenceAxiom
-
-end NonEquivalenceAxiom
-
 section ForwardAxioms
 
 /-- Paper: Figure 8, rule (Vote!). Forward rule `Vote!`: persistent safety and echoes lead to a
@@ -104,39 +100,14 @@ variable
 
 end Theory
 
-section SafePredicate
-
-variable {P : Type} [Nonempty P] {M : Model S P}
-variable {liveSymb safeSymb : Signature.PredSymb S}
-variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
-
-/-- In any model of `HBBSafe`, the `safe` predicate coincides with
-`safeFormula` at every world, by axiom `Safe`. -/
-theorem safe_iff_safeFormula
-    (hTheory : M ⊨ᵀ
-      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    (w : World P (Signature.EventType S))
-    (hW : w.time ⪯ M.history.val) (l : S.Value) :
-    (⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) ↔
-      (⟪w⟫ ⊨[M] safeFormula proposeSymb l) := by
-  classical
-  have hAx : AllWorldValid M (safeAxiom safeSymb proposeSymb) := by
-    apply hTheory
-    simp [theory]
-  have hInst := Sat.forall_elim (M := M) (w := w)
-    (body := fun learner =>
-      ofPredicate ⟨safeSymb, [learner]⟩ ⇔ᶠ safeFormula proposeSymb learner)
-    (v := l) (hAx hW)
-  exact ⟨Sat.iff_mp (M := M) (w := w) hInst,
-    Sat.iff_mpr (M := M) (w := w) hInst⟩
-
-end SafePredicate
-
 section Projections
 
+/-! Each axiom of `HBBSafe` is valid in every model of the theory. -/
+
 variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+
 /-- A model of `HBBSafe` is a model of `thyLive`. -/
 theorem theory_thyLive
     (hTheory : M ⊨ᵀ
@@ -199,7 +170,18 @@ variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
-/-- Instantiate `Vote?` at a world of the model: a vote yields safety of the
+/-- In any model of `HBBSafe`, the `safe` predicate coincides with
+`safeFormula` at every world, by axiom `Safe`. -/
+theorem safe_iff_safeFormula
+    (hTheory : M ⊨ᵀ
+      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
+    (w : World P (Signature.EventType S))
+    (hW : w.time ⪯ M.history.val) (l : S.Value) :
+    (⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩) ↔
+      (⟪w⟫ ⊨[M] safeFormula proposeSymb l) :=
+  ⟨Sat.iff_mp M w (theory_safe hTheory hW l), Sat.iff_mpr M w (theory_safe hTheory hW l)⟩
+
+/-- Instantiate `Vote?` at an event-tuple of the model: a vote yields safety of the
 learner and a quorum of past echoes. -/
 theorem vote_backward_elim
     (hAx : □W⊨[M] voteBackwardAxiom safeSymb echoSymb voteSymb)
@@ -208,83 +190,8 @@ theorem vote_backward_elim
     {learner value : S.Value}
     (hVote : ⟪w⟫ ⊨[M] ofEvent ⟨voteSymb, [learner, value]⟩) :
     (⟪w⟫ ⊨[M] ofPredicate ⟨safeSymb, [learner]⟩) ∧
-      (⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) := by
-  classical
-  have hLocal :
-      ⟪w⟫ ⊨[M] voteBackwardAxiom safeSymb echoSymb voteSymb :=
-    AllWorldValid.of_mem_history (M := M) hAx hMem
-  have hLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner => ∀ᶠ (fun value =>
-        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-          (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
-            □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
-      (v := learner)
-      (by simpa [voteBackwardAxiom] using hLocal)
-  have hValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        ofEvent ⟨voteSymb, [learner, value]⟩ ⇒ᶠ
-          (ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
-            □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))
-      (v := value) hLearner
-  have hConj :=
-    Sat.imp_elim (M := M) (w := w)
-      (φ := ofEvent ⟨voteSymb, [learner, value]⟩)
-      (ψ := ofPredicate ⟨safeSymb, [learner]⟩ ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))
-      hValue hVote
-  exact
-    (Sat.and (M := M) (w := w)
-      (φ := ofPredicate ⟨safeSymb, [learner]⟩)
-      (ψ := □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))).1 hConj
-
-/-- Instantiate `Vote!` at a world of the model: everywhere-safety and a sometime-live
-quorum of past echoes yield an eventual vote. -/
-theorem vote_forward_elim
-    (hAx : □W⊨[M] voteForwardAxiom liveSymb safeSymb echoSymb voteSymb)
-    {w : World P (Signature.EventType S)}
-    (hW : w.time ⪯ M.history.val)
-    {learner value : S.Value}
-    (hSafeAlways : ⟪w⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩))
-    (hLiveEcho : ⟪w⟫ ⊨[M] (↕ᶠ (predicate0 liveSymb ∧ᶠ
-      □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)))) :
-    ⟪w⟫ ⊨[M] ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩) := by
-  classical
-  have hLocal :
-      ⟪w⟫ ⊨[M] voteForwardAxiom liveSymb safeSymb echoSymb voteSymb :=
-    hAx hW
-  have hLearner :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun learner => ∀ᶠ (fun value =>
-        (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
-          ((↕ᶠ (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
-            ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))))
-      (v := learner)
-      (by simpa [voteForwardAxiom] using hLocal)
-  have hValue :=
-    Sat.forall_elim (M := M) (w := w)
-      (body := fun value =>
-        (⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩)) ⇒ᶠ
-          ((↕ᶠ (predicate0 liveSymb ∧ᶠ
-              □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
-            ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩)))
-      (v := value) hLearner
-  have hGuarded :=
-    Sat.imp_elim (M := M) (w := w)
-      (φ := ⇕ᶠ (ofPredicate ⟨safeSymb, [learner]⟩))
-      (ψ := (↕ᶠ (predicate0 liveSymb ∧ᶠ
-          □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))) ⇒ᶠ
-        ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
-      hValue hSafeAlways
-  exact
-    Sat.imp_elim (M := M) (w := w)
-      (φ := (↕ᶠ (predicate0 liveSymb ∧ᶠ
-        □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩))))
-      (ψ := ↕ᶠ(ofEvent ⟨voteSymb, [learner, value]⟩))
-      hGuarded
-      hLiveEcho
+      (⟪w⟫ ⊨[M] □ᶠ↓[[learner]] (ofEvent ⟨echoSymb, [value]⟩)) :=
+  (Sat.and ..).1 (hAx (M.time_le_of_mem hMem) learner value hVote)
 
 end Instantiations
 
