@@ -5,10 +5,10 @@ import ModalDistribution.Logic.Properties.Modalities
 /-!
 # Sequentiality lemmas
 
-This module packages the lemmas and propositions whose primary focus is the
-sequentiality modality `Formula.seq`: the Section 5.1 characterisation and
-monotonicity results, and the quorum-intersection witnesses of
-Proposition 5.1.5.
+The results of paper Section 5.1 about the sequentiality predicate `seq`: its
+characterisation by linearity of the in-place past (Lemma 5.1.2), its
+monotonicity (Lemma 5.1.3, Proposition 5.1.4), and the ordering of events seen
+by two quorums (Proposition 5.1.5).
 -/
 
 namespace ModalDistribution
@@ -22,84 +22,56 @@ open scoped Formula History PreHistory
 
 set_option autoImplicit false
 
-variable {S : Signature} {P : Type}
-variable {w w' : World P (Signature.EventType S)}
+variable {S : Signature} {P : Type} [Nonempty P]
+variable {M : Model S P} {w w' : World P (Signature.EventType S)}
 
-variable [Nonempty P]
-variable {M : Model S P}
-
-/-- Paper: Lemma 5.1.2. Sequentiality coincides with linear ordering of the in-place slice. -/
+/-- Paper: Lemma 5.1.2. `w ⊨ seq` exactly when the event-tuples in-place
+accessible from `w` are linearly ordered by accessibility. -/
 theorem seq_iff_linear_accessible
     : (⟪w⟫ ⊨[M]Formula.seq) ↔
       (∀ {w₁ w₂ : World P (Signature.EventType S)},
         w₁ ≪⁻ w → w₂ ≪⁻ w →
-          (w₁ ≪ w₂ ∨ w₂ ≪ w₁ ∨ w₁ = w₂)) := by
-  classical
-  constructor
-  · intro hSeq
-    have hSeq' : IsSequential (P := P) (Event := Signature.EventType S)
-        w.place w.time :=
-      (Sat.seq (M := M) (w := w)).1 hSeq
-    intro w₁ w₂ hw₁ hw₂
-    have hw₁_mem : w₁ ∈ w.time := by
-      simpa [World.Accessible] using hw₁.1
-    have hw₂_mem : w₂ ∈ w.time := by
-      simpa [World.Accessible] using hw₂.1
-    have hw₁_place : World.place w₁ = w.place := hw₁.2
-    have hw₂_place : World.place w₂ = w.place := hw₂.2
-    exact hSeq' w₁ w₂ hw₁_mem hw₂_mem hw₁_place hw₂_place
-  · intro h
-    have hSeq :
-        IsSequential (P := P) (Event := Signature.EventType S)
-          w.place w.time := by
-      intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
-      have ht₁_access : t₁ ≪⁻ w :=
-        ⟨by simpa [World.Accessible] using ht₁, hp₁⟩
-      have ht₂_access : t₂ ≪⁻ w :=
-        ⟨by simpa [World.Accessible] using ht₂, hp₂⟩
-      exact h (w₁ := t₁) (w₂ := t₂) ht₁_access ht₂_access
-    exact (Sat.seq (M := M) (w := w)).2 hSeq
+          (w₁ ≪ w₂ ∨ w₂ ≪ w₁ ∨ w₁ = w₂)) :=
+  -- Unpack sequentiality (Definition 3.4.9(1)) and `≪⁻` (Definition 3.4.2(4)).
+  (Sat.seq M w).trans
+    ⟨fun hSeq {_ _} ⟨h₁, hp₁⟩ ⟨h₂, hp₂⟩ => hSeq _ _ h₁ h₂ hp₁ hp₂,
+      fun h _ _ h₁ h₂ hp₁ hp₂ => h ⟨h₁, hp₁⟩ ⟨h₂, hp₂⟩⟩
 
-/-- Paper: Lemma 5.1.3. Accessible predecessors preserve in-place accessibility slices. -/
+/-- Paper: Lemma 5.1.3. If `w' ≪⁻ w` then everything in-place accessible from
+`w'` is in-place accessible from `w`. -/
 theorem accessible_subset_of_accessible
     (hW : w.time ⪯ M.history.val)
     (hAcc : w' ≪⁻ w) :
     {t : World P (Signature.EventType S) | t ≪⁻ w'} ⊆
       {t : World P (Signature.EventType S) | t ≪⁻ w} := fun _ ht =>
+  -- Transitivity of `≪` (Proposition 3.4.5) and of equality of places.
   ⟨accessible_trans (H := M.history) (hW := hW) (h₂ := ht.1) (h₁ := hAcc.1),
     ht.2.trans hAcc.2⟩
 
-/-- Paper: Proposition 5.1.4(1). Sequentiality persists along same-place accessibility. -/
+/-- Paper: Proposition 5.1.4(1). If `w' ≪⁻ w` then `w ⊨ seq` implies
+`w' ⊨ seq`. -/
 theorem seq_monotone_of_subset
     (hW : w.time ⪯ M.history.val)
     (hAcc : w' ≪⁻ w)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
-    ⟪w'⟫ ⊨[M]Formula.seq := by
-  classical
-  -- Lemma 5.1.2 reduces sequentiality to linearity of the in-place cone,
-  -- and Lemma 5.1.3 nests the cones.
-  refine (seq_iff_linear_accessible (M := M) (w := w')).2 ?_
-  intro w₁ w₂ h₁ h₂
-  exact
-    (seq_iff_linear_accessible (M := M) (w := w)).1 hSeq
-      (accessible_subset_of_accessible (M := M) (hW := hW) (hAcc := hAcc) h₁)
-      (accessible_subset_of_accessible (M := M) (hW := hW) (hAcc := hAcc) h₂)
+    ⟪w'⟫ ⊨[M]Formula.seq :=
+  -- By Lemma 5.1.2 both sides are linearity statements, and Lemma 5.1.3 nests
+  -- the sets that must be linear.
+  seq_iff_linear_accessible.2 fun h₁ h₂ =>
+    seq_iff_linear_accessible.1 hSeq
+      (accessible_subset_of_accessible hW hAcc h₁)
+      (accessible_subset_of_accessible hW hAcc h₂)
 
-/-- Paper: Proposition 5.1.4(2). Sequentiality implies `⇓ᶠ`-sequentiality.
-This restates part 1 under `⇓`. -/
+/-- Paper: Proposition 5.1.4(2). `w ⊨ seq ⇒ ⇓seq`, a restatement of part (1). -/
 theorem seq_monotone_all_itp
     (hW : w.time ⪯ M.history.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
-    ⟪w⟫ ⊨[M]⇓ᶠ Formula.seq := by
-  classical
-  refine (Sat.allPast (M := M) (w := w) (φ := Formula.seq)).2 ?_
-  intro t ht hp
-  exact
-    seq_monotone_of_subset (M := M) (hW := hW)
-      (hAcc := ⟨by simpa [World.Accessible] using ht, hp⟩)
-      (hSeq := hSeq)
+    ⟪w⟫ ⊨[M]⇓ᶠ Formula.seq :=
+  (Sat.allPast ..).2 fun _ ht hp => seq_monotone_of_subset hW ⟨ht, hp⟩ hSeq
 
-/-- Paper: Proposition 5.1.5(1). Quorum intersections furnish a joint witness. -/
+/-- Paper: Proposition 5.1.5(1). If `l` and `l'` quorums intersect at
+participants satisfying `ψ`, and an `l`-quorum satisfies `φ` and an
+`l'`-quorum satisfies `φ'`, then some participant satisfies all three. -/
 theorem two_quorums_exists
     {ls : Signature.Value S}
     {ls' : Signature.Value S}
@@ -108,98 +80,11 @@ theorem two_quorums_exists
     (hφ : ⟪w⟫ ⊨[M]□ᶠ[[ls]]φ)
     (hφ' : ⟪w⟫ ⊨[M]□ᶠ[[ls']]φ') :
     ⟪w⟫ ⊨[M] ♢ᶠ[] ((ψ ∧ᶠ φ) ∧ᶠ φ') := by
-  classical
-  obtain ⟨O, hO, hO_all⟩ :=
-    (sat_box_singleton_exists (M := M)
-      (w := w) (l := ls) (φ := φ)).1 hφ
-  obtain ⟨O', hO', hO'_all⟩ :=
-    (sat_box_singleton_exists (M := M)
-      (w := w) (l := ls') (φ := φ')).1 hφ'
-  obtain ⟨q, hqMem, hqψ⟩ :=
-    (sat_diamond_pair_iff (M := M)
-      (w := w) (l := ls) (l' := ls') (φ := ψ)).1 hψ
-      O hO O' hO'
-  have hqφ : ⟪⟨q, †, w.time⟩⟫ ⊨[M] φ :=
-    hO_all q (Set.mem_of_mem_inter_left hqMem)
-  have hqφ' : ⟪⟨q, †, w.time⟩⟫ ⊨[M] φ' :=
-    hO'_all q (Set.mem_of_mem_inter_right hqMem)
-  have hψφ : ⟪⟨q, †, w.time⟩⟫ ⊨[M] (ψ ∧ᶠ φ) := by
-    have :=
-      (Sat.and (M := M) (w := ⟨q, †, w.time⟩)
-        (φ := ψ) (ψ := φ))
-    exact this.2 ⟨hqψ, hqφ⟩
-  have hConj :
-      ⟪⟨q, †, w.time⟩⟫ ⊨[M]
-        ((ψ ∧ᶠ φ) ∧ᶠ φ') := by
-    have :=
-      (Sat.and (M := M) (w := ⟨q, †, w.time⟩)
-        (φ := (ψ ∧ᶠ φ)) (ψ := φ'))
-    exact this.2 ⟨hψφ, hqφ'⟩
-  have hWitness : ∃ r, ⟪⟨r, †, w.time⟩⟫ ⊨[M]
-      ((ψ ∧ᶠ φ) ∧ᶠ φ') := ⟨q, hConj⟩
-  exact
-    sat_diamondEmpty_of_local (M := M)
-      (w := w) (φ := ((ψ ∧ᶠ φ) ∧ᶠ φ')) hWitness
-
-variable {H H' : History P (Signature.EventType S)}
-variable {p : P}
-variable {w w₁ w₂ : World P (Signature.EventType S)}
-variable {w' : World P (Signature.EventType S)}
-variable {t t' t₁ t₂ : World P (Signature.EventType S)}
-variable {h' : PreHistory P (Signature.EventType S)}
-variable {l l' : Signature.Value S}
-variable {evt evt' : Signature.EventType S}
-variable {φ ψ φ' : Formula S}
-
-/-- Sequentiality depends only on the place and timeline of the current world. -/
-theorem seq_local_view_of_seq
-    (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
-    (hPlace : w'.place = w.place)
-    (hTime : w'.time = w.time) :
-    ⟪w'⟫ ⊨[M]Formula.seq := by
-  classical
-  rcases w with ⟨p, e, τ⟩
-  rcases w' with ⟨p', e', τ'⟩
-  dsimp [World.place, World.time] at hPlace hTime
-  subst hPlace
-  subst hTime
-  simpa [World.place, World.time, Sat] using hSeq
-
-/-- Satisfaction of the empty past diamond depends only on the underlying timeline,
-not the distinguished participant. -/
-theorem sat_diamondPast_empty_participant_iff
-    {w₁ w₂ : World P (Signature.EventType S)}
-    (hTime : w₁.time = w₂.time) (φ : Formula S) :
-    (⟪w₁⟫ ⊨[M] ♢ᶠ↓[[]] φ) ↔ (⟪w₂⟫ ⊨[M] ♢ᶠ↓[[]] φ) := by
-  classical
-  rcases w₁ with ⟨p₁, evt₁, H₁⟩
-  rcases w₂ with ⟨p₂, evt₂, H₂⟩
-  have hTime' : H₁ = H₂ := by simpa [World.time] using hTime
-  constructor
-  · intro h
-    obtain ⟨p, hp⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := ⟨p₁, evt₁, H₁⟩)
-        (φ := ↓ᶠ φ)).1
-        (by simpa [Formula.diamondPast])
-    have hp₁ : ⟪⟨p, †, H₂⟩⟫ ⊨[M] ↓ᶠ φ := by
-      simpa [World.time, hTime'] using hp
-    exact
-      (Sat.diamond_nil (M := M)
-        (w := ⟨p₂, evt₂, H₂⟩)
-        (φ := ↓ᶠ φ)).2 ⟨p, hp₁⟩
-  · intro h
-    obtain ⟨p, hp⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := ⟨p₂, evt₂, H₂⟩)
-        (φ := ↓ᶠ φ)).1
-        (by simpa [Formula.diamondPast, hTime'])
-    have hp₂ : ⟪⟨p, †, H₁⟩⟫ ⊨[M] ↓ᶠ φ := by
-      simpa [World.time, hTime'] using hp
-    exact
-      (Sat.diamond_nil (M := M)
-        (w := ⟨p₁, evt₁, H₁⟩)
-        (φ := ↓ᶠ φ)).2 ⟨p, hp₂⟩
+  obtain ⟨O, hO, hφO⟩ := (sat_box_singleton_exists ..).1 hφ
+  obtain ⟨O', hO', hφO'⟩ := (sat_box_singleton_exists ..).1 hφ'
+  obtain ⟨q, ⟨hqO, hqO'⟩, hψq⟩ := (sat_diamond_pair_iff ..).1 hψ O hO O' hO'
+  exact (Sat.diamondEmpty ..).2
+    ⟨q, Sat.and_intro M _ (Sat.and_intro M _ hψq (hφO q hqO)) (hφO' q hqO')⟩
 
 /-- Paper: Proposition 5.1.5(2). At a sequential world, two distinct past
 events at the current place occur one after the other. -/
@@ -213,61 +98,22 @@ theorem seq_two_quorums_events
     ⟪w⟫ ⊨[M]
       ((↓ᶠ ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt'))) ∨ᶠ
         (↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))) := by
-  classical
-  have hSeqTime :
-      IsSequential (P := P) (Event := Signature.EventType S)
-        w.place w.time :=
-    (Sat.seq (M := M) (w := w)).1 hSeq
-  obtain ⟨t₁, ht₁_mem, ht₁_place, ht₁_event⟩ :=
-    (Sat.past (M := M) (w := w) (φ := Formula.ofEvent evt)).1 hEvt_local
-  obtain ⟨t₂, ht₂_mem, ht₂_place, ht₂_event⟩ :=
-    (Sat.past (M := M) (w := w) (φ := Formula.ofEvent evt')).1 hEvt'_local
-  have hOrder :=
-    hSeqTime t₁ t₂ ht₁_mem ht₂_mem ht₁_place ht₂_place
-  have hEvt₁_place : t₁.event = MaybeEvent.some evt :=
-    ((Sat.ofEvent (M := M) (w := t₁) (E := evt)).1 ht₁_event).1
-  have hEvt₂_place : t₂.event = MaybeEvent.some evt' :=
-    ((Sat.ofEvent (M := M) (w := t₂) (E := evt')).1 ht₂_event).1
-  have hp_eq : t₁.place = t₂.place := ht₁_place.trans ht₂_place.symm
-  cases hOrder with
-  | inl hIn =>
-      -- `t₁` precedes `t₂`: `evt'` happened after `evt`.
-      have hConj :
-          ⟪t₂⟫ ⊨[M]
-            ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)) :=
-        (Sat.and (M := M) (w := t₂)
-          (φ := Formula.ofEvent evt') (ψ := ↓ᶠ (Formula.ofEvent evt))).2
-          ⟨ht₂_event,
-            Sat.past_intro_of_prefix (M := M) (w := t₂) (t := t₁)
-              (ht := by simpa [World.Accessible] using hIn)
-              (hp := hp_eq) (hφ := ht₁_event)⟩
-      exact sat_or_of_right (M := M) (w := w)
-        (Sat.past_intro_of_prefix (M := M) (w := w) (t := t₂)
-          (ht := ht₂_mem) (hp := ht₂_place) (hφ := hConj))
-  | inr hInOrEq =>
-      cases hInOrEq with
-      | inl hIn =>
-          -- `t₂` precedes `t₁`: `evt` happened after `evt'`.
-          have hConj :
-              ⟪t₁⟫ ⊨[M]
-                ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')) :=
-            (Sat.and (M := M) (w := t₁)
-              (φ := Formula.ofEvent evt) (ψ := ↓ᶠ (Formula.ofEvent evt'))).2
-              ⟨ht₁_event,
-                Sat.past_intro_of_prefix (M := M) (w := t₁) (t := t₂)
-                  (ht := by simpa [World.Accessible] using hIn)
-                  (hp := hp_eq.symm) (hφ := ht₂_event)⟩
-          exact sat_or_of_left (M := M) (w := w)
-            (Sat.past_intro_of_prefix (M := M) (w := w) (t := t₁)
-              (ht := ht₁_mem) (hp := ht₁_place) (hφ := hConj))
-      | inr hEq =>
-          cases hEq
-          have hMaybe : MaybeEvent.some evt = MaybeEvent.some evt' :=
-            (Eq.trans hEvt₂_place.symm hEvt₁_place).symm
-          exact (hDistinct (MaybeEvent.some.inj hMaybe)).elim
+  obtain ⟨t₁, ht₁, hp₁, hE₁⟩ := (Sat.past ..).1 hEvt_local
+  obtain ⟨t₂, ht₂, hp₂, hE₂⟩ := (Sat.past ..).1 hEvt'_local
+  -- Sequentiality orders the two event-tuples at the current place.
+  rcases (Sat.seq M w).1 hSeq t₁ t₂ ht₁ ht₂ hp₁ hp₂ with h₁₂ | h₂₁ | rfl
+  · -- `E` happened before `E'`.
+    refine (Sat.or ..).2 (.inr (Sat.past_intro_of_prefix ht₂ hp₂ ?_))
+    exact Sat.and_intro M _ hE₂ (Sat.past_intro_of_prefix h₁₂ (hp₁.trans hp₂.symm) hE₁)
+  · -- `E'` happened before `E`.
+    refine (Sat.or ..).2 (.inl (Sat.past_intro_of_prefix ht₁ hp₁ ?_))
+    exact Sat.and_intro M _ hE₁ (Sat.past_intro_of_prefix h₂₁ (hp₂.trans hp₁.symm) hE₂)
+  · -- One event-tuple cannot carry two distinct events.
+    exact absurd (MaybeEvent.some.inj (hE₁.1.symm.trans hE₂.1)) hDistinct
 
-/-- Paper: Proposition 5.1.5(3). Sequential eventual ordering: distinct events from two quorums are
-temporally ordered. -/
+/-- Paper: Proposition 5.1.5(3). If `l` and `l'` have sequential quorum
+intersections, an `l`-quorum saw `E` and an `l'`-quorum saw `E'`, then some
+participant saw them in one order or the other. -/
 theorem seq_two_quorums_eventually
     {w : World P (Signature.EventType S)}
     {l l' : Signature.Value S}
@@ -279,103 +125,18 @@ theorem seq_two_quorums_eventually
     ⟪w⟫ ⊨[M]
       ((♢ᶠ↓[[]] ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt'))) ∨ᶠ
         (♢ᶠ↓[[]] ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))) := by
-  classical
-  have hWitness :=
-    two_quorums_exists (M := M)
-      (w := w)
-      (ls := l) (ls' := l')
-      (ψ := Formula.seq)
-      (φ := ↓ᶠ (Formula.ofEvent evt))
-      (φ' := ↓ᶠ (Formula.ofEvent evt'))
-      hSeq hEvt hEvt'
-  obtain ⟨q, hLocal⟩ :=
-    (Sat.diamond_nil (M := M)
-      (w := w)
-      (φ :=
-        ((Formula.seq ∧ᶠ ↓ᶠ (Formula.ofEvent evt)) ∧ᶠ
-          ↓ᶠ (Formula.ofEvent evt')))).1
-      (by simpa [Formula.diamondEmpty] using hWitness)
-  simp only [Sat.and] at hLocal
-  obtain ⟨⟨hSeq_local, hEvt_local⟩, hEvt'_local⟩ := hLocal
-  set w_q : World P (Signature.EventType S) :=
-    ⟨q, w.event, w.time⟩
-  have hSeq_q : ⟪w_q⟫ ⊨[M] Formula.seq :=
-    seq_local_view_of_seq
-      (w := ⟨q, †, w.time⟩)
-      (w' := w_q)
-      (M := M)
-      (hSeq := hSeq_local)
-      (hPlace := rfl)
-      (hTime := rfl)
-  have hEvt_q : ⟪w_q⟫ ⊨[M] ↓ᶠ (Formula.ofEvent evt) := by
-    obtain ⟨t, ht_mem, ht_place, ht_evt⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨q, †, w.time⟩)
-        (φ := Formula.ofEvent evt)).1 hEvt_local
-    exact
-      (Sat.past (M := M)
-        (w := w_q)
-        (φ := Formula.ofEvent evt)).2
-        ⟨t, by simpa [World.time] using ht_mem,
-          by simpa [World.place] using ht_place, ht_evt⟩
-  have hEvt'_q : ⟪w_q⟫ ⊨[M] ↓ᶠ (Formula.ofEvent evt') := by
-    obtain ⟨t, ht_mem, ht_place, ht_evt⟩ :=
-      (Sat.past (M := M)
-        (w := ⟨q, †, w.time⟩)
-        (φ := Formula.ofEvent evt')).1 hEvt'_local
-    exact
-      (Sat.past (M := M)
-        (w := w_q)
-        (φ := Formula.ofEvent evt')).2
-        ⟨t, by simpa [World.time] using ht_mem,
-          by simpa [World.place] using ht_place, ht_evt⟩
-  have hDisj_q :=
-    seq_two_quorums_events (M := M) (w := w_q)
-      (hSeq := hSeq_q)
-      (hEvt_local := hEvt_q)
-      (hEvt'_local := hEvt'_q)
-      (hDistinct := hDistinct)
-  set φ₁ :=
-      ♢ᶠ↓[[]]
-        ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt'))
-    with hφ₁
-  set φ₂ :=
-      ♢ᶠ↓[[]]
-        ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt))
-    with hφ₂
-  have hCases :=
-    sat_or_cases (M := M) (w := w_q)
-      (φ := ↓ᶠ ((Formula.ofEvent evt) ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))
-      (ψ := ↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt))) hDisj_q
-  cases hCases with
-  | inl hPast₁_q =>
-      have hφ₁_q : ⟪w_q⟫ ⊨[M] φ₁ := diamondPast_nil_of_past (M := M) hPast₁_q
-      have hφ₁_w : ⟪w⟫ ⊨[M] φ₁ := by
-        have :=
-          (sat_diamondPast_empty_participant_iff
-            (M := M)
-            (w₁ := w_q)
-            (w₂ := w)
-            (hTime := rfl)
-            (φ :=
-              (Formula.ofEvent evt ∧ᶠ ↓ᶠ (Formula.ofEvent evt')))).1 hφ₁_q
-        simpa [hφ₁]
-      exact sat_or_of_left (M := M) (w := w)
-        (φ := φ₁) (ψ := φ₂) hφ₁_w
-  | inr hPast₂_q =>
-      have hφ₂_q : ⟪w_q⟫ ⊨[M] φ₂ := diamondPast_nil_of_past (M := M) hPast₂_q
-      have hφ₂_w : ⟪w⟫ ⊨[M] φ₂ := by
-        have :=
-          (sat_diamondPast_empty_participant_iff
-            (M := M)
-            (w₁ := w_q)
-            (w₂ := w)
-            (hTime := rfl)
-            (φ :=
-              (Formula.ofEvent evt' ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))).1 hφ₂_q
-        simpa [hφ₂]
-      exact sat_or_of_right (M := M) (w := w)
-        (φ := φ₁) (ψ := φ₂) hφ₂_w
+  -- Part (1) gives a participant `q` that is sequential and saw both events ...
+  obtain ⟨q, hq⟩ := (Sat.diamondEmpty ..).1 (two_quorums_exists hSeq hEvt hEvt')
+  simp only [Sat.and] at hq
+  obtain ⟨⟨hSeq_q, hE_q⟩, hE'_q⟩ := hq
+  -- ... part (2) orders the events at `q`, and a past witness at `q` is a
+  -- past witness at any place.
+  have toDiamond : ∀ {X : Formula S},
+      (⟪⟨q, †, w.time⟩⟫ ⊨[M] ↓ᶠ X) → ⟪w⟫ ⊨[M] ♢ᶠ↓[[]] X := fun h =>
+    let ⟨t, ht, _, hX⟩ := (Sat.past ..).1 h
+    Sat.diamondPast_nil.2 ⟨t, ht, hX⟩
+  exact (Sat.or ..).2
+    ((sat_or_cases (seq_two_quorums_events hSeq_q hE_q hE'_q hDistinct)).imp toDiamond toDiamond)
 
 end Logic
 end ModalDistribution
