@@ -12,7 +12,7 @@ This module re-exports the components of the `HBBCorr` formalisation. The layout
 follows Section 8 of the paper:
 
 * `HBBCorr.Axioms`: Axiom system
-* `HBBCorr.Lemmas`: Helper lemmas
+* `HBBCorr.Lemmas`: Lemmas 8.4.1–8.4.4
 * `HBBCorr.HappyTermination`: Happy Termination
 * `HBBCorr.CascadeTermination`: Cascade Termination
 * `HBBCorr.Agreement`: Agreement property

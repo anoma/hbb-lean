@@ -54,15 +54,7 @@ theorem correctness
       ⊨[M](♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l₁, v]⟩)) ⇒ᶠ
            predicate0 liveSymb ⇒ᶠ
            ↕ᶠ(ofEvent ⟨deliverSymb, [l₂, v]⟩)) :=
-  ⟨fun hCorrelation =>
-      agreement (M := M) (hTheory := hTheory)
-        (hCorrelation := hCorrelation),
-   fun hLiveQuorum hUnique =>
-      happy_termination (M := M) (hTheory := hTheory)
-        (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
-   fun hCorrelation hLiveQuorum =>
-      cascade_termination (M := M) (hTheory := hTheory)
-        (hCorrelation := hCorrelation) (hLiveQuorum := hLiveQuorum)⟩
+  ⟨agreement hTheory, happy_termination hTheory, cascade_termination hTheory⟩
 
 end HBBCorr
 end Examples
