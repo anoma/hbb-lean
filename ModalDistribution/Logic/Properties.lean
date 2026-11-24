@@ -8,7 +8,8 @@ import ModalDistribution.Logic.Properties.Sequentiality
 
 This file re-exports the logical infrastructure for modal logic.
 
-- `Properties.Quorums`: QuorumFamily structure and quorum intersection lemmas
+- `Properties.Quorums`: quorum families, one quorum chosen per learner
+- `Properties.Satisfaction`: evaluating `♢`/`□` through quorum families
 - `Properties.Modalities`: Diamond/box modality lemmas and duality properties
 - `Properties.Sequentiality`: Sequentiality modality lemmas and sequential reasoning
 -/
