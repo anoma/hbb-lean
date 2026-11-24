@@ -101,7 +101,6 @@ This builds the project **and verifies all proofs**. It will:
 **What to expect during the build:**
 - The project has no external dependencies beyond Lean itself, so the first build takes well under a minute on a typical machine
 - You'll see messages like "✔ [13/38] Built ModalDistribution.Logic.Properties.Modalities (842ms)" as modules are being processed
-- The build compiles 43 files total, which can be used to gauge build progress
 - When you see modules from `ModalDistribution.Examples.HBBSafe`, `HBBSimp`, and `HBBCorr` being processed, that's when the correctness properties (Agreement, Happy Termination, and Cascade Termination) for each protocol are being verified
 - Subsequent builds are much faster
 

@@ -6,8 +6,7 @@ import ModalDistribution.Logic.Properties
 /-!
 # HBBCorr Axioms
 
-This file records the axiom schemes for the `HBBCorr` broadcast protocol. The
-Theory HBBCorr axioms:
+This file records the axiom schemes for the `HBBCorr` broadcast protocol:
 
 * Backward rules `Echo?`, `Vote?`, and `Deliver?`
 * Non-equivocation axioms `EchoNE` and `VoteNE`
@@ -81,7 +80,7 @@ intersect. -/
   ∀ᶠ fun learner₁ => ∀ᶠ fun learner₂ => ∀ᶠ fun learner₃ =>
     ♢ᶠ[[learner₁, learner₂, learner₃]] ⊤ᶠ
 
-/-- Paper: Figure 12, axiom (≐seq). Axiom `$\mnta\tf{seq}$`: correlated learners have sequential
+/-- Paper: Figure 12, axiom (≐seq). Axiom `≐seq`: correlated learners have sequential
 intersections. -/
 @[simp] def correlationSeqAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
@@ -89,21 +88,21 @@ intersections. -/
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ♢ᶠ[[learner, correlated]] Formula.seq
 
-/-- Paper: Figure 12, axiom (≐⇓). Axiom `$\mnta\utn$`: correlation is historically persistent. -/
+/-- Paper: Figure 12, axiom (≐⇓). Axiom `≐⇓`: correlation is historically persistent. -/
 @[simp] def correlationMonotoneAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ⇓ᶠ (ofPredicate ⟨correlationSymb, [learner, correlated]⟩)
 
-/-- Paper: Figure 12, axiom (≐symm). Axiom `$\mnta$symm`: correlation is symmetric. -/
+/-- Paper: Figure 12, axiom (≐symm). Axiom `≐symm`: correlation is symmetric. -/
 @[simp] def correlationSymmAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun correlated =>
     ofPredicate ⟨correlationSymb, [learner, correlated]⟩ ⇒ᶠ
       ofPredicate ⟨correlationSymb, [correlated, learner]⟩
 
-/-- Paper: Figure 12, axiom (≐tran). Axiom `$\mnta$tran`: correlation is transitive. -/
+/-- Paper: Figure 12, axiom (≐tran). Axiom `≐tran`: correlation is transitive. -/
 @[simp] def correlationTransAxiom
     (correlationSymb : Signature.PredSymb S) : Formula S :=
   ∀ᶠ fun learner => ∀ᶠ fun middle => ∀ᶠ fun correlated =>

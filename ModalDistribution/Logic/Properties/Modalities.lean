@@ -478,8 +478,8 @@ theorem pastBoxCollapsesToPresentBox
 
 /-! ## Corollary derivation for the liveness theorems -/
 
-/-- Paper: Lemma 6.5.4. `\atd{l}` of `\sometime φ` coincides
-with `\atddot{l} φ`. -/
+/-- Paper: Lemma 6.5.4. `□_l ↕φ` coincides
+with `□↓_l φ`. -/
 theorem box_sometime_iff_boxPast
     (M : Model S P)
     (φ : Formula S)

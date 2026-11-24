@@ -218,7 +218,7 @@ theorem final_knows_quorum {t : World Unit sig.EventType} {E : sig.EventType}
   simpa [Formula.boxPast] using hBox
 
 /-- `ThyLive` holds in the model. -/
-theorem thyLive_valid : Theory.Valid (M := model dargs) (ThyLive (S := sig) .live) := by
+theorem thyLive_valid : model dargs ⊨ᵀ ThyLive (S := sig) .live := by
   rintro ax (rfl | rfl | ⟨E, rfl⟩ | ⟨l, E, rfl⟩) w hw
   · -- (LiveAlways): `live` holds everywhere.
     simp [liveAlwaysAxiom, Formula.iff, Formula.and, Formula.not, Sat]
@@ -267,8 +267,8 @@ theorem valid_by_eval {φ : Formula sig}
 
 /-- `HBBSimp` holds in the model with ternary deliveries. -/
 theorem hbbSimp_valid :
-    Theory.Valid (M := model [v, v, v])
-      (HBBSimp.theory (S := sig) .live .propose .echo .vote .deliver) := by
+    model [v, v, v] ⊨ᵀ
+      HBBSimp.theory (S := sig) .live .propose .echo .vote .deliver := by
   rintro ax (hL | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · exact thyLive_valid _ hL
   all_goals
@@ -278,8 +278,8 @@ theorem hbbSimp_valid :
 
 /-- `HBBSafe` holds in the model with ternary deliveries. -/
 theorem hbbSafe_valid :
-    Theory.Valid (M := model [v, v, v])
-      (HBBSafe.theory (S := sig) .live .safe .propose .echo .vote .deliver) := by
+    model [v, v, v] ⊨ᵀ
+      HBBSafe.theory (S := sig) .live .safe .propose .echo .vote .deliver := by
   rintro ax (hL | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · exact thyLive_valid _ hL
   all_goals
@@ -289,8 +289,8 @@ theorem hbbSafe_valid :
 
 /-- `HBBCorr` holds in the model with binary deliveries. -/
 theorem hbbCorr_valid :
-    Theory.Valid (M := model [v, v])
-      (HBBCorr.theory (S := sig) .live .propose .echo .vote .deliver .corr) := by
+    model [v, v] ⊨ᵀ
+      HBBCorr.theory (S := sig) .live .propose .echo .vote .deliver .corr := by
   rintro ax (hL | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl)
   · exact thyLive_valid _ hL
@@ -315,8 +315,8 @@ theorem seq_intersections (ls : List sig.Value) :
 Agreement, Happy Termination and Cascade Termination all hold (with `l` the
 one learner and `v` the one value), and a live participant delivers `v`. -/
 theorem hbbSafe_nonvacuous :
-    Theory.Valid (M := model [v, v, v])
-      (HBBSafe.theory (S := sig) .live .safe .propose .echo .vote .deliver) ∧
+    (model [v, v, v] ⊨ᵀ
+      HBBSafe.theory (S := sig) .live .safe .propose .echo .vote .deliver) ∧
     -- Agreement: sequential quorum intersections.
     (⊨[model [v, v, v]] ♢ᶠ[[v, v]] Formula.seq) ∧
     -- Happy Termination: a live quorum, a unique proposal, and live knowledge of it.
@@ -338,8 +338,8 @@ theorem hbbSafe_nonvacuous :
 Agreement, Happy Termination and Cascade Termination all hold, and a live
 participant delivers `v`. -/
 theorem hbbSimp_nonvacuous :
-    Theory.Valid (M := model [v, v, v])
-      (HBBSimp.theory (S := sig) .live .propose .echo .vote .deliver) ∧
+    (model [v, v, v] ⊨ᵀ
+      HBBSimp.theory (S := sig) .live .propose .echo .vote .deliver) ∧
     -- Agreement: sequential quorum intersections.
     (⊨[model [v, v, v]] ♢ᶠ[[v, v]] Formula.seq) ∧
     -- Happy Termination: a live quorum, a unique proposal, and live knowledge of it.
@@ -359,8 +359,8 @@ theorem hbbSimp_nonvacuous :
 Agreement, Happy Termination and Cascade Termination all hold, and a live
 participant delivers `v`. -/
 theorem hbbCorr_nonvacuous :
-    Theory.Valid (M := model [v, v])
-      (HBBCorr.theory (S := sig) .live .propose .echo .vote .deliver .corr) ∧
+    (model [v, v] ⊨ᵀ
+      HBBCorr.theory (S := sig) .live .propose .echo .vote .deliver .corr) ∧
     -- Agreement and Cascade Termination: the learner is always correlated.
     (⊨[model [v, v]] □ᶠ[] (ofPredicate ⟨Pred.corr, [v, v]⟩)) ∧
     -- Happy and Cascade Termination: a live quorum.

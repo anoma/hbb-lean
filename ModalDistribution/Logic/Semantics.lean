@@ -7,11 +7,10 @@ import ModalDistribution.Logic.Syntax
 /-!
 # Modal logic semantics
 
-We formalise the satisfaction relation from
-the validity figure.  Satisfaction is defined for a model, a
-participant, a local history, and a variable assignment.  We also introduce
-end-of-time validity, event-driven validity, and the notion of active
-participants .
+We formalise the satisfaction relation of the paper's validity judgements
+(Definition 3.4.10).  Satisfaction is defined for a model, a participant, a
+maybe-event, and a history.  We also introduce end-of-time validity,
+event-driven validity, and the notion of active participants.
 -/
 
 namespace ModalDistribution
@@ -42,7 +41,7 @@ def Sat.check (M : Model S P) (Q : P → Prop) : List S.Value → Set P → Prop
         Sat.check M Q ls (acc ∩ O)
 
 /-- Paper: Definition 3.4.10(1) / Figure 4 (possible-world validity). Satisfaction relation
-`p \dx H ⊨[M]φ`. -/
+`p, x, H ⊨ φ`. -/
 def Sat (M : Model S P)
     (p : P)
     (evt : MaybeEvent S.EventType)

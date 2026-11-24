@@ -10,10 +10,9 @@ import ModalDistribution.Logic.Properties.Modalities
 /-!
 # HBBCorr Cascade Termination
 
-This file states the Cascade Termination property for `HBBCorr`, following
-Cascade Termination for HBBCorr. When `l₁` and `l₂` are always correlated
-and `l₂` has a live quorum, any delivery for `l₁` eventually propagates to a
-live delivery for `l₂`.
+This file states the Cascade Termination property for `HBBCorr`. When `l₁`
+and `l₂` are always correlated and `l₂` has a live quorum, any delivery for
+`l₁` eventually propagates to a live delivery for `l₂`.
 -/
 
 namespace ModalDistribution
@@ -155,7 +154,7 @@ theorem cascadeTermination
         (hWitness := hVotesBoxGlobal_l₁)
     simpa [wTop]
       using hLiveVoteDiamondGlobal p
-  -- Knowledge$\atddot{}$: live participants eventually learn about the `l₁` vote.
+  -- (Knowledge□↓): live participants eventually learn about the `l₁` vote.
   have hLiveVoteBoxGlobal_l₂ :
       ⊨[M]
         □ᶠ↓[[l₂]]

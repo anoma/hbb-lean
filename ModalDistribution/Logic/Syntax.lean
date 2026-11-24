@@ -5,8 +5,7 @@ open Lean
 /-!
 # Modal logic syntax
 
-This file introduces the syntactic objects for the modal logic developed in
-Modal logic syntax. terms are
+This file introduces the syntactic objects of the paper's modal logic. Terms are
 built from variable symbols and values, while formulas provide propositional
 connectives, equality, quantification, event and predicate atoms, the temporal
 modalities `↓` (in the past) and `⤒` (at the end of time), the quorum
@@ -14,45 +13,44 @@ intersection modality `♢`, and the distinguished sequentiality predicate `seq`
 
 ## Symbol reference
 
-The constructors and scoped notations in this module realise
-The syntax and satisfaction clauses in
-the semantics.  The bullets record the
-correspondence between Lean identifiers or notations and the LaTeX glyphs used
-throughout the paper.
+The constructors and scoped notations in this module realise the paper's
+syntax of predicates (Definition 3.1.3) and its derived connectives. The
+bullets record the correspondence between Lean identifiers or notations and the
+symbols used throughout the paper.
 
-* `Term.var` ↔ the variable symbol `a` range.
-* `Term.value` ↔ the value literal `v`.
-* `Formula.bot` / notation `⊥ᶠ` ↔ `\tbot`.
-* `Formula.top` / notation `⊤ᶠ` ↔ `\ttop`.
-* `Formula.imp` / notation `φ ⇒ᶠ ψ` ↔ `\timp`.
-* `Formula.eq` / notation `t ≃ᶠ t'` ↔ `t\teq t'`.
-* `Formula.forall` / notation `∀ᶠ a, φ` ↔ `\tall a.\,φ`.
-* `Formula.exists_` / notation `∃ᶠ a, φ` ↔ `\texi a.\,φ`.
-* `Formula.not` / notation `¬ᶠ φ` ↔ `\tneg φ`.
-* `Formula.and` / notation `φ ∧ᶠ ψ` ↔ `\tand`.
-* `Formula.or` / notation `φ ∨ᶠ ψ` ↔ `\tor`.
-* `Formula.iff` / notation `φ ⇔ᶠ ψ` ↔ `\tiff`.
-* `Formula.event` (and `event0`, `ofEvent`) ↔ `\tf E(t_1,\dots,t_n)`.
-* `Formula.predicate` (and `predicate0`, `ofPredicate`) ↔ `\tf P(t_1,\dots,t_n)`.
-* `Formula.past` / notation `↓ᶠ φ` ↔ `\itp φ` (``in the past'').
-* `Formula.atEnd` / notation `⤒ᶠ φ` ↔ `\EOT φ` (``at the end of time'').
-* `Formula.sometime` / notation `↕ᶠ φ` — the paper's ↕ (sometime).
-* `Formula.everytime` / notation `⇕ᶠ φ` — the paper's ⇕ (everytime).
-* `Formula.allPast` / notation `⇓ᶠ φ` — the paper's ⇓ (at every past event).
-* `Formula.diamond ls φ` / notation `♢ᶠ[ls] φ` ↔ `\ate{l_1\dots l_n}\phi`.
-* `Formula.diamondPast ls φ` / notation `♢ᶠ↓[ls] φ` ↔ `\atedot{l_1\dots l_n}\phi`.
-* `Formula.diamondAllPast ls φ` / notation `♢ᶠ⇓[ls] φ` — the paper's ♢⇓.
-* `Formula.diamondEmpty φ` / notation `♢ᶠ[] φ` ↔ `\ate{}\phi`.
-* `Formula.box ls φ` / notation `□ᶠ[ls] φ` ↔ `\atd{l_1\dots l_n}\phi`.
-* `Formula.boxPast ls φ` / notation `□ᶠ↓[ls] φ` ↔ `\atddot{l_1\dots l_n}\phi`.
-* `Formula.boxAllPast ls φ` / notation `□ᶠ⇓[ls] φ` — the paper's □⇓.
-* `Formula.boxEmpty φ` / notation `□ᶠ[] φ` ↔ `\atd{}\phi`.
-* `Formula.seq` ↔ the distinguished predicate `\tf{seq}`.
-* `World.accessible` / notation `t' ≪ t` ↔ `\accessible` .
-* `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `\accessible^{-}` .
+* `Term.var` ↔ a variable symbol `a`.
+* `Term.value` ↔ a value literal `v`.
+* `Formula.bot` / notation `⊥ᶠ` ↔ `⊥`.
+* `Formula.top` / notation `⊤ᶠ` ↔ `⊤`.
+* `Formula.imp` / notation `φ ⇒ᶠ ψ` ↔ `φ ⇒ ψ`.
+* `Formula.eq` / notation `t ≃ᶠ t'` ↔ `t = t'`.
+* `Formula.forall` / notation `∀ᶠ a, φ` ↔ `∀ a.φ`.
+* `Formula.exists_` / notation `∃ᶠ a, φ` ↔ `∃ a.φ`.
+* `Formula.not` / notation `¬ᶠ φ` ↔ `¬φ`.
+* `Formula.and` / notation `φ ∧ᶠ ψ` ↔ `φ ∧ ψ`.
+* `Formula.or` / notation `φ ∨ᶠ ψ` ↔ `φ ∨ ψ`.
+* `Formula.iff` / notation `φ ⇔ᶠ ψ` ↔ `φ ⇔ ψ`.
+* `Formula.event` (and `event0`, `ofEvent`) ↔ `E(t₁,…,tₙ)`.
+* `Formula.predicate` (and `predicate0`, `ofPredicate`) ↔ `P(t₁,…,tₙ)`.
+* `Formula.past` / notation `↓ᶠ φ` ↔ `↓φ` (in the past).
+* `Formula.atEnd` / notation `⤒ᶠ φ` ↔ `⤒φ` (at the end of time).
+* `Formula.sometime` / notation `↕ᶠ φ` ↔ `↕φ` (sometime).
+* `Formula.everytime` / notation `⇕ᶠ φ` ↔ `⇕φ` (everytime).
+* `Formula.allPast` / notation `⇓ᶠ φ` ↔ `⇓φ` (at every past event).
+* `Formula.diamond ls φ` / notation `♢ᶠ[ls] φ` ↔ `♢_{l₁…lₙ} φ`.
+* `Formula.diamondPast ls φ` / notation `♢ᶠ↓[ls] φ` ↔ `♢↓_{l₁…lₙ} φ`.
+* `Formula.diamondAllPast ls φ` / notation `♢ᶠ⇓[ls] φ` ↔ `♢⇓_{l₁…lₙ} φ`.
+* `Formula.diamondEmpty φ` / notation `♢ᶠ[] φ` ↔ `♢ φ` (no learners).
+* `Formula.box ls φ` / notation `□ᶠ[ls] φ` ↔ `□_{l₁…lₙ} φ`.
+* `Formula.boxPast ls φ` / notation `□ᶠ↓[ls] φ` ↔ `□↓_{l₁…lₙ} φ`.
+* `Formula.boxAllPast ls φ` / notation `□ᶠ⇓[ls] φ` ↔ `□⇓_{l₁…lₙ} φ`.
+* `Formula.boxEmpty φ` / notation `□ᶠ[] φ` ↔ `□ φ` (no learners).
+* `Formula.seq` ↔ the distinguished predicate `seq`.
+* `World.accessible` / notation `t' ≪ t` ↔ `t' ≪ t`.
+* `World.accessibleLe` / notation `t' ≪⁻ t` ↔ `t' ≪⁻ t`.
 
 > **Validity notation warning.**  The paper uses three related validity
-> judgements (`\aworld\mentHφ`, `\mentHφ`, `\alltimeplace\mentHφ`).  In this
+> judgements (`w ⊨ φ`, `⊨ φ`, `□W ⊨ φ`).  In this
 > formalisation they correspond to different Lean notations:
 > `⟪w⟫ ⊨[M] φ` for local/world satisfaction, `⊨[M] φ` for end-of-time
 > validity, and `□W⊨[M] φ` for all-world validity.  Picking the wrong one
@@ -61,7 +59,7 @@ throughout the paper.
 
 ## References
 
-* Modal logic syntax and semantics.
+* Paper: Definition 3.1.3 (syntax of predicates) and Definition 3.4.10 (validity).
 -/
 
 namespace ModalDistribution
