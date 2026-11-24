@@ -76,52 +76,35 @@ private theorem extend_hered (h : PreHistory Unit sig.EventType)
   exact ⟨fun h' ⟨p, e, ht⟩ => hs (p, e, h') ht,
     fun h' ⟨p, e, ht⟩ => hh (p, e, h') ht⟩
 
+/-- The chain is hereditarily transitive, prefix by prefix: the time of each
+event in a prefix `hᵢ` is an earlier prefix, contained in `hᵢ` and
+hereditarily transitive by the previous step. -/
 private theorem hered5 : IsHereditarilyTransitive (h5 dargs) := by
   have hered0 : IsHereditarilyTransitive h0 := by
     rw [isHereditarilyTransitive_unfold]
     simp [IsTransitive, HappensBefore, h0]
   have hered1 : IsHereditarilyTransitive h1 :=
-    extend_hered _ (by intro t ht; simp_all [h1, e0, h0] )
-      (by intro t ht; simp only [h1, mem_mk, List.mem_singleton] at ht; subst ht; exact hered0)
+    extend_hered _ (by simp [h1, e0, h0]) (by simpa [h1, e0] using hered0)
   have hered2 : IsHereditarilyTransitive h2 :=
     extend_hered _
       (by intro t ht; simp only [h2, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-          rcases ht with rfl | rfl <;> simp [e0, e1, h0, h1, h2] )
-      (by intro t ht; simp only [h2, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-          rcases ht with rfl | rfl
-          · exact hered0
-          · exact hered1)
+          rcases ht with rfl | rfl <;> simp [e0, e1, h0, h1, h2])
+      (by simpa [h2, e0, e1] using ⟨hered0, hered1⟩)
   have hered3 : IsHereditarilyTransitive h3 :=
     extend_hered _
       (by intro t ht; simp only [h3, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-          rcases ht with rfl | rfl | rfl <;> simp [e0, e1, e2, h0, h1, h2, h3] )
-      (by intro t ht; simp only [h3, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-          rcases ht with rfl | rfl | rfl
-          · exact hered0
-          · exact hered1
-          · exact hered2)
+          rcases ht with rfl | rfl | rfl <;> simp [e0, e1, e2, h0, h1, h2, h3])
+      (by simpa [h3, e0, e1, e2] using ⟨hered0, hered1, hered2⟩)
   have hered4 : IsHereditarilyTransitive (h4 dargs) :=
     extend_hered _
       (by intro t ht; simp only [h4, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-          rcases ht with rfl | rfl | rfl | rfl <;>
-            simp [e0, e1, e2, e3, h0, h1, h2, h3, h4] )
-      (by intro t ht; simp only [h4, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-          rcases ht with rfl | rfl | rfl | rfl
-          · exact hered0
-          · exact hered1
-          · exact hered2
-          · exact hered3)
+          rcases ht with rfl | rfl | rfl | rfl <;> simp [e0, e1, e2, e3, h0, h1, h2, h3, h4])
+      (by simpa [h4, e0, e1, e2, e3] using ⟨hered0, hered1, hered2, hered3⟩)
   exact extend_hered _
     (by intro t ht; simp only [h5, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
         rcases ht with rfl | rfl | rfl | rfl | rfl <;>
-          simp [e0, e1, e2, e3, e4, h0, h1, h2, h3, h4, h5] )
-    (by intro t ht; simp only [h5, mem_mk, List.mem_cons, List.not_mem_nil, or_false] at ht
-        rcases ht with rfl | rfl | rfl | rfl | rfl
-        · exact hered0
-        · exact hered1
-        · exact hered2
-        · exact hered3
-        · exact hered4)
+          simp [e0, e1, e2, e3, e4, h0, h1, h2, h3, h4, h5])
+    (by simpa [h5, e0, e1, e2, e3, e4] using ⟨hered0, hered1, hered2, hered3, hered4⟩)
 
 /-- The single-learner semifilter: the one quorum is the whole participant set. -/
 def learner : Semifilter Unit where
@@ -201,10 +184,8 @@ theorem final_knows {t : World Unit sig.EventType} {E : sig.EventType}
     (ht : t ∈ h5 dargs) (hE : ⟪t⟫ ⊨[model dargs] Formula.ofEvent E) :
     ⟪e4 dargs⟫ ⊨[model dargs] ♢ᶠ↓[[]] (Formula.ofEvent E) := by
   have hEvt : t.event = .some E := ((Sat.ofEvent (model dargs) t E).1 hE).1
-  have hPast : ⟪((), †, h4 dargs)⟫ ⊨[model dargs] ↓ᶠ (Formula.ofEvent E) :=
-    (Sat.past (model dargs) _ _).2 ⟨t, mem_h4_of_event dargs ht hEvt, rfl, hE⟩
-  simpa [Formula.diamondPast] using
-    (Sat.diamond_nil (model dargs) (e4 dargs) (↓ᶠ (Formula.ofEvent E))).2 ⟨(), hPast⟩
+  exact (Sat.diamond_nil (model dargs) (e4 dargs) _).2
+    ⟨(), (Sat.past (model dargs) _ _).2 ⟨t, mem_h4_of_event dargs ht hEvt, rfl, hE⟩⟩
 
 /-- An event performed in the model is known by a quorum (`■_l E`) at the
 final tuple. -/
@@ -212,10 +193,9 @@ theorem final_knows_quorum {t : World Unit sig.EventType} {E : sig.EventType}
     (l : sig.Value) (ht : t ∈ h5 dargs) (hE : ⟪t⟫ ⊨[model dargs] Formula.ofEvent E) :
     ⟪e4 dargs⟫ ⊨[model dargs] □ᶠ↓[[l]] (Formula.ofEvent E) := by
   have hEvt : t.event = .some E := ((Sat.ofEvent (model dargs) t E).1 hE).1
-  have hBox := (sat_box_singleton_exists (model dargs) (e4 dargs) l (↓ᶠ (Formula.ofEvent E))).2
-    ⟨Set.univ, trivial, fun q _ => (Sat.past (model dargs) _ _).2
+  exact (sat_box_singleton_exists (model dargs) (e4 dargs) l _).2
+    ⟨Set.univ, trivial, fun _ _ => (Sat.past (model dargs) _ _).2
       ⟨t, mem_h4_of_event dargs ht hEvt, rfl, hE⟩⟩
-  simpa [Formula.boxPast] using hBox
 
 /-- `thyLive` holds in the model. -/
 theorem thyLive_valid : model dargs ⊨ᵀ thyLive (S := sig) .live := by
@@ -228,9 +208,7 @@ theorem thyLive_valid : model dargs ⊨ᵀ thyLive (S := sig) .live := by
     exact Sat.imp_intro (model dargs) _ fun _ => seq_of_time dargs hw
   · -- (Knowledge♢↓): the final tuple knows every performed event.
     refine Sat.imp_intro (model dargs) w fun hPrem => Sat.imp_intro (model dargs) w fun _ => ?_
-    obtain ⟨q, hq⟩ := (Sat.diamond_nil (model dargs) (w.1, †, h5 dargs)
-      (↓ᶠ (Formula.predicate0 Pred.live ∧ᶠ Formula.ofEvent E))).1
-      (by simpa [Formula.diamondPast] using (Sat.atEnd (model dargs) w _).1 hPrem)
+    obtain ⟨q, hq⟩ := (Sat.diamond_nil (model dargs) (w.1, †, h5 dargs) _).1 hPrem
     obtain ⟨t, ht, -, hConj⟩ := (Sat.past (model dargs) _ _).1 hq
     have hE := ((Sat.and (model dargs) t _ _).1 hConj).2
     exact (Sat.sometime (model dargs) w _).2
@@ -238,9 +216,7 @@ theorem thyLive_valid : model dargs ⊨ᵀ thyLive (S := sig) .live := by
   · -- (Knowledge□↓): the final tuple knows that a quorum performed every
     -- performed event.
     refine Sat.imp_intro (model dargs) w fun hPrem => Sat.imp_intro (model dargs) w fun _ => ?_
-    obtain ⟨O, hO, hAll⟩ := (sat_box_singleton_exists (model dargs) (w.1, †, h5 dargs) l
-      (↓ᶠ (Formula.predicate0 Pred.live ∧ᶠ Formula.ofEvent E))).1
-      (by simpa [Formula.boxPast] using (Sat.atEnd (model dargs) w _).1 hPrem)
+    obtain ⟨O, hO, hAll⟩ := (sat_box_singleton_exists (model dargs) (w.1, †, h5 dargs) l _).1 hPrem
     obtain ⟨t, ht, -, hConj⟩ := (Sat.past (model dargs) _ _).1 (hAll () hO)
     have hE := ((Sat.and (model dargs) t _ _).1 hConj).2
     exact (Sat.sometime (model dargs) w _).2
