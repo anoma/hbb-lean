@@ -59,15 +59,17 @@ theorem cascade_termination
   have hKnows := boxPast_live_knows_of_intersecting hThyLive
     (correlation_implies_quorum_intersection hTheory hCorrelation) hLiveQuorum
     (fun _ => hVotes₁)
-  -- Lemma 6.5.2(2) with `(Vote'!)` as Lemma 8.4.3(3), using `⇕(l₁ ≐ l₂)`:
-  -- the `l₂`-quorum votes `v`.
+  -- `(≐⇓)`: `l₁ ≐ l₂` holds at every event, so `⇕(l₁ ≐ l₂)` holds everywhere.
+  have hAlways {t : World P (Signature.EventType S)} :
+      ⟪t⟫ ⊨[M] ⇕ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
+    (Sat.everytime ..).2 fun _ hu _ => correlation_of_mem hTheory hCorrelation hu
+  -- Lemma 6.5.2(2) with `(Vote'!)` as Lemma 8.4.3(3): the `l₂`-quorum votes `v`.
   have hVotes₂ := boxPast_live_of_eventual_quorum hThyLive _ (ofEvent ⟨voteSymb, [l₂, v]⟩) l₂
     hKnows fun ht hKnowsVote =>
       correlated_vote_eventually hTheory (live_quorum_seq _ M hThyLive hLiveQuorum) ht
         (sometime_mono (fun _ _ h => by
           simp only [Sat.and] at h ⊢
-          exact ⟨⟨h.1, (Sat.everytime ..).2 fun _ hu _ =>
-            correlation_of_mem hTheory hCorrelation hu⟩, h.2⟩) hKnowsVote)
+          exact ⟨⟨h.1, hAlways⟩, h.2⟩) hKnowsVote)
   -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!), concludes
   -- eventual delivery.
   exact live_quorum_eventually_consequent hThyLive hVotes₂
