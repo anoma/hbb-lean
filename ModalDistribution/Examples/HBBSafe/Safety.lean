@@ -56,7 +56,7 @@ theorem diamond_seq_of_subset {ls : List S.Value}
     (hSubset : w'.time ⊆ w.time)
     (h : ⟪w⟫ ⊨[M] ♢ᶠ[ls] Formula.seq) :
     ⟪w'⟫ ⊨[M] ♢ᶠ[ls] Formula.seq :=
-  Sat.check_of_imp (fun _ hSeq t₁ t₂ h₁ h₂ => hSeq t₁ t₂ (hSubset _ h₁) (hSubset _ h₂)) h
+  Sat.check_mono (fun _ hSeq t₁ t₂ h₁ h₂ => hSeq t₁ t₂ (hSubset _ h₁) (hSubset _ h₂)) h
 
 /-- `safeFormula` persists to a transitive subset of the history: at most one proposal
 in the larger history leaves at most one in the smaller, and sequential quorum
@@ -66,8 +66,8 @@ theorem safeFormula_of_subset {l : S.Value}
     (h : ⟪w⟫ ⊨[M] safeFormula proposeSymb l) :
     ⟪w'⟫ ⊨[M] safeFormula proposeSymb l := by
   rcases (Sat.or ..).1 h with hUnique | hSeq
-  · exact sat_or_of_left (unique_propose_monotone hSubset hUnique)
-  · exact sat_or_of_right fun l' => diamond_seq_of_subset hSubset.1 (hSeq l')
+  · exact (Sat.or ..).2 (.inl (unique_propose_monotone hSubset hUnique))
+  · exact (Sat.or ..).2 (.inr fun l' => diamond_seq_of_subset hSubset.1 (hSeq l'))
 
 /-- The time of a world accessible from a world of the model is a transitive subset
 of that world's time. -/
@@ -122,7 +122,7 @@ theorem at_most_one_propose_safe
   -- disjunct of (Safe) holds there.
   have hs : s.time ⪯ M.history.val := M.time_le_of_mem hs
   exact (safe_iff_safeFormula hTheory s hs l).2 <|
-    sat_or_of_left (unique_propose_monotone (w := ⟨p, †, _⟩) (time_subset_trn_history M hs) hUnique)
+    (Sat.or ..).2 (.inl (unique_propose_monotone (w := ⟨p, †, _⟩) (time_subset_trn_history M hs) hUnique))
 
 /-- The instantiated `Vote!` implication, taking the everywhere-always safety
 guard in the form axiom `Vote!` demands it. -/

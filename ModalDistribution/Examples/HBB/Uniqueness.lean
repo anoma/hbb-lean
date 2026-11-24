@@ -136,7 +136,7 @@ theorem box_echo_to_propose_diamond
   -- (Echo?) at `s`: some `r` proposed `v` before `s`, hence before `w`.
   obtain ⟨r, hr⟩ := (Sat.diamond_nil M s _).1 (diamondPast_propose_of_echo hEchoBack hsEcho)
   exact (Sat.diamond_nil M w _).2
-    ⟨r, sat_past_of_subset M (hSubset.2.trans _ (happensBefore_of_mem hs)) hr⟩
+    ⟨r, Sat.past_of_time_subset (hSubset.2.trans _ (happensBefore_of_mem hs)) hr⟩
 
 /-- One-sided application of `EchoNE`: an echo followed by a past echo must
 share the same value. -/
