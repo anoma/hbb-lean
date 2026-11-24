@@ -28,7 +28,8 @@ abbrev Axiom (S : Signature.{0, 0, 0}) : Type 1 :=
 
 namespace Axiom
 
-/-- Paper: Definition 5.2.1(2). An axiom is valid in a model when it holds at every possible world. -/
+/-- Paper: Definition 5.2.1(2). An axiom is valid in a model when it holds at every possible
+world. -/
 @[simp] def Valid
     (M : Model S P) (ax : Axiom S) : Prop :=
   AllWorldValid M ax
@@ -48,7 +49,7 @@ namespace Theory
 end Theory
 
 /-- Notation for models satisfying theories. -/
-notation:55 M " ⊨ᵀ " T => Theory.Valid (M := M) T
+notation:55 M " ⊨ᵀ " T => Theory.Valid M T
 
 end Logic
 end ModalDistribution

@@ -10,8 +10,9 @@ import ModalDistribution.Logic.Semantics
 import ModalDistribution.Logic.Properties
 import ModalDistribution.Logic.AxiomSystem
 import ModalDistribution.Examples.ThyLive
-import ModalDistribution.Examples.ThyHBB1
-import ModalDistribution.Examples.ThyHBB2
-import ModalDistribution.Examples.ThyHBB3
+import ModalDistribution.Examples.HBBSafe
+import ModalDistribution.Examples.HBBSimp
+import ModalDistribution.Examples.HBBCorr
+import ModalDistribution.Examples.NonVacuity
 import ModalDistribution.Examples.Counterexamples
 import ModalDistribution.AxiomAudit

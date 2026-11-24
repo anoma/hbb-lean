@@ -29,3 +29,7 @@ __pycache__/
 # Documentation build
 /_target/
 /html/
+
+# The paper (no redistribution rights)
+hbb-disc.pdf
+docs/hbb-disc.pdf

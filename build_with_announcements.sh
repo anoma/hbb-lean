@@ -2,9 +2,9 @@
 # Build with progress announcements for protocol verification
 
 # Track which announcements have been printed
-thyHBB1_done=false
-thyHBB2_done=false
-thyHBB3_done=false
+hbbSafe_done=false
+hbbSimp_done=false
+hbbCorr_done=false
 
 # Run lake build with verbose output and monitor for protocol completion
 # Filter out trace lines to keep output clean
@@ -22,43 +22,43 @@ while IFS= read -r line; do
 
     echo "$line"
 
-    # Check for ThyHBB1 completion
-    if [[ "$line" == *"ModalDistribution.Examples.ThyHBB1.Liveness_Two"* ]] && [ "$thyHBB1_done" = false ]; then
+    # Check for HBBSafe completion
+    if [[ "$line" == *"ModalDistribution.Examples.HBBSafe.Correctness"* ]] && [ "$hbbSafe_done" = false ]; then
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "✓ Correctness properties of ThyHBB1 proved."
+        echo "✓ Correctness properties of HBBSafe proved."
         echo "  • Agreement property"
-        echo "  • Liveness property 1"
-        echo "  • Liveness property 2"
+        echo "  • Happy Termination"
+        echo "  • Cascade Termination"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
-        thyHBB1_done=true
+        hbbSafe_done=true
     fi
 
-    # Check for ThyHBB2 completion
-    if [[ "$line" == *"ModalDistribution.Examples.ThyHBB2.Liveness_Two"* ]] && [ "$thyHBB2_done" = false ]; then
+    # Check for HBBSimp completion
+    if [[ "$line" == *"ModalDistribution.Examples.HBBSimp.Correctness"* ]] && [ "$hbbSimp_done" = false ]; then
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "✓ Correctness properties of ThyHBB2 proved."
+        echo "✓ Correctness properties of HBBSimp proved."
         echo "  • Agreement property"
-        echo "  • Liveness property 1"
-        echo "  • Liveness property 2"
+        echo "  • Happy Termination"
+        echo "  • Cascade Termination"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
-        thyHBB2_done=true
+        hbbSimp_done=true
     fi
 
-    # Check for ThyHBB3 completion
-    if [[ "$line" == *"ModalDistribution.Examples.ThyHBB3.Liveness_Two"* ]] && [ "$thyHBB3_done" = false ]; then
+    # Check for HBBCorr completion
+    if [[ "$line" == *"ModalDistribution.Examples.HBBCorr.Correctness"* ]] && [ "$hbbCorr_done" = false ]; then
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "✓ Correctness properties of ThyHBB3 proved."
+        echo "✓ Correctness properties of HBBCorr proved."
         echo "  • Agreement property"
-        echo "  • Liveness property 1"
-        echo "  • Liveness property 2"
+        echo "  • Happy Termination"
+        echo "  • Cascade Termination"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
-        thyHBB3_done=true
+        hbbCorr_done=true
     fi
 
     # Finish announcement

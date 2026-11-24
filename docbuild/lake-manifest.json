@@ -8,7 +8,7 @@
    "rev": "31023a7025add9dbae9ab31db6c87295d6294a0d",
    "name": "«doc-gen4»",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "main",
+   "inputRev": "v4.24.0-rc1",
    "inherited": false,
    "configFile": "lakefile.lean"},
   {"type": "path",
