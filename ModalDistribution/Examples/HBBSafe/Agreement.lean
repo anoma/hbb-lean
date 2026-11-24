@@ -1,5 +1,5 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBB.Uniqueness
 import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.HBBSafe.Safety
 import ModalDistribution.Examples.ThyLive

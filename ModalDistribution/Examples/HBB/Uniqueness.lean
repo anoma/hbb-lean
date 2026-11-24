@@ -1,51 +1,34 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.HBBSafe.Safety
-import ModalDistribution.Examples.HBBSafe.Axioms
-import ModalDistribution.Examples.ThyLive
-import ModalDistribution.Logic.Properties
-import ModalDistribution.Core.History
+import ModalDistribution.Examples.HBB.Liveness
 
 /-!
-# HBBSafe Uniqueness of Proposals
+# Uniqueness of proposals
 
-This file contains lemmas proving the crucial property that at most one value can be proposed
-in the HBBSafe broadcast protocol, and derives consequences about echo events.
+Consequences of the uniqueness of proposals and of the shared echo axioms
+`Echo?`, `EchoNE`, and `Echo!`, used by the three broadcast theories `HBBSafe`,
+`HBBSimp`, and `HBBCorr`.
 
-The main results show that:
-- Uniqueness of proposals forces observed proposal diamonds to agree on values
-- Unique proposals guarantee eventual echoes with the same value
-- At most one proposal implies every learner is safe
+- **Uniqueness guard lemmas**:
+  - `uniquePropose_monotone`: at most one proposal persists in smaller histories
+  - `uniquePropose_guard_at_history`: uniqueness yields the at-most-one guard
+  - `uniquePropose_equal_values`: forces observed proposals to agree
 
-They support the proof of agreement and liveness properties.
+- **Lemma 6.6.1** (`uniquePropose_eventually_echo`): a unique proposal
+  guarantees eventual echoes of it, assembled from
+  `uniquePropose_exists_witness_echo`, `uniquePropose_witness_eq_value`, and
+  `uniquePropose_eventually_echo_core`
 
-## Key Lemmas
-
-The file is organized into several categories:
-
-- **Guard and value equality lemmas**: Extract and apply uniqueness constraints
-  - `uniquePropose_guard_at_history`: Specializes uniqueness to a given history
-  - `uniquePropose_equal_values`: Forces observed proposals to agree
-
-- **Echo existence and equality lemmas**: Derive echo properties from unique proposals
-  - `uniquePropose_exists_witness_echo`: Antecedent ensures echoes exist
-  - `uniquePropose_eventually_echo_core`: Combines existence and equality
-  - `uniquePropose_eventually_echo`: Main result
-
-- **Helper lemmas for event-level reasoning**:
-  - `sometime_echo_event_exists`: Witness explicit echo events
-  - `echo_backward_diamond_from_sometime`: Convert echoes to proposal diamonds
-  - `boxEcho_to_propose_diamond`: Box echoes imply proposal diamonds
-  - `echoNonEquiv_diamond`: Echo non-equivalence constraint
-
-- **Safety lemmas**:
-  - `atMostOnePropose_safeFormula`: Uniqueness implies safety
+- **Echo lemmas**:
+  - `sometime_echo_event_exists`: witness explicit echo events
+  - `echo_backward_diamond_from_sometime`: convert echoes to proposal diamonds
+  - `boxPast_live_knowsEcho_knowsPropose`: (Echo?) under a live quorum
+  - `boxEcho_to_propose_diamond`: echo quorums imply proposal diamonds
+  - `echoNonEquiv_diamond`: one-sided application of `EchoNE`
 -/
 
 namespace ModalDistribution
 namespace Examples
-namespace HBBSafe
-
-open HBB
+namespace HBB
 
 open ModalDistribution
 open ModalDistribution.Logic
@@ -63,9 +46,91 @@ section Results
 
 variable {P : Type} [Nonempty P]
 variable {M : Model S P}
-variable {liveSymb safeSymb : Signature.PredSymb S}
-variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+variable {liveSymb : Signature.PredSymb S}
+variable {proposeSymb echoSymb : Signature.EventSymb S}
 variable {w w' t : World P (Signature.EventType S)}
+
+/-- Monotonicity of the at-most-one proposal condition. -/
+theorem uniquePropose_monotone
+    (hSubset : w'.time ⊆trn w.time)
+    (hUnique :
+      ⟪w⟫ ⊨[M]∃≤ᶠ1 v ↦
+          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :
+    ⟪w'⟫ ⊨[M]
+      ∃≤ᶠ1 v ↦
+        ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) := by
+  classical
+  dsimp [Formula.existsAtMostOne] at hUnique ⊢
+  refine Sat.forall_intro (M := M) (w := w')
+      (body := fun value =>
+        ∀ᶠ fun altValue =>
+          (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+            (value ≃ᶠ altValue)) ?_
+  intro v
+  have hUnique_v :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun value =>
+        ∀ᶠ fun altValue =>
+          (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [value]⟩)) ⇒ᶠ
+          (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+            (value ≃ᶠ altValue))
+      (v := v) hUnique
+  refine Sat.forall_intro (M := M) (w := w')
+      (body := fun altValue =>
+        (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+        (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+          (v ≃ᶠ altValue)) ?_
+  intro v'
+  have hUnique_vv :=
+    Sat.forall_elim (M := M) (w := w)
+      (body := fun altValue =>
+        (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v]⟩)) ⇒ᶠ
+        (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [altValue]⟩)) ⇒ᶠ
+          (v ≃ᶠ altValue))
+      (v := v') hUnique_v
+  refine Sat.imp_intro (M := M) (w := w')
+      (φ := ♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v']⟩)) ⇒ᶠ
+        (v ≃ᶠ v')) ?_
+  intro hDiamondValue
+  have hDiamondValueW :
+      ⟪w⟫ ⊨[M]
+        ♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v]⟩) := by
+    have :=
+      sat_diamondPast_nil_event_subset (M := M)
+        (w := w) (w' := w') (symb := proposeSymb) (args := [v])
+        hSubset
+        (by simpa [Formula.ofEvent] using hDiamondValue)
+    simpa [Formula.ofEvent] using this
+  refine Sat.imp_intro (M := M) (w := w')
+      (φ := ♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v']⟩))
+      (ψ := v ≃ᶠ v') ?_
+  intro hDiamondAlt
+  have hDiamondAltW :
+      ⟪w⟫ ⊨[M]
+        ♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v']⟩) := by
+    have :=
+      sat_diamondPast_nil_event_subset (M := M)
+        (w := w) (w' := w') (symb := proposeSymb) (args := [v'])
+        hSubset
+        (by simpa [Formula.ofEvent] using hDiamondAlt)
+    simpa [Formula.ofEvent] using this
+  have hEq :=
+    Sat.imp_elim (M := M) (w := w)
+      (φ := ♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v]⟩))
+      (ψ := (♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v']⟩)) ⇒ᶠ
+        (v ≃ᶠ v'))
+      hUnique_vv hDiamondValueW
+  have hEq' :=
+    Sat.imp_elim (M := M) (w := w)
+      (φ := ♢ᶠ↓[[]] (Formula.ofEvent ⟨proposeSymb, [v']⟩))
+      (ψ := v ≃ᶠ v')
+      hEq hDiamondAltW
+  have hEq'' : v = v' :=
+    (Sat.eq (M := M) (w := w) (v₁ := v) (v₂ := v')).1 hEq'
+  exact
+    (Sat.eq (M := M) (w := w') (v₁ := v) (v₂ := v')).2 hEq''
 
 /-- Auxiliary: uniqueness at a fixed world yields the guarded at-most-one witness. -/
 theorem uniquePropose_guard_at_history
@@ -814,82 +879,8 @@ theorem uniquePropose_eventually_echo
               ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [value]⟩))) ⇒ᶠ
             ↕ᶠ(ofEvent ⟨echoSymb, [value]⟩))
 
-/-- at most one proposal implies every learner is safe. -/
-theorem atMostOnePropose_safeFormula
-    (l : Signature.Value S) :
-    ⊨[M](∃≤ᶠ1 v ↦
-        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
-        safeFormula proposeSymb l := by
-  classical
-  let uniqueCond : Formula S :=
-    ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)
-  let seqGuard : Formula S :=
-    ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq)
-  intro p
-  refine (Sat.imp (M := M)
-      (w := ⟨p, †, M.history.val⟩)
-      (φ := uniqueCond)
-      (ψ := safeFormula proposeSymb l)).2 ?_
-  intro hUniqueCond
-  have hOr :=
-    (Sat.or (M := M) (w := ⟨p, †, M.history.val⟩)
-      (φ := uniqueCond) (ψ := seqGuard)).2
-      (Or.inl hUniqueCond)
-  simpa [uniqueCond, seqGuard, safeFormula]
-    using hOr
-
-/-- Paper: Lemma 6.6.2. If at most one value is proposed, then every learner is everywhere and
-always safe. -/
-theorem atMostOnePropose_safe
-    (hTheory : M ⊨ᵀ
-      theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
-    (l : Signature.Value S) :
-    ⊨[M](∃≤ᶠ1 v ↦
-        (♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
-        ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
-  classical
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hUnique
-  refine Sat.not_intro (M := M) (w := wTop)
-    (φ := ↕ᶠ (¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))) ?_
-  intro hSome
-  obtain ⟨s, hs_mem, hs_place, hNot⟩ :=
-    (Sat.sometime (M := M) (w := wTop)
-      (φ := ¬ᶠ (ofPredicate ⟨safeSymb, [l]⟩))).1 hSome
-  have hs_mem' : s ∈ M.history.val := by
-    simpa [wTop, World.time] using hs_mem
-  have hs_le : s.time ⪯ M.history.val :=
-    PreHistory.happensBeforeEq_of_mem
-      (P := P) (Event := Signature.EventType S)
-      (hmem := by
-        simpa [World.place, World.event, World.time] using hs_mem')
-  have hUnique_s :
-      ⟪s⟫ ⊨[M]∃≤ᶠ1 v ↦
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩) :=
-    uniquePropose_monotone (M := M)
-      (w := wTop) (w' := s)
-      (hSubset := by
-        simpa [wTop, World.time] using
-          time_subset_trn_history (M := M) (t := s) hs_le)
-      (hUnique := by simpa [wTop] using hUnique)
-  have hSafeF_s : ⟪s⟫ ⊨[M] safeFormula proposeSymb l := by
-    have hOr :=
-      (Sat.or (M := M) (w := s)
-        (φ := ∃≤ᶠ1 v ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
-        (ψ := ∀ᶠ (fun l' => ♢ᶠ[[l, l']] Formula.seq))).2
-        (Or.inl hUnique_s)
-    simpa [safeFormula] using hOr
-  have hSafe_s : ⟪s⟫ ⊨[M] ofPredicate ⟨safeSymb, [l]⟩ :=
-    (safe_iff_safeFormula (M := M) (hTheory := hTheory)
-      (w := s) hs_le l).2 hSafeF_s
-  exact
-    Sat.not_elim (M := M) (w := s)
-      (φ := ofPredicate ⟨safeSymb, [l]⟩) hNot hSafe_s
-
 end Results
 
-end HBBSafe
+end HBB
 end Examples
 end ModalDistribution

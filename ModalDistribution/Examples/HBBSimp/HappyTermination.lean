@@ -1,7 +1,7 @@
 import ModalDistribution.Examples.HBB
 import ModalDistribution.Examples.HBBSimp.Axioms
 import ModalDistribution.Examples.HBBSimp.Lemmas
-import ModalDistribution.Examples.HBBSafe.Safety
+import ModalDistribution.Examples.HBB.Termination
 import ModalDistribution.Core.Semifilter
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
@@ -60,110 +60,26 @@ theorem happyTermination
   intro hLiveHere
   have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
     theory_thyLive (M := M) hTheory
-  have hProposeWitness :
-      ⟪wTop⟫ ⊨[M]
-        ♢ᶠ↓[[]]
-          (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
-    -- Restate the antecedent: beginning of Step 1.
-    simpa [wTop] using hSeenPropose
-  have hEventGlobal :
-      ⊨[M]
-        ♢ᶠ↓[[]]
-          (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) := by
-    intro q
-    obtain ⟨q', hPast⟩ :=
-      (Sat.diamond_nil (M := M)
-        (w := wTop)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).1
-        (by simpa [Formula.diamondPast] using hProposeWitness)
-    have hDiamond :=
-      (Sat.diamond_nil (M := M)
-        (w := ⟨q, †, M.history.val⟩)
-        (φ := ↓ᶠ (predicate0 liveSymb ∧ᶠ
-          ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)))).2
-        ⟨q', by simpa [wTop] using hPast⟩
-    simpa [Formula.diamondPast] using hDiamond
-  -- Lemma 6.6.1 holds verbatim in HBBSimp: it uses only (Echo!), (Echo?)
-  -- and `ThyLive`, which HBBSimp shares with HBBSafe.
-  have hImpEcho :
-      □W⊨[M]
-        (↕ᶠ (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
-          ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩) :=
-    HBBSafe.uniquePropose_eventually_echo (M := M)
-      (liveSymb := liveSymb)
-      (proposeSymb := proposeSymb)
-      (echoSymb := echoSymb)
-      (value := v)
+  -- Lemma 6.6.1, Proposition 5.2.8, (Echo?) with Lemma 4.2.2,
+  -- Lemma 6.5.2(2) and Lemma 5.2.11: a live `l`-quorum knows of an
+  -- `l`-quorum of echoes of `v`.
+  have hEchoNestedGlobal :
+      ⊨[M]□ᶠ↓[[l]]
+        (predicate0 liveSymb ∧ᶠ □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
+    HBB.uniquePropose_live_nestedEcho_quorum (M := M)
+      (hLiveTheory := hThyLive)
       (hEcho := theory_echoForward (M := M) hTheory)
       (hEchoBack := theory_echoBackward (M := M) hTheory)
-      (hUnique := hUnique)
-  -- Lemma 6.6.1: some live participant echoes `v`.
-  have hLiveEchoGlobal :
-      ⊨[M] ♢ᶠ↓[[]] (predicate0 liveSymb ∧ᶠ ofEvent ⟨echoSymb, [v]⟩) :=
-    HBBSafe.diamondPast_live_of_eventual (M := M)
-      (hLiveTheory := hThyLive)
-      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
-      (ψ := ofEvent ⟨echoSymb, [v]⟩)
-      (hDiamond := hEventGlobal) (hImp := hImpEcho)
-  -- Proposition 5.2.8: an `l`-quorum of live participants knows of that echo.
-  have hKnowsEchoGlobal :
-      ⊨[M] □ᶠ↓[[l]]
-        (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨echoSymb, [v]⟩)) := by
-    have hKE :=
-      live_eventually_knows (P := P) (M := M) (liveSymb := liveSymb)
-        (l := l) (evt := ⟨echoSymb, [v]⟩)
-        (hTheory := hThyLive) (hLive := hLiveQuorum)
-        (hEvent := hLiveEchoGlobal)
-    intro q
-    simpa using hKE q
-  -- (Echo?) and Lemma 4.2.2: that quorum knows of the proposal.
-  have hProposeQuorumGlobal :
-      ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
-    HBBSafe.boxPast_live_knowsEcho_knowsPropose (M := M)
-      (hEchoBack := theory_echoBackward (M := M) hTheory)
-      (hQuorum := hKnowsEchoGlobal)
-  -- Lemma 6.5.2(2) and Lemma 6.6.1: that quorum echoes `v`.
-  have hEchoQuorumGlobal :
-      ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨echoSymb, [v]⟩) :=
-    HBBSafe.boxPast_live_of_eventual_quorum
-      (M := M)
-      (liveSymb := liveSymb)
-      (φ := ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))
-      (ψ := ofEvent ⟨echoSymb, [v]⟩)
-      (l := l)
-      (hLiveTheory := hThyLive)
-      (hQuorum := hProposeQuorumGlobal)
-      (hImp := hImpEcho)
-  -- Lemma 5.2.11: the quorum knows of an `l`-quorum of echoes.
-  have hEchoNestedGlobal :
-      ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    live_boxPast_nests
-      (M := M)
-      (liveSymb := liveSymb)
-      (l := l)
-      (evt := ⟨echoSymb, [v]⟩)
-      (hTheory := hThyLive)
-      (hQuorum := hEchoQuorumGlobal)
+      (hLiveQuorum := hLiveQuorum) (hUnique := hUnique)
+      (hKnown := diamondPast_nil_valid_of_end (M := M)
+        (by simpa [wTop] using hSeenPropose))
   -- Lemma 6.5.2(2) with (Vote!): the quorum votes.
   have hVotesGlobal :
       ⊨[M]
         □ᶠ↓[[l]]
           (predicate0 liveSymb ∧ᶠ
             ofEvent ⟨voteSymb, [l, v]⟩) :=
-    HBBSafe.boxPast_live_of_eventual_quorum
+    HBB.boxPast_live_of_eventual_quorum
       (M := M) (liveSymb := liveSymb)
       (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
       (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
@@ -178,17 +94,9 @@ theorem happyTermination
       ⟪wTop⟫ ⊨[M]
         ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
     have hGlobal :=
-      HBBSafe.live_eventually_consequent (M := M)
+      HBB.live_quorum_eventually_consequent (M := M)
         (hLiveTheory := hThyLive)
-        (φ := □ᶠ↓[[l]] (ofEvent ⟨voteSymb, [l, v]⟩))
-        (ψ := ofEvent ⟨deliverSymb, [l, l, v]⟩)
-        (hLive :=
-          live_eventually_knows_box (M := M)
-            (liveSymb := liveSymb)
-            (l := l)
-            (evt := ⟨voteSymb, [l, v]⟩)
-            (hTheory := hThyLive)
-            (hQuorum := hVotesGlobal))
+        (hQuorum := hVotesGlobal)
         (hImp := HBB.deliverForward_imp (M := M)
           (theory_deliverForward (M := M) hTheory))
     exact

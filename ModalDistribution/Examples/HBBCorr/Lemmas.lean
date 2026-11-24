@@ -1,5 +1,5 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.HBBSafe.Uniqueness
+import ModalDistribution.Examples.HBB.Uniqueness
 import ModalDistribution.Examples.HBBCorr.Axioms
 import ModalDistribution.Examples.ThyLive
 import ModalDistribution.Logic.Semantics
@@ -553,7 +553,7 @@ theorem echo_quorums_agree
             hEchoCollision_local with
       | inl hLeft =>
           exact
-            HBBSafe.echoNonEquiv_diamond (M := M)
+            HBB.echoNonEquiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -563,7 +563,7 @@ theorem echo_quorums_agree
               (diamondPast_nil_of_past (M := M) hLeft)
       | inr hRight =>
           have hEq :=
-            HBBSafe.echoNonEquiv_diamond (M := M)
+            HBB.echoNonEquiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)

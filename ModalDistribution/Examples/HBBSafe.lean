@@ -1,6 +1,5 @@
 import ModalDistribution.Examples.HBBSafe.Axioms
 import ModalDistribution.Examples.HBBSafe.Safety
-import ModalDistribution.Examples.HBBSafe.Uniqueness
 import ModalDistribution.Examples.HBBSafe.Agreement
 import ModalDistribution.Examples.HBBSafe.HappyTermination
 import ModalDistribution.Examples.HBBSafe.CascadeTermination
@@ -13,8 +12,8 @@ This file re-exports the complete formalization of the HBBSafe broadcast protoco
 organized into the following modules:
 
 - **`HBBSafe.Axioms`**: Axiom schemes (backward rules, forward rules, safety formula, EchoNE)
-- **`HBBSafe.Safety`**: Safety and liveness helper lemmas
-- **`HBBSafe.Uniqueness`**: Uniqueness of proposals lemmas
+- **`HBBSafe.Safety`**: Safety of a learner (Lemmas 6.5.1 and 6.6.2) and the `Vote!`
+  instantiations
 - **`HBBSafe.Agreement`**: Main agreement theorem
 - **`HBBSafe.HappyTermination`**: Happy Termination
 - **`HBBSafe.CascadeTermination`**: Cascade Termination

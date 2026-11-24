@@ -431,6 +431,21 @@ theorem diamondPast_nil_of_past
   simpa [Formula.diamondPast] using
     (Sat.diamond_nil (M := M) (w := w) (φ := ↓ᶠ φ)).2 ⟨w.place, hLocal⟩
 
+/-- At the end of time `♦φ` does not depend on the place: if it holds at one
+end-of-time world, it is valid. -/
+theorem diamondPast_nil_valid_of_end
+    {M : Model S P} {p : P} {φ : Formula S}
+    (h : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]] φ) :
+    ⊨[M]♢ᶠ↓[[]] φ := by
+  classical
+  obtain ⟨r, hPast⟩ :=
+    (Sat.diamond_nil (M := M) (w := ⟨p, †, M.history.val⟩) (φ := ↓ᶠ φ)).1
+      (by simpa [Formula.diamondPast] using h)
+  intro q
+  simpa [Formula.diamondPast] using
+    (Sat.diamond_nil (M := M) (w := ⟨q, †, M.history.val⟩) (φ := ↓ᶠ φ)).2
+      ⟨r, by simpa [World.time] using hPast⟩
+
 /-- Paper: Lemma 4.2.3(1). If at some past event-tuple an `l`-quorum is known
 to have had `φ` in the past, then an `l`-quorum is known to have had `φ` in the
 past now. This is the analogue of the (5) axiom of modal logic.
@@ -560,17 +575,8 @@ theorem endValid_boxPast_of_imp_sometime
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hAnte
   -- The omniscient antecedent transports to every participant.
-  obtain ⟨rProp, hPastAnte⟩ :=
-    (Sat.diamond_nil (M := M) (w := wTop)
-        (φ := Formula.past ψ)).1
-      (by simpa [Formula.diamondPast] using hAnte)
-  have hAnteGlobal : ⊨[M]♢ᶠ↓[[]]ψ := by
-    intro q
-    have hDiamond :=
-      (Sat.diamond_nil (M := M) (w := ⟨q, †, M.history.val⟩)
-          (φ := Formula.past ψ)).2
-        ⟨rProp, by simpa [wTop, World.time] using hPastAnte⟩
-    simpa [Formula.diamondPast] using hDiamond
+  have hAnteGlobal : ⊨[M]♢ᶠ↓[[]]ψ :=
+    diamondPast_nil_valid_of_end (M := M) (by simpa [wTop] using hAnte)
   -- Every member of the guard quorum eventually sees `D`.
   have hBoxSometime : ⊨[M]□ᶠ[[l]](↕ᶠ D) := by
     intro q

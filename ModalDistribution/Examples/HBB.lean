@@ -12,6 +12,15 @@ theories, and the `Deliver?`/`Deliver!` rules are identical in `HBBSafe` and
 Each theory's `Axioms.lean` assembles its axiom set from these plus its own
 vote rules. The `Lemmas` section holds the shared instantiation lemmas for
 `Deliver?` and `Deliver!`.
+
+The theory-independent results built on these axioms live in the `HBB`
+submodules:
+
+- **`HBB.Liveness`**: Lemmas 6.5.2 and 6.5.3, which need only `ThyLive`
+- **`HBB.Uniqueness`**: Lemma 6.6.1 and the echo lemmas built on `Echo?`,
+  `EchoNE`, and `Echo!`
+- **`HBB.Termination`**: the steps shared by the Happy and Cascade
+  Termination proofs of the three theories
 -/
 
 namespace ModalDistribution
