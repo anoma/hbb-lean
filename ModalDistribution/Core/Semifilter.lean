@@ -7,9 +7,9 @@ open History
 /-!
 # Semifilter Structures
 
-This file introduces semifilters as the set-theoretic foundation for quorums, following
-Notation and definition for semifilters. Semifilters capture nonempty,
-up-closed families of pairwise intersecting quorums on a set of participants.
+This file introduces semifilters as the set-theoretic foundation for quorums.
+Semifilters capture nonempty, up-closed families of pairwise intersecting
+quorums on a set of participants.
 
 ## Main definitions
 
@@ -18,8 +18,7 @@ up-closed families of pairwise intersecting quorums on a set of participants.
 
 ## References
 
-* Paper notation for quorum intersection.
-* Paper definition for semifilters.
+* Paper: Definition 3.3.2 (semifilters).
 -/
 
 universe u
@@ -38,7 +37,7 @@ end Semifilter
 
 open scoped Semifilter
 
-/-- Paper: Definition 3.3.2 (semifilters). A semifilter is: A semifilter is a nonempty up-closed
+/-- Paper: Definition 3.3.2 (semifilters). A semifilter is a nonempty up-closed
 family of pairwise intersecting quorums over a participant set `P`. -/
 structure Semifilter (P : Type u) where
   /-- Carrier set of quorums. -/

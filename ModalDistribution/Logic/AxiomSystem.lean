@@ -49,7 +49,7 @@ namespace Theory
 end Theory
 
 /-- Notation for models satisfying theories. -/
-notation:55 M " ⊨ᵀ " T => Theory.Valid (M := M) T
+notation:55 M " ⊨ᵀ " T => Theory.Valid M T
 
 end Logic
 end ModalDistribution

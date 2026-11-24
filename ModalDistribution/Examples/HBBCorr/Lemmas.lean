@@ -10,11 +10,11 @@ import ModalDistribution.Core.Semifilter
 /-!
 # HBBCorr Helper Lemmas
 
-This file records the auxiliary lemmas used throughout Section~8 of the paper.
+This file records the auxiliary lemmas used throughout Section 8 of the paper.
 Each statement mirrors the corresponding labelled lemma in the text: the
 interaction of the `3twined` axiom with sequential quorums, the extraction of
 quorum witnesses from votes, and the behaviour of the correlation relation
-$\mnta$.
+`≐`.
 -/
 
 namespace ModalDistribution

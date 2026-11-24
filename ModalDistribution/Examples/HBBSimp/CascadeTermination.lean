@@ -10,10 +10,9 @@ import ModalDistribution.Logic.Properties.Modalities
 /-!
 # HBBSimp Cascade Termination
 
-This file records the Cascade Termination statement for `HBBSimp`, matching
-Cascade Termination for HBBSimp. Intersecting reporting quorums together
-with a live quorum for `l₂'` ensure that deliveries for `(l₁',\thel)` propagate
-to `(l₂',\thel)`.
+This file records the Cascade Termination statement for `HBBSimp`.
+Intersecting reporting quorums together with a live quorum for `l₂'` ensure
+that deliveries for `(l₁', ℓ)` propagate to `(l₂', ℓ)`.
 -/
 
 namespace ModalDistribution
@@ -39,7 +38,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 
 /-- Paper: Proposition 7.3.2 (Cascade Termination). If reporting learners `l₁'` and `l₂'`
 have intersecting quorums and learner `l₂'` is live, then any delivery for
-`(l₁', \thel)` propagates to `(l₂', \thel)`. -/
+`(l₁', ℓ)` propagates to `(l₂', ℓ)`. -/
 theorem cascadeTermination
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)

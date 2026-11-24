@@ -9,7 +9,7 @@ import ModalDistribution.Examples.HBBCorr.Agreement
 # Theory `HBBCorr`
 
 This module re-exports the components of the `HBBCorr` formalisation. The layout
-follows Section~8 of the paper:
+follows Section 8 of the paper:
 
 * `HBBCorr.Axioms`: Axiom system
 * `HBBCorr.Lemmas`: Helper lemmas
