@@ -228,7 +228,8 @@ theorem past_box_does_not_reverse :
     obtain ⟨t, ht, -, htBox⟩ := (Sat.past _ _ _).1 h
     exact not_boxPast_evF_of_mem ht htBox
   · -- The quorum `{p}` has a member whose past event-tuple would satisfy `□↓F`.
-    obtain ⟨q, -, hq⟩ := (sat_diamond_singleton_iff branchingModel branchingEnd () _).1 h Set.univ trivial
+    obtain ⟨q, -, hq⟩ :=
+      (sat_diamond_singleton_iff branchingModel branchingEnd () _).1 h Set.univ trivial
     obtain ⟨t, ht, -, htBox⟩ := (Sat.past _ _ _).1 hq
     exact not_boxPast_evF_of_mem ht htBox
 
