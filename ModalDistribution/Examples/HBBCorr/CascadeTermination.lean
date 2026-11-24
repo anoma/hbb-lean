@@ -40,7 +40,7 @@ variable {correlationSymb : Signature.PredSymb S}
 /-- Paper: Proposition 8.4.5 (Cascade Termination). If learners `l₁` and `l₂` are always
 correlated and `l₂` has a live quorum, then any delivery for `l₁` eventually
 forces a live delivery for `l₂`. -/
-theorem cascadeTermination
+theorem cascade_termination
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -58,7 +58,7 @@ theorem cascadeTermination
       (hLiveQuorum := hLiveQuorum)
   intro p
   set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+  have hThyLive : M ⊨ᵀ thyLive liveSymb :=
     fun _ hAx => hTheory (Or.inl hAx)
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hDeliverDiamond
@@ -67,7 +67,7 @@ theorem cascadeTermination
   -- Quorum intersections supplied by the correlation hypothesis.
   have hIntersectGlobal :
       ⊨[M]♢ᶠ[[l₁, l₂]] ⊤ᶠ :=
-    correlationImpliesQuorumIntersection
+    correlation_implies_quorum_intersection
       (M := M)
       (liveSymb := liveSymb)
       (proposeSymb := proposeSymb)
@@ -201,14 +201,14 @@ theorem cascadeTermination
           HBB.live_quorum_eventually_consequent (M := M)
             (hLiveTheory := hThyLive)
             (hQuorum := fun q => by simpa [wTop] using hVotesBox_l₂)
-            (hImp := deliverForward_imp (M := M)
-              (theory_deliverForward (M := M) hTheory)) p)
+            (hImp := deliver_forward_imp (M := M)
+              (theory_deliver_forward (M := M) hTheory)) p)
       hLiveHere
 
 /-- Paper: Proposition 8.4.5, first corollary. A delivery for `l₁`
 forces every member of `l₂`'s quorum to know (in the past) that `l₂` delivered
 the same value. -/
-theorem cascadeTermination_boxPast
+theorem cascade_termination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -221,7 +221,7 @@ theorem cascadeTermination_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      cascadeTermination (M := M)
+      cascade_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)
@@ -231,7 +231,7 @@ theorem cascadeTermination_boxPast
         (hLiveQuorum := hLiveQuorum))
 /-- Paper: Proposition 8.4.5, second corollary. A delivery for `l₁`
 produces a delivery for `l₂` somewhere in the past. -/
-theorem cascadeTermination_diamondPast
+theorem cascade_termination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S} {v : Signature.Value S}
@@ -244,7 +244,7 @@ theorem cascadeTermination_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLiveQuorum)
       (hMain :=
-      cascadeTermination (M := M)
+      cascade_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (correlationSymb := correlationSymb)

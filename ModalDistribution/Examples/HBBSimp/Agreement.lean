@@ -71,7 +71,7 @@ theorem agreement
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliverBackward (M := M) hTheory)
+          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
           (reporting := l₁') (learner := l₁)
           (value := v₁) (p := p)
           (hDeliver := hDeliver₁)
@@ -82,7 +82,7 @@ theorem agreement
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliverBackward (M := M) hTheory)
+          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
           (reporting := l₂') (learner := l₂)
           (value := v₂) (p := p)
           (hDeliver := hDeliver₂)
@@ -153,7 +153,7 @@ theorem agreement
         (hEvt' := hEchoBox₂)
         (hDistinct := hDistinct)
   have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-    theory_echoNonEquiv (M := M) hTheory
+    theory_echo_non_equiv (M := M) hTheory
   have hEquality :
       ⟪wTop⟫ ⊨[M] v₁ ≃ᶠ v₂ := by
     -- Combining the ordered echoes with `EchoNE` forces the values to coincide.
@@ -170,7 +170,7 @@ theorem agreement
           hEchoCollision with
     | inl hLeft =>
         have hEq :=
-          HBB.echoNonEquiv_diamond (M := M)
+          HBB.echo_non_equiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)
@@ -179,7 +179,7 @@ theorem agreement
         simpa [Sat] using hEq
     | inr hRight =>
         have hEq :=
-          HBB.echoNonEquiv_diamond (M := M)
+          HBB.echo_non_equiv_diamond (M := M)
             (echoSymb := echoSymb)
             (hEchoNE := hEchoNE)
             (hSubset := hSubset)

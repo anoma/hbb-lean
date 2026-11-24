@@ -58,10 +58,10 @@ theorem correctness
       agreement (M := M) (hTheory := hTheory)
         (hCorrelation := hCorrelation),
    fun hLiveQuorum hUnique =>
-      happyTermination (M := M) (hTheory := hTheory)
+      happy_termination (M := M) (hTheory := hTheory)
         (hLiveQuorum := hLiveQuorum) (hUnique := hUnique),
    fun hCorrelation hLiveQuorum =>
-      cascadeTermination (M := M) (hTheory := hTheory)
+      cascade_termination (M := M) (hTheory := hTheory)
         (hCorrelation := hCorrelation) (hLiveQuorum := hLiveQuorum)⟩
 
 end HBBCorr

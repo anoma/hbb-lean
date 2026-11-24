@@ -39,7 +39,7 @@ variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 /-- Paper: Proposition 7.3.2 (Cascade Termination). If reporting learners `l₁'` and `l₂'`
 have intersecting quorums and learner `l₂'` is live, then any delivery for
 `(l₁', ℓ)` propagates to `(l₂', ℓ)`. -/
-theorem cascadeTermination
+theorem cascade_termination
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -63,11 +63,11 @@ theorem cascadeTermination
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliverBackward (M := M) hTheory)
+          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
           (reporting := l₁') (learner := ℓ)
           (value := v) (p := p)
           (hDeliver := hDeliverSource)
-  have hThyLive : M ⊨ᵀ ThyLive liveSymb :=
+  have hThyLive : M ⊨ᵀ thyLive liveSymb :=
     theory_thyLive (M := M) hTheory
   -- Propositions 5.2.10 and 5.2.8: the live `l₂'`-quorum eventually knows of
   -- a vote of the intersecting `l₁'`-quorum.
@@ -83,10 +83,10 @@ theorem cascadeTermination
   have hLiveEchoBoxGlobal :
       ⊨[M]□ᶠ↓[[l₂']] (predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[ℓ]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    HBB.boxPast_live_knowsVote_knowsEchoQuorum (M := M)
+    HBB.boxPast_live_knows_vote_knows_echo_quorum (M := M)
       (hVoteEcho := fun _ ht hVote =>
-        voteBackward_elim (M := M)
-          (hAx := theory_voteBackward (M := M) hTheory)
+        vote_backward_elim (M := M)
+          (hAx := theory_vote_backward (M := M) hTheory)
           (hMem := ht) (hVote := hVote))
       (hQuorum := hKnowsVoteGlobal)
   -- Lemma 6.5.2(2) with (Vote!): the quorum votes.
@@ -100,7 +100,7 @@ theorem cascadeTermination
       (l := l₂')
       (hLiveTheory := hThyLive)
       (hQuorum := hLiveEchoBoxGlobal)
-      (hImp := voteForward_imp (M := M) (hTheory := hTheory))
+      (hImp := vote_forward_imp (M := M) (hTheory := hTheory))
   -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
   -- knowledge becomes eventual delivery.
   have hDeliverEventually :
@@ -111,8 +111,8 @@ theorem cascadeTermination
       HBB.live_quorum_eventually_consequent (M := M)
         (hLiveTheory := hThyLive)
         (hQuorum := hVoteBoxGlobal)
-        (hImp := HBB.deliverForward_imp (M := M)
-          (theory_deliverForward (M := M) hTheory))
+        (hImp := HBB.deliver_forward_imp (M := M)
+          (theory_deliver_forward (M := M) hTheory))
     simpa [wTop] using hGlobal p
   have hGoal :
       ⟪wTop⟫ ⊨[M]
@@ -128,7 +128,7 @@ theorem cascadeTermination
 /-- Paper: Proposition 7.3.2, first corollary. A delivery for `(l₁', ℓ)`
 forces every member of `l₂'`'s quorum to know (in the past) that `(l₂', ℓ)` was
 delivered. -/
-theorem cascadeTermination_boxPast
+theorem cascade_termination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -142,7 +142,7 @@ theorem cascadeTermination_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      cascadeTermination (M := M)
+      cascade_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb)
@@ -152,7 +152,7 @@ theorem cascadeTermination_boxPast
         (hLive := hLive))
 /-- Paper: Proposition 7.3.2, second corollary. A delivery for `(l₁', ℓ)`
 eventually yields a delivery for `(l₂', ℓ)`. -/
-theorem cascadeTermination_diamondPast
+theorem cascade_termination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' ℓ : Signature.Value S}
@@ -166,7 +166,7 @@ theorem cascadeTermination_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      cascadeTermination (M := M)
+      cascade_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb)

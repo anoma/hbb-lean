@@ -11,14 +11,14 @@ steps; each theory differs only in its vote rules. The shared steps are proved
 here once, with each theory's vote rule taken as a hypothesis where a step
 needs it.
 
-- `uniquePropose_live_nestedEcho_quorum`: the Happy Termination steps from a
+- `unique_propose_live_nested_echo_quorum`: the Happy Termination steps from a
   live participant knowing a unique proposal to a live quorum knowing of an
   echo quorum (Lemma 6.6.1, Proposition 5.2.8, (Echo?) with Lemma 4.2.2,
   Lemma 6.5.2(2), and Lemma 5.2.11)
 - `boxPast_live_knows_of_intersecting`: the Cascade Termination steps from a
   quorum of events to a live quorum knowing of one of them (Propositions 5.2.10
   and 5.2.8)
-- `boxPast_live_knowsVote_knowsEchoQuorum`: (Vote?) with Lemma 4.2.3(1), given
+- `boxPast_live_knows_vote_knows_echo_quorum`: (Vote?) with Lemma 4.2.3(1), given
   the theory's (Vote?) instance
 - `live_quorum_eventually_consequent`: Lemma 6.5.3 applied to (Knowledge□↓),
   the last step of every termination proof
@@ -54,8 +54,8 @@ has a live quorum, then a live `l`-quorum knows of an `l`-quorum of echoes of
 `l`-quorum know of it; (Echo?) with Lemma 4.2.2 makes that quorum know of the
 proposal; Lemma 6.5.2(2) with Lemma 6.6.1 makes it echo `v`; Lemma 5.2.11 nests
 the echo quorum. -/
-theorem uniquePropose_live_nestedEcho_quorum
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+theorem unique_propose_live_nested_echo_quorum
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     (hEcho : □W⊨[M]echoForwardAxiom liveSymb proposeSymb echoSymb)
     (hEchoBack : □W⊨[M]echoBackwardAxiom proposeSymb echoSymb)
     {l v : Signature.Value S}
@@ -70,7 +70,7 @@ theorem uniquePropose_live_nestedEcho_quorum
       □W⊨[M]
         ((↕ᶠ (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
           ↕ᶠ (ofEvent ⟨echoSymb, [v]⟩)) :=
-    uniquePropose_eventually_echo (M := M) (value := v)
+    unique_propose_eventually_echo (M := M) (value := v)
       (hEcho := hEcho) (hEchoBack := hEchoBack) (hUnique := hUnique)
   -- Some live participant echoes `v`.
   have hLiveEcho :
@@ -94,7 +94,7 @@ theorem uniquePropose_live_nestedEcho_quorum
   have hKnowsPropose :
       ⊨[M]□ᶠ↓[[l]]
         (predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩)) :=
-    boxPast_live_knowsEcho_knowsPropose (M := M)
+    boxPast_live_knows_echo_knows_propose (M := M)
       (hEchoBack := hEchoBack) (hQuorum := hKnowsEcho)
   -- Lemma 6.5.2(2) and Lemma 6.6.1: that quorum echoes `v`.
   have hEchoQuorum :
@@ -116,7 +116,7 @@ theorem uniquePropose_live_nestedEcho_quorum
 exposes a live participant with `evt`; Proposition 5.2.8 spreads the knowledge
 of it. -/
 theorem boxPast_live_knows_of_intersecting
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     {l₁ l₂ : Signature.Value S} {evt : Signature.EventType S}
     (hIntersect : ⊨[M]♢ᶠ[[l₁, l₂]]⊤ᶠ)
     (hLive : ⊨[M]□ᶠ[[l₂]]predicate0 liveSymb)
@@ -148,7 +148,7 @@ theorem boxPast_live_knows_of_intersecting
 learner `l` for `v`, it knows of an `l`-quorum of echoes of `v`. The theory's
 (Vote?) rule enters as `hVoteEcho`: at every vote event-tuple of the model, an
 `l`-quorum has echoed `v`. -/
-theorem boxPast_live_knowsVote_knowsEchoQuorum
+theorem boxPast_live_knows_vote_knows_echo_quorum
     {l l' v : Signature.Value S}
     (hVoteEcho :
       ∀ t ∈ M.history.val,
@@ -185,14 +185,14 @@ theorem boxPast_live_knowsVote_knowsEchoQuorum
     (Sat.and (M := M) (w := t) (φ := predicate0 liveSymb)
       (ψ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))).2
       ⟨hSplit.1,
-        pastDiamondBoxCollapsesToPresentBox (M := M) t l _ ht hKnowsEcho⟩
+        past_diamond_box_collapses_to_present_box (M := M) t l _ ht hKnowsEcho⟩
 
 /-- Lemma 6.5.3 applied to (Knowledge□↓): if a live `l`-quorum has `evt`
 events and `↕(live ∧ ■_l evt) ⇒ ↕ψ` is valid, every live participant
 eventually has `ψ`. With the theory's (Deliver!) implication for `ψ` this is the
 last step of every termination proof. -/
 theorem live_quorum_eventually_consequent
-    (hLiveTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hLiveTheory : M ⊨ᵀ thyLive liveSymb)
     {l : Signature.Value S} {evt : Signature.EventType S} {ψ : Formula S}
     (hQuorum : ⊨[M]□ᶠ↓[[l]](predicate0 liveSymb ∧ᶠ ofEvent evt))
     (hImp :

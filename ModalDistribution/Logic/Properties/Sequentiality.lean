@@ -37,26 +37,26 @@ theorem seq_iff_linear_accessible
   classical
   constructor
   · intro hSeq
-    have hSeq' : isSequential (P := P) (Event := Signature.EventType S)
+    have hSeq' : IsSequential (P := P) (Event := Signature.EventType S)
         w.place w.time :=
       (Sat.seq (M := M) (w := w)).1 hSeq
     intro w₁ w₂ hw₁ hw₂
     have hw₁_mem : w₁ ∈ w.time := by
-      simpa [World.accessible] using hw₁.1
+      simpa [World.Accessible] using hw₁.1
     have hw₂_mem : w₂ ∈ w.time := by
-      simpa [World.accessible] using hw₂.1
+      simpa [World.Accessible] using hw₂.1
     have hw₁_place : World.place w₁ = w.place := hw₁.2
     have hw₂_place : World.place w₂ = w.place := hw₂.2
     exact hSeq' w₁ w₂ hw₁_mem hw₂_mem hw₁_place hw₂_place
   · intro h
     have hSeq :
-        isSequential (P := P) (Event := Signature.EventType S)
+        IsSequential (P := P) (Event := Signature.EventType S)
           w.place w.time := by
       intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
       have ht₁_access : t₁ ≪⁻ w :=
-        ⟨by simpa [World.accessible] using ht₁, hp₁⟩
+        ⟨by simpa [World.Accessible] using ht₁, hp₁⟩
       have ht₂_access : t₂ ≪⁻ w :=
-        ⟨by simpa [World.accessible] using ht₂, hp₂⟩
+        ⟨by simpa [World.Accessible] using ht₂, hp₂⟩
       exact h (w₁ := t₁) (w₂ := t₂) ht₁_access ht₂_access
     exact (Sat.seq (M := M) (w := w)).2 hSeq
 
@@ -87,7 +87,7 @@ theorem seq_monotone_of_subset
 
 /-- Paper: Proposition 5.1.4(2). Sequentiality implies `⇓ᶠ`-sequentiality.
 This restates part 1 under `⇓`. -/
-theorem seq_monotone_allItp
+theorem seq_monotone_all_itp
     (hW : w.time ⪯ M.history.val)
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq) :
     ⟪w⟫ ⊨[M]⇓ᶠ Formula.seq := by
@@ -96,7 +96,7 @@ theorem seq_monotone_allItp
   intro t ht hp
   exact
     seq_monotone_of_subset (M := M) (hW := hW)
-      (hAcc := ⟨by simpa [World.accessible] using ht, hp⟩)
+      (hAcc := ⟨by simpa [World.Accessible] using ht, hp⟩)
       (hSeq := hSeq)
 
 /-- Paper: Proposition 5.1.5(1). Quorum intersections furnish a joint witness. -/
@@ -152,7 +152,7 @@ variable {evt evt' : Signature.EventType S}
 variable {φ ψ φ' : Formula S}
 
 /-- Sequentiality depends only on the place and timeline of the current world. -/
-theorem seq_localView_of_seq
+theorem seq_local_view_of_seq
     (hSeq : ⟪w⟫ ⊨[M]Formula.seq)
     (hPlace : w'.place = w.place)
     (hTime : w'.time = w.time) :
@@ -215,7 +215,7 @@ theorem seq_two_quorums_events
         (↓ᶠ ((Formula.ofEvent evt') ∧ᶠ ↓ᶠ (Formula.ofEvent evt)))) := by
   classical
   have hSeqTime :
-      isSequential (P := P) (Event := Signature.EventType S)
+      IsSequential (P := P) (Event := Signature.EventType S)
         w.place w.time :=
     (Sat.seq (M := M) (w := w)).1 hSeq
   obtain ⟨t₁, ht₁_mem, ht₁_place, ht₁_event⟩ :=
@@ -239,7 +239,7 @@ theorem seq_two_quorums_events
           (φ := Formula.ofEvent evt') (ψ := ↓ᶠ (Formula.ofEvent evt))).2
           ⟨ht₂_event,
             Sat.past_intro_of_prefix (M := M) (w := t₂) (t := t₁)
-              (ht := by simpa [World.accessible] using hIn)
+              (ht := by simpa [World.Accessible] using hIn)
               (hp := hp_eq) (hφ := ht₁_event)⟩
       exact sat_or_of_right (M := M) (w := w)
         (Sat.past_intro_of_prefix (M := M) (w := w) (t := t₂)
@@ -255,7 +255,7 @@ theorem seq_two_quorums_events
               (φ := Formula.ofEvent evt) (ψ := ↓ᶠ (Formula.ofEvent evt'))).2
               ⟨ht₁_event,
                 Sat.past_intro_of_prefix (M := M) (w := t₁) (t := t₂)
-                  (ht := by simpa [World.accessible] using hIn)
+                  (ht := by simpa [World.Accessible] using hIn)
                   (hp := hp_eq.symm) (hφ := ht₂_event)⟩
           exact sat_or_of_left (M := M) (w := w)
             (Sat.past_intro_of_prefix (M := M) (w := w) (t := t₁)
@@ -300,7 +300,7 @@ theorem seq_two_quorums_eventually
   set w_q : World P (Signature.EventType S) :=
     ⟨q, w.event, w.time⟩
   have hSeq_q : ⟪w_q⟫ ⊨[M] Formula.seq :=
-    seq_localView_of_seq
+    seq_local_view_of_seq
       (w := ⟨q, †, w.time⟩)
       (w' := w_q)
       (M := M)

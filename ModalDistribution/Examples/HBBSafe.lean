@@ -22,14 +22,14 @@ organized into the following modules:
 ## Main Results
 
 - **Agreement** (`agreement`): Two different values implies sequentiality violation
-- **Happy Termination** (`happyTermination`): Under uniqueness, live proposals are
+- **Happy Termination** (`happy_termination`): Under uniqueness, live proposals are
   eventually delivered
-- **Cascade Termination** (`cascadeTermination`): Deliveries propagate across
+- **Cascade Termination** (`cascade_termination`): Deliveries propagate across
   intersecting learner quorums
 
 ## Theory Definition
 
-The theory `HBBSafe` extends `ThyLive` with the protocol-specific axioms of
+The theory `HBBSafe` extends `thyLive` with the protocol-specific axioms of
 Figure 8.
 -/
 

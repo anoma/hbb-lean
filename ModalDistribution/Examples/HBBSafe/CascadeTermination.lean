@@ -11,8 +11,9 @@ import ModalDistribution.Logic.Properties.Modalities
 
 This file contains the Cascade Termination theorem for the HBBSafe broadcast protocol:
 
-- **Cascade Termination** (`cascadeTermination`): If a value is delivered to one learner and certain
-  liveness/intersection conditions hold, it will eventually be delivered to another learner.
+- **Cascade Termination** (`cascade_termination`): If a value is delivered to one learner and
+  certain liveness/intersection conditions hold, it will eventually be delivered to another
+  learner.
 -/
 
 namespace ModalDistribution
@@ -44,7 +45,7 @@ If a value is delivered to learner l₁' and:
 - The safe condition holds for learner l
 - All of learner l₂'s quorum members are live
 Then if p is live, the value will eventually be delivered to learner l₂'. -/
-theorem cascadeTermination
+theorem cascade_termination
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -63,7 +64,7 @@ theorem cascadeTermination
   refine Sat.imp_intro (M := M) (w := wTop) ?_
   intro hLivep
 
-  have hThyLiveTheory : M ⊨ᵀ ThyLive liveSymb :=
+  have hThyLiveTheory : M ⊨ᵀ thyLive liveSymb :=
     theory_thyLive (M := M) hTheory
 
   -- (Deliver?) with Lemma 4.2.3(1): the delivery forces an end-of-time
@@ -74,7 +75,7 @@ theorem cascadeTermination
     simpa [wTop]
       using
         HBB.deliver_to_vote_box_end (M := M)
-          (hDeliverAx := theory_deliverBackward (M := M) hTheory)
+          (hDeliverAx := theory_deliver_backward (M := M) hTheory)
           (reporting := l₁') (learner := l)
           (value := v) (p := p)
           (hDeliver := hDeliver)
@@ -98,15 +99,15 @@ theorem cascadeTermination
       ⊨[M]□ᶠ↓[[l₂']]
         (predicate0 liveSymb ∧ᶠ
           □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    boxPast_live_knowsVote_knowsEchoQuorum (M := M)
+    boxPast_live_knows_vote_knows_echo_quorum (M := M)
       (hVoteEcho := fun _ ht hVote =>
-        (voteBackward_elim (M := M)
-          (hAx := theory_voteBackward (M := M) hTheory)
+        (vote_backward_elim (M := M)
+          (hAx := theory_vote_backward (M := M) hTheory)
           (hMem := ht) (hVote := hVote)).2)
       (hQuorum := hKnowsVoteGlobal)
 
   -- Lemma 6.5.2(2) with (Vote!): the safe learner's quorum eventually votes.
-  -- Safety enters through `voteForward_imp`, i.e. Lemma 6.5.1.
+  -- Safety enters through `vote_forward_imp`, i.e. Lemma 6.5.1.
   have hVotesGlobal :
       ⊨[M]□ᶠ↓[[l₂']]
         (predicate0 liveSymb ∧ᶠ ofEvent ⟨voteSymb, [l, v]⟩) :=
@@ -117,7 +118,7 @@ theorem cascadeTermination
       (l := l₂')
       (hLiveTheory := hThyLiveTheory)
       (hQuorum := hStep4Global)
-      (hImp := voteForward_imp (M := M)
+      (hImp := vote_forward_imp (M := M)
         (hTheory := hTheory) (hSafe := hSafe))
 
   -- Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!): eventual vote
@@ -128,8 +129,8 @@ theorem cascadeTermination
     live_quorum_eventually_consequent (M := M)
       (hLiveTheory := hThyLiveTheory)
       (hQuorum := hVotesGlobal)
-      (hImp := HBB.deliverForward_imp (M := M)
-        (theory_deliverForward (M := M) hTheory))
+      (hImp := HBB.deliver_forward_imp (M := M)
+        (theory_deliver_forward (M := M) hTheory))
   exact
     Sat.imp_elim (M := M) (w := wTop)
       (φ := predicate0 liveSymb)
@@ -139,7 +140,7 @@ theorem cascadeTermination
 /-- Paper: Proposition 6.5.5, first corollary. Corollary: a delivery for `(l₁', l)`
 forces every `l₂'`-quorum member to know (in the past) that `(l₂', l)` was
 delivered. -/
-theorem cascadeTermination_boxPast
+theorem cascade_termination_boxPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -154,7 +155,7 @@ theorem cascadeTermination_boxPast
     endValid_boxPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      cascadeTermination (M := M)
+      cascade_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)
@@ -164,7 +165,7 @@ theorem cascadeTermination_boxPast
         (hLive := hLive))
 /-- Paper: Proposition 6.5.5, second corollary. Corollary: a delivery for `(l₁', l)`
 forces a delivery for `(l₂', l)` somewhere in the past of the history. -/
-theorem cascadeTermination_diamondPast
+theorem cascade_termination_diamondPast
     (hTheory : M ⊨ᵀ
       theory liveSymb safeSymb proposeSymb echoSymb voteSymb deliverSymb)
     {l₁' l₂' l : Signature.Value S}
@@ -179,7 +180,7 @@ theorem cascadeTermination_diamondPast
     endValid_diamondPast_of_imp_sometime (M := M)
       (hGuard := hLive)
       (hMain :=
-      cascadeTermination (M := M)
+      cascade_termination (M := M)
         (liveSymb := liveSymb) (proposeSymb := proposeSymb)
         (echoSymb := echoSymb) (voteSymb := voteSymb)
         (deliverSymb := deliverSymb) (v := v)

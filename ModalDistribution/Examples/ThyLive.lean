@@ -5,7 +5,7 @@ import ModalDistribution.Core.Prehistory
 import ModalDistribution.Core.History
 
 /-!
-# Theory `ThyLive`
+# Theory `thyLive`
 
 We formalise the liveness theory.  The theory is
 parametrised by a distinguished predicate symbol `liveSymb`, and contains the
@@ -69,8 +69,8 @@ every live participant eventually knows that an `l`-quorum performed `E`. -/
       ↕ᶠ (□ᶠ↓[[l]] (Formula.ofEvent evt)))
 
 /-- Paper: Definition 5.2.4 (the theory of liveness). The collection of liveness axioms
-(`ThyLive`). -/
-@[simp] def ThyLive
+(`thyLive`). -/
+@[simp] def thyLive
     (liveSymb : Signature.PredSymb S) :
     Set (Formula S) :=
   { φ |
@@ -85,24 +85,24 @@ section Projections
 
 variable {P : Type} [Nonempty P] {M : Model S P} {liveSymb : Signature.PredSymb S}
 
-/-- Project validity of `(LiveAlways)` out of a model of `ThyLive`. -/
-theorem thyLive_liveAlways (hTheory : M ⊨ᵀ ThyLive liveSymb) :
+/-- Project validity of `(LiveAlways)` out of a model of `thyLive`. -/
+theorem thyLive_live_always (hTheory : M ⊨ᵀ thyLive liveSymb) :
     □W⊨[M] liveAlwaysAxiom (S := S) liveSymb :=
   hTheory (Or.inl rfl)
 
-/-- Project validity of `(LiveSeq)` out of a model of `ThyLive`. -/
-theorem thyLive_liveSeq (hTheory : M ⊨ᵀ ThyLive liveSymb) :
+/-- Project validity of `(LiveSeq)` out of a model of `thyLive`. -/
+theorem thyLive_live_seq (hTheory : M ⊨ᵀ thyLive liveSymb) :
     □W⊨[M] liveSeqAxiom (S := S) liveSymb :=
   hTheory (Or.inr (Or.inl rfl))
 
-/-- Project validity of a `(Knowledge♢↓)` instance out of a model of `ThyLive`. -/
-theorem thyLive_knowledgeDiamond (hTheory : M ⊨ᵀ ThyLive liveSymb)
+/-- Project validity of a `(Knowledge♢↓)` instance out of a model of `thyLive`. -/
+theorem thyLive_knowledge_diamond (hTheory : M ⊨ᵀ thyLive liveSymb)
     (evt : Signature.EventType S) :
     □W⊨[M] knowledgeDiamondAxiom (S := S) liveSymb evt :=
   hTheory (Or.inr (Or.inr (Or.inl ⟨evt, rfl⟩)))
 
-/-- Project validity of a `(Knowledge□↓)` instance out of a model of `ThyLive`. -/
-theorem thyLive_knowledgeBox (hTheory : M ⊨ᵀ ThyLive liveSymb)
+/-- Project validity of a `(Knowledge□↓)` instance out of a model of `thyLive`. -/
+theorem thyLive_knowledge_box (hTheory : M ⊨ᵀ thyLive liveSymb)
     (l : Signature.Value S) (evt : Signature.EventType S) :
     □W⊨[M] knowledgeBoxAxiom (S := S) liveSymb l evt :=
   hTheory (Or.inr (Or.inr (Or.inr ⟨l, evt, rfl⟩)))
@@ -147,7 +147,7 @@ theorem sometime_past_end
       hSubset_t_plain
       (by
         simpa using
-          History.hereditarilyTransitive
+          History.hereditarily_transitive
             (History.predecessorHistory (H := M.history) hBefore))
   obtain ⟨q, hPastEvt⟩ :=
     (Sat.diamondEmpty (M := M)
@@ -173,7 +173,7 @@ theorem sometime_past_end
 
 /-- `LiveAlways` transports end-of-time liveness to any witnessed prefix. -/
 theorem live_at_predecessor
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
     (hLive : ⟪⟨w.place, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb) :
@@ -183,8 +183,8 @@ theorem live_at_predecessor
       ⊨[M] Formula.predicate0 liveSymb := by
   classical
   have hAlwaysMem :
-      liveAlwaysAxiom (S := S) liveSymb ∈ ThyLive liveSymb := by
-    simp [ThyLive]
+      liveAlwaysAxiom (S := S) liveSymb ∈ thyLive liveSymb := by
+    simp [thyLive]
   have hAlways :
       AllWorldValid M (liveAlwaysAxiom (S := S) liveSymb) :=
     hTheory hAlwaysMem
@@ -197,7 +197,7 @@ theorem live_at_predecessor
       ⟪⟨w.place, w.event, Hpre.val⟩⟫ ⊨[M]
         (Formula.predicate0 liveSymb ⇔ᶠ
           ⤒ᶠ (Formula.predicate0 liveSymb)) :=
-    AllWorldValid_predecessor (M := M)
+    allWorldValid_predecessor (M := M)
       (φ := liveAlwaysAxiom (S := S) liveSymb)
       hAlways (by
         simpa [World.place, World.event, World.time]
@@ -229,17 +229,17 @@ equivalence). Liveness does not depend on time: a participant is live at a speci
 only if it is live at the end-of-time world for that participant. This follows from the
 liveness-always axiom (live ⇔ ⤒ live).
 
-See also: `alwaysLiveEquivBackward`, liveness-always axiom. -/
-theorem alwaysLiveEquivForward
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+See also: `always_live_equiv_backward`, liveness-always axiom. -/
+theorem always_live_equiv_forward
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     {t : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val) :
     (⟪t⟫ ⊨[M] Formula.predicate0 liveSymb) ↔
       (⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M] Formula.predicate0 liveSymb) := by
   classical
   have hAlwaysMem :
-      liveAlwaysAxiom (S := S) liveSymb ∈ ThyLive liveSymb := by
-    simp [ThyLive]
+      liveAlwaysAxiom (S := S) liveSymb ∈ thyLive liveSymb := by
+    simp [thyLive]
   have hAlways :
       AllWorldValid M (liveAlwaysAxiom (S := S) liveSymb) :=
     hTheory hAlwaysMem
@@ -295,9 +295,9 @@ theorem alwaysLiveEquivForward
 then liveness holds at one if and only if it holds at the other. This is a direct
 consequence of the forward direction applied twice.
 
-See also: `alwaysLiveEquivForward`, liveness-always axiom. -/
-theorem alwaysLiveEquivBackward
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+See also: `always_live_equiv_forward`, liveness-always axiom. -/
+theorem always_live_equiv_backward
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     {t t' : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val)
     (ht' : t' ∈ M.history.val)
@@ -306,10 +306,10 @@ theorem alwaysLiveEquivBackward
       (⟪t'⟫ ⊨[M] Formula.predicate0 liveSymb) := by
   classical
   have h_t :=
-    alwaysLiveEquivForward (M := M)
+    always_live_equiv_forward (M := M)
       (t := t) (hTheory := hTheory) (ht := ht)
   have h_t' :=
-    alwaysLiveEquivForward (M := M)
+    always_live_equiv_forward (M := M)
       (t := t') (hTheory := hTheory) (ht := ht')
   constructor
   · intro hLocal
@@ -352,7 +352,7 @@ theorem alwaysLiveEquivBackward
 /-- Paper: Lemma 5.2.9(3). Liveness at an event-tuple of the model implies liveness at every past
 event at the same place. -/
 theorem live_allPast
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     {t : World P (Signature.EventType S)}
     (ht : t ∈ M.history.val)
     (hLive : ⟪t⟫ ⊨[M] Formula.predicate0 liveSymb) :
@@ -371,7 +371,7 @@ theorem live_allPast
           (Event := Signature.EventType S) ht)
     exact hsub _ ht'_mem
   have hLive_t' : ⟪t'⟫ ⊨[M] Formula.predicate0 liveSymb :=
-    (alwaysLiveEquivBackward (M := M) (hTheory := hTheory)
+    (always_live_equiv_backward (M := M) (hTheory := hTheory)
       (ht := ht'_hist) (ht' := ht) (hplace := ht'_place)).2 hLive
   exact
     Sat.not_elim (M := M) (w := t')
@@ -380,7 +380,7 @@ theorem live_allPast
 /-- A quorum of live participants is a quorum of sequential participants,
 by the `(LiveSeq)` axiom. -/
 theorem live_quorum_seq
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     (hLiveQuorum : ⊨[M]□ᶠ[[l]]Formula.predicate0 liveSymb) :
     ⊨[M]□ᶠ[[l]]Formula.seq := by
   classical
@@ -401,15 +401,15 @@ theorem live_quorum_seq
       (ψ := Formula.seq)).1
       (by
         simpa [liveSeqAxiom]
-          using thyLive_liveSeq (M := M) hTheory (t := ⟨q, †, M.history.val⟩)
+          using thyLive_live_seq (M := M) hTheory (t := ⟨q, †, M.history.val⟩)
             (by simp [World.time]))
       (hAllLive q hqO)
 
 /-- Instantiate `(Knowledge♢↓)` at an end-of-time world: a live participant
 that, at the end of time, knows of a live performance of `E` sometime knows
 of `E`. -/
-theorem knowledgeDiamond_sometime_at_end
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+theorem knowledge_diamond_sometime_at_end
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
     (hEvent : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb)
@@ -420,7 +420,7 @@ theorem knowledgeDiamond_sometime_at_end
   have hImp :=
     AllWorldValid.at_end (M := M)
       (φ := knowledgeDiamondAxiom (S := S) liveSymb evt)
-      (thyLive_knowledgeDiamond (M := M) hTheory evt) p
+      (thyLive_knowledge_diamond (M := M) hTheory evt) p
   have hAtEnd :
       ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]
         ⤒ᶠ (♢ᶠ↓[[]]
@@ -441,7 +441,7 @@ theorem knowledgeDiamond_sometime_at_end
 participants performed `E`, every live participant sometime knows that an
 `l`-quorum performed `E`. -/
 theorem live_eventually_knows_box
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt))) :
     ⊨[M](Formula.predicate0 liveSymb) ⇒ᶠ ↕ᶠ (□ᶠ↓[[l]] (Formula.ofEvent evt)) := by
   classical
@@ -452,7 +452,7 @@ theorem live_eventually_knows_box
   -- The knowledge axiom instance we need.
   have hKnowledge :
       AllWorldValid M (knowledgeBoxAxiom (S := S) liveSymb l evt) :=
-    thyLive_knowledgeBox (M := M) hTheory l evt
+    thyLive_knowledge_box (M := M) hTheory l evt
 
   have hAx :=
     AllWorldValid.at_end (M := M)
@@ -487,7 +487,7 @@ theorem live_eventually_knows_box
       hImp hLiveTop
 
 private theorem live_boxPast_nests_past
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt)))
     {q : P}
     (hPastLiveE :
@@ -498,7 +498,7 @@ private theorem live_boxPast_nests_past
   classical
   have hKnowledge :
       AllWorldValid M (knowledgeBoxAxiom (S := S) liveSymb l evt) :=
-    thyLive_knowledgeBox (M := M) hTheory l evt
+    thyLive_knowledge_box (M := M) hTheory l evt
   obtain ⟨t, ht_mem, ht_place, hLiveE_t⟩ :=
     (Sat.past (M := M)
       (w := ⟨q, †, M.history.val⟩)
@@ -583,7 +583,7 @@ private theorem live_boxPast_nests_past
   have hLive_end_t :
       ⟪⟨t.place, †, M.history.val⟩⟫ ⊨[M]
         Formula.predicate0 liveSymb :=
-    (alwaysLiveEquivForward (M := M)
+    (always_live_equiv_forward (M := M)
       (hTheory := hTheory)
       (t := t)
       (ht := ht_mem)).1 hLive_t
@@ -606,7 +606,7 @@ private theorem live_boxPast_nests_past
   have hLive_tBox :
       ⟪tBox⟫ ⊨[M]
         Formula.predicate0 liveSymb :=
-    (alwaysLiveEquivForward (M := M)
+    (always_live_equiv_forward (M := M)
       (hTheory := hTheory)
       (t := tBox)
       (ht := htBox_mem)).2 hLive_end_tBox
@@ -626,9 +626,9 @@ private theorem live_boxPast_nests_past
       ⟨tBox, htBox_mem, htBox_place, hConj⟩
 
 /-- Paper: Lemma 5.2.11. Liveness quorum boxes promote to nested
-quorum boxes under `ThyLive`. -/
+quorum boxes under `thyLive`. -/
 theorem live_boxPast_nests
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     (hQuorum : ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt))) :
     ⊨[M]□ᶠ↓[[l]]((Formula.predicate0 liveSymb) ∧ᶠ □ᶠ↓[[l]] (Formula.ofEvent evt)) := by
   classical
@@ -662,7 +662,7 @@ theorem live_boxPast_nests
       (hQuorum := hQuorum) (q := q) hPastLiveE
 
 theorem live_knows_eventually_past
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     {p : P}
     (hLive : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]Formula.predicate0 liveSymb)
     (hEvent : ⟪⟨p, †, M.history.val⟩⟫ ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb)
@@ -672,7 +672,7 @@ theorem live_knows_eventually_past
         ♢ᶠ↓[[]] (Formula.ofEvent evt)) := by
   classical
   have hSometime :=
-    knowledgeDiamond_sometime_at_end (M := M)
+    knowledge_diamond_sometime_at_end (M := M)
       (hTheory := hTheory)
       (hLive := hLive) (hEvent := hEvent)
   have hPastDiamond :
@@ -739,7 +739,7 @@ theorem live_knows_eventually_past
 /-- Paper: Proposition 5.2.8. If some live participant performed `E`, then
 an `l`-quorum of live participants eventually knows that `E` occurred. -/
 theorem live_eventually_knows
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     (hLive : ⊨[M]□ᶠ[id [l]](Formula.predicate0 liveSymb))
     (hEvent : ⊨[M]♢ᶠ↓[[]]((Formula.predicate0 liveSymb) ∧ᶠ (Formula.ofEvent evt))) :
     ⊨[M]□ᶠ↓[id [l]]
@@ -777,7 +777,7 @@ theorem live_eventually_knows
 
 /-- Paper: Proposition 5.2.10. Live quorum intersections expose live witnesses. -/
 theorem intertwined_two_quorums
-    (hTheory : M ⊨ᵀ ThyLive liveSymb)
+    (hTheory : M ⊨ᵀ thyLive liveSymb)
     (hIntersect : ⊨[M]♢ᶠ[id [l, l₁]]⊤ᶠ)
     (hLiveQuorum : ⊨[M]□ᶠ[id [l₁]](Formula.predicate0 liveSymb))
     (hWitness : ⊨[M]□ᶠ↓[id [l]]φ) :
@@ -786,7 +786,7 @@ theorem intertwined_two_quorums
   classical
   -- Nonempty intersection of the quorum families for `[l, l₁]`.
   have hIntersect_nonempty :=
-    (nWayQuorumIntersectionNonempty (M := M)
+    (n_way_quorum_intersection_nonempty (M := M)
       (ls := [l, l₁])).1 hIntersect
   -- Choose a default participant for extracting quorums.
   let p₀ : P := Classical.choice inferInstance

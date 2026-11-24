@@ -17,45 +17,45 @@ Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms ModalDistribution.Examples.HBBSafe.agreement
 
-/-- info: 'ModalDistribution.Examples.HBBSafe.happyTermination' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.HBBSafe.happy_termination' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.HBBSafe.happyTermination
+#print axioms ModalDistribution.Examples.HBBSafe.happy_termination
 
-/-- info: 'ModalDistribution.Examples.HBBSafe.cascadeTermination' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.HBBSafe.cascade_termination' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.HBBSafe.cascadeTermination
+#print axioms ModalDistribution.Examples.HBBSafe.cascade_termination
 
 /-- info: 'ModalDistribution.Examples.HBBSimp.agreement' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms ModalDistribution.Examples.HBBSimp.agreement
 
-/-- info: 'ModalDistribution.Examples.HBBSimp.happyTermination' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.HBBSimp.happy_termination' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.HBBSimp.happyTermination
+#print axioms ModalDistribution.Examples.HBBSimp.happy_termination
 
-/-- info: 'ModalDistribution.Examples.HBBSimp.cascadeTermination' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.HBBSimp.cascade_termination' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.HBBSimp.cascadeTermination
+#print axioms ModalDistribution.Examples.HBBSimp.cascade_termination
 
 /-- info: 'ModalDistribution.Examples.HBBCorr.agreement' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms ModalDistribution.Examples.HBBCorr.agreement
 
-/-- info: 'ModalDistribution.Examples.HBBCorr.happyTermination' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.HBBCorr.happy_termination' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.HBBCorr.happyTermination
+#print axioms ModalDistribution.Examples.HBBCorr.happy_termination
 
-/-- info: 'ModalDistribution.Examples.HBBCorr.cascadeTermination' depends on axioms: [propext,
+/-- info: 'ModalDistribution.Examples.HBBCorr.cascade_termination' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms ModalDistribution.Examples.HBBCorr.cascadeTermination
+#print axioms ModalDistribution.Examples.HBBCorr.cascade_termination
 
 /-- info: 'ModalDistribution.Examples.HBBSafe.correctness' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/

@@ -28,46 +28,46 @@ variable {P : Type u} {Event : Type v}
 
 /-- Paper: Definition 2.3.2 (transitive prehistories). A prehistory is transitive when every strict
 predecessor is a subset. -/
-def isTransitive (h : PreHistory P Event) : Prop :=
+def IsTransitive (h : PreHistory P Event) : Prop :=
   ∀ h' : PreHistory P Event, h' ≺− h → h' ⊆ h
 
 /-- Paper: Definition 2.3.5. Hereditary transitivity demands every predecessor be transitive and
 itself satisfy hereditary transitivity. We construct this predicate by well-founded recursion on
 ≺−. -/
-noncomputable def isHereditarilyTransitive : PreHistory P Event → Prop :=
+noncomputable def IsHereditarilyTransitive : PreHistory P Event → Prop :=
   PreHistory.happensBefore_wellFounded.fix
     (fun h rec =>
-      isTransitive h ∧
+      IsTransitive h ∧
       ∀ h' : PreHistory P Event,
         ∀ h_before : h' ≺− h, rec h' h_before)
 
 theorem isHereditarilyTransitive_unfold (h : PreHistory P Event) :
-  isHereditarilyTransitive h ↔
-    isTransitive h ∧
+  IsHereditarilyTransitive h ↔
+    IsTransitive h ∧
     ∀ h' : PreHistory P Event,
-      ∀ _ : h' ≺− h, isHereditarilyTransitive h' := by
+      ∀ _ : h' ≺− h, IsHereditarilyTransitive h' := by
   classical
-  unfold isHereditarilyTransitive
+  unfold IsHereditarilyTransitive
   simpa using
     (PreHistory.happensBefore_wellFounded.fix_eq
       (fun h rec =>
-        isTransitive h ∧
+        IsTransitive h ∧
         ∀ h' : PreHistory P Event,
           ∀ h_before : h' ≺− h, rec h' h_before)
       h)
 
-theorem isHereditarilyTransitive.trans
+theorem IsHereditarilyTransitive.trans
     {h : PreHistory P Event} :
-    isHereditarilyTransitive h → isTransitive h := by
+    IsHereditarilyTransitive h → IsTransitive h := by
   intro h_hered
   have := (isHereditarilyTransitive_unfold h).mp h_hered
   exact this.1
 
-theorem isHereditarilyTransitive.desc
+theorem IsHereditarilyTransitive.desc
     {h h' : PreHistory P Event}
-    (hh : isHereditarilyTransitive h)
+    (hh : IsHereditarilyTransitive h)
     (hb : h' ≺− h) :
-    isHereditarilyTransitive h' := by
+    IsHereditarilyTransitive h' := by
   classical
   have := (isHereditarilyTransitive_unfold h).mp hh
   exact this.2 h' hb
@@ -77,7 +77,7 @@ hereditarily transitive. The transitivity of the history follows from the heredi
 itself. -/
 structure History (P : Type u) (Event : Type v) where
   val : PreHistory P Event
-  hered : isHereditarilyTransitive val
+  hered : IsHereditarilyTransitive val
 
 namespace History
 
@@ -94,25 +94,25 @@ instance : Coe (History P Event) (PreHistory P Event) := ⟨History.val⟩
   rfl
 
 /-- A history is transitive -/
-theorem transitive (h : History P Event) : isTransitive h.val :=
-  (isHereditarilyTransitive.trans (P := P) (Event := Event) h.hered)
+theorem transitive (h : History P Event) : IsTransitive h.val :=
+  (IsHereditarilyTransitive.trans (P := P) (Event := Event) h.hered)
 
 theorem subset_of_happensBefore {H : History P Event} {h' : PreHistory P Event}
     (h_before : h' ≺− H.val) : h' ⊆ H.val :=
   History.transitive H h' h_before
 
 /-- A history is hereditarily transitive -/
-theorem hereditarilyTransitive (h : History P Event) : isHereditarilyTransitive h.val :=
+theorem hereditarily_transitive (h : History P Event) : IsHereditarilyTransitive h.val :=
   h.hered
 
 /-- Helper: data carried by the hereditary property for a specific predecessor. -/
 theorem predecessor_data {H : History P Event} {h' : PreHistory P Event}
     (h_before : h' ≺− H.val) :
-    isTransitive h' ∧ isHereditarilyTransitive h' := by
-  have h_hered := History.hereditarilyTransitive H
-  have h_desc := isHereditarilyTransitive.desc
+    IsTransitive h' ∧ IsHereditarilyTransitive h' := by
+  have h_hered := History.hereditarily_transitive H
+  have h_desc := IsHereditarilyTransitive.desc
       (P := P) (Event := Event) (h := H.val) (h' := h') h_hered h_before
-  exact ⟨isHereditarilyTransitive.trans h_desc, h_desc⟩
+  exact ⟨IsHereditarilyTransitive.trans h_desc, h_desc⟩
 
 /-- Package a predecessor of a history as a history. -/
 def predecessorHistory {H : History P Event} {h' : PreHistory P Event}
@@ -144,7 +144,7 @@ end HistoryAt
 
 /-- Paper: Definition 3.4.9(1) (p sequential at H). Participant `p` is sequential in `h` when its
 event-tuples are linearly ordered by accessibility. -/
-def isSequential (p : P) (h : PreHistory P Event) : Prop :=
+def IsSequential (p : P) (h : PreHistory P Event) : Prop :=
   ∀ t₁ t₂ : World P Event,
     t₁ ∈ h →
     t₂ ∈ h →
@@ -159,7 +159,7 @@ namespace History
 /-- Transitive subset relation (⊆trn). `H' ⊆trn H` when `H' ⊆ H` and `H'`
     is hereditarily transitive. -/
 def TransitiveSubset (h1 h2 : PreHistory P Event) : Prop :=
-  h1 ⊆ h2 ∧ isHereditarilyTransitive h1
+  h1 ⊆ h2 ∧ IsHereditarilyTransitive h1
 
 infixl:50 " ⊆trn " => TransitiveSubset
 
@@ -172,7 +172,7 @@ theorem transitiveSubset_subset {h₁ h₂ : PreHistory P Event}
 theorem transitiveSubset_of_subset
     {h₁ h₂ : PreHistory P Event}
     (hsubset : h₁ ⊆ h₂)
-    (hhered : isHereditarilyTransitive (P := P) (Event := Event) h₁) :
+    (hhered : IsHereditarilyTransitive (P := P) (Event := Event) h₁) :
     h₁ ⊆trn h₂ := by
   exact ⟨hsubset, hhered⟩
 
@@ -184,25 +184,25 @@ theorem happensBefore_implies_transitiveSubset (h1 h2 : History P Event) :
   constructor
   · -- h1.val ⊆ h2.val
     exact History.subset_of_happensBefore (H := h2) h_before
-  · -- isHereditarilyTransitive h1.val
-    exact History.hereditarilyTransitive h1
+  · -- IsHereditarilyTransitive h1.val
+    exact History.hereditarily_transitive h1
 
 /-- Paper: Definition 2.3.13(2). A globally initial event-tuple. -/
-def isInitialTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
+def IsInitialTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, H' ≺− t.2.2
 
 /-- Paper: Definition 2.3.13(3). A globally final event-tuple. -/
-def isFinalTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
+def IsFinalTuple (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ ¬ ∃ H' : PreHistory P Event, t.2.2 ≺− H'
 
 /-- Paper: Definition 2.3.13(2). `(p, E, H)` is `p`-initial when no earlier `p`-event exists. -/
-def isInitialAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
+def IsInitialAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ World.place t = p ∧
     ¬ ∃ t' : World P Event,
         t' ∈ H ∧ World.place t' = p ∧ World.time t' ≺− World.time t
 
 /-- Paper: Definition 2.3.13(3). `(p, E, H)` is `p`-final when no later `p`-event exists. -/
-def isFinalAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
+def IsFinalAt (p : P) (t : World P Event) (H : PreHistory P Event) : Prop :=
   t ∈ H ∧ World.place t = p ∧
     ¬ ∃ t' : World P Event,
         t' ∈ H ∧ World.place t' = p ∧ World.time t ≺− World.time t'
@@ -213,7 +213,7 @@ theorem happensBefore_trans_in_history (H : History P Event) :
     h1 ≺− h2 → h2 ≺− h3 → h3 ⪯ H.val → h1 ≺− h3 := by
   intro h1 h2 h3 h12 h23 h3_le_H
   -- h3 is transitive: either h3 ≺− H.val (hereditary transitivity) or h3 = H.val (H is transitive)
-  have h3_transitive : isTransitive h3 := by
+  have h3_transitive : IsTransitive h3 := by
     rw [PreHistory.happensBeforeEq_iff] at h3_le_H
     cases h3_le_H with
     | inl h3_before_H =>
@@ -255,7 +255,7 @@ theorem transitiveSubset_refl (H : History P Event) :
     H.val ⊆trn H.val := by
   constructor
   · exact PreHistory.subset_refl H.val
-  · exact History.hereditarilyTransitive H
+  · exact History.hereditarily_transitive H
 
 /-! ## Helper lemmas for sequentiality preservation -/
 
@@ -268,8 +268,8 @@ theorem happensBefore_of_mem {H : PreHistory P Event} {e : World P Event}
 /-- Paper: Proposition 5.1.4 (variant). Sequentiality is monotone. -/
 theorem sequentiality_monotone (p : P) (h h' : History P Event) :
   h' ⊆trn h.val →
-  isSequential p h.val →
-  isSequential p h'.val := by
+  IsSequential p h.val →
+  IsSequential p h'.val := by
   intro hsubtrn seq_h
   -- Extract the plain subset relation from ⊆trn
   have hsub : h'.val ⊆ h.val := hsubtrn.1
@@ -282,8 +282,8 @@ theorem sequentiality_monotone (p : P) (h h' : History P Event) :
 theorem sequentiality_of_predecessor {p : P} {H : History P Event}
     {h' : PreHistory P Event}
     (h_before : h' ≺− H.val)
-    (hseq : isSequential (P := P) (Event := Event) p H.val) :
-    isSequential p h' := by
+    (hseq : IsSequential (P := P) (Event := Event) p H.val) :
+    IsSequential p h' := by
   have hsubset : h' ⊆ H.val := History.subset_of_happensBefore (H := H) h_before
   intro t₁ t₂ ht₁ ht₂ hp₁ hp₂
   have ht₁' : t₁ ∈ H.val := hsubset _ ht₁
@@ -295,27 +295,27 @@ end History
 /-! ## Element-transitivity (paper Definition 2.3.11 and Lemma 2.3.12) -/
 
 /-- Paper: Definition 2.3.11 (element-transitive). A prehistory is element-transitive when `≺−` is
-transitive into it. This is an alternative, strictly weaker notion than `isTransitive`. -/
-def isElementTransitive (h : PreHistory P Event) : Prop :=
+transitive into it. This is an alternative, strictly weaker notion than `IsTransitive`. -/
+def IsElementTransitive (h : PreHistory P Event) : Prop :=
   ∀ h'' h' : PreHistory P Event, h'' ≺− h' → h' ≺− h → h'' ≺− h
 
 /-- Paper: Lemma 2.3.12(1). Transitive prehistories are element-transitive. -/
-theorem isTransitive.isElementTransitive {h : PreHistory P Event}
-    (ht : isTransitive h) : isElementTransitive h := by
+theorem IsTransitive.isElementTransitive {h : PreHistory P Event}
+    (ht : IsTransitive h) : IsElementTransitive h := by
   intro h'' h' h''h' h'h
   obtain ⟨p, x, hmem⟩ := h''h'
   exact ⟨p, x, ht h' h'h _ hmem⟩
 
 /-- Paper: Lemma 2.3.12(3). Every history structure is element-transitive. -/
 theorem History.isElementTransitive (H : History P Event) :
-    isElementTransitive H.val :=
+    IsElementTransitive H.val :=
   (History.transitive H).isElementTransitive
 
 /-- Paper: Lemma 2.3.12(2). The reverse implication fails: an element-transitive prehistory need not
 be transitive. The witness is the paper's `H₂ = {(p, †, H₁), (q, †, ∅)}` with `H₁ = {(p, †, ∅)}`. -/
-theorem exists_elementTransitive_not_transitive :
+theorem exists_element_transitive_not_transitive :
     ∃ h : PreHistory Bool Empty,
-      isElementTransitive h ∧ ¬ isTransitive h := by
+      IsElementTransitive h ∧ ¬ IsTransitive h := by
   classical
   set H₁ : PreHistory Bool Empty :=
     PreHistory.mk [(true, MaybeEvent.none, PreHistory.empty)] with hH₁
@@ -400,7 +400,7 @@ theorem accessible_trans
     w'' ≪ w := by
   have hbefore : World.time w' ≺− World.time w :=
     PreHistory.happensBefore_of_accessible (P := P) (Event := Event) h₁
-  have htrans : isTransitive (World.time w) := by
+  have htrans : IsTransitive (World.time w) := by
     rcases (PreHistory.happensBeforeEq_iff
         (P := P) (Event := Event) (World.time w) H.val).1 hW with hlt | heq
     · exact (History.predecessor_data (H := H) hlt).1
@@ -408,13 +408,13 @@ theorem accessible_trans
       exact History.transitive H
   have hsub : World.time w' ⊆ World.time w := htrans _ hbefore
   have hmem : w'' ∈ World.time w' := by
-    simpa [World.accessible] using h₂
+    simpa [World.Accessible] using h₂
   have hmem' : w'' ∈ World.time w := hsub _ hmem
-  simpa [World.accessible] using hmem'
+  simpa [World.Accessible] using hmem'
 
 /-- Paper: Definition 3.4.9(2) (H sequential). A whole time is sequential when all of its
 event-tuples are linearly ordered by accessibility, regardless of place. -/
-def isSequentialAll (h : PreHistory P Event) : Prop :=
+def IsSequentialAll (h : PreHistory P Event) : Prop :=
   ∀ t₁ t₂ : World P Event,
     t₁ ∈ h → t₂ ∈ h →
       (t₁ ≪ t₂ ∨ t₂ ≪ t₁ ∨ t₁ = t₂)

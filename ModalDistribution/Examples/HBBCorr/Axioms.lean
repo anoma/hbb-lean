@@ -158,10 +158,10 @@ variable
     (correlationSymb : Signature.PredSymb S)
 
 /-- Paper: Definition 8.2.1 (theory HBBCorr). Theory HBBCorr .
-It extends `ThyLive` with the `HBBCorr`-specific axioms in -/
+It extends `thyLive` with the `HBBCorr`-specific axioms in -/
 @[simp] def theory : Logic.Theory S :=
   { ax |
-      ax ∈ ThyLive liveSymb ∨
+      ax ∈ thyLive liveSymb ∨
       ax = echoBackwardAxiom proposeSymb echoSymb ∨
       ax = voteBackwardAxiom echoSymb voteSymb correlationSymb ∨
       ax = deliverBackwardAxiom voteSymb deliverSymb ∨
@@ -186,78 +186,78 @@ variable {liveSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
 variable {correlationSymb : Signature.PredSymb S}
 
-/-- A model of `HBBCorr` is a model of `ThyLive`. -/
+/-- A model of `HBBCorr` is a model of `thyLive`. -/
 theorem theory_thyLive
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
-    M ⊨ᵀ ThyLive liveSymb :=
+    M ⊨ᵀ thyLive liveSymb :=
   fun _ hAx => hTheory (Or.inl hAx)
 
-theorem theory_echoBackward
+theorem theory_echo_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] echoBackwardAxiom proposeSymb echoSymb :=
   hTheory (by simp [theory])
 
-theorem theory_voteBackward
+theorem theory_vote_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] voteBackwardAxiom echoSymb voteSymb correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_deliverBackward
+theorem theory_deliver_backward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb :=
   hTheory (by simp [theory])
 
-theorem theory_echoNonEquiv
+theorem theory_echo_non_equiv
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] echoNonEquivAxiom echoSymb :=
   hTheory (by simp [theory])
 
-theorem theory_voteNonEquiv
+theorem theory_vote_non_equiv
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] voteNonEquivAxiom voteSymb correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_threeTwined
+theorem theory_three_twined
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] (threeTwinedAxiom : Formula S) :=
   hTheory (by simp [theory])
 
-theorem theory_correlationSeq
+theorem theory_correlation_seq
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] correlationSeqAxiom correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_correlationMonotone
+theorem theory_correlation_monotone
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] correlationMonotoneAxiom correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_correlationSymm
+theorem theory_correlation_symm
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] correlationSymmAxiom correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_correlationTrans
+theorem theory_correlation_trans
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] correlationTransAxiom correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_echoForward
+theorem theory_echo_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] echoForwardAxiom liveSymb proposeSymb echoSymb :=
   hTheory (by simp [theory])
 
-theorem theory_voteForward
+theorem theory_vote_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] voteForwardAxiom liveSymb echoSymb voteSymb :=
   hTheory (by simp [theory])
 
-theorem theory_voteForwardCorrelated
+theorem theory_vote_forward_correlated
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb :=
   hTheory (by simp [theory])
 
-theorem theory_deliverForward
+theorem theory_deliver_forward
     (hTheory : M ⊨ᵀ theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb) :
     □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb :=
   hTheory (by simp [theory])
@@ -274,7 +274,7 @@ variable {w : World P (Signature.EventType S)}
 
 /-- Instantiate `(Vote?)` at a world: a vote is justified by an echo quorum
 or by a correlated prior vote. -/
-theorem voteBackward_elim
+theorem vote_backward_elim
     (hAx : □W⊨[M] voteBackwardAxiom echoSymb voteSymb correlationSymb)
     (hW : w.time ⪯ M.history.val)
     {learner value : S.Value}
@@ -315,7 +315,7 @@ theorem voteBackward_elim
       hValue hVote
 
 /-- Instantiate `(Deliver?)` at a world: a delivery forces a vote quorum. -/
-theorem deliverBackward_elim
+theorem deliver_backward_elim
     (hAx : □W⊨[M] deliverBackwardAxiom voteSymb deliverSymb)
     (hW : w.time ⪯ M.history.val)
     {learner value : S.Value}
@@ -343,7 +343,7 @@ theorem deliverBackward_elim
       hValue hDeliver
 
 /-- Instantiate `(VoteNE)` at a world: correlated votes agree on the value. -/
-theorem voteNonEquiv_elim
+theorem vote_non_equiv_elim
     (hAx : □W⊨[M] voteNonEquivAxiom voteSymb correlationSymb)
     (hW : w.time ⪯ M.history.val)
     {learner value correlated altValue : S.Value}
@@ -406,7 +406,7 @@ theorem voteNonEquiv_elim
       hCorr
 
 /-- Instantiate `(3twined)` at a world: any three quorums intersect. -/
-theorem threeTwined_elim
+theorem three_twined_elim
     (hAx : □W⊨[M] (threeTwinedAxiom : Formula S))
     (hW : w.time ⪯ M.history.val)
     {l₁ l₂ l₃ : S.Value} :
@@ -431,7 +431,7 @@ theorem threeTwined_elim
 
 /-- Instantiate `(≐seq)` at a world: correlated learners have a sequential
 quorum intersection. -/
-theorem correlationSeq_elim
+theorem correlation_seq_elim
     (hAx : □W⊨[M] correlationSeqAxiom correlationSymb)
     (hW : w.time ⪯ M.history.val)
     {learner correlated : S.Value}
@@ -459,7 +459,7 @@ theorem correlationSeq_elim
       hCorrelated hCorr
 
 /-- Instantiate `(≐⇓)` at a world: correlation persists through the past. -/
-theorem correlationMonotone_elim
+theorem correlation_monotone_elim
     (hAx : □W⊨[M] correlationMonotoneAxiom correlationSymb)
     (hW : w.time ⪯ M.history.val)
     {learner correlated : S.Value}
@@ -487,7 +487,7 @@ theorem correlationMonotone_elim
       hCorrelated hCorr
 
 /-- Instantiate `(≐symm)` at a world: correlation is symmetric. -/
-theorem correlationSymm_elim
+theorem correlation_symm_elim
     (hAx : □W⊨[M] correlationSymmAxiom correlationSymb)
     (hW : w.time ⪯ M.history.val)
     {learner correlated : S.Value}
@@ -516,7 +516,7 @@ theorem correlationSymm_elim
 
 /-- The instantiated `Deliver!` implication: live knowledge of a vote quorum
 eventually yields a delivery. This is the form consumed by Lemma 6.5.3. -/
-theorem deliverForward_imp
+theorem deliver_forward_imp
     (hAx : □W⊨[M] deliverForwardAxiom liveSymb voteSymb deliverSymb)
     {learner value : S.Value} :
     □W⊨[M]((↕ᶠ (predicate0 liveSymb ∧ᶠ

@@ -42,7 +42,7 @@ variable {correlationSymb : Signature.PredSymb S}
 
 /-- Paper: Lemma 8.4.1. `3twined` combines three guarded box facts
 into a joint diamond witness. -/
-theorem threeTwined_boxes_intersect
+theorem three_twined_boxes_intersect
     {l₁ l₂ l₃ : Signature.Value S}
     {φ₁ φ₂ φ₃ : Formula S} :
     ⊨[M]
@@ -112,19 +112,19 @@ theorem threeTwined_boxes_intersect
       (φ := φ₁ ∧ᶠ φ₂ ∧ᶠ φ₃) hWitness
 
 /-- The `threeTwined` axiom forces triple learner quorums to intersect. -/
-theorem threeTwined_hasQuorumNonempty
+theorem three_twined_hasQuorumNonempty
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     (hHistory : ∃ t : World P (Signature.EventType S), t ∈ M.history.val)
     {l₁ l₂ l₃ : Signature.Value S} :
-    hasQuorumNonempty (M := M) [l₁, l₂, l₃] := by
+    HasQuorumNonempty (M := M) [l₁, l₂, l₃] := by
   classical
   obtain ⟨t, ht⟩ := hHistory
   exact
     (sat_diamond_top_iff_hasQuorumNonempty (M := M)
         (w := t) (ls := [l₁, l₂, l₃])).1
-      (threeTwined_elim (M := M)
-        (theory_threeTwined (M := M) hTheory)
+      (three_twined_elim (M := M)
+        (theory_three_twined (M := M) hTheory)
         (M.time_le_of_mem ht))
 
 /-- Inductive step for `vote_implies_echo_quorum_local`.  Assuming the result
@@ -149,8 +149,8 @@ theorem vote_implies_echo_quorum_step
   classical
   -- Instantiate `(Vote?)` at `w`.
   have hDisj :=
-    voteBackward_elim (M := M)
-      (theory_voteBackward (M := M) hTheory)
+    vote_backward_elim (M := M)
+      (theory_vote_backward (M := M) hTheory)
       (M.time_le_of_mem hMem)
       (learner := learner) (value := value) hVote
   let φLeft := □ᶠ↓[[learner]](ofEvent ⟨echoSymb, [value]⟩)
@@ -338,8 +338,8 @@ theorem deliver_to_vote_box_end
   have hBox_at_event :
       ⟪tDeliver⟫ ⊨[M]
         □ᶠ↓[[learner]](ofEvent ⟨voteSymb, [learner, value]⟩) :=
-    deliverBackward_elim (M := M)
-      (theory_deliverBackward (M := M) hTheory)
+    deliver_backward_elim (M := M)
+      (theory_deliver_backward (M := M) hTheory)
       (M.time_le_of_mem ht_mem_history)
       hDeliver_at
   have hBefore_history : tDeliver.time ≺− M.history.val :=
@@ -356,7 +356,7 @@ theorem deliver_to_vote_box_end
 
 /-- One-sided application of `VoteNE`: a vote together with a past vote from a
 correlated learner forces value equality. -/
-theorem voteNonEquiv_local
+theorem vote_non_equiv_local
     (hVoteNE : AllWorldValid M (voteNonEquivAxiom voteSymb correlationSymb))
     {w : World P (Signature.EventType S)}
     (hMem : w ∈ M.history.val)
@@ -371,7 +371,7 @@ theorem voteNonEquiv_local
     valNow = valPast := by
   classical
   have hEqFormula :=
-    voteNonEquiv_elim (M := M)
+    vote_non_equiv_elim (M := M)
       (hAx := hVoteNE)
       (M.time_le_of_mem hMem)
       hVote_now hVote_past hCorr
@@ -407,7 +407,7 @@ theorem echo_quorums_agree
             ↓ᶠ (ofEvent ⟨echoSymb, [v₂]⟩)) := by
     classical
     have hThreeTwined :=
-      threeTwined_boxes_intersect (M := M)
+      three_twined_boxes_intersect (M := M)
         (l₁ := l) (l₂ := l₁) (l₃ := l₂)
         (φ₁ := Formula.seq)
         (φ₂ := ↓ᶠ (ofEvent ⟨echoSymb, [v₁]⟩))
@@ -416,7 +416,7 @@ theorem echo_quorums_agree
         ⊨[M] ♢ᶠ[[l, l₁, l₂]] ⊤ᶠ := by
       classical
       have hNonempty :=
-        threeTwined_hasQuorumNonempty
+        three_twined_hasQuorumNonempty
           (M := M)
           (hTheory := hTheory)
           (hHistory := hHistory)
@@ -537,7 +537,7 @@ theorem echo_quorums_agree
         (hDistinct := hEventNe)
     -- `EchoNE` turns the collision diamond into equality.
     have hEchoNE : AllWorldValid M (echoNonEquivAxiom echoSymb) :=
-      theory_echoNonEquiv (M := M) hTheory
+      theory_echo_non_equiv (M := M) hTheory
     have hSubset : wEcho.time ⊆trn M.history.val := by
       simpa [wEcho, wTop]
         using History.transitiveSubset_refl (H := M.history)
@@ -553,7 +553,7 @@ theorem echo_quorums_agree
             hEchoCollision_local with
       | inl hLeft =>
           exact
-            HBB.echoNonEquiv_diamond (M := M)
+            HBB.echo_non_equiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -563,7 +563,7 @@ theorem echo_quorums_agree
               (diamondPast_nil_of_past (M := M) hLeft)
       | inr hRight =>
           have hEq :=
-            HBB.echoNonEquiv_diamond (M := M)
+            HBB.echo_non_equiv_diamond (M := M)
               (echoSymb := echoSymb)
               (hEchoNE := hEchoNE)
               (w := wEcho)
@@ -622,8 +622,8 @@ theorem always_corr_symm
       (φ := ofPredicate ⟨correlationSymb, [l₂, l₁]⟩)).2 ?_
   intro t ht hp
   exact
-    correlationSymm_elim (M := M)
-      (theory_correlationSymm (M := M) hTheory)
+    correlation_symm_elim (M := M)
+      (theory_correlation_symm (M := M) hTheory)
       (M.time_le_of_mem ht)
       ((Sat.everytime (M := M) (w := w)
         (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).1 hAlways t ht hp)
@@ -652,8 +652,8 @@ theorem correlation_global_allPast
   have hAllPast :
       ⟪⟨s.place, †, M.history.val⟩⟫ ⊨[M]
         ⇓ᶠ (ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) :=
-    correlationMonotone_elim (M := M)
-      (theory_correlationMonotone (M := M) hTheory)
+    correlation_monotone_elim (M := M)
+      (theory_correlation_monotone (M := M) hTheory)
       (by simp [World.time])
       hCorrTop
   exact
@@ -672,8 +672,8 @@ theorem correlation_seq_diamond
   classical
   intro p
   exact
-    correlationSeq_elim (M := M)
-      (theory_correlationSeq (M := M) hTheory)
+    correlation_seq_elim (M := M)
+      (theory_correlation_seq (M := M) hTheory)
       (by simp [World.time])
       ((EndValid.boxEmpty_guard (M := M)
         (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩) hCorrelation) p)
@@ -948,7 +948,7 @@ theorem correlated_vote_eventually
   have hVoteCorrAx :
       AllWorldValid M
         (voteForwardCorrelatedAxiom liveSymb voteSymb correlationSymb) :=
-    theory_voteForwardCorrelated (M := M) hTheory
+    theory_vote_forward_correlated (M := M) hTheory
   intro t _
   refine Sat.imp_intro (M := M) (w := t) ?_
   intro hSometimeAnte
@@ -1070,7 +1070,7 @@ theorem live_echo_eventually_vote
         ↕ᶠ (ofEvent ⟨voteSymb, [l, v]⟩)) := by
   classical
   have hVoteAx : AllWorldValid M (voteForwardAxiom liveSymb echoSymb voteSymb) :=
-    theory_voteForward (M := M) hTheory
+    theory_vote_forward (M := M) hTheory
   intro t _
   refine Sat.imp_intro (M := M) (w := t) ?_
   intro hSometimeAnte
@@ -1098,7 +1098,7 @@ theorem live_echo_eventually_vote
 /-- Paper: Lemma 8.4.4(1). If someone believes `l₁` correlates with `l₂`, then their quorums
 intersect. This is the paper's Lemma 8.4.4(1), proved from the `(≐seq)`
 axiom at the believing participant. -/
-theorem correlationImpliesPairwiseQuorumIntersection
+theorem correlation_implies_pairwise_quorum_intersection
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
@@ -1113,8 +1113,8 @@ theorem correlationImpliesPairwiseQuorumIntersection
       (by simpa [wTop] using hSomeone p)
   set wq : World P (Signature.EventType S) := ⟨q, †, M.history.val⟩
   have hSeqDiamond : ⟪wq⟫ ⊨[M] ♢ᶠ[[l₁, l₂]] Formula.seq :=
-    correlationSeq_elim (M := M)
-      (theory_correlationSeq (M := M) hTheory)
+    correlation_seq_elim (M := M)
+      (theory_correlation_seq (M := M) hTheory)
       (by simp [wq, World.time])
       (by simpa [wq, wTop] using hq)
   have hTopDiamond : ⟪wq⟫ ⊨[M] ♢ᶠ[[l₁, l₂]] ⊤ᶠ :=
@@ -1126,7 +1126,7 @@ theorem correlationImpliesPairwiseQuorumIntersection
 
 /-- Paper: Lemma 8.4.4(2). Universal correlation implies quorum intersection. This is the paper's
 Lemma 8.4.4(2), derived from part 1 by weakening `□` to `♢`. -/
-theorem correlationImpliesQuorumIntersection
+theorem correlation_implies_quorum_intersection
     (hTheory : M ⊨ᵀ
       theory liveSymb proposeSymb echoSymb voteSymb deliverSymb correlationSymb)
     {l₁ l₂ : Signature.Value S}
@@ -1147,7 +1147,7 @@ theorem correlationImpliesQuorumIntersection
         (φ := ofPredicate ⟨correlationSymb, [l₁, l₂]⟩)).2
         ⟨p, hAll p⟩
   exact
-    correlationImpliesPairwiseQuorumIntersection
+    correlation_implies_pairwise_quorum_intersection
       (M := M) hTheory hSomeone
 
 end HBBCorr
