@@ -1,5 +1,4 @@
 import ModalDistribution.Examples.HBB
-import ModalDistribution.Examples.HBBSafe.Agreement
 import ModalDistribution.Examples.HBB.Termination
 import ModalDistribution.Examples.HBBSafe.Safety
 import ModalDistribution.Examples.HBBSafe.Axioms
@@ -55,103 +54,22 @@ theorem happy_termination
     ⊨[M](♢ᶠ↓[[]](predicate0 liveSymb ∧ᶠ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
          predicate0 liveSymb ⇒ᶠ
          ↕ᶠ(ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-  classical
-  intro p
-  set wTop : World P (Signature.EventType S) := ⟨p, †, M.history.val⟩
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hPropose
-  refine Sat.imp_intro (M := M) (w := wTop) ?_
-  intro hLivep
-
-  -- Fragments of `thyLive` used throughout the derivation.
-  have hThyLiveTheory : M ⊨ᵀ thyLive liveSymb :=
-    theory_thyLive (M := M) hTheory
-
-  -- Lemma 6.6.1, Proposition 5.2.8, (Echo?) with Lemma 4.2.2,
-  -- Lemma 6.5.2(2) and Lemma 5.2.11: a live `l`-quorum knows of an
-  -- `l`-quorum of echoes of `v`.
-  have hStep3Global :
-      ⊨[M]□ᶠ↓[[l]]
-        (predicate0 liveSymb ∧ᶠ □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩)) :=
-    unique_propose_live_nested_echo_quorum (M := M)
-      (hLiveTheory := hThyLiveTheory)
-      (hEcho := theory_echo_forward (M := M) hTheory)
-      (hEchoBack := theory_echo_backward (M := M) hTheory)
-      (hLiveQuorum := hLiveQuorum) (hUnique := hUnique)
-      (hKnown := diamondPast_nil_valid_of_end (M := M)
-        (by simpa [wTop] using hPropose))
-
-  -- Global guard: uniqueness of proposals enforces the at-most-one constraint.
-  have hGuardGlobal :
-      ⊨[M] ∃≤ᶠ1 w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩) := by
-    intro q
-    exact
-      unique_propose_guard_at_history
-        (M := M) (proposeSymb := proposeSymb)
-        (w := ⟨q, †, M.history.val⟩)
-        (hUnique := hUnique q)
-
-  -- Step 4 (Lemma 6.6.2): with at most one proposal, every learner is
-  -- everywhere and always safe.
-  have hSafeAlwaysGlobal :
-      □W⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
-    have hSafeEnd : ⊨[M] ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩) := by
-      intro q
-      exact
-        Sat.imp_elim (M := M) (w := ⟨q, †, M.history.val⟩)
-          (φ := ∃≤ᶠ1 w ↦ ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [w]⟩))
-          (ψ := ⇕ᶠ (ofPredicate ⟨safeSymb, [l]⟩))
-          (at_most_one_propose_safe (M := M)
-            (hTheory := hTheory) (l := l) q)
-          (hGuardGlobal q)
-    intro t _
-    refine (Sat.everytime (M := M) (w := t)
-      (φ := ofPredicate ⟨safeSymb, [l]⟩)).2 ?_
-    intro st hst hpl
-    exact
-      (Sat.everytime (M := M)
-        (w := ⟨t.place, †, M.history.val⟩)
-        (φ := ofPredicate ⟨safeSymb, [l]⟩)).1
-        (by simpa using hSafeEnd t.place) st hst (by simpa using hpl)
-
-  -- Step 5 (Lemma 6.5.2(2) with (Vote!)): the live echo quorum becomes a
-  -- live vote quorum.
-  have hVotesGlobal :
-      ⊨[M]
-        □ᶠ↓[[l]]
-          (predicate0 liveSymb ∧ᶠ
-            ofEvent ⟨voteSymb, [l, v]⟩) :=
-    boxPast_live_of_eventual_quorum
-      (M := M) (liveSymb := liveSymb)
-      (φ := □ᶠ↓[[l]] (ofEvent ⟨echoSymb, [v]⟩))
-      (ψ := ofEvent ⟨voteSymb, [l, v]⟩)
-      (l := l)
-      (hLiveTheory := hThyLiveTheory)
-      (hQuorum := hStep3Global)
-      (hImp := vote_forward_imp_of_everytime (M := M)
-        (hTheory := hTheory)
-        (hSafeAlways := hSafeAlwaysGlobal))
-
-  -- Step 6 (Lemma 6.5.3, applied to (Knowledge□↓) and (Deliver!)):
-  -- eventual vote knowledge becomes eventual delivery.
-  have hDeliverImp :
-      ⟪wTop⟫ ⊨[M]
-        predicate0 liveSymb ⇒ᶠ
-          ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-    have hDeliverEventually :=
-      live_quorum_eventually_consequent (M := M)
-        (hLiveTheory := hThyLiveTheory)
-        (hQuorum := hVotesGlobal)
-        (hImp := HBB.deliver_forward_imp (M := M)
-          (theory_deliver_forward (M := M) hTheory))
-    simpa [wTop] using hDeliverEventually p
-
-  -- Final application of the implication at participant `p`.
-  exact
-    Sat.imp_elim (M := M) (w := wTop)
-      (φ := predicate0 liveSymb)
-      (ψ := ↕ᶠ (ofEvent ⟨deliverSymb, [l, l, v]⟩))
-      hDeliverImp hLivep
+  intro p hKnown hLive_p
+  have hThyLive := theory_thyLive hTheory
+  -- Proposition 5.2.8, `⊨ □_l live`; Lemma 6.5.2(2) with Lemma 6.6.1; Lemma 5.2.11:
+  -- a live `l`-quorum knows of an `l`-quorum of `echo(v)`.
+  have hKnowsEchoes := unique_propose_live_nested_echo_quorum hThyLive
+    (theory_echo_forward hTheory) (theory_echo_backward hTheory) hLiveQuorum hUnique
+    (diamondPast_nil_valid_of_end hKnown)
+  -- Lemma 6.6.2, `⊨ ∃!v.♢↓propose(v)`: `l` is everywhere and always safe.
+  have hSafe : □W⊨[M] ⇕ᶠ ofPredicate ⟨safeSymb, [l]⟩ := fun {t} _ =>
+    at_most_one_propose_safe hTheory l t.place (unique_propose_guard_at_history (hUnique _))
+  -- Lemma 6.5.2(2), (Vote!): the live `l`-quorum votes `(l, v)`.
+  have hVotes := boxPast_live_of_eventual_quorum hThyLive _ _ l hKnowsEchoes
+    (vote_forward_imp_of_everytime hTheory hSafe)
+  -- (Knowledge□↓), Lemma 6.5.3, (Deliver!): every live participant eventually delivers.
+  exact live_quorum_eventually_consequent hThyLive hVotes
+    (deliver_forward_imp (theory_deliver_forward hTheory)) p hLive_p
 
 /-- Paper: Proposition 6.6.3, first corollary. Whenever a live learner
 observes the guarded proposal diamond, every member of its quorum knows (in the
@@ -166,19 +84,10 @@ theorem happy_termination_boxPast
     ⊨[M](♢ᶠ↓[[]]
           (predicate0 liveSymb ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
-         □ᶠ↓[[l]] (ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-  classical
-  exact
-    endValid_boxPast_of_imp_sometime (M := M)
-      (hGuard := hLiveQuorum)
-      (hMain :=
-      happy_termination (M := M)
-        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb) (l := l) (v := v)
-        (hTheory := hTheory)
-        (hLiveQuorum := hLiveQuorum)
-        (hUnique := hUnique))
+         □ᶠ↓[[l]] (ofEvent ⟨deliverSymb, [l, l, v]⟩) :=
+  endValid_boxPast_of_imp_sometime M hLiveQuorum
+    (happy_termination hTheory hLiveQuorum hUnique)
+
 /-- Paper: Proposition 6.6.3, second corollary. Witnessing the guarded
 proposal diamond guarantees the delivery diamond for learner `l`. -/
 theorem happy_termination_diamondPast
@@ -191,19 +100,10 @@ theorem happy_termination_diamondPast
     ⊨[M](♢ᶠ↓[[]]
           (predicate0 liveSymb ∧ᶠ
             ♢ᶠ↓[[]](ofEvent ⟨proposeSymb, [v]⟩))) ⇒ᶠ
-         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l, l, v]⟩) := by
-  classical
-  exact
-    endValid_diamondPast_of_imp_sometime (M := M)
-      (hGuard := hLiveQuorum)
-      (hMain :=
-      happy_termination (M := M)
-        (liveSymb := liveSymb) (proposeSymb := proposeSymb)
-        (echoSymb := echoSymb) (voteSymb := voteSymb)
-        (deliverSymb := deliverSymb) (l := l) (v := v)
-        (hTheory := hTheory)
-        (hLiveQuorum := hLiveQuorum)
-        (hUnique := hUnique))
+         ♢ᶠ↓[[]](ofEvent ⟨deliverSymb, [l, l, v]⟩) :=
+  endValid_diamondPast_of_imp_sometime M hLiveQuorum
+    (happy_termination hTheory hLiveQuorum hUnique)
+
 end HappyTermination
 end HBBSafe
 end Examples
