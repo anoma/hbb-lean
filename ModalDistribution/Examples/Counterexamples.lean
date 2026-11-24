@@ -8,10 +8,12 @@ The paper's Lemma 4.2.1(3,4) and Lemma 4.2.3(3) are negative observations:
 certain modal implications do not hold in general. This file realises them in
 concrete models.
 
-The model for Lemma 4.2.1(3,4): two participants (`Bool`), the empty history,
-and two learners whose quorum systems are the up-closures of `{true}` and
-`{false}` respectively — so the pair of quorums `{true}`, `{false}` has empty
-intersection.
+- `disjointQuorumsModel` (Lemma 4.2.1(3,4)): two participants (`Bool`), the
+  empty history, and two learners whose quorum systems are the up-closures of
+  `{true}` and `{false}` respectively, so the pair of quorums `{true}`,
+  `{false}` has empty intersection.
+- `branchingModel` (Lemma 4.2.3(3)): the paper's one-participant model with
+  events `E₁`, `E₂`, `F` and history `H = H₃ ∪ H₄`.
 -/
 
 namespace ModalDistribution
@@ -25,6 +27,14 @@ open scoped Formula PreHistory
 
 set_option autoImplicit false
 
+/-- The empty prehistory is hereditarily transitive. -/
+theorem empty_hered {P E : Type} :
+    IsHereditarilyTransitive (PreHistory.mk [] : PreHistory P E) :=
+  (isHereditarilyTransitive_unfold _).2
+    ⟨fun _ ⟨_, _, hm⟩ => (nomatch hm), fun _ ⟨_, _, hm⟩ => (nomatch hm)⟩
+
+/-! ## Lemma 4.2.1(3,4): boxes and diamonds over disjoint quorums -/
+
 /-- A signature with no symbols and `Bool` as values/learners. -/
 def sig : Signature := ⟨Empty, Empty, Bool⟩
 
@@ -32,109 +42,51 @@ def sig : Signature := ⟨Empty, Empty, Bool⟩
 def upset (p : Bool) : Semifilter Bool where
   quorums := {O | p ∈ O}
   nonempty := ⟨Set.univ, trivial⟩
-  upward_closed := by
-    intro O O' hO hsub
-    exact hsub hO
-  pairwise_inter := by
-    intro O O' hO hO'
-    exact ⟨p, hO, hO'⟩
+  upward_closed := fun _ _ hO hsub => hsub hO
+  pairwise_inter := fun _ _ hO hO' => ⟨p, hO, hO'⟩
 
-/-- The empty prehistory is hereditarily transitive. -/
-theorem empty_hered :
-    IsHereditarilyTransitive (P := Bool) (Event := Signature.EventType sig)
-      (PreHistory.mk []) := by
-  refine (isHereditarilyTransitive_unfold _).mpr ⟨?_, ?_⟩
-  · intro h' hb
-    rcases hb with ⟨p, e, hm⟩
-    cases hm
-  · intro h' hb
-    rcases hb with ⟨p, e, hm⟩
-    cases hm
-
-/-- The empty model over two participants with disjoint-quorum learners. -/
-noncomputable def m : Model sig Bool where
+/-- The model of the Lemma 4.2.1(3,4) counterexamples: the empty history over
+two participants, where learner `b` has the quorums containing `b`, so the
+`true`-quorum `{true}` and the `false`-quorum `{false}` are disjoint. -/
+noncomputable def disjointQuorumsModel : Model sig Bool where
   history := ⟨PreHistory.mk [], empty_hered⟩
   predInterp := fun _ _ => ∅
   learner := fun v => upset v
 
 /-- The world at participant `true` at the (empty) end of time. -/
-def w0 : World Bool (Signature.EventType sig) :=
+def disjointQuorumsEnd : World Bool (Signature.EventType sig) :=
   ⟨true, †, PreHistory.mk []⟩
 
 /-- The quorum pair with empty intersection: `{true}` for learner `true`. -/
-theorem true_set_mem : {b : Bool | b = true} ∈ (m.learner true).quorums := rfl
+theorem true_set_mem :
+    {b : Bool | b = true} ∈ (disjointQuorumsModel.learner true).quorums := rfl
 
 /-- ... and `{false}` for learner `false`. -/
-theorem false_set_mem : {b : Bool | b = false} ∈ (m.learner false).quorums := rfl
+theorem false_set_mem :
+    {b : Bool | b = false} ∈ (disjointQuorumsModel.learner false).quorums := rfl
+
+/-- No formula holds under `♢[true, false]`: the quorums `{true}` and
+`{false}` have no common member. -/
+theorem not_sat_diamond_true_false (φ : Formula sig) :
+    ¬ (⟪disjointQuorumsEnd⟫ ⊨[disjointQuorumsModel] ♢ᶠ[[true, false]] φ) := fun h => by
+  obtain ⟨q, ⟨hq, hq'⟩, -⟩ :=
+    (sat_diamond_pair_iff _ _ true false φ).1 h _ true_set_mem _ false_set_mem
+  exact Bool.noConfusion ((hq : q = true).symm.trans hq')
 
 /-- Paper: Lemma 4.2.1(3). `□l₁…lₙφ` does not imply `♢φ`: with an empty
 quorum intersection the box holds vacuously (even of `⊥`), while `♢⊥` fails. -/
 theorem box_not_implies_diamondEmpty :
-    (⟪w0⟫ ⊨[m] □ᶠ[[true, false]] (⊥ᶠ : Formula sig)) ∧
-      ¬ (⟪w0⟫ ⊨[m] ♢ᶠ[] (⊥ᶠ : Formula sig)) := by
-  constructor
-  · refine Sat.not_intro (M := m) (w := w0)
-      (φ := ♢ᶠ[[true, false]] (¬ᶠ (⊥ᶠ : Formula sig))) ?_
-    intro hDiamond
-    have hCheck :
-        Sat.Check m
-          (fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (¬ᶠ (⊥ᶠ : Formula sig)))
-          [true, false] Set.univ :=
-      (sat_diamond_iff_diamond_check (M := m)
-        (ls := [true, false]) (φ := ¬ᶠ (⊥ᶠ : Formula sig)) (w := w0)).1 hDiamond
-    have h1 :=
-      (Sat.check_cons (M := m)
-        (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (¬ᶠ (⊥ᶠ : Formula sig)))
-        (v := true) (vs := [false]) (acc := Set.univ)).1 hCheck
-        {b : Bool | b = true} true_set_mem
-    have h2 :=
-      (Sat.check_cons (M := m)
-        (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (¬ᶠ (⊥ᶠ : Formula sig)))
-        (v := false) (vs := []) (acc := Set.univ ∩ {b : Bool | b = true})).1 h1
-        {b : Bool | b = false} false_set_mem
-    obtain ⟨p, hpMem, _⟩ :=
-      (Sat.check_nil (M := m)
-        (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (¬ᶠ (⊥ᶠ : Formula sig)))
-        (acc := (Set.univ ∩ {b : Bool | b = true}) ∩ {b : Bool | b = false})).1 h2
-    have hTrue : p = true := hpMem.1.2
-    have hFalse : p = false := hpMem.2
-    rw [hTrue] at hFalse
-    cases hFalse
-  · intro hDiamond
-    obtain ⟨p, hp⟩ :=
-      (Sat.diamondEmpty (M := m) (w := w0)
-        (φ := (⊥ᶠ : Formula sig))).1 hDiamond
-    exact hp
+    (⟪disjointQuorumsEnd⟫ ⊨[disjointQuorumsModel] □ᶠ[[true, false]] (⊥ᶠ : Formula sig)) ∧
+      ¬ (⟪disjointQuorumsEnd⟫ ⊨[disjointQuorumsModel] ♢ᶠ[] (⊥ᶠ : Formula sig)) :=
+  ⟨Sat.not_intro _ (not_sat_diamond_true_false _),
+    fun h => ((Sat.diamondEmpty _ _ _).1 h).elim fun _ hBot => hBot⟩
 
 /-- Paper: Lemma 4.2.1(4). `φ` does not imply `♢l₁…lₙφ`: even `⊤` fails under
 the diamond when some quorum intersection is empty. -/
 theorem sat_not_implies_diamond :
-    (⟪w0⟫ ⊨[m] (⊤ᶠ : Formula sig)) ∧
-      ¬ (⟪w0⟫ ⊨[m] ♢ᶠ[[true, false]] (⊤ᶠ : Formula sig)) := by
-  constructor
-  · exact Sat.top (M := m) (w := w0)
-  · intro hDiamond
-    have hCheck :=
-      (sat_diamond_iff_diamond_check (M := m)
-        (ls := [true, false]) (φ := (⊤ᶠ : Formula sig)) (w := w0)).1 hDiamond
-    have h1 :=
-      (Sat.check_cons (M := m)
-        (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (⊤ᶠ : Formula sig))
-        (v := true) (vs := [false]) (acc := Set.univ)).1 hCheck
-        {b : Bool | b = true} true_set_mem
-    have h2 :=
-      (Sat.check_cons (M := m)
-        (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (⊤ᶠ : Formula sig))
-        (v := false) (vs := []) (acc := Set.univ ∩ {b : Bool | b = true})).1 h1
-        {b : Bool | b = false} false_set_mem
-    obtain ⟨p, hpMem, _⟩ :=
-      (Sat.check_nil (M := m)
-        (Q := fun q => ⟪⟨q, †, w0.time⟩⟫ ⊨[m] (⊤ᶠ : Formula sig))
-        (acc := (Set.univ ∩ {b : Bool | b = true}) ∩ {b : Bool | b = false})).1 h2
-    have hTrue : p = true := hpMem.1.2
-    have hFalse : p = false := hpMem.2
-    rw [hTrue] at hFalse
-    cases hFalse
+    (⟪disjointQuorumsEnd⟫ ⊨[disjointQuorumsModel] (⊤ᶠ : Formula sig)) ∧
+      ¬ (⟪disjointQuorumsEnd⟫ ⊨[disjointQuorumsModel] ♢ᶠ[[true, false]] (⊤ᶠ : Formula sig)) :=
+  ⟨Sat.top _ _, not_sat_diamond_true_false _⟩
 
 /-! ## Lemma 4.2.3(3): the collapsing implications do not reverse
 
@@ -157,237 +109,128 @@ def evE₁ : Signature.EventType sig3 := ⟨(0 : Fin 3), []⟩
 def evE₂ : Signature.EventType sig3 := ⟨(1 : Fin 3), []⟩
 def evF : Signature.EventType sig3 := ⟨(2 : Fin 3), []⟩
 
+/-- The initial event-tuples `(p, E₁, ∅)` and `(p, E₂, ∅)`. -/
 def tE₁ : World Unit (Signature.EventType sig3) :=
   ((), MaybeEvent.some evE₁, PreHistory.mk [])
 def tE₂ : World Unit (Signature.EventType sig3) :=
   ((), MaybeEvent.some evE₂, PreHistory.mk [])
-def h₁ : PreHistory Unit (Signature.EventType sig3) := PreHistory.mk [tE₁]
-def h₂ : PreHistory Unit (Signature.EventType sig3) := PreHistory.mk [tE₂]
-def tF₁ : World Unit (Signature.EventType sig3) :=
-  ((), MaybeEvent.some evF, h₁)
-def tF₂ : World Unit (Signature.EventType sig3) :=
-  ((), MaybeEvent.some evF, h₂)
 
-/-- The full history `H₃ ∪ H₄` of the counterexample. -/
-def bigH : PreHistory Unit (Signature.EventType sig3) :=
+/-- The paper's `H₁ = {(p, E₁, ∅)}`. -/
+def historyE₁ : PreHistory Unit (Signature.EventType sig3) := PreHistory.mk [tE₁]
+
+/-- The paper's `H₂ = {(p, E₂, ∅)}`. -/
+def historyE₂ : PreHistory Unit (Signature.EventType sig3) := PreHistory.mk [tE₂]
+
+/-- The two `F` event-tuples `(p, F, H₁)` and `(p, F, H₂)`. -/
+def tF₁ : World Unit (Signature.EventType sig3) :=
+  ((), MaybeEvent.some evF, historyE₁)
+def tF₂ : World Unit (Signature.EventType sig3) :=
+  ((), MaybeEvent.some evF, historyE₂)
+
+/-- The paper's history `H = H₃ ∪ H₄` of the counterexample. -/
+def branchingHistory : PreHistory Unit (Signature.EventType sig3) :=
   PreHistory.mk [tF₁, tE₁, tF₂, tE₂]
 
-theorem empty_hered₃ :
-    IsHereditarilyTransitive (P := Unit) (Event := Signature.EventType sig3)
-      (PreHistory.mk []) := by
-  refine (isHereditarilyTransitive_unfold _).mpr ⟨?_, ?_⟩ <;>
-    · intro h' hb
-      rcases hb with ⟨p, e, hm⟩
-      cases hm
-
+/-- A prehistory of one initial event-tuple is hereditarily transitive. -/
 theorem singleton_hered (t : World Unit (Signature.EventType sig3))
-    (ht : t.2.2 = PreHistory.mk []) :
-    IsHereditarilyTransitive (P := Unit) (Event := Signature.EventType sig3)
-      (PreHistory.mk [t]) := by
-  refine (isHereditarilyTransitive_unfold _).mpr ⟨?_, ?_⟩
-  · intro h' hb
-    rcases hb with ⟨p, e, hm⟩
-    have hmL : (p, e, h') ∈ [t] := hm
-    rcases List.mem_cons.1 hmL with heq | hnil
-    · have hh : h' = t.2.2 := congrArg (fun x => x.2.2) heq
-      rw [hh, ht]
-      intro x hx
-      cases hx
-    · cases hnil
-  · intro h' hb
-    rcases hb with ⟨p, e, hm⟩
-    have hmL : (p, e, h') ∈ [t] := hm
-    rcases List.mem_cons.1 hmL with heq | hnil
-    · have hh : h' = t.2.2 := congrArg (fun x => x.2.2) heq
-      rw [hh, ht]
-      exact empty_hered₃
-    · cases hnil
+    (ht : t.time = PreHistory.mk []) :
+    IsHereditarilyTransitive (PreHistory.mk [t]) := by
+  -- The only predecessor of `{t}` is `t.time = ∅`.
+  have hPred : ∀ h', h' ≺− PreHistory.mk [t] → h' = PreHistory.mk [] :=
+    fun _ ⟨_, _, hm⟩ => (congrArg World.time (List.mem_singleton.1 hm)).trans ht
+  refine (isHereditarilyTransitive_unfold _).2
+    ⟨fun h' hb x hx => ?_, fun h' hb => hPred h' hb ▸ empty_hered⟩
+  rw [hPred h' hb] at hx
+  nomatch hx
 
-theorem bigH_hered :
-    IsHereditarilyTransitive (P := Unit) (Event := Signature.EventType sig3)
-      bigH := by
-  have hsub₁ : (h₁ : PreHistory Unit (Signature.EventType sig3)) ⊆ bigH := by
-    intro x hx
-    have hxL : x ∈ [tE₁] := hx
-    rcases List.mem_cons.1 hxL with heq | hnil
-    · rw [heq]
-      exact List.Mem.tail _ (List.Mem.head _)
-    · cases hnil
-  have hsub₂ : (h₂ : PreHistory Unit (Signature.EventType sig3)) ⊆ bigH := by
-    intro x hx
-    have hxL : x ∈ [tE₂] := hx
-    rcases List.mem_cons.1 hxL with heq | hnil
-    · rw [heq]
-      exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))
-    · cases hnil
-  have hTimes :
-      ∀ {p : Unit} {e : MaybeEvent (Signature.EventType sig3)}
-        {h' : PreHistory Unit (Signature.EventType sig3)},
-        (p, e, h') ∈ bigH →
-          h' = h₁ ∨ h' = h₂ ∨ h' = PreHistory.mk [] := by
-    intro p e h' hm
-    have hmL : (p, e, h') ∈ [tF₁, tE₁, tF₂, tE₂] := hm
-    rcases List.mem_cons.1 hmL with heq | h2
-    · exact Or.inl (congrArg (fun x => x.2.2) heq)
-    · rcases List.mem_cons.1 h2 with heq | h3
-      · exact Or.inr (Or.inr (congrArg (fun x => x.2.2) heq))
-      · rcases List.mem_cons.1 h3 with heq | h4
-        · exact Or.inr (Or.inl (congrArg (fun x => x.2.2) heq))
-        · rcases List.mem_cons.1 h4 with heq | hnil
-          · exact Or.inr (Or.inr (congrArg (fun x => x.2.2) heq))
-          · cases hnil
-  refine (isHereditarilyTransitive_unfold _).mpr ⟨?_, ?_⟩
-  · intro h' hb
-    rcases hb with ⟨p, e, hm⟩
-    rcases hTimes hm with rfl | rfl | rfl
+/-- Every event-tuple of `H` happens at time `H₁`, `H₂`, or `∅`. -/
+theorem time_of_mem_branchingHistory {t : World Unit (Signature.EventType sig3)}
+    (ht : t ∈ branchingHistory) :
+    t.time = historyE₁ ∨ t.time = historyE₂ ∨ t.time = PreHistory.mk [] := by
+  have ht' : t ∈ [tF₁, tE₁, tF₂, tE₂] := ht
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at ht'
+  rcases ht' with rfl | rfl | rfl | rfl
+  · exact Or.inl rfl
+  · exact Or.inr (Or.inr rfl)
+  · exact Or.inr (Or.inl rfl)
+  · exact Or.inr (Or.inr rfl)
+
+theorem branchingHistory_hered : IsHereditarilyTransitive branchingHistory := by
+  -- `H₁` and `H₂` lie in `H`.
+  have hsub₁ : historyE₁ ⊆ branchingHistory := fun x hx => by
+    rw [List.mem_singleton.1 hx]
+    exact List.Mem.tail _ (List.Mem.head _)
+  have hsub₂ : historyE₂ ⊆ branchingHistory := fun x hx => by
+    rw [List.mem_singleton.1 hx]
+    exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))
+  refine (isHereditarilyTransitive_unfold _).2 ⟨fun h' ⟨p, e, hm⟩ => ?_, fun h' ⟨p, e, hm⟩ => ?_⟩
+  · rcases time_of_mem_branchingHistory hm with rfl | rfl | rfl
     · exact hsub₁
     · exact hsub₂
-    · intro x hx
-      cases hx
-  · intro h' hb
-    rcases hb with ⟨p, e, hm⟩
-    rcases hTimes hm with rfl | rfl | rfl
+    · exact fun _ hx => nomatch hx
+  · rcases time_of_mem_branchingHistory hm with rfl | rfl | rfl
     · exact singleton_hered tE₁ rfl
     · exact singleton_hered tE₂ rfl
-    · exact empty_hered₃
+    · exact empty_hered
 
-/-- The model of the Lemma 4.2.3(3) counterexample. -/
-noncomputable def m₃ : Model sig3 Unit where
-  history := ⟨bigH, bigH_hered⟩
+/-- The model of the Lemma 4.2.3(3) counterexample: history `H` and one
+learner whose only relevant quorum is the single participant. -/
+noncomputable def branchingModel : Model sig3 Unit where
+  history := ⟨branchingHistory, branchingHistory_hered⟩
   predInterp := fun _ _ => ∅
   learner := fun _ =>
     { quorums := {O | () ∈ O}
       nonempty := ⟨Set.univ, trivial⟩
-      upward_closed := by
-        intro O O' hO hsub
-        exact hsub hO
-      pairwise_inter := by
-        intro O O' hO hO'
-        exact ⟨(), hO, hO'⟩ }
+      upward_closed := fun _ _ hO hsub => hsub hO
+      pairwise_inter := fun _ _ hO hO' => ⟨(), hO, hO'⟩ }
 
 /-- The end-of-time world of the counterexample. -/
-def w₃ : World Unit (Signature.EventType sig3) := ((), †, bigH)
+def branchingEnd : World Unit (Signature.EventType sig3) := ((), †, branchingHistory)
 
 /-- No `F` occurs at any time strictly inside the counterexample history:
-`↓F` fails at any world whose time is `h₁`, `h₂`, or `∅`. -/
+`↓F` fails at any world whose time is `H₁`, `H₂`, or `∅`. -/
 theorem no_past_evF (x : MaybeEvent (Signature.EventType sig3))
     (T : PreHistory Unit (Signature.EventType sig3))
-    (hT : T = h₁ ∨ T = h₂ ∨ T = PreHistory.mk []) :
-    ¬ (⟪((), x, T)⟫ ⊨[m₃] ↓ᶠ (ofEvent evF)) := by
+    (hT : T = historyE₁ ∨ T = historyE₂ ∨ T = PreHistory.mk []) :
+    ¬ (⟪((), x, T)⟫ ⊨[branchingModel] ↓ᶠ (ofEvent evF)) := by
   intro h
-  obtain ⟨t, ht_mem, _, ht_sat⟩ :=
-    (Sat.past (M := m₃) (w := ((), x, T)) (φ := ofEvent evF)).1 h
-  have hEvt : t.2.1 = MaybeEvent.some evF :=
-    ((Sat.ofEvent (M := m₃) (w := t) (E := evF)).1 ht_sat).1
+  obtain ⟨t, ht, -, htF⟩ := (Sat.past _ _ _).1 h
+  have hEvt : t.event = MaybeEvent.some evF := ((Sat.ofEvent _ t evF).1 htF).1
+  -- The only event-tuples at those times are `(p, E₁, ∅)` and `(p, E₂, ∅)`.
   rcases hT with rfl | rfl | rfl
-  · have hmL : t ∈ [tE₁] := ht_mem
-    rcases List.mem_cons.1 hmL with heq | hnil
-    · rw [heq] at hEvt
-      simp [tE₁, evE₁, evF] at hEvt
-      exact (show (0 : Fin 3) ≠ (2 : Fin 3) by decide) hEvt
-    · cases hnil
-  · have hmL : t ∈ [tE₂] := ht_mem
-    rcases List.mem_cons.1 hmL with heq | hnil
-    · rw [heq] at hEvt
-      simp [tE₂, evE₂, evF] at hEvt
-      exact (show (1 : Fin 3) ≠ (2 : Fin 3) by decide) hEvt
-    · cases hnil
-  · have hmL : t ∈ ([] : List (World Unit (Signature.EventType sig3))) := ht_mem
-    cases hmL
+  · rw [List.mem_singleton.1 ht] at hEvt
+    simp [tE₁, evE₁, evF] at hEvt
+    exact (show (0 : Fin 3) ≠ 2 by decide) hEvt
+  · rw [List.mem_singleton.1 ht] at hEvt
+    simp [tE₂, evE₂, evF] at hEvt
+    exact (show (1 : Fin 3) ≠ 2 by decide) hEvt
+  · nomatch ht
+
+/-- No event-tuple of `H` satisfies `□↓F`, as no `F` precedes it. -/
+theorem not_boxPast_evF_of_mem {t : World Unit (Signature.EventType sig3)}
+    (ht : t ∈ branchingHistory) :
+    ¬ (⟪t⟫ ⊨[branchingModel] □ᶠ↓[[()]] (ofEvent evF)) := fun h => by
+  obtain ⟨O, hO, hOF⟩ := (sat_box_singleton_exists _ t () _).1 h
+  exact no_past_evF † t.time (time_of_mem_branchingHistory ht) (hOF () hO)
 
 /-- Paper: Lemma 4.2.3(3). The collapsing implications of Lemma 4.2.3 do not
 reverse: at the end of time `□↓F` holds, yet `↓□↓F` and `♢↓□↓F` both fail. -/
 theorem past_box_does_not_reverse :
-    (⟪w₃⟫ ⊨[m₃] □ᶠ↓[[()]] (ofEvent evF)) ∧
-      ¬ (⟪w₃⟫ ⊨[m₃] ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF))) ∧
-      ¬ (⟪w₃⟫ ⊨[m₃] ♢ᶠ↓[[()]] (□ᶠ↓[[()]] (ofEvent evF))) := by
-  refine ⟨?_, ?_, ?_⟩
-  · -- □↓F at the end of time: every (the only) participant has a past F.
-    have hPast : ⟪(((), †, bigH) : World Unit (Signature.EventType sig3))⟫
-        ⊨[m₃] ↓ᶠ (ofEvent evF) := by
-      refine (Sat.past (M := m₃) (w := ((), †, bigH))
-        (φ := ofEvent evF)).2 ⟨tF₁, List.Mem.head _, rfl, ?_⟩
-      refine (Sat.ofEvent (M := m₃) (w := tF₁) (E := evF)).2 ⟨rfl, ?_⟩
-      exact List.Mem.head _
-    have hBox :
-        ⟪w₃⟫ ⊨[m₃] □ᶠ[[()]] (↓ᶠ (ofEvent evF)) :=
-      (sat_box_singleton_exists (M := m₃) (w := w₃)
-        (l := ()) (φ := ↓ᶠ (ofEvent evF))).2
-        ⟨Set.univ, trivial, fun q _ => by
-          cases q
-          exact hPast⟩
-    simpa [Formula.boxPast] using hBox
-  · -- ¬↓□↓F: each event-tuple of H has time H₁, ∅, H₂, or ∅ — no past F there.
-    intro h
-    obtain ⟨t, ht_mem, _, ht_sat⟩ :=
-      (Sat.past (M := m₃) (w := w₃)
-        (φ := □ᶠ↓[[()]] (ofEvent evF))).1 h
-    have hBox :
-        ⟪t⟫ ⊨[m₃] □ᶠ[[()]] (↓ᶠ (ofEvent evF)) := by
-      simpa [Formula.boxPast] using ht_sat
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := m₃) (w := t)
-        (l := ()) (φ := ↓ᶠ (ofEvent evF))).1 hBox
-    have hPastF :
-        ⟪(((), †, t.2.2) : World Unit (Signature.EventType sig3))⟫
-          ⊨[m₃] ↓ᶠ (ofEvent evF) :=
-      hAll () hO
-    have hTimes : t.2.2 = h₁ ∨ t.2.2 = h₂ ∨ t.2.2 = PreHistory.mk [] := by
-      have hmL : t ∈ [tF₁, tE₁, tF₂, tE₂] := ht_mem
-      rcases List.mem_cons.1 hmL with heq | h2
-      · exact Or.inl (congrArg (fun x => x.2.2) heq)
-      · rcases List.mem_cons.1 h2 with heq | h3
-        · exact Or.inr (Or.inr (congrArg (fun x => x.2.2) heq))
-        · rcases List.mem_cons.1 h3 with heq | h4
-          · exact Or.inr (Or.inl (congrArg (fun x => x.2.2) heq))
-          · rcases List.mem_cons.1 h4 with heq | hnil
-            · exact Or.inr (Or.inr (congrArg (fun x => x.2.2) heq))
-            · cases hnil
-    exact no_past_evF † t.2.2 hTimes hPastF
-  · -- ¬♢↓□↓F: the single-participant intersection witness would again need a
-    -- past □↓F, refuted as above.
-    intro h
-    have hCheck :=
-      (sat_diamond_iff_diamond_check (M := m₃)
-        (ls := [()]) (φ := ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF))) (w := w₃)).1
-        (by simpa [Formula.diamondPast] using h)
-    have h1 :=
-      (Sat.check_cons (M := m₃)
-        (Q := fun q => ⟪⟨q, †, w₃.time⟩⟫ ⊨[m₃]
-          ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF)))
-        (v := ()) (vs := []) (acc := Set.univ)).1 hCheck
-        Set.univ trivial
-    obtain ⟨q, _, hq⟩ :=
-      (Sat.check_nil (M := m₃)
-        (Q := fun q => ⟪⟨q, †, w₃.time⟩⟫ ⊨[m₃]
-          ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF)))
-        (acc := Set.univ ∩ Set.univ)).1 h1
-    cases q
-    obtain ⟨t, ht_mem, _, ht_sat⟩ :=
-      (Sat.past (M := m₃) (w := (((), †, w₃.time) : World Unit _))
-        (φ := □ᶠ↓[[()]] (ofEvent evF))).1 hq
-    have hBox :
-        ⟪t⟫ ⊨[m₃] □ᶠ[[()]] (↓ᶠ (ofEvent evF)) := by
-      simpa [Formula.boxPast] using ht_sat
-    obtain ⟨O, hO, hAll⟩ :=
-      (sat_box_singleton_exists (M := m₃) (w := t)
-        (l := ()) (φ := ↓ᶠ (ofEvent evF))).1 hBox
-    have hPastF :
-        ⟪(((), †, t.2.2) : World Unit (Signature.EventType sig3))⟫
-          ⊨[m₃] ↓ᶠ (ofEvent evF) :=
-      hAll () hO
-    have hTimes : t.2.2 = h₁ ∨ t.2.2 = h₂ ∨ t.2.2 = PreHistory.mk [] := by
-      have hmL : t ∈ [tF₁, tE₁, tF₂, tE₂] := ht_mem
-      rcases List.mem_cons.1 hmL with heq | h2
-      · exact Or.inl (congrArg (fun x => x.2.2) heq)
-      · rcases List.mem_cons.1 h2 with heq | h3
-        · exact Or.inr (Or.inr (congrArg (fun x => x.2.2) heq))
-        · rcases List.mem_cons.1 h3 with heq | h4
-          · exact Or.inr (Or.inl (congrArg (fun x => x.2.2) heq))
-          · rcases List.mem_cons.1 h4 with heq | hnil
-            · exact Or.inr (Or.inr (congrArg (fun x => x.2.2) heq))
-            · cases hnil
-    exact no_past_evF † t.2.2 hTimes hPastF
+    (⟪branchingEnd⟫ ⊨[branchingModel] □ᶠ↓[[()]] (ofEvent evF)) ∧
+      ¬ (⟪branchingEnd⟫ ⊨[branchingModel] ↓ᶠ (□ᶠ↓[[()]] (ofEvent evF))) ∧
+      ¬ (⟪branchingEnd⟫ ⊨[branchingModel] ♢ᶠ↓[[()]] (□ᶠ↓[[()]] (ofEvent evF))) := by
+  refine ⟨?_, fun h => ?_, fun h => ?_⟩
+  · -- The (only) participant has the past `F` event-tuple `(p, F, H₁)`.
+    exact (sat_box_singleton_exists branchingModel branchingEnd () _).2 ⟨Set.univ, trivial,
+      fun () _ => (Sat.past branchingModel ((), †, branchingHistory) _).2 ⟨tF₁, List.Mem.head _,
+        rfl, (Sat.ofEvent branchingModel tF₁ evF).2 ⟨rfl, List.Mem.head _⟩⟩⟩
+  · -- The past event-tuple would satisfy `□↓F`.
+    obtain ⟨t, ht, -, htBox⟩ := (Sat.past _ _ _).1 h
+    exact not_boxPast_evF_of_mem ht htBox
+  · -- The quorum `{p}` has a member whose past event-tuple would satisfy `□↓F`.
+    obtain ⟨q, -, hq⟩ := (sat_diamond_singleton_iff branchingModel branchingEnd () _).1 h Set.univ trivial
+    obtain ⟨t, ht, -, htBox⟩ := (Sat.past _ _ _).1 hq
+    exact not_boxPast_evF_of_mem ht htBox
 
 end Counterexamples
 end Examples
