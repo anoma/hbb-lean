@@ -122,7 +122,8 @@ theorem at_most_one_propose_safe
   -- disjunct of (Safe) holds there.
   have hs : s.time ⪯ M.history.val := M.time_le_of_mem hs
   exact (safe_iff_safeFormula hTheory s hs l).2 <|
-    (Sat.or ..).2 (.inl (unique_propose_monotone (w := ⟨p, †, _⟩) (time_subset_trn_history M hs) hUnique))
+    (Sat.or ..).2 (.inl
+      (unique_propose_monotone (w := ⟨p, †, _⟩) (time_subset_trn_history M hs) hUnique))
 
 /-- The instantiated `Vote!` implication, taking the everywhere-always safety
 guard in the form axiom `Vote!` demands it. -/
