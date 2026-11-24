@@ -102,9 +102,12 @@ end Theory
 
 section Projections
 
+/-! Each axiom of `HBBSafe` is valid in every model of the theory. -/
+
 variable {P : Type} [Nonempty P] {M : Model S P}
 variable {liveSymb safeSymb : Signature.PredSymb S}
 variable {proposeSymb echoSymb voteSymb deliverSymb : Signature.EventSymb S}
+
 /-- A model of `HBBSafe` is a model of `thyLive`. -/
 theorem theory_thyLive
     (hTheory : M ⊨ᵀ
