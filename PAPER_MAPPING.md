@@ -55,7 +55,7 @@ through membership, never through equality of prehistories — exactly the
 - **Definition 2.3.5 (history structures)** — `History` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 - **Definition 2.3.11 (element-transitive)** — `IsElementTransitive` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 - **Lemma 2.3.12(1)** — `IsTransitive.isElementTransitive` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
-- **Lemma 2.3.12(2)** — `exists_element_transitive_not_transitive` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
+- **Lemma 2.3.12(2)** — `exists_isElementTransitive_not_isTransitive` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 - **Lemma 2.3.12(3)** — `History.isElementTransitive` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 - **Definition 2.3.13(2)** — `IsInitialTuple` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))
 - **Definition 2.3.13(2)** — `IsInitialAt` ([ModalDistribution/Core/History.lean](ModalDistribution/Core/History.lean))

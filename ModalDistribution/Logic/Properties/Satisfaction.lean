@@ -253,11 +253,9 @@ subset of the model history as its time. -/
 theorem time_subset_trn_history
     (M : Model S P) {t : World P S.EventType}
     (ht : t.time ⪯ M.history.val) :
-    t.time ⊆trn M.history.val := by
-  rcases ht with hBefore | hEq
-  · exact ⟨History.subset_of_happensBefore hBefore, (History.predecessor_data hBefore).2⟩
-  · rw [hEq]
-    exact History.transitiveSubset_refl M.history
+    t.time ⊆trn M.history.val :=
+  ⟨PreHistory.subset_of_happensBeforeEq (fun h hb => M.history.transitive h hb) ht,
+    History.isHereditarilyTransitive_of_happensBeforeEq ht⟩
 
 /-- An all-world validity holds at an event-tuple of the model, presented with
 its time packaged as a predecessor history. -/
